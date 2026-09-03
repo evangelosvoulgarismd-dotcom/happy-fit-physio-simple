@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Fit Physio — Coaching</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#241413; --ink-soft:#6b5450; --bg:#f6efe4; --panel:#fffdf9; --line:#e8dcc9;
+    --red:#c4201f; --red-deep:#8f1615; --gold:#e2a233; --danger:#8f1615; --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; font-size:14px; line-height:1.5;}
+  h1,h2,h3{font-family:'Poppins',sans-serif; font-weight:800; margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  #shell{display:flex; min-height:100vh;}
+  #sidebar{width:230px; flex-shrink:0; background:var(--red-deep); color:#f7ece7; padding:22px 16px; display:flex; flex-direction:column; gap:16px;}
+  #sidebar h1{font-size:16px; color:#fff; text-align:center;}
+  #sidebar .tagline{font-size:11px; color:#f1c9c1; text-align:center; margin:2px 0 0;}
+  .navBtn{background:transparent; border:none; color:#f0d9d4; text-align:left; padding:9px 10px; border-radius:var(--radius); cursor:pointer; font-size:13.5px; font-family:inherit; border-left:3px solid transparent;}
+  .navBtn:hover{background:rgba(255,255,255,.08);}
+  .navBtn.active{background:rgba(255,255,255,.12); border-left-color:var(--gold); color:#fff; font-weight:600;}
+  .langToggle{display:flex; gap:6px;}
+  .langToggle button{flex:1; padding:6px; border-radius:var(--radius); border:1px solid #a8302f; background:transparent; color:#f5ddd6; cursor:pointer; font-size:12px; font-family:inherit;}
+  .langToggle button.active{background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:700;}
+  #main{flex:1; padding:28px 40px 60px; max-width:980px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--red); border-radius:8px; padding:18px; margin-bottom:16px; box-shadow:0 1px 3px rgba(36,20,19,0.06); transition:box-shadow .15s ease;}
+  .card.gold{border-left-color:var(--gold);}
+  .clientCard{transition:box-shadow .15s ease, transform .1s ease;}
+  .clientCard:hover{box-shadow:0 4px 14px rgba(36,20,19,0.12); transform:translateY(-1px);}
+  .statGrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:18px;}
+  .statCard{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
+  .statCard .num{font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; color:var(--red-deep); line-height:1.1;}
+  .statCard .lbl{font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
+  .chartWrap{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px 8px; margin-bottom:14px; height:220px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
+  .chartTitle{font-size:12px; color:var(--ink-soft); margin-bottom:6px; font-weight:600;}
+  .btn{font-family:inherit; font-weight:600; font-size:13px; padding:9px 16px; border-radius:var(--radius); border:1px solid var(--red); background:var(--red); color:#fff; cursor:pointer;}
+  .btn:hover{background:var(--red-deep); border-color:var(--red-deep);}
+  .btn.secondary{background:transparent; color:var(--red); border-color:var(--red);}
+  .btn.secondary:hover{background:#fbeae6;}
+  .btn.danger{background:transparent; color:var(--danger); border-color:var(--danger);}
+  .btn.danger:hover{background:#f6e0da;}
+  .field{display:flex; flex-direction:column; gap:4px; margin-bottom:10px;}
+  .field label{font-size:12px; color:var(--ink-soft);}
+  .field input,.field select,.field textarea{font-family:inherit; font-size:13.5px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); width:100%;}
+  .field textarea{min-height:56px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:0 16px;}
+  .badge{display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:#efe4d4; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
+  .savedTag{font-size:11.5px; color:var(--red);}
+  .errorTag{font-size:12.5px; color:var(--danger); background:#f6e0da; padding:8px 10px; border-radius:var(--radius);}
+  table.hist{width:100%; border-collapse:collapse; font-size:12.8px;}
+  table.hist th,table.hist td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left;}
+  table.hist th{background:#efe4d4; font-weight:600; color:var(--ink-soft); font-size:11.5px;}
+  .authWrap{max-width:380px; margin:60px auto;}
+  .authWrap .card{border-left-width:6px;}
+  .roleToggle{display:flex; gap:8px; margin-bottom:14px;}
+  .roleToggle button{flex:1; padding:10px; border-radius:var(--radius); border:1px solid var(--line); background:#fff; cursor:pointer; font-family:inherit; font-weight:600; font-size:12.5px;}
+  .roleToggle button.active{background:var(--red); color:#fff; border-color:var(--red);}
+  .evidenceItem{border-top:1px solid var(--line); padding:8px 0; font-size:12.8px;}
+  .evidenceItem a{color:var(--red-deep);}
+  .setRow{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
+  .setRow input{width:70px; padding:6px;}
+  .clickable{cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app"><div style="padding:40px;">Φόρτωση…</div></div>
+
+<!-- Supabase client via CDN — no npm/build step needed -->
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// ============================================================
+// !!! ΒΑΛΕ ΕΔΩ ΤΑ ΔΙΚΑ ΣΟΥ ΚΛΕΙΔΙΑ (Supabase → Project Settings → API) !!!
+// Το "anon public" key είναι ΑΣΦΑΛΕΣ να είναι δημόσιο μέσα σε αυτό το
+// αρχείο — η προστασία γίνεται από τις πολιτικές RLS που ήδη έτρεξες.
+// ============================================================
+const SUPABASE_URL = 'https://hxbpuamzisdldwbuumda.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ---------- i18n ----------
+const STR = {
+  appName:{el:'Happy Fit Physio', en:'Happy Fit Physio'},
+  tagline:{el:'Πλατφόρμα coaching', en:'Coaching platform'},
+  login:{el:'Σύνδεση', en:'Log in'}, signup:{el:'Εγγραφή', en:'Sign up'}, logout:{el:'Αποσύνδεση', en:'Log out'},
+  email:{el:'Email', en:'Email'}, password:{el:'Κωδικός', en:'Password'}, fullName:{el:'Ονοματεπώνυμο', en:'Full name'},
+  iAmCoach:{el:'Είμαι προπονητής/φυσικοθεραπευτής', en:"I'm a coach"}, iAmClient:{el:'Είμαι ασκούμενος', en:"I'm a client"},
+  inviteCode:{el:'Κωδικός πρόσκλησης', en:'Invite code'}, consent:{el:'Συναινώ στην επεξεργασία των δεδομένων μου.', en:'I consent to data processing.'},
+  clients:{el:'Ασκούμενοι', en:'Clients'}, dashboard:{el:'Πίνακας', en:'Dashboard'}, exerciseLibrary:{el:'Βιβλιοθήκη ασκήσεων', en:'Exercise library'},
+  newClient:{el:'+ Νέος ασκούμενος', en:'+ New client'}, newExercise:{el:'+ Νέα άσκηση', en:'+ New exercise'},
+  program:{el:'Πρόγραμμα', en:'Program'}, liveSession:{el:'Ζωντανή προπόνηση', en:'Live session'},
+  checkins:{el:'Weekly check-in', en:'Weekly check-in'}, readiness:{el:'Daily readiness', en:'Daily readiness'},
+  why:{el:'Το γιατί', en:'The why'}, bibliography:{el:'Βιβλιογραφία', en:'Bibliography'},
+  save:{el:'Αποθήκευση', en:'Save'}, saved:{el:'✓ Αποθηκεύτηκε', en:'✓ Saved'},
+  sets:{el:'Σετ', en:'Sets'}, reps:{el:'Επαναλήψεις', en:'Reps'}, load:{el:'Φορτίο (kg)', en:'Load (kg)'},
+  rpe:{el:'RPE', en:'RPE'}, pain:{el:'Πόνος', en:'Pain'}, logSet:{el:'Καταγραφή', en:'Log'},
+  noClients:{el:'Δεν υπάρχουν ακόμα ασκούμενοι.', en:'No clients yet.'}, loading:{el:'Φόρτωση…', en:'Loading…'},
+  exportData:{el:'Λήψη δικών μου δεδομένων', en:'Download my data'},
+  intake:{el:'Ιστορικό & Στόχοι', en:'History & Goals'},
+  progress:{el:'Ιστορικό προόδου', en:'Progress history'},
+  mainGoal:{el:'Κύριος στόχος', en:'Main goal'},
+  goalWhy:{el:'Γιατί τώρα;', en:'Why now?'},
+  goalDeadline:{el:'Συγκεκριμένος στόχος/ημερομηνία', en:'Specific goal/date'},
+  conditions:{el:'Διαγνωσμένες παθήσεις', en:'Diagnosed conditions'},
+  medications:{el:'Φαρμακευτική αγωγή', en:'Medications'},
+  medicalClearance:{el:'Ιατρικός περιορισμός/έγκριση', en:'Medical clearance/restriction'},
+  currentPain:{el:'Τρέχων πόνος/ενόχληση', en:'Current pain/discomfort'},
+  injuryHistory:{el:'Ιστορικό τραυματισμών', en:'Injury history'},
+  fearedMovement:{el:'Κίνηση που φοβάσαι', en:'Movement you fear'},
+  yearsTraining:{el:'Χρόνια άσκησης', en:'Years training'},
+  currentProgram:{el:'Τι κάνεις αυτή την περίοδο', en:'What you do currently'},
+  likedExercises:{el:'Ασκήσεις που σου αρέσουν', en:'Exercises you like'},
+  dislikedExercises:{el:'Ασκήσεις που αποφεύγεις', en:'Exercises you avoid'},
+  trainingLocation:{el:'Πού προπονείσαι', en:'Where you train'},
+  equipmentAvailable:{el:'Διαθέσιμος εξοπλισμός', en:'Available equipment'},
+  adherenceDifficulty:{el:'Δυσκολία τήρησης προγράμματος (1-10)', en:'Difficulty following a program (1-10)'},
+  barriers:{el:'Μεγαλύτερα εμπόδια', en:'Biggest barriers'},
+  intakeSaved:{el:'✓ Αποθηκεύτηκε αυτόματα', en:'✓ Auto-saved'},
+  noIntake:{el:'Ο ασκούμενος δεν έχει συμπληρώσει ακόμα το ιστορικό του.', en:'The client has not filled in their history yet.'},
+};
+function t(k, loc){ return STR[k]?.[loc] || STR[k]?.el || k; }
+
+// ---------- Global state ----------
+let session = null, profile = null, locale = 'el', view = 'dashboard', selectedClient = null;
+
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
+function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function uidCode(){ return crypto.randomUUID().slice(0,8).toUpperCase(); }
+function toast(msg){
+  let tEl = document.getElementById('toast');
+  if(!tEl){ tEl = el('<div id="toast" style="position:fixed;bottom:20px;right:20px;background:#241413;color:#fff;padding:10px 16px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .25s;"></div>'); document.body.appendChild(tEl); }
+  tEl.textContent = msg; tEl.style.opacity = '1';
+  clearTimeout(toast._h); toast._h = setTimeout(()=>tEl.style.opacity='0', 1800);
+}
+
+// ============================================================
+// AUTH SCREEN
+// ============================================================
+function renderAuth(){
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  let mode = 'login', role = 'coach';
+  const wrap = el(`<div class="authWrap"><div class="card">
+    <h2 style="margin-bottom:4px;">${t('appName',locale)}</h2>
+    <p style="color:var(--ink-soft);font-size:12.5px;margin:0 0 18px;">${t('tagline',locale)}</p>
+    <div class="roleToggle" id="modeToggle">
+      <button data-m="login" class="active">${t('login',locale)}</button>
+      <button data-m="signup">${t('signup',locale)}</button>
+    </div>
+    <div class="roleToggle" id="roleToggle" style="display:none;">
+      <button data-r="coach" class="active">${t('iAmCoach',locale)}</button>
+      <button data-r="client">${t('iAmClient',locale)}</button>
+    </div>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;"><label>${t('fullName',locale)}</label><input id="fullName"></div>
+      <div class="field"><label>${t('email',locale)}</label><input id="authEmail" type="email" required></div>
+      <div class="field"><label>${t('password',locale)}</label><input id="authPassword" type="password" required minlength="6"></div>
+      <div class="field" id="codeField" style="display:none;"><label>${t('inviteCode',locale)}</label><input id="inviteCode" placeholder="π.χ. A1B2C3D4"></div>
+      <div class="field" id="consentField" style="display:none; flex-direction:row; align-items:center; gap:8px;">
+        <input type="checkbox" id="consentBox" style="width:auto;"><label style="margin:0;">${t('consent',locale)}</label>
+      </div>
+      <div id="authError"></div>
+      <button class="btn" type="submit" style="width:100%; margin-top:6px;">${t('login',locale)}</button>
+    </form>
+  </div></div>`);
+  app.appendChild(wrap);
+
+  function syncFields(){
+    wrap.querySelector('#nameField').style.display = mode==='signup' ? '' : 'none';
+    wrap.querySelector('#consentField').style.display = mode==='signup' ? '' : 'none';
+    wrap.querySelector('#roleToggle').style.display = mode==='signup' ? 'flex' : 'none';
+    wrap.querySelector('#codeField').style.display = (mode==='signup' && role==='client') ? '' : 'none';
+    wrap.querySelector('button[type=submit]').textContent = mode==='login' ? t('login',locale) : t('signup',locale);
+  }
+  wrap.querySelectorAll('#modeToggle button').forEach(b=>b.addEventListener('click', ()=>{
+    mode = b.dataset.m;
+    wrap.querySelectorAll('#modeToggle button').forEach(x=>x.classList.toggle('active', x===b));
+    syncFields();
+  }));
+  wrap.querySelectorAll('#roleToggle button').forEach(b=>b.addEventListener('click', ()=>{
+    role = b.dataset.r;
+    wrap.querySelectorAll('#roleToggle button').forEach(x=>x.classList.toggle('active', x===b));
+    syncFields();
+  }));
+
+  wrap.querySelector('#authForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const errBox = wrap.querySelector('#authError');
+    errBox.innerHTML = '';
+    const email = wrap.querySelector('#authEmail').value.trim();
+    const password = wrap.querySelector('#authPassword').value;
+    try{
+      if(mode==='login'){
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if(error) throw error;
+      } else {
+        const fullName = wrap.querySelector('#fullName').value.trim();
+        const consent = wrap.querySelector('#consentBox').checked;
+        if(!fullName) throw new Error(locale==='el' ? 'Βάλε το ονοματεπώνυμό σου.' : 'Enter your full name.');
+        if(!consent) throw new Error(locale==='el' ? 'Χρειάζεται συναίνεση.' : 'Consent is required.');
+
+        if(role==='client'){
+          const code = wrap.querySelector('#inviteCode').value.trim().toUpperCase();
+          const { data: codeRow, error: codeErr } = await supabase.from('invite_codes').select('*').eq('code', code).eq('used', false).single();
+          if(codeErr || !codeRow) throw new Error(locale==='el' ? 'Μη έγκυρος κωδικός πρόσκλησης.' : 'Invalid invite code.');
+          const { data, error } = await supabase.auth.signUp({ email, password });
+          if(error) throw error;
+          const userId = data.user.id;
+          await supabase.from('profiles').insert({ id:userId, role:'client', full_name:fullName, locale });
+          await supabase.from('clients').insert({ id:userId, coach_id:codeRow.coach_id, full_name:fullName });
+          await supabase.from('invite_codes').update({ used:true, used_by:userId }).eq('code', code);
+          await supabase.from('consents').insert({ profile_id:userId, granted:true });
+        } else {
+          const { data, error } = await supabase.auth.signUp({ email, password });
+          if(error) throw error;
+          const userId = data.user.id;
+          await supabase.from('profiles').insert({ id:userId, role:'coach', full_name:fullName, locale });
+          await supabase.from('consents').insert({ profile_id:userId, granted:true });
+        }
+      }
+      await boot();
+    }catch(err){
+      errBox.innerHTML = `<p class="errorTag">${escapeHtml(err.message || String(err))}</p>`;
+    }
+  });
+  syncFields();
+}
+
+// ============================================================
+// SHELL (sidebar + main)
+// ============================================================
+function renderShell(){
+  const isCoach = profile.role === 'coach';
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  const shell = el(`<div id="shell">
+    <div id="sidebar">
+      <div><h1>${t('appName',locale)}</h1><p class="tagline">${t('tagline',locale)}</p></div>
+      <div class="langToggle" id="langToggle">
+        <button data-l="el" class="${locale==='el'?'active':''}">ΕΛ</button>
+        <button data-l="en" class="${locale==='en'?'active':''}">EN</button>
+      </div>
+      <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
+      <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
+        <button class="navBtn" id="exportBtn">${t('exportData',locale)}</button>
+        <button class="navBtn" id="logoutBtn">${t('logout',locale)}</button>
+      </div>
+    </div>
+    <div id="main"></div>
+  </div>`);
+  app.appendChild(shell);
+  shell.querySelectorAll('#langToggle button').forEach(b=>b.addEventListener('click', ()=>{ locale=b.dataset.l; renderShell(); }));
+  shell.querySelectorAll('.navBtn[data-v]').forEach(b=>b.addEventListener('click', ()=>{ view=b.dataset.v; selectedClient=null; renderShell(); }));
+  shell.querySelector('#logoutBtn').addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
+  shell.querySelector('#exportBtn').addEventListener('click', exportMyData);
+
+  const main = shell.querySelector('#main');
+  if(view==='library') renderLibrary(main, isCoach);
+  else if(isCoach) renderCoachDashboard(main);
+  else renderClientDashboard(main);
+}
+
+async function exportMyData(){
+  const payload = { exportedAt:new Date().toISOString(), profile };
+  if(profile.role==='client'){
+    const [ck, rd, pr, lg] = await Promise.all([
+      supabase.from('checkins').select('*').eq('client_id', profile.id),
+      supabase.from('readiness_logs').select('*').eq('client_id', profile.id),
+      supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id),
+      supabase.from('session_logs').select('*').eq('client_id', profile.id),
+    ]);
+    payload.checkins = ck.data; payload.readiness = rd.data; payload.programs = pr.data; payload.session_logs = lg.data;
+  }
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = el(`<a href="${url}" download="happy-fit-physio-data.json"></a>`);
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast(locale==='el' ? 'Λήψη έγινε' : 'Downloaded');
+}
+
+// ============================================================
+// EXERCISE LIBRARY (shared by coach + client, read-only for client)
+// ============================================================
+let evidenceAutoCache = {};
+async function fetchEuropePMC(query){
+  const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}&format=json&pageSize=5&sort=P_PDATE_D%20desc`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('fetch failed');
+  const data = await res.json();
+  return (data.resultList?.result || []).map(r=>({
+    title: r.title, authors: r.authorString, journal: r.journalTitle, year: r.pubYear,
+    doi: r.doi || null, pmid: r.pmid || null,
+    url: r.doi ? `https://doi.org/${r.doi}` : (r.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/` : null),
+  }));
+}
+
+async function renderLibrary(main, isCoach){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const { data: exercises, error } = await supabase.from('exercises').select('*, evidence(*)').order('category');
+  if(error){ main.innerHTML = `<p class="errorTag">${escapeHtml(error.message)}</p>`; return; }
+
+  main.innerHTML = '';
+  const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>${t('exerciseLibrary',locale)}</h2>
+    ${isCoach ? `<button class="btn" id="newExBtn">${t('newExercise',locale)}</button>` : ''}
+  </div>`);
+  main.appendChild(header);
+
+  if(isCoach){
+    header.querySelector('#newExBtn').addEventListener('click', ()=>renderNewExerciseForm(main, ()=>renderLibrary(main, isCoach)));
+  }
+
+  exercises.forEach(ex=>{
+    const name = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
+    const desc = locale==='el' ? ex.description_el : (ex.description_en || ex.description_el);
+    const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
+    const card = el(`<div class="card">
+      <div class="clickable" style="display:flex; justify-content:space-between;">
+        <div><strong>${escapeHtml(name)}</strong> <span class="badge">${escapeHtml(ex.category||'')}</span></div>
+        <span class="caret">▸</span>
+      </div>
+      <div class="detail" style="display:none; margin-top:12px;">
+        <p>${escapeHtml(desc||'')}</p>
+        <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
+        <h4 style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">${t('bibliography',locale)}</h4>
+        ${(ex.evidence||[]).length===0 ? '<p style="font-size:12.5px;color:var(--ink-soft);" class="noEvidenceMsg">—</p>' : ''}
+        ${(ex.evidence||[]).map(ev=>`<div class="evidenceItem">${escapeHtml(ev.citation)} ${ev.url?`<a href="${escapeHtml(ev.url)}" target="_blank" rel="noreferrer">↗</a>`:''}</div>`).join('')}
+        ${isCoach ? `<div class="autoEvidenceBox" style="margin-top:8px; font-size:12px; color:var(--ink-soft);"></div>
+        <div class="addEvidence" style="margin-top:10px;">
+          <div style="display:flex; gap:8px;">
+            <input class="evCitation" placeholder="${locale==='el'?'Νέα αναφορά/citation':'New citation'}" style="flex:1;padding:8px;border-radius:4px;border:1px solid var(--line);">
+            <input class="evUrl" placeholder="URL (προαιρετικό)" style="flex:1;padding:8px;border-radius:4px;border:1px solid var(--line);">
+            <button class="btn secondary addEvBtn" type="button">+ ${t('save',locale)}</button>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>`);
+    card.querySelector('.clickable').addEventListener('click', async ()=>{
+      const d = card.querySelector('.detail'); const c = card.querySelector('.caret');
+      const wasOpen = d.style.display !== 'none';
+      d.style.display = wasOpen ? 'none' : 'block'; c.textContent = wasOpen ? '▸' : '▾';
+      if(!wasOpen && isCoach){
+        const box = card.querySelector('.autoEvidenceBox');
+        if(evidenceAutoCache[ex.id]){
+          renderAutoEvidenceBox(box, ex, evidenceAutoCache[ex.id]);
+        } else if(box){
+          box.textContent = locale==='el' ? '🔍 Έλεγχος για νέα βιβλιογραφία…' : '🔍 Checking for new literature…';
+          try{
+            const results = await fetchEuropePMC(ex.name_en || ex.name_el);
+            const known = (ex.evidence||[]).map(ev=>(ev.citation||'').toLowerCase());
+            const fresh = results.filter(r=> r.title && !known.some(k=>k.includes((r.title||'').toLowerCase().slice(0,25))));
+            evidenceAutoCache[ex.id] = fresh;
+            renderAutoEvidenceBox(box, ex, fresh);
+          }catch(err){
+            box.innerHTML = `<a href="https://europepmc.org/search?query=${encodeURIComponent(ex.name_en||ex.name_el)}" target="_blank" rel="noreferrer">${locale==='el'?'Αναζήτηση χειροκίνητα στο Europe PMC ↗':'Search manually on Europe PMC ↗'}</a>`;
+          }
+        }
+      }
+    });
+    if(isCoach){
+      const addBtn = card.querySelector('.addEvBtn');
+      if(addBtn) addBtn.addEventListener('click', async ()=>{
+        const citation = card.querySelector('.evCitation').value.trim();
+        const url = card.querySelector('.evUrl').value.trim();
+        if(!citation) return;
+        await supabase.from('evidence').insert({ exercise_id: ex.id, citation, url: url||null, added_by: profile.id });
+        delete evidenceAutoCache[ex.id];
+        renderLibrary(main, isCoach);
+      });
+    }
+    main.appendChild(card);
+  });
+}
+
+function renderAutoEvidenceBox(box, ex, fresh){
+  if(!box) return;
+  if(!fresh.length){
+    box.innerHTML = `<span>✓ ${locale==='el'?'Δεν βρέθηκε νεότερη βιβλιογραφία πέρα από αυτή που έχεις ήδη.':'No newer literature found beyond what you already have.'}</span>`;
+    return;
+  }
+  box.innerHTML = `<div style="font-weight:600; margin-bottom:6px;">🔍 ${fresh.length} ${locale==='el'?'πιθανές νέες μελέτες:':'possible new studies:'}</div>`;
+  fresh.forEach(r=>{
+    const row = el(`<div class="evidenceItem">
+      <div>${escapeHtml(r.authors||'')} — <em>${escapeHtml(r.title||'')}</em> (${escapeHtml(r.journal||'')}, ${r.year||''})</div>
+      <button class="btn secondary addAutoEvBtn" style="margin-top:4px; padding:4px 10px; font-size:11.5px;" type="button">+ ${t('save',locale)}</button>
+    </div>`);
+    row.querySelector('.addAutoEvBtn').addEventListener('click', async ()=>{
+      await supabase.from('evidence').insert({
+        exercise_id: ex.id,
+        citation: `${r.authors||''} ${r.title}. ${r.journal||''} ${r.year||''}.`.trim(),
+        url: r.url, added_by: profile.id,
+      });
+      delete evidenceAutoCache[ex.id];
+      toast(locale==='el' ? 'Προστέθηκε' : 'Added');
+      row.remove();
+    });
+    box.appendChild(row);
+  });
+}
+
+
+function renderNewExerciseForm(main, onDone){
+  const form = el(`<form class="card gold">
+    <div class="grid2">
+      <div class="field"><label>Όνομα (EL)</label><input class="f_name_el" required></div>
+      <div class="field"><label>Name (EN, προαιρετικό)</label><input class="f_name_en"></div>
+    </div>
+    <div class="field"><label>${locale==='el'?'Κατηγορία':'Category'}</label><input class="f_cat" required></div>
+    <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="f_desc"></textarea></div>
+    <div class="field"><label>${t('why',locale)}</label><textarea class="f_why"></textarea></div>
+    <button class="btn" type="submit">${t('save',locale)}</button>
+  </form>`);
+  main.insertBefore(form, main.children[1] || null);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    await supabase.from('exercises').insert({
+      name_el: form.querySelector('.f_name_el').value.trim(),
+      name_en: form.querySelector('.f_name_en').value.trim() || null,
+      category: form.querySelector('.f_cat').value.trim(),
+      description_el: form.querySelector('.f_desc').value.trim(),
+      why_rationale_el: form.querySelector('.f_why').value.trim(),
+      created_by: profile.id,
+    });
+    onDone();
+  });
+}
+
+// ============================================================
+// COACH DASHBOARD
+// ============================================================
+async function renderCoachDashboard(main){
+  if(selectedClient){ return renderClientDetail(main); }
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: clients }, { data: invites }] = await Promise.all([
+    supabase.from('clients').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false}),
+    supabase.from('invite_codes').select('*').eq('coach_id', profile.id).eq('used', false).order('created_at',{ascending:false}),
+  ]);
+
+  const clientIds = (clients||[]).map(c=>c.id);
+  let latestCheckinByClient = {}, programByClient = {};
+  if(clientIds.length){
+    const [{ data: allCheckins }, { data: allPrograms }] = await Promise.all([
+      supabase.from('checkins').select('client_id,date,adherence,pain_level').in('client_id', clientIds).order('date',{ascending:false}),
+      supabase.from('programs').select('client_id,title').in('client_id', clientIds).eq('active', true),
+    ]);
+    (allCheckins||[]).forEach(c=>{ if(!latestCheckinByClient[c.client_id]) latestCheckinByClient[c.client_id] = c; });
+    (allPrograms||[]).forEach(p=>{ if(!programByClient[p.client_id]) programByClient[p.client_id] = p; });
+  }
+
+  main.innerHTML = '';
+  main.appendChild(el(`<h2 style="margin-bottom:14px;">${t('clients',locale)}</h2>`));
+
+  if(clients?.length){
+    const adherenceVals = Object.values(latestCheckinByClient).map(c=>c.adherence).filter(v=>v!=null);
+    const avgAdherence = adherenceVals.length ? Math.round(adherenceVals.reduce((a,b)=>a+b,0)/adherenceVals.length) : null;
+    const painCount = Object.values(latestCheckinByClient).filter(c=>c.pain_level>3).length;
+    const noProgramCount = clients.filter(c=>!programByClient[c.id]).length;
+    renderStatCards(main, [
+      { value: clients.length, label: locale==='el'?'Σύνολο ασκούμενων':'Total clients' },
+      { value: avgAdherence!=null ? avgAdherence+'%' : '—', label: locale==='el'?'Μέσο adherence':'Avg adherence' },
+      { value: painCount, label: locale==='el'?'Με πόνο >3/10':'Reporting pain >3/10' },
+      { value: noProgramCount, label: locale==='el'?'Χωρίς πρόγραμμα':'Without a program' },
+    ]);
+  }
+
+  const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
+    <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Όνομα νέου ασκούμενου':'New client name'}</label><input class="newClientName" required></div>
+    <button class="btn" type="submit">${t('newClient',locale)}</button>
+  </form>`);
+  main.appendChild(form);
+  const codeMsg = el(`<p class="savedTag" style="display:none;"></p>`);
+  main.appendChild(codeMsg);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name = form.querySelector('.newClientName').value.trim();
+    if(!name) return;
+    const code = uidCode();
+    await supabase.from('invite_codes').insert({ code, coach_id: profile.id, client_name: name });
+    try{ await navigator.clipboard.writeText(code); }catch(err){}
+    codeMsg.style.display = '';
+    codeMsg.innerHTML = `${locale==='el'?'Κωδικός πρόσκλησης (αντιγράφηκε ήδη)':'Invite code (already copied)'}: <span class="mono badge">${code}</span>`;
+    form.querySelector('.newClientName').value = '';
+    renderCoachDashboard(main);
+  });
+
+  if(invites?.length){
+    const box = el(`<div class="card"><h3 style="font-size:13px; margin-bottom:8px;">${locale==='el'?'Εκκρεμείς προσκλήσεις':'Pending invites'}</h3></div>`);
+    invites.forEach(i=>{
+      const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; font-size:12.8px; margin-bottom:6px;">
+        <span>${escapeHtml(i.client_name)} — <span class="mono badge">${i.code}</span></span>
+        <span style="display:flex; gap:6px;">
+          <button class="btn secondary copyInviteBtn" type="button" style="padding:4px 10px; font-size:11.5px;">${locale==='el'?'Αντιγραφή':'Copy'}</button>
+          <button class="btn danger cancelInviteBtn" type="button" style="padding:4px 10px; font-size:11.5px;">${locale==='el'?'Ακύρωση':'Cancel'}</button>
+        </span>
+      </div>`);
+      row.querySelector('.copyInviteBtn').addEventListener('click', async ()=>{
+        try{ await navigator.clipboard.writeText(i.code); toast(locale==='el'?'Αντιγράφηκε':'Copied'); }catch(err){}
+      });
+      row.querySelector('.cancelInviteBtn').addEventListener('click', async ()=>{
+        await supabase.from('invite_codes').delete().eq('code', i.code);
+        renderCoachDashboard(main);
+      });
+      box.appendChild(row);
+    });
+    main.appendChild(box);
+  }
+
+  if(!clients?.length){ main.appendChild(el(`<p>${t('noClients',locale)}</p>`)); return; }
+  clients.forEach(c=>{
+    const lastCk = latestCheckinByClient[c.id];
+    const prog = programByClient[c.id];
+    const painFlag = lastCk && lastCk.pain_level > 3;
+    const card = el(`<div class="card clientCard">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div class="clickable clientCardMain" style="flex:1; min-width:160px;">
+          <strong>${escapeHtml(c.full_name)}</strong>
+          <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+            ${prog ? `<span class="badge">${escapeHtml(prog.title)}</span>` : `<span class="badge" style="color:var(--danger);">${locale==='el'?'Χωρίς πρόγραμμα':'No program'}</span>`}
+            ${lastCk ? `<span class="badge">${locale==='el'?'Adherence':'Adherence'} ${lastCk.adherence}%</span>` : ''}
+            ${lastCk ? `<span class="badge mono">${lastCk.date}</span>` : ''}
+            ${painFlag ? `<span class="badge" style="background:#f6e0da; color:var(--danger);">⚠ ${locale==='el'?'Πόνος':'Pain'} ${lastCk.pain_level}/10</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn secondary jumpBtn" data-jump="live" style="padding:6px 12px; font-size:12px;">${t('liveSession',locale)}</button>
+          <button class="btn secondary jumpBtn" data-jump="program" style="padding:6px 12px; font-size:12px;">${t('program',locale)}</button>
+        </div>
+      </div>
+    </div>`);
+    card.querySelector('.clientCardMain').addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
+    card.querySelectorAll('.jumpBtn').forEach(b=>b.addEventListener('click', ()=>{
+      selectedClient = c; renderClientDetail._tab = b.dataset.jump; renderShell();
+    }));
+    main.appendChild(card);
+  });
+}
+
+async function renderClientDetail(main){
+  const client = selectedClient;
+  let tab = renderClientDetail._tab || 'program';
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: programs }, { data: exercises }, { data: checkins }, { data: readiness }, { data: intakeRow }] = await Promise.all([
+    supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', client.id).eq('active', true).order('created_at',{ascending:false}),
+    supabase.from('exercises').select('*').order('category'),
+    supabase.from('checkins').select('*').eq('client_id', client.id).order('date',{ascending:false}),
+    supabase.from('readiness_logs').select('*').eq('client_id', client.id).order('date',{ascending:false}),
+    supabase.from('client_intake').select('*').eq('client_id', client.id).maybeSingle(),
+  ]);
+  const program = programs?.[0] || null;
+
+  main.innerHTML = '';
+  const back = el(`<button class="btn secondary">← ${locale==='el'?'Πίσω':'Back'}</button>`);
+  back.addEventListener('click', ()=>{ selectedClient=null; renderShell(); });
+  main.appendChild(back);
+  main.appendChild(el(`<h2 style="margin-top:14px;">${escapeHtml(client.full_name)}</h2>`));
+
+  const tabs = el(`<div style="display:flex; gap:8px; margin:16px 0; flex-wrap:wrap;">
+    <button class="btn ${tab==='intake'?'':'secondary'}" data-t="intake">${t('intake',locale)}</button>
+    <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
+    <button class="btn ${tab==='live'?'':'secondary'}" data-t="live">${t('liveSession',locale)}</button>
+    <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
+    <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
+  </div>`);
+  tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDetail._tab = b.dataset.t; renderClientDetail(main); }));
+  main.appendChild(tabs);
+
+  const body = el('<div></div>');
+  main.appendChild(body);
+
+  if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null);
+  else if(tab==='program') renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main), intakeRow?.data || null);
+  else if(tab==='live'){
+    if(program) renderLiveSessionTab(body, client, program, true);
+    else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
+  }
+  else if(tab==='checkins'){
+    renderTrendChart(body, locale==='el'?'Adherence % & Ενέργεια ανά check-in':'Adherence % & Energy per check-in', checkins, 'date', [
+      {key:'adherence', label:'Adherence %'}, {key:'avg_energy', label:locale==='el'?'Ενέργεια':'Energy'},
+    ]);
+    renderHistTable(body, checkins, ['date','sessions_completed','avg_sleep','avg_energy','pain_level','adherence']);
+  }
+  else if(tab==='readiness'){
+    renderTrendChart(body, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
+      {key:'sleep', label:locale==='el'?'Ύπνος':'Sleep'}, {key:'energy', label:locale==='el'?'Ενέργεια':'Energy'},
+      {key:'stress', label:locale==='el'?'Στρες':'Stress'}, {key:'pain', label:locale==='el'?'Πόνος':'Pain'},
+    ]);
+    renderHistTable(body, readiness, ['date','sleep','energy','stress','pain','perceived_capacity']);
+  }
+}
+
+const INTAKE_FIELDS = [
+  ['mainGoal','select',['Μυϊκή ανάπτυξη','Απώλεια λίπους','Αύξηση δύναμης','Βελτίωση φυσικής κατάστασης','Βελτίωση κινητικότητας','Μείωση ενοχλήσεων','Επιστροφή μετά τραυματισμό','Αθλητική απόδοση','Άλλο']],
+  ['goalWhy','area'], ['goalDeadline','text'],
+  ['conditions','area'], ['medications','area'], ['medicalClearance','area'],
+  ['currentPain','area'], ['injuryHistory','area'], ['fearedMovement','area'],
+  ['yearsTraining','text'], ['currentProgram','area'], ['likedExercises','area'], ['dislikedExercises','area'],
+  ['trainingLocation','select',['Γυμναστήριο','Σπίτι','Εξωτερικός χώρος','Μικτό']],
+  ['equipmentAvailable','area'],
+  ['adherenceDifficulty','text'], ['barriers','area'],
+];
+
+function renderIntakeView(body, data){
+  if(!data){ body.appendChild(el(`<p>${t('noIntake',locale)}</p>`)); return; }
+  const wrap = el('<div class="card"></div>');
+  INTAKE_FIELDS.forEach(([key])=>{
+    const val = data[key];
+    if(!val) return;
+    wrap.appendChild(el(`<div style="margin-bottom:10px;"><div style="font-size:12px; color:var(--ink-soft);">${t(key,locale)}</div><div>${escapeHtml(val)}</div></div>`));
+  });
+  if(!wrap.children.length) wrap.appendChild(el(`<p>${t('noIntake',locale)}</p>`));
+  body.appendChild(wrap);
+}
+
+function renderIntakeForm(body, client, existingData){
+  const state = { ...(existingData||{}) };
+  let timer = null;
+  const card = el(`<div class="card gold"><div class="fieldsWrap"></div><span class="savedTag statusSpan"></span></div>`);
+  const fieldsWrap = card.querySelector('.fieldsWrap');
+  const statusEl = card.querySelector('.statusSpan');
+
+  INTAKE_FIELDS.forEach(([key, type, opts])=>{
+    let input;
+    if(type==='select'){
+      input = el(`<select><option value="">—</option>${opts.map(o=>`<option value="${escapeHtml(o)}" ${state[key]===o?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`);
+    } else if(type==='area'){
+      input = el(`<textarea>${escapeHtml(state[key]||'')}</textarea>`);
+    } else {
+      input = el(`<input value="${escapeHtml(state[key]||'')}">`);
+    }
+    input.addEventListener(type==='select'?'change':'input', ()=>{
+      state[key] = input.value;
+      statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+      clearTimeout(timer);
+      timer = setTimeout(async ()=>{
+        await supabase.from('client_intake').upsert({ client_id: client.id, data: state, updated_at: new Date().toISOString() }, { onConflict:'client_id' });
+        statusEl.textContent = t('intakeSaved',locale);
+      }, 700);
+    });
+    const fieldDiv = el(`<div class="field"><label>${t(key,locale)}</label></div>`);
+    fieldDiv.appendChild(input);
+    fieldsWrap.appendChild(fieldDiv);
+  });
+  body.appendChild(card);
+}
+
+
+
+function renderHistTable(body, rows, cols){
+  if(!rows?.length){ body.appendChild(el(`<p>—</p>`)); return; }
+  const table = el(`<table class="hist"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map(r=>`<tr>${cols.map(c=>`<td class="mono">${r[c]??''}</td>`).join('')}</tr>`).join('')}
+  </tbody></table>`);
+  body.appendChild(el('<div class="card"></div>')).appendChild(table);
+}
+
+let _chartInstances = [];
+function destroyCharts(){ _chartInstances.forEach(c=>c.destroy()); _chartInstances = []; }
+
+function renderTrendChart(container, title, rows, dateKey, series){
+  // rows: array of objects sorted desc by date — we reverse for chronological display
+  if(!rows?.length){ return; }
+  const sorted = [...rows].sort((a,b)=> (a[dateKey]||'').localeCompare(b[dateKey]||''));
+  const wrap = el(`<div class="chartWrap"><div class="chartTitle">${escapeHtml(title)}</div><canvas></canvas></div>`);
+  container.appendChild(wrap);
+  const ctx = wrap.querySelector('canvas');
+  const palette = ['#c4201f','#241413','#e2a233','#6b5450'];
+  const chart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: sorted.map(r=>r[dateKey]),
+      datasets: series.map((s,i)=>({
+        label: s.label,
+        data: sorted.map(r=>r[s.key]),
+        borderColor: palette[i%palette.length],
+        backgroundColor: palette[i%palette.length],
+        tension:0.25,
+        spanGaps:true,
+      })),
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ beginAtZero:true, ticks:{font:{family:'IBM Plex Mono', size:10}} }, x:{ ticks:{font:{family:'IBM Plex Mono', size:9}} } },
+      plugins:{ legend:{ labels:{ font:{family:'Public Sans', size:10.5}, boxWidth:12 } } },
+    }
+  });
+  _chartInstances.push(chart);
+}
+
+function renderStatCards(container, stats){
+  const grid = el('<div class="statGrid"></div>');
+  stats.forEach(s=>{
+    grid.appendChild(el(`<div class="statCard"><div class="num">${s.value}</div><div class="lbl">${escapeHtml(s.label)}</div></div>`));
+  });
+  container.appendChild(grid);
+}
+
+const GOAL_CATEGORY_MAP = {
+  'Μυϊκή ανάπτυξη': ['Δύναμη'],
+  'Απώλεια λίπους': ['Δύναμη','Λειτουργική'],
+  'Αύξηση δύναμης': ['Δύναμη'],
+  'Βελτίωση φυσικής κατάστασης': ['Λειτουργική'],
+  'Βελτίωση κινητικότητας': ['Κινητικότητα','Κορμός'],
+  'Μείωση ενοχλήσεων': ['Πρόληψη τραυματισμού','Κορμός'],
+  'Επιστροφή μετά τραυματισμό': ['Πρόληψη τραυματισμού'],
+  'Αθλητική απόδοση': ['Λειτουργική','Δύναμη'],
+};
+const RISK_KEYWORDS = [
+  { match:['γόνατ','knee'], nameHints:['squat','step-up','καθίσματα','step-up'] },
+  { match:['ώμ','shoulder'], nameHints:['overhead press','pull-up','bench press','ώθηση ώμων'] },
+  { match:['μέση','οσφ','low back','lower back'], nameHints:['deadlift','άρση θανάτου','overhead press'] },
+  { match:['βουβων','προσαγωγ','groin','adductor'], nameHints:['copenhagen','step-up'] },
+  { match:['μηριαί','hamstring'], nameHints:['romanian','nordic','deadlift','άρση θανάτου'] },
+  { match:['καρπ','wrist'], nameHints:['bench press','plank','bird dog','πλανκ'] },
+];
+
+function computeRecommendations(intakeData, exercises){
+  const recommended = new Set();
+  const risky = new Map();
+  if(!intakeData) return { recommended, risky };
+
+  const goalCats = GOAL_CATEGORY_MAP[intakeData.mainGoal] || [];
+  const riskText = [intakeData.currentPain, intakeData.injuryHistory, intakeData.fearedMovement]
+    .filter(Boolean).join(' ').toLowerCase();
+
+  exercises.forEach(ex=>{
+    const cat = ex.category || '';
+    if(goalCats.some(gc=>cat.includes(gc))) recommended.add(ex.id);
+
+    const nameLower = (ex.name_el+' '+(ex.name_en||'')).toLowerCase();
+    RISK_KEYWORDS.forEach(rk=>{
+      if(rk.match.some(m=>riskText.includes(m)) && rk.nameHints.some(h=>nameLower.includes(h))){
+        risky.set(ex.id, true);
+      }
+    });
+  });
+  return { recommended, risky };
+}
+
+function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
+  if(!program){
+    const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
+      <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Τίτλος προγράμματος':'Program title'}</label><input class="progTitle" required></div>
+      <button class="btn" type="submit">${t('save',locale)}</button>
+    </form>`);
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const title = form.querySelector('.progTitle').value.trim();
+      if(!title) return;
+      await supabase.from('programs').insert({ client_id: client.id, coach_id: profile.id, title });
+      onChanged();
+    });
+    body.appendChild(form);
+    return;
+  }
+
+  const { recommended, risky } = computeRecommendations(intakeData, exercises);
+  const sortedExercises = [...exercises].sort((a,b)=>{
+    const score = ex => (risky.get(ex.id) ? 2 : (recommended.has(ex.id) ? 0 : 1));
+    return score(a) - score(b);
+  });
+
+  body.appendChild(el(`<h3 style="margin-bottom:10px;">${escapeHtml(program.title)}</h3>`));
+  if(intakeData){
+    body.appendChild(el(`<p style="font-size:11.5px; color:var(--ink-soft); margin:-4px 0 10px;">
+      ⭐ ${locale==='el'?'= ταιριάζει με τον στόχο του' : '= matches their goal'} ·
+      ⚠ ${locale==='el'?'= πιθανή σύγκρουση με ιστορικό — πρόσεξε, όχι απαγόρευση' : '= possible conflict with history — caution, not a ban'}
+    </p>`));
+  }
+  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+    <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
+      <select class="exSelect" required><option value="">—</option>${sortedExercises.map(ex=>{
+        const label = escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el));
+        const prefix = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
+        return `<option value="${ex.id}">${prefix}${label}</option>`;
+      }).join('')}</select>
+    </div>
+    <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="exSets" type="number" value="3"></div>
+    <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="exReps" value="8-10"></div>
+    <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="exLoad"></div>
+    <button class="btn" type="submit">+ ${locale==='el'?'Προσθήκη':'Add'}</button>
+  </form>`);
+  addForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const exercise_id = addForm.querySelector('.exSelect').value;
+    if(!exercise_id) return;
+    await supabase.from('program_exercises').insert({
+      program_id: program.id, exercise_id,
+      target_sets: Number(addForm.querySelector('.exSets').value)||3,
+      target_reps: addForm.querySelector('.exReps').value,
+      target_load: addForm.querySelector('.exLoad').value,
+      sort_order: (program.program_exercises||[]).length,
+    });
+    onChanged();
+  });
+  body.appendChild(addForm);
+
+  (program.program_exercises||[]).forEach(pe=>{
+    body.appendChild(el(`<div class="card">
+      <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>
+      <div class="mono" style="font-size:12.5px; color:var(--ink-soft);">${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+    </div>`));
+  });
+}
+
+function renderLiveSessionTab(body, client, program, loggedByCoach){
+  const today = new Date().toISOString().slice(0,10);
+  body.appendChild(el(`<p class="badge">${today}</p>`));
+  (program.program_exercises||[]).forEach(pe=>{
+    const card = el(`<div class="card">
+      <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>
+      <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Στόχος':'Target'}: ${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+    </div>`);
+    const setsCount = pe.target_sets || 3;
+    for(let s=1; s<=setsCount; s++){
+      const row = el(`<div class="setRow">
+        <span class="mono" style="width:24px;">#${s}</span>
+        <input class="f_reps" placeholder="${t('reps',locale)}">
+        <input class="f_load" placeholder="${t('load',locale)}">
+        <input class="f_rpe" placeholder="${t('rpe',locale)}">
+        <input class="f_pain" placeholder="${t('pain',locale)}">
+        <button class="btn secondary" type="button" style="padding:6px 12px; font-size:12px;">${t('logSet',locale)}</button>
+      </div>`);
+      row.querySelector('button').addEventListener('click', async ()=>{
+        await supabase.from('session_logs').insert({
+          program_exercise_id: pe.id, client_id: client.id, logged_by: profile.id, session_date: today, set_number: s,
+          reps: Number(row.querySelector('.f_reps').value)||null,
+          load_kg: Number(row.querySelector('.f_load').value)||null,
+          rpe: Number(row.querySelector('.f_rpe').value)||null,
+          pain: Number(row.querySelector('.f_pain').value)||0,
+        });
+        row.querySelector('button').textContent = '✓';
+      });
+      card.appendChild(row);
+    }
+    body.appendChild(card);
+  });
+}
+
+// ============================================================
+// CLIENT DASHBOARD
+// ============================================================
+async function renderClientDashboard(main){
+  let tab = renderClientDashboard._tab || 'program';
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: programs }, { data: checkins }, { data: readiness }] = await Promise.all([
+    supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
+    supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
+    supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
+  ]);
+  const program = programs?.[0] || null;
+
+  main.innerHTML = '';
+  const tabs = el(`<div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+    <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
+    <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
+    <button class="btn ${tab==='checkin'?'':'secondary'}" data-t="checkin">${t('checkins',locale)}</button>
+    <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">${t('progress',locale)}</button>
+  </div>`);
+  tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.t; renderClientDashboard(main); }));
+  main.appendChild(tabs);
+
+  const body = el('<div></div>');
+  main.appendChild(body);
+
+  if(tab==='program'){
+    if(program) renderLiveSessionTab(body, profile, program, false);
+    else body.appendChild(el(`<p>${locale==='el'?'Δεν έχεις ακόμα πρόγραμμα.':'No program yet.'}</p>`));
+  } else if(tab==='readiness'){
+    renderReadinessForm(body, readiness);
+  } else if(tab==='checkin'){
+    renderCheckinForm(body, checkins);
+  } else if(tab==='progress'){
+    body.appendChild(el(`<h3 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">Weekly check-in</h3>`));
+    renderTrendChart(body, locale==='el'?'Adherence % & Ενέργεια':'Adherence % & Energy', checkins, 'date', [
+      {key:'adherence', label:'Adherence %'}, {key:'avg_energy', label:locale==='el'?'Ενέργεια':'Energy'},
+    ]);
+    renderHistTable(body, checkins, ['date','sessions_completed','avg_sleep','avg_energy','pain_level','adherence']);
+    body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">Daily readiness</h3>`));
+    renderTrendChart(body, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
+      {key:'sleep', label:locale==='el'?'Ύπνος':'Sleep'}, {key:'energy', label:locale==='el'?'Ενέργεια':'Energy'},
+      {key:'stress', label:locale==='el'?'Στρες':'Stress'}, {key:'pain', label:locale==='el'?'Πόνος':'Pain'},
+    ]);
+    renderHistTable(body, readiness, ['date','sleep','energy','stress','pain','perceived_capacity']);
+  }
+}
+
+function renderReadinessForm(body, existing){
+  const today = new Date().toISOString().slice(0,10);
+  const todays = existing.find(r=>r.date===today) || { sleep:6, energy:6, stress:5, soreness:5, motivation:6, pain:0, perceived_capacity:6 };
+  const scales = [
+    ['sleep', {el:'Ύπνος', en:'Sleep'}], ['energy', {el:'Ενέργεια', en:'Energy'}], ['stress', {el:'Στρες', en:'Stress'}],
+    ['soreness', {el:'Πιάσιμο', en:'Soreness'}], ['motivation', {el:'Motivation', en:'Motivation'}], ['pain', {el:'Πόνος', en:'Pain'}],
+    ['perceived_capacity', {el:'Πόσο μπορείς να αποδώσεις σήμερα', en:'How capable do you feel today'}],
+  ];
+  const card = el(`<div class="card gold"><h3 style="margin-bottom:10px;">${locale==='el'?'Σήμερα':'Today'}</h3></div>`);
+  const state = { ...todays, date: today };
+  let timer = null;
+  const statusEl = el(`<span class="savedTag"></span>`);
+  scales.forEach(([k,l])=>{
+    const row = el(`<div class="field"><label>${l[locale]||l.el}: <span class="mono val">${state[k]}</span></label><input type="range" min="0" max="10" value="${state[k]}"></div>`);
+    row.querySelector('input').addEventListener('input', (e)=>{
+      state[k] = Number(e.target.value);
+      row.querySelector('.val').textContent = state[k];
+      statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+      clearTimeout(timer);
+      timer = setTimeout(async ()=>{
+        await supabase.from('readiness_logs').upsert({ ...state, client_id: profile.id }, { onConflict:'client_id,date' });
+        statusEl.textContent = t('saved',locale);
+      }, 600);
+    });
+    card.appendChild(row);
+  });
+  card.appendChild(statusEl);
+  body.appendChild(card);
+}
+
+function renderCheckinForm(body, existing){
+  const today = new Date().toISOString().slice(0,10);
+  let currentDate = today;
+  const scales = [
+    ['sessions_completed', {el:'Προπονήσεις', en:'Sessions'}, 0,14], ['avg_sleep', {el:'Ύπνος', en:'Sleep'}, 0,10],
+    ['avg_stress', {el:'Στρες', en:'Stress'}, 0,10], ['avg_energy', {el:'Ενέργεια', en:'Energy'}, 0,10],
+    ['avg_soreness', {el:'Πιάσιμο', en:'Soreness'}, 0,10], ['avg_motivation', {el:'Motivation', en:'Motivation'}, 0,10],
+    ['pain_level', {el:'Πόνος', en:'Pain'}, 0,10], ['difficulty', {el:'Δυσκολία', en:'Difficulty'}, 0,10],
+    ['adherence', {el:'Adherence %', en:'Adherence %'}, 0,100],
+  ];
+  const textLabels = {
+    problem_exercise: {el:'Άσκηση που δημιούργησε πρόβλημα', en:'Exercise that caused a problem'},
+    adherence_challenges: {el:'Τι δυσκόλεψε', en:'What was challenging'},
+    what_worked: {el:'Τι λειτούργησε', en:'What worked'},
+    feedback_changes: {el:'Τι θα άλλαζες την επόμενη εβδομάδα', en:'What would you change next week'},
+    anything_else: {el:'Κάτι άλλο σημαντικό', en:'Anything else important'},
+  };
+  const texts = ['problem_exercise','adherence_challenges','what_worked','feedback_changes','anything_else'];
+
+  const wrap = el('<div></div>');
+  body.appendChild(wrap);
+
+  function draw(){
+    wrap.innerHTML = '';
+    const existingForDate = existing.find(c=>c.date===currentDate) || {};
+    const state = { sessions_completed:0, avg_sleep:6, avg_stress:5, avg_energy:6, avg_soreness:5, avg_motivation:6, pain_level:0, difficulty:5, adherence:80, problem_exercise:'', adherence_challenges:'', what_worked:'', feedback_changes:'', anything_else:'', ...existingForDate };
+    let timer = null;
+    const card = el(`<div class="card gold">
+      <div class="field"><label>${locale==='el'?'Ημερομηνία':'Date'}</label><input type="date" class="dateInput" value="${currentDate}"></div>
+      <div class="grid2 scalesGrid"></div>
+      <div class="textsGrid"></div>
+      <span class="savedTag statusSpan"></span>
+    </div>`);
+    const statusEl = card.querySelector('.statusSpan');
+    card.querySelector('.dateInput').addEventListener('change', (e)=>{ currentDate = e.target.value; draw(); });
+
+    const grid = card.querySelector('.scalesGrid');
+    scales.forEach(([k,l,min,max])=>{
+      const row = el(`<div class="field"><label>${l[locale]||l.el}: <span class="mono val">${state[k]}</span></label><input type="range" min="${min}" max="${max}" value="${state[k]}"></div>`);
+      row.querySelector('input').addEventListener('input', (e)=>{
+        state[k] = Number(e.target.value);
+        row.querySelector('.val').textContent = state[k];
+        scheduleSave();
+      });
+      grid.appendChild(row);
+    });
+    const textsGrid = card.querySelector('.textsGrid');
+    texts.forEach(k=>{
+      const lbl = textLabels[k]?.[locale] || textLabels[k]?.el || k.replace(/_/g,' ');
+      const row = el(`<div class="field"><label>${lbl}</label><textarea>${escapeHtml(state[k])}</textarea></div>`);
+      row.querySelector('textarea').addEventListener('input', (e)=>{ state[k]=e.target.value; scheduleSave(); });
+      textsGrid.appendChild(row);
+    });
+
+    function scheduleSave(){
+      statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+      clearTimeout(timer);
+      timer = setTimeout(async ()=>{
+        await supabase.from('checkins').upsert({ ...state, client_id: profile.id, date: currentDate }, { onConflict:'client_id,date' });
+        statusEl.textContent = t('saved',locale);
+      }, 700);
+    }
+
+    wrap.appendChild(card);
+  }
+  draw();
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+async function boot(){
+  const { data } = await supabase.auth.getSession();
+  session = data.session;
+  if(!session){ profile = null; renderAuth(); return; }
+  const { data: p, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+  if(error || !p){ profile = null; renderAuth(); return; }
+  profile = p; locale = p.locale || 'el';
+  view = 'dashboard'; selectedClient = null;
+  renderShell();
+}
+
+supabase.auth.onAuthStateChange((_evt, s)=>{ session = s; });
+boot();
+</script>
+</body>
+</html>
