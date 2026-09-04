@@ -1243,7 +1243,13 @@ async function renderCoachDashboard(main){
       selectedClient = c; renderClientDetail._tab = b.dataset.jump; renderShell();
     }));
     card.querySelector('.delClientBtn').addEventListener('click', async ()=>{
-      if(!confirm(locale==='el' ? `Οριστική διαγραφή του/της ${c.full_name} και όλων των δεδομένων του (πρόγραμμα, check-ins, μηνύματα); Δεν αναιρείται.` : `Permanently delete ${c.full_name} and all their data (program, check-ins, messages)? This cannot be undone.`)) return;
+      const typed = prompt(locale==='el'
+        ? `Αυτή η ενέργεια ΔΕΝ αναιρείται και θα διαγράψει το πρόγραμμα, τα check-ins, τα μηνύματα και τις φωτογραφίες του/της ${c.full_name}.\n\nΓια επιβεβαίωση, γράψε ακριβώς το όνομα: ${c.full_name}`
+        : `This action CANNOT be undone and will delete ${c.full_name}'s program, check-ins, messages and photos.\n\nTo confirm, type their exact name: ${c.full_name}`);
+      if(typed !== c.full_name){
+        if(typed !== null) toast(locale==='el' ? 'Το όνομα δεν ταιριάζει — δεν έγινε διαγραφή.' : "Name didn't match — nothing was deleted.");
+        return;
+      }
       await supabase.from('clients').delete().eq('id', c.id);
       renderCoachDashboard(main);
     });
