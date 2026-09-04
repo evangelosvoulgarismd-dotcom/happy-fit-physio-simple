@@ -256,6 +256,10 @@ const STR = {
   noLeads:{el:'Δεν υπάρχουν ακόμα ενδιαφερόμενοι από τη landing page.', en:'No leads yet from the landing page.'},
   interest:{el:'Ενδιαφέρον', en:'Interest'},
   marketingConsent:{el:'Συναίνεση email', en:'Email consent'},
+  zoomLink:{el:'Zoom Link (προσωπικό δωμάτιο)', en:'Zoom Link (personal room)'},
+  nextCall:{el:'Επόμενη κλήση', en:'Next call'},
+  joinCall:{el:'Συμμετοχή στην κλήση', en:'Join call'},
+  noCallScheduled:{el:'Δεν έχει οριστεί ακόμα Zoom κλήση.', en:'No Zoom call scheduled yet.'},
 };
 function t(k, loc){ return STR[k]?.[loc] || STR[k]?.el || k; }
 
@@ -1423,6 +1427,8 @@ function renderBusinessTab(body, client, onChanged){
     </div>
     <div class="field"><label>${locale==='el'?'Προτάθηκε από':'Referred by'}</label><input class="f_ref" value="${escapeHtml(client.referred_by||'')}" placeholder="${locale==='el'?'π.χ. όνομα ασκούμενου':'e.g. client name'}"></div>
     <div class="field"><label>${t('paymentLink',locale)}</label><input class="f_paylink" value="${escapeHtml(client.payment_link||'')}" placeholder="https://buy.stripe.com/... ή https://viva.com/..."></div>
+    <div class="field"><label>${t('zoomLink',locale)}</label><input class="f_zoom" value="${escapeHtml(client.zoom_link||'')}" placeholder="https://zoom.us/j/..."></div>
+    <div class="field"><label>${t('nextCall',locale)}</label><input class="f_nextcall" type="datetime-local" value="${client.next_call_at ? new Date(client.next_call_at).toISOString().slice(0,16) : ''}"></div>
     <span class="savedTag statusSpan"></span>
   </div>`);
   const statusEl = card.querySelector('.statusSpan');
@@ -1436,6 +1442,8 @@ function renderBusinessTab(body, client, onChanged){
         status: card.querySelector('.f_status').value,
         referred_by: card.querySelector('.f_ref').value.trim() || null,
         payment_link: card.querySelector('.f_paylink').value.trim() || null,
+        zoom_link: card.querySelector('.f_zoom').value.trim() || null,
+        next_call_at: card.querySelector('.f_nextcall').value ? new Date(card.querySelector('.f_nextcall').value).toISOString() : null,
       }).eq('id', client.id);
       statusEl.textContent = t('saved',locale);
       client.monthly_price = card.querySelector('.f_price').value;
@@ -1445,6 +1453,8 @@ function renderBusinessTab(body, client, onChanged){
   card.querySelector('.f_price').addEventListener('input', scheduleSave);
   card.querySelector('.f_status').addEventListener('change', scheduleSave);
   card.querySelector('.f_paylink').addEventListener('input', scheduleSave);
+  card.querySelector('.f_zoom').addEventListener('input', scheduleSave);
+  card.querySelector('.f_nextcall').addEventListener('change', scheduleSave);
   card.querySelector('.f_ref').addEventListener('input', scheduleSave);
   body.appendChild(card);
 }
@@ -1754,7 +1764,7 @@ async function renderClientDashboard(main){
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
-    supabase.from('clients').select('payment_link,monthly_price').eq('id', profile.id).maybeSingle(),
+    supabase.from('clients').select('payment_link,monthly_price,zoom_link,next_call_at').eq('id', profile.id).maybeSingle(),
   ]);
   const program = programs?.[0] || null;
 
@@ -1764,6 +1774,7 @@ async function renderClientDashboard(main){
     <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">${t('progress',locale)}</button>
+    <button class="btn ${tab==='calls'?'':'secondary'}" data-t="calls">📹 Zoom</button>
     <button class="btn ${tab==='payment'?'':'secondary'}" data-t="payment">💳 ${t('payment',locale)}</button>
     <button class="btn ${tab==='refer'?'':'secondary'}" data-t="refer">${t('referFriend',locale)}</button>
   </div>`);
@@ -1778,6 +1789,18 @@ async function renderClientDashboard(main){
     else body.appendChild(el(`<p>${locale==='el'?'Δεν έχεις ακόμα πρόγραμμα.':'No program yet.'}</p>`));
   } else if(tab==='messages'){
     await renderMessagesTab(body, profile, 'client');
+  } else if(tab==='calls'){
+    const card = el('<div class="card gold"></div>');
+    if(clientRow?.zoom_link){
+      const nextCallStr = clientRow.next_call_at ? new Date(clientRow.next_call_at).toLocaleString(locale==='el'?'el-GR':'en-GB') : null;
+      card.innerHTML = `
+        ${nextCallStr ? `<p style="margin-bottom:14px;">${t('nextCall',locale)}: <strong class="mono">${nextCallStr}</strong></p>` : ''}
+        <a class="btn" href="${escapeHtml(clientRow.zoom_link)}" target="_blank" rel="noreferrer">📹 ${t('joinCall',locale)} ↗</a>
+      `;
+    } else {
+      card.innerHTML = `<p style="color:var(--ink-soft);">${t('noCallScheduled',locale)}</p>`;
+    }
+    body.appendChild(card);
   } else if(tab==='payment'){
     const card = el('<div class="card gold"></div>');
     if(clientRow?.payment_link){
