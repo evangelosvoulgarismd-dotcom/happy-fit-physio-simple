@@ -590,7 +590,7 @@ async function renderLeadsView(main){
   leads.forEach(l=>{
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-        <div>
+        <div class="leadView" style="flex:1; min-width:200px;">
           <strong>${escapeHtml(l.full_name)}</strong> ${l.converted ? `<span class="badge">${locale==='el'?'Έγινε ασκούμενος':'Became client'}</span>` : ''}
           <div style="font-size:12.5px; color:var(--ink-soft); margin-top:4px;">
             📧 ${escapeHtml(l.email)} ${l.phone ? `· 📞 ${escapeHtml(l.phone)}` : ''}
@@ -601,7 +601,22 @@ async function renderLeadsView(main){
             ${l.marketing_consent ? `<span class="badge">✓ ${t('marketingConsent',locale)}</span>` : ''}
           </div>
         </div>
-        ${!l.converted ? `<button class="btn secondary convertBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('convertToClient',locale)}</button>` : ''}
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          ${!l.converted ? `<button class="btn secondary convertBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('convertToClient',locale)}</button>` : ''}
+          <button class="btn secondary editLeadBtn" type="button" style="padding:6px 10px; font-size:12px;">✏️</button>
+          <button class="btn danger delLeadBtn" type="button" style="padding:6px 10px; font-size:12px;">🗑</button>
+        </div>
+      </div>
+      <div class="leadEditForm" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);">
+        <div class="grid2">
+          <div class="field"><label>${locale==='el'?'Ονοματεπώνυμο':'Full name'}</label><input class="lf_name" value="${escapeHtml(l.full_name)}"></div>
+          <div class="field"><label>Email</label><input class="lf_email" value="${escapeHtml(l.email)}"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>${locale==='el'?'Τηλέφωνο':'Phone'}</label><input class="lf_phone" value="${escapeHtml(l.phone||'')}"></div>
+          <div class="field"><label>${t('interest',locale)}</label><input class="lf_interest" value="${escapeHtml(l.interest||'')}"></div>
+        </div>
+        <button class="btn saveLeadBtn" type="button">${t('save',locale)}</button>
       </div>
     </div>`);
     const convertBtn = card.querySelector('.convertBtn');
@@ -611,6 +626,25 @@ async function renderLeadsView(main){
       await supabase.from('leads').update({ converted: true }).eq('id', l.id);
       try{ await navigator.clipboard.writeText(code); }catch(err){}
       toast(locale==='el' ? `Κωδικός πρόσκλησης αντιγράφηκε: ${code}` : `Invite code copied: ${code}`);
+      renderLeadsView(main);
+    });
+    card.querySelector('.editLeadBtn').addEventListener('click', ()=>{
+      const form = card.querySelector('.leadEditForm');
+      form.style.display = form.style.display==='none' ? 'block' : 'none';
+    });
+    card.querySelector('.saveLeadBtn').addEventListener('click', async ()=>{
+      await supabase.from('leads').update({
+        full_name: card.querySelector('.lf_name').value.trim(),
+        email: card.querySelector('.lf_email').value.trim(),
+        phone: card.querySelector('.lf_phone').value.trim() || null,
+        interest: card.querySelector('.lf_interest').value.trim() || null,
+      }).eq('id', l.id);
+      toast(t('saved',locale));
+      renderLeadsView(main);
+    });
+    card.querySelector('.delLeadBtn').addEventListener('click', async ()=>{
+      if(!confirm(locale==='el' ? `Διαγραφή του ενδιαφερόμενου "${l.full_name}";` : `Delete lead "${l.full_name}"?`)) return;
+      await supabase.from('leads').delete().eq('id', l.id);
       renderLeadsView(main);
     });
     main.appendChild(card);

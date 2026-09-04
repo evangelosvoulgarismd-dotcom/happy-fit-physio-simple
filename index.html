@@ -185,6 +185,37 @@
     </div>
   </section>
 
+  <!-- LEAD CAPTURE -->
+  <section class="lead-section">
+    <div class="lead-card" id="leadCard">
+      <h3>Ζήτησε δωρεάν πρώτη επικοινωνία</h3>
+      <p class="sub">Άφησε τα στοιχεία σου — θα επικοινωνήσουμε μαζί σου σύντομα.</p>
+      <form id="leadForm">
+        <div class="lead-field"><label>Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
+        <div class="lead-field"><label>Email</label><input type="email" id="leadEmail" required></div>
+        <div class="lead-field"><label>Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
+        <div class="lead-field">
+          <label>Ενδιαφέρον</label>
+          <select id="leadInterest">
+            <option value="">—</option>
+            <option>Μυϊκή ανάπτυξη / Δύναμη</option>
+            <option>Απώλεια λίπους</option>
+            <option>Return to Play / Αποκατάσταση</option>
+            <option>Πρόληψη τραυματισμού</option>
+            <option>Γενική φυσική κατάσταση</option>
+            <option>Άλλο</option>
+          </select>
+        </div>
+        <label class="lead-consent">
+          <input type="checkbox" id="leadConsent" required>
+          <span>Συναινώ να λαμβάνω ενημερωτικά email/μηνύματα σχετικά με το coaching. Μπορώ να διαγραφώ οποιαδήποτε στιγμή.</span>
+        </label>
+        <button class="lead-submit" type="submit">Στείλε τα στοιχεία μου</button>
+        <div class="lead-error" id="leadError" style="display:none;"></div>
+      </form>
+    </div>
+  </section>
+
   <!-- FEATURES -->
   <section class="section">
     <div class="section-label">Τι περιλαμβάνει</div>
@@ -217,37 +248,6 @@
     <div class="hero-cta">
       <button class="cta-btn secondary js-open-chat"><span>Ρώτησέ μας</span></button>
       <a class="cta-btn primary js-signup-link" href="app.html"><span>Ξεκίνα Coaching</span></a>
-    </div>
-  </section>
-
-  <!-- LEAD CAPTURE -->
-  <section class="lead-section">
-    <div class="lead-card" id="leadCard">
-      <h3>Ζήτησε δωρεάν πρώτη επικοινωνία</h3>
-      <p class="sub">Άφησε τα στοιχεία σου — θα επικοινωνήσουμε μαζί σου σύντομα.</p>
-      <form id="leadForm">
-        <div class="lead-field"><label>Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
-        <div class="lead-field"><label>Email</label><input type="email" id="leadEmail" required></div>
-        <div class="lead-field"><label>Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
-        <div class="lead-field">
-          <label>Ενδιαφέρον</label>
-          <select id="leadInterest">
-            <option value="">—</option>
-            <option>Μυϊκή ανάπτυξη / Δύναμη</option>
-            <option>Απώλεια λίπους</option>
-            <option>Return to Play / Αποκατάσταση</option>
-            <option>Πρόληψη τραυματισμού</option>
-            <option>Γενική φυσική κατάσταση</option>
-            <option>Άλλο</option>
-          </select>
-        </div>
-        <label class="lead-consent">
-          <input type="checkbox" id="leadConsent" required>
-          <span>Συναινώ να λαμβάνω ενημερωτικά email/μηνύματα σχετικά με το coaching. Μπορώ να διαγραφώ οποιαδήποτε στιγμή.</span>
-        </label>
-        <button class="lead-submit" type="submit">Στείλε τα στοιχεία μου</button>
-        <div class="lead-error" id="leadError" style="display:none;"></div>
-      </form>
     </div>
   </section>
 
