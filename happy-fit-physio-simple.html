@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Fit Physio — Coaching</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#241413; --ink-soft:#6b5450; --bg:#f6efe4; --panel:#fffdf9; --line:#e8dcc9;
+    --red:#c4201f; --red-deep:#8f1615; --gold:#e2a233; --danger:#8f1615; --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; font-size:14px; line-height:1.5;}
+  h1,h2,h3{font-family:'Poppins',sans-serif; font-weight:800; margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  #shell{display:flex; min-height:100vh;}
+  #sidebar{width:230px; flex-shrink:0; background:var(--red-deep); color:#f7ece7; padding:22px 16px; display:flex; flex-direction:column; gap:16px;}
+  #brandMark{display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px 0 2px;}
+  #brandMark svg{width:38px; height:38px;}
+  #sidebar h1{font-size:15.5px; color:#fff; text-align:center; letter-spacing:0.01em;}
+  #sidebarFooter{margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,0.12); font-size:10.5px; color:#d99a92; text-align:center; line-height:1.6;}
+  #sidebarFooter a{color:#f0d9d4; cursor:pointer; text-decoration:underline;}
+  .modalOverlay{position:fixed; inset:0; background:rgba(36,20,19,0.55); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}
+  .modalBox{background:var(--panel); border-radius:10px; max-width:560px; width:100%; max-height:80vh; overflow-y:auto; padding:28px; box-shadow:0 20px 50px rgba(36,20,19,0.3);}
+  .modalBox h2{margin-bottom:14px;}
+  .modalBox p{font-size:13px; margin:0 0 10px; line-height:1.6;}
+  .modalBox h4{font-size:13px; margin:16px 0 6px;}
+  .modalCloseBtn{float:right; background:transparent; border:none; font-size:20px; cursor:pointer; color:var(--ink-soft); line-height:1;}
+  .trustBadges{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:6px;}
+  .trustBadges .badge{font-size:9.5px; padding:2px 7px;}
+  .clinicalCard{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:22px 24px; margin-bottom:18px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
+  .clinicalHeader{display:flex; align-items:center; gap:10px; padding-bottom:12px; border-bottom:2px solid var(--ink); margin-bottom:16px;}
+  .clinicalHeader svg{width:26px; height:26px;}
+  .clinicalHeader .brand{font-family:'Poppins',sans-serif; font-weight:800; font-size:13px; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink);}
+  .clinicalHeader .doc-title{font-family:'Poppins',sans-serif; font-weight:700; font-size:15px; margin-left:auto; color:var(--red-deep);}
+  .clinicalSection{margin-bottom:22px;}
+  .clinicalSection h4{font-family:'Poppins',sans-serif; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--red-deep); border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:12px;}
+  .bodyDiagram{display:flex; gap:20px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
+  .bodyDiagram .bodyCol{text-align:center;}
+  .bodyDiagram .bodyCol .lbl{font-size:10.5px; color:var(--ink-soft); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.04em;}
+  .bodyDiagram svg{width:100px; height:210px; cursor:crosshair; background:#fdfbf7; border:1px solid var(--line); border-radius:6px;}
+  .bodyDiagram .clearMarkers{font-size:10.5px; color:var(--red-deep); cursor:pointer; text-decoration:underline; display:block; margin-top:4px;}
+  .painMarker{fill:#c4201f; stroke:#fff; stroke-width:1;}
+  .reassessTable{width:100%; border-collapse:collapse; font-size:12px;}
+  .reassessTable th, .reassessTable td{border:1px solid var(--line); padding:6px 8px; text-align:center;}
+  .reassessTable th{background:#efe4d4; font-weight:600; color:var(--ink-soft); font-size:10.5px; text-transform:uppercase;}
+  #sidebar .tagline{font-size:11px; color:#f1c9c1; text-align:center; margin:2px 0 0;}
+  .navBtn{background:transparent; border:none; color:#f0d9d4; text-align:left; padding:9px 10px; border-radius:var(--radius); cursor:pointer; font-size:13.5px; font-family:inherit; border-left:3px solid transparent;}
+  .navBtn:hover{background:rgba(255,255,255,.08);}
+  .navBtn.active{background:rgba(255,255,255,.12); border-left-color:var(--gold); color:#fff; font-weight:600;}
+  .langToggle{display:flex; gap:6px;}
+  .langToggle button{flex:1; padding:6px; border-radius:var(--radius); border:1px solid #a8302f; background:transparent; color:#f5ddd6; cursor:pointer; font-size:12px; font-family:inherit;}
+  .langToggle button.active{background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:700;}
+  #main{flex:1; padding:28px 40px 60px; max-width:980px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--red); border-radius:8px; padding:18px; margin-bottom:16px; box-shadow:0 1px 3px rgba(36,20,19,0.06); transition:box-shadow .15s ease;}
+  .card.gold{border-left-color:var(--gold);}
+  .clientCard{transition:box-shadow .15s ease, transform .1s ease;}
+  .clientCard:hover{box-shadow:0 4px 14px rgba(36,20,19,0.12); transform:translateY(-1px);}
+  .statGrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:18px;}
+  .statCard{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
+  .statCard .num{font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; color:var(--red-deep); line-height:1.1;}
+  .statCard .lbl{font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
+  .chartWrap{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px 8px; margin-bottom:14px; height:220px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
+  .chartTitle{font-size:12px; color:var(--ink-soft); margin-bottom:6px; font-weight:600;}
+  .btn{font-family:inherit; font-weight:600; font-size:13px; padding:9px 16px; border-radius:var(--radius); border:1px solid var(--red); background:var(--red); color:#fff; cursor:pointer;}
+  .btn:hover{background:var(--red-deep); border-color:var(--red-deep);}
+  .btn.secondary{background:transparent; color:var(--red); border-color:var(--red);}
+  .btn.secondary:hover{background:#fbeae6;}
+  .btn.danger{background:transparent; color:var(--danger); border-color:var(--danger);}
+  .btn.danger:hover{background:#f6e0da;}
+  .field{display:flex; flex-direction:column; gap:4px; margin-bottom:10px;}
+  .field label{font-size:12px; color:var(--ink-soft);}
+  .field input,.field select,.field textarea{font-family:inherit; font-size:13.5px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; color:var(--ink); width:100%;}
+  .field textarea{min-height:56px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:0 16px;}
+  .badge{display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:#efe4d4; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
+  .savedTag{font-size:11.5px; color:var(--red);}
+  .errorTag{font-size:12.5px; color:var(--danger); background:#f6e0da; padding:8px 10px; border-radius:var(--radius);}
+  table.hist{width:100%; border-collapse:collapse; font-size:12.8px;}
+  table.hist th,table.hist td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left;}
+  table.hist th{background:#efe4d4; font-weight:600; color:var(--ink-soft); font-size:11.5px;}
+  .authWrap{max-width:380px; margin:60px auto;}
+  .authWrap .card{border-left-width:6px;}
+  .roleToggle{display:flex; gap:8px; margin-bottom:14px;}
+  .roleToggle button{flex:1; padding:10px; border-radius:var(--radius); border:1px solid var(--line); background:#fff; cursor:pointer; font-family:inherit; font-weight:600; font-size:12.5px;}
+  .roleToggle button.active{background:var(--red); color:#fff; border-color:var(--red);}
+  .evidenceItem{border-top:1px solid var(--line); padding:8px 0; font-size:12.8px;}
+  .evidenceItem a{color:var(--red-deep);}
+  .setRow{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
+  .setRow input{width:70px; padding:6px;}
+  .clickable{cursor:pointer;}
+  .tableScroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 760px){
+    #shell{flex-direction:column;}
+    #sidebar{
+      width:100%; flex-direction:row; flex-wrap:wrap; align-items:center; gap:8px;
+      padding:12px 14px; position:sticky; top:0; z-index:100;
+    }
+    #brandMark{flex-direction:row; padding:0; gap:6px;}
+    #brandMark svg{width:26px; height:26px;}
+    #sidebar h1{font-size:13px; text-align:left;}
+    #sidebar .tagline{display:none;}
+    .langToggle{width:auto; order:2; margin-left:auto;}
+    .langToggle button{padding:5px 8px;}
+    .navBtn{padding:7px 10px; font-size:12.5px; border-left:none; border-bottom:3px solid transparent;}
+    .navBtn.active{border-left:none; border-bottom-color:var(--gold);}
+    #sidebar > div[style*="margin-top:auto"]{order:5; width:100%; flex-direction:row !important; flex-wrap:wrap; gap:6px !important; margin-top:4px !important;}
+    #sidebarFooter{width:100%; order:6;}
+    #main{padding:16px 14px 40px;}
+    .grid2{grid-template-columns:1fr;}
+    .authWrap{margin:24px auto; padding:0 12px;}
+    .setRow{flex-wrap:wrap;}
+    .setRow input{width:64px; flex:1; min-width:52px;}
+    .bodyDiagram{gap:10px;}
+    .bodyDiagram svg{width:80px; height:168px;}
+    .statGrid{grid-template-columns:repeat(2,1fr);}
+    table.hist, .reassessTable{font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<div id="app"><div style="padding:40px;">Φόρτωση…</div></div>
+
+<!-- Supabase client via CDN — no npm/build step needed -->
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// ============================================================
+// !!! ΒΑΛΕ ΕΔΩ ΤΑ ΔΙΚΑ ΣΟΥ ΚΛΕΙΔΙΑ (Supabase → Project Settings → API) !!!
+// Το "anon public" key είναι ΑΣΦΑΛΕΣ να είναι δημόσιο μέσα σε αυτό το
+// αρχείο — η προστασία γίνεται από τις πολιτικές RLS που ήδη έτρεξες.
+// ============================================================
+const SUPABASE_URL = 'https://hxbpuamzisdldwbuumda.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ---------- i18n ----------
+const STR = {
+  appName:{el:'Happy Fit Physio', en:'Happy Fit Physio'},
+  tagline:{el:'Πλατφόρμα coaching', en:'Coaching platform'},
+  login:{el:'Σύνδεση', en:'Log in'}, signup:{el:'Εγγραφή', en:'Sign up'}, logout:{el:'Αποσύνδεση', en:'Log out'},
+  email:{el:'Email', en:'Email'}, password:{el:'Κωδικός', en:'Password'}, fullName:{el:'Ονοματεπώνυμο', en:'Full name'},
+  iAmCoach:{el:'Είμαι προπονητής/φυσικοθεραπευτής', en:"I'm a coach"}, iAmClient:{el:'Είμαι ασκούμενος', en:"I'm a client"},
+  inviteCode:{el:'Κωδικός πρόσκλησης', en:'Invite code'}, consent:{el:'Συναινώ στην επεξεργασία των δεδομένων μου.', en:'I consent to data processing.'},
+  clients:{el:'Ασκούμενοι', en:'Clients'}, dashboard:{el:'Πίνακας', en:'Dashboard'}, exerciseLibrary:{el:'Βιβλιοθήκη ασκήσεων', en:'Exercise library'},
+  newClient:{el:'+ Νέος ασκούμενος', en:'+ New client'}, newExercise:{el:'+ Νέα άσκηση', en:'+ New exercise'},
+  program:{el:'Πρόγραμμα', en:'Program'}, liveSession:{el:'Ζωντανή προπόνηση', en:'Live session'},
+  checkins:{el:'Weekly check-in', en:'Weekly check-in'}, readiness:{el:'Daily readiness', en:'Daily readiness'},
+  why:{el:'Το γιατί', en:'The why'}, bibliography:{el:'Βιβλιογραφία', en:'Bibliography'},
+  save:{el:'Αποθήκευση', en:'Save'}, saved:{el:'✓ Αποθηκεύτηκε', en:'✓ Saved'},
+  sets:{el:'Σετ', en:'Sets'}, reps:{el:'Επαναλήψεις', en:'Reps'}, load:{el:'Φορτίο (kg)', en:'Load (kg)'},
+  rpe:{el:'RPE', en:'RPE'}, pain:{el:'Πόνος', en:'Pain'}, logSet:{el:'Καταγραφή', en:'Log'},
+  noClients:{el:'Δεν υπάρχουν ακόμα ασκούμενοι.', en:'No clients yet.'}, loading:{el:'Φόρτωση…', en:'Loading…'},
+  exportData:{el:'Λήψη δικών μου δεδομένων', en:'Download my data'},
+  intake:{el:'Ιστορικό & Στόχοι', en:'History & Goals'},
+  progress:{el:'Ιστορικό προόδου', en:'Progress history'},
+  mainGoal:{el:'Κύριος στόχος', en:'Main goal'},
+  goalWhy:{el:'Γιατί τώρα;', en:'Why now?'},
+  goalDeadline:{el:'Συγκεκριμένος στόχος/ημερομηνία', en:'Specific goal/date'},
+  conditions:{el:'Διαγνωσμένες παθήσεις', en:'Diagnosed conditions'},
+  medications:{el:'Φαρμακευτική αγωγή', en:'Medications'},
+  medicalClearance:{el:'Ιατρικός περιορισμός/έγκριση', en:'Medical clearance/restriction'},
+  currentPain:{el:'Τρέχων πόνος/ενόχληση', en:'Current pain/discomfort'},
+  injuryHistory:{el:'Ιστορικό τραυματισμών', en:'Injury history'},
+  fearedMovement:{el:'Κίνηση που φοβάσαι', en:'Movement you fear'},
+  yearsTraining:{el:'Χρόνια άσκησης', en:'Years training'},
+  currentProgram:{el:'Τι κάνεις αυτή την περίοδο', en:'What you do currently'},
+  likedExercises:{el:'Ασκήσεις που σου αρέσουν', en:'Exercises you like'},
+  dislikedExercises:{el:'Ασκήσεις που αποφεύγεις', en:'Exercises you avoid'},
+  trainingLocation:{el:'Πού προπονείσαι', en:'Where you train'},
+  equipmentAvailable:{el:'Διαθέσιμος εξοπλισμός', en:'Available equipment'},
+  adherenceDifficulty:{el:'Δυσκολία τήρησης προγράμματος (1-10)', en:'Difficulty following a program (1-10)'},
+  barriers:{el:'Μεγαλύτερα εμπόδια', en:'Biggest barriers'},
+  intakeSaved:{el:'✓ Αποθηκεύτηκε αυτόματα', en:'✓ Auto-saved'},
+  noIntake:{el:'Ο ασκούμενος δεν έχει συμπληρώσει ακόμα το ιστορικό του.', en:'The client has not filled in their history yet.'},
+  messages:{el:'Μηνύματα', en:'Messages'},
+  sendMessage:{el:'Αποστολή', en:'Send'},
+  writeMessage:{el:'Γράψε μήνυμα…', en:'Write a message…'},
+  noMessages:{el:'Δεν υπάρχουν ακόμα μηνύματα.', en:'No messages yet.'},
+  business:{el:'Έσοδα', en:'Revenue'},
+  monthlyPrice:{el:'Μηνιαία τιμή (€)', en:'Monthly price (€)'},
+  status:{el:'Κατάσταση', en:'Status'},
+  statusTrial:{el:'Δοκιμαστικά', en:'Trial'}, statusActive:{el:'Ενεργός', en:'Active'},
+  statusPaused:{el:'Σε παύση', en:'Paused'}, statusCancelled:{el:'Ακυρώθηκε', en:'Cancelled'},
+  mrr:{el:'Μηνιαία έσοδα (MRR)', en:'Monthly revenue (MRR)'},
+  activeClients:{el:'Ενεργοί συνδρομητές', en:'Active clients'},
+  goalProgress:{el:'Πρόοδος προς €10.000', en:'Progress to €10,000'},
+  referFriend:{el:'Πρόσκλησε φίλο', en:'Refer a friend'},
+  referFriendHint:{el:'Δώσε αυτόν τον κωδικό σε κάποιον που θέλεις να προτείνεις — θα εγγραφεί στον ίδιο coach.', en:'Give this code to someone you want to refer — they will sign up with the same coach.'},
+  generateCode:{el:'Δημιουργία κωδικού', en:'Generate code'},
+  assessmentCard:{el:'Καρτέλα Αξιολόγησης', en:'Assessment Card'},
+  painCharacterization:{el:'Χαρακτηρισμός Πόνου', en:'Pain Characterization'},
+  subjectiveAssessment:{el:'Υποκειμενική Αξιολόγηση', en:'Subjective Assessment'},
+  goalsAndHistory:{el:'Στόχοι & Προπονητικό Ιστορικό', en:'Goals & Training History'},
+  lifestyleAndEquipment:{el:'Καθημερινότητα & Εξοπλισμός', en:'Lifestyle & Equipment'},
+  intensity:{el:'Ένταση (0-10)', en:'Intensity (0-10)'},
+  extent:{el:'Έκταση', en:'Extent'},
+  frequency:{el:'Συχνότητα', en:'Frequency'},
+  movementRest:{el:'Κίνηση / Ηρεμία', en:'Movement / Rest'},
+  neurological:{el:'Νευρολογικά συμπτώματα', en:'Neurological symptoms'},
+  nocturnal:{el:'Νυχτερινός πόνος', en:'Nocturnal pain'},
+  injuryDate:{el:'Ημερομηνία τραυματισμού', en:'Date of injury'},
+  mechanism:{el:'Μηχανισμός κάκωσης', en:'Mechanism of injury'},
+  symptoms:{el:'Συμπτώματα', en:'Symptoms'},
+  management:{el:'Αντιμετώπιση μέχρι σήμερα', en:'Management to date'},
+  tests:{el:'Εξετάσεις / Απεικονίσεις', en:'Tests / Imaging'},
+  contraindications:{el:'Αντενδείξεις', en:'Contraindications'},
+  frontView:{el:'Πρόσθια όψη', en:'Front view'},
+  backView:{el:'Οπίσθια όψη', en:'Back view'},
+  clickToMark:{el:'Πάτα για σημείο πόνου', en:'Tap to mark pain point'},
+  clearMarkers:{el:'Καθαρισμός σημείων', en:'Clear markers'},
+  reassessment:{el:'Επαναξιολόγηση', en:'Re-assessment'},
+  sessionNumber:{el:'Συνεδρία #', en:'Session #'},
+  passiveRom:{el:'Παθητική Τροχιά', en:'Passive ROM'},
+  activeRom:{el:'Ενεργητική Τροχιά', en:'Active ROM'},
+  strength:{el:'Δύναμη', en:'Strength'},
+  otherSymptoms:{el:'Άλλα Συμπτώματα', en:'Other Symptoms'},
+  addSession:{el:'+ Καταγραφή συνεδρίας', en:'+ Log session'},
+  noReassessments:{el:'Δεν υπάρχουν ακόμα καταγεγραμμένες επαναξιολογήσεις.', en:'No re-assessments logged yet.'},
+  executionSteps:{el:'Εκτέλεση βήμα-βήμα', en:'Step-by-step execution'},
+  techniqueCues:{el:'Τεχνικές συμβουλές', en:'Technique cues'},
+  commonMistakes:{el:'Συχνά λάθη', en:'Common mistakes'},
+  lastReviewed:{el:'Τελευταίος έλεγχος βιβλιογραφίας', en:'Last literature check'},
+  neverReviewed:{el:'Δεν έχει ελεγχθεί ποτέ', en:'Never checked'},
+  staleReview:{el:'⚠ Χρειάζεται νέος έλεγχος (>6 μήνες)', en:'⚠ Needs re-check (>6 months)'},
+  needsAttention:{el:'Χρειάζονται προσοχή', en:'Need attention'},
+  noAlerts:{el:'✓ Όλα καλά — κανένας ασκούμενος δεν χρειάζεται άμεση προσοχή.', en:'✓ All good — no client needs immediate attention.'},
+  alertNoCheckin:{el:'Καμία καταγραφή check-in >10 ημέρες', en:'No check-in logged for >10 days'},
+  alertPainRising:{el:'Ο πόνος αυξάνεται στα τελευταία check-ins', en:'Pain is rising over recent check-ins'},
+  alertAdherenceDrop:{el:'Το adherence έπεσε απότομα', en:'Adherence dropped sharply'},
+  alertLowEnergy:{el:'Χαμηλή ενέργεια/motivation τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
+  baselineSection:{el:'Baseline — Αρχικά Δεδομένα', en:'Baseline — Initial Data'},
+  baselineWeight:{el:'Βάρος (kg)', en:'Weight (kg)'},
+  measurements:{el:'Περίμετροι (στήθος/μέση/ισχίο/μηρός κ.λπ.)', en:'Circumferences (chest/waist/hip/thigh etc.)'},
+  restingHR:{el:'Καρδιακή συχνότητα ηρεμίας', en:'Resting heart rate'},
+  progressPhotosNote:{el:'Φωτογραφίες προόδου (σημείωση/link)', en:'Progress photos (note/link)'},
+  delete:{el:'Διαγραφή', en:'Delete'},
+  clientProfile:{el:'Προφίλ Ασκούμενου', en:'Client Profile'},
+  sport:{el:'Δραστηριότητα / Άθλημα', en:'Activity / Sport'},
+  pathway:{el:'Κλινική Πορεία', en:'Clinical Pathway'},
+  filterBySport:{el:'Φίλτρο ανά δραστηριότητα', en:'Filter by activity'},
+  allClients:{el:'Όλοι', en:'All'},
+  paymentLink:{el:'Link Πληρωμής (Stripe/Viva Wallet)', en:'Payment Link (Stripe/Viva Wallet)'},
+  payment:{el:'Πληρωμή', en:'Payment'},
+  payNow:{el:'Πλήρωσε τώρα', en:'Pay now'},
+  noPaymentLink:{el:'Δεν έχει οριστεί ακόμα link πληρωμής — επικοινώνησε με τον coach σου.', en:'No payment link set up yet — contact your coach.'},
+};
+function t(k, loc){ return STR[k]?.[loc] || STR[k]?.el || k; }
+
+// ---------- Global state ----------
+let session = null, profile = null, locale = 'el', view = 'dashboard', selectedClient = null;
+
+function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
+function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function uidCode(){ return crypto.randomUUID().slice(0,8).toUpperCase(); }
+function toast(msg){
+  let tEl = document.getElementById('toast');
+  if(!tEl){ tEl = el('<div id="toast" style="position:fixed;bottom:20px;right:20px;background:#241413;color:#fff;padding:10px 16px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .25s;"></div>'); document.body.appendChild(tEl); }
+  tEl.textContent = msg; tEl.style.opacity = '1';
+  clearTimeout(toast._h); toast._h = setTimeout(()=>tEl.style.opacity='0', 1800);
+}
+
+// ============================================================
+// LEGAL / TRUST CONTENT
+// Template only — not legal advice. Have a lawyer review before
+// relying on this commercially, especially given health data handling.
+// ============================================================
+const LEGAL_CONTENT = {
+  terms: {
+    title: {el:'Όροι Χρήσης', en:'Terms of Use'},
+    body: {
+      el: `<p>Η χρήση της πλατφόρμας Happy Fit Physio ("η Υπηρεσία") προϋποθέτει την αποδοχή των παρόντων όρων.</p>
+        <h4>1. Περιγραφή Υπηρεσίας</h4>
+        <p>Η Υπηρεσία παρέχει online coaching φυσικής κατάστασης: πρόγραμμα άσκησης, καταγραφή προόδου, επικοινωνία με τον προπονητή/φυσικοθεραπευτή, και σχετικό εκπαιδευτικό υλικό.</p>
+        <h4>2. Ευθύνες Χρήστη</h4>
+        <p>Ο χρήστης δεσμεύεται να παρέχει ακριβή στοιχεία στο ιστορικό υγείας/στόχων του, να ενημερώνει άμεσα τον προπονητή για μεταβολές στην κατάστασή του, και να συμμορφώνεται με τυχόν ιατρικές οδηγίες τρίτων που υπερισχύουν του προγράμματος.</p>
+        <h4>3. Πληρωμές & Συνδρομή</h4>
+        <p>Οι όροι χρέωσης (τιμή, συχνότητα, ακύρωση) συμφωνούνται ξεχωριστά μεταξύ προπονητή και ασκούμενου. Η πλατφόρμα δεν επεξεργάζεται η ίδια πληρωμές.</p>
+        <h4>4. Περιορισμός Ευθύνης</h4>
+        <p>Βλ. ξεχωριστή <a data-legal="disclaimer">Ιατρική Αποποίηση Ευθύνης</a>. Η Υπηρεσία παρέχεται "ως έχει" χωρίς εγγύηση αδιάλειπτης λειτουργίας.</p>
+        <h4>5. Καταγγελία</h4>
+        <p>Οποιοδήποτε μέρος μπορεί να διακόψει τη χρήση/παροχή της Υπηρεσίας οποτεδήποτε.</p>
+        <h4>6. Εφαρμοστέο Δίκαιο</h4>
+        <p>Οι παρόντες όροι διέπονται από το Ελληνικό δίκαιο.</p>`,
+      en: `<p>Using the Happy Fit Physio platform ("the Service") requires acceptance of these terms.</p>
+        <h4>1. Service Description</h4>
+        <p>The Service provides online fitness coaching: exercise programming, progress tracking, coach communication, and related educational content.</p>
+        <h4>2. User Responsibilities</h4>
+        <p>The user agrees to provide accurate information in their intake/history, to promptly inform the coach of changes in their condition, and to follow any third-party medical instructions that supersede the program.</p>
+        <h4>3. Payments & Subscription</h4>
+        <p>Billing terms (price, frequency, cancellation) are agreed separately between coach and client. The platform itself does not process payments.</p>
+        <h4>4. Limitation of Liability</h4>
+        <p>See the separate <a data-legal="disclaimer">Medical Disclaimer</a>. The Service is provided "as is" without guarantee of uninterrupted operation.</p>
+        <h4>5. Termination</h4>
+        <p>Either party may discontinue use/provision of the Service at any time.</p>
+        <h4>6. Governing Law</h4>
+        <p>These terms are governed by Greek law.</p>`,
+    }
+  },
+  privacy: {
+    title: {el:'Πολιτική Απορρήτου', en:'Privacy Policy'},
+    body: {
+      el: `<p>Σεβόμαστε τα προσωπικά σας δεδομένα σύμφωνα με τον Γενικό Κανονισμό Προστασίας Δεδομένων (GDPR).</p>
+        <h4>Ποια δεδομένα συλλέγουμε</h4>
+        <p>Στοιχεία εγγραφής (όνομα, email), ιστορικό υγείας/στόχων που δηλώνετε οικειοθελώς, καταγραφές προπόνησης, weekly check-in και daily readiness, μηνύματα προς τον προπονητή σας.</p>
+        <h4>Σκοπός επεξεργασίας</h4>
+        <p>Αποκλειστικά για την παροχή της υπηρεσίας coaching — εξατομίκευση προγράμματος, παρακολούθηση προόδου, επικοινωνία.</p>
+        <h4>Νομική βάση</h4>
+        <p>Η ρητή συναίνεσή σας, την οποία δίνετε κατά την εγγραφή και μπορείτε να ανακαλέσετε οποτεδήποτε.</p>
+        <h4>Αποθήκευση</h4>
+        <p>Τα δεδομένα φιλοξενούνται σε υποδομή εντός Ευρωπαϊκής Ένωσης (Supabase, region Frankfurt).</p>
+        <h4>Τα δικαιώματά σας</h4>
+        <p>Δικαίωμα πρόσβασης (κουμπί "Λήψη δικών μου δεδομένων"), διόρθωσης, και διαγραφής (επικοινωνήστε με τον προπονητή σας ή ζητήστε διαγραφή λογαριασμού).</p>`,
+      en: `<p>We respect your personal data in accordance with the General Data Protection Regulation (GDPR).</p>
+        <h4>What we collect</h4>
+        <p>Registration details (name, email), health/goals history you voluntarily provide, training logs, weekly check-ins and daily readiness, messages to your coach.</p>
+        <h4>Purpose of processing</h4>
+        <p>Solely to provide the coaching service — program personalization, progress tracking, communication.</p>
+        <h4>Legal basis</h4>
+        <p>Your explicit consent, given at signup and revocable at any time.</p>
+        <h4>Storage</h4>
+        <p>Data is hosted on infrastructure within the European Union (Supabase, Frankfurt region).</p>
+        <h4>Your rights</h4>
+        <p>Right to access ("Download my data" button), rectification, and erasure (contact your coach or request account deletion).</p>`,
+    }
+  },
+  disclaimer: {
+    title: {el:'Ιατρική Αποποίηση Ευθύνης', en:'Medical Disclaimer'},
+    body: {
+      el: `<p><strong>Το περιεχόμενο και τα προγράμματα αυτής της πλατφόρμας δεν αποτελούν ιατρική διάγνωση, θεραπεία ή ιατρική συμβουλή.</strong></p>
+        <p>Συμβουλευτείτε γιατρό πριν ξεκινήσετε οποιοδήποτε πρόγραμμα άσκησης, ιδίως αν έχετε προϋπάρχουσα πάθηση, τραυματισμό, ή είστε έγκυος.</p>
+        <p>Η βιβλιογραφία που εμφανίζεται ανά άσκηση είναι υποστηρικτικό, ενημερωτικό υλικό — δεν αντικαθιστά την κλινική κρίση επαγγελματία υγείας για την περίπτωσή σας.</p>
+        <p>Σε περίπτωση οξέος πόνου, τραυματισμού, ή επείγοντος ιατρικού συμβάντος, διακόψτε αμέσως και αναζητήστε ιατρική βοήθεια.</p>
+        <p>Ο προπονητής/φυσικοθεραπευτής δεν φέρει ευθύνη για τραυματισμό που προκύπτει από μη τήρηση της σωστής τεχνικής, απόκρυψη ιατρικού ιστορικού, ή μη συμμόρφωση με τις οδηγίες.</p>`,
+      en: `<p><strong>The content and programs on this platform do not constitute medical diagnosis, treatment, or medical advice.</strong></p>
+        <p>Consult a physician before starting any exercise program, especially if you have a pre-existing condition, injury, or are pregnant.</p>
+        <p>The bibliography shown per exercise is supportive, informational material — it does not replace the clinical judgment of a healthcare professional for your specific case.</p>
+        <p>In case of acute pain, injury, or a medical emergency, stop immediately and seek medical attention.</p>
+        <p>The coach/physiotherapist is not liable for injury resulting from improper technique, undisclosed medical history, or non-compliance with instructions.</p>`,
+    }
+  },
+};
+
+function showLegalModal(key){
+  const doc = LEGAL_CONTENT[key];
+  if(!doc) return;
+  const overlay = el(`<div class="modalOverlay"><div class="modalBox">
+    <button class="modalCloseBtn" type="button">&times;</button>
+    <h2>${doc.title[locale]||doc.title.el}</h2>
+    ${doc.body[locale]||doc.body.el}
+  </div></div>`);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('.modalCloseBtn').addEventListener('click', ()=>overlay.remove());
+  overlay.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', (e)=>{ e.preventDefault(); overlay.remove(); showLegalModal(a.dataset.legal); }));
+  document.body.appendChild(overlay);
+}
+
+
+function renderAuth(){
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  let mode = 'login', role = 'coach';
+  const wrap = el(`<div class="authWrap"><div class="card">
+    <div id="brandMark" style="margin-bottom:10px;">
+      <img src="data:image/webp;base64,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" alt="Happy Fit Physio" style="width:100px;height:100px;border-radius:14px;">
+    </div>
+    <h2 style="margin-bottom:4px;">${t('appName',locale)}</h2>
+    <p style="color:var(--ink-soft);font-size:12.5px;margin:0 0 18px;">${t('tagline',locale)}</p>
+    <div class="roleToggle" id="modeToggle">
+      <button data-m="login" class="active">${t('login',locale)}</button>
+      <button data-m="signup">${t('signup',locale)}</button>
+    </div>
+    <div class="roleToggle" id="roleToggle" style="display:none;">
+      <button data-r="coach" class="active">${t('iAmCoach',locale)}</button>
+      <button data-r="client">${t('iAmClient',locale)}</button>
+    </div>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;"><label>${t('fullName',locale)}</label><input id="fullName"></div>
+      <div class="field"><label>${t('email',locale)}</label><input id="authEmail" type="email" required></div>
+      <div class="field"><label>${t('password',locale)}</label><input id="authPassword" type="password" required minlength="6"></div>
+      <div class="field" id="codeField" style="display:none;"><label>${t('inviteCode',locale)}</label><input id="inviteCode" placeholder="π.χ. A1B2C3D4"></div>
+      <div class="field" id="consentField" style="display:none; flex-direction:row; align-items:flex-start; gap:8px;">
+        <input type="checkbox" id="consentBox" style="width:auto; margin-top:3px;">
+        <label style="margin:0; font-size:12px; line-height:1.5;">${locale==='el'
+          ? `Συναινώ στην επεξεργασία των δεδομένων μου και αποδέχομαι τους <a data-legal="terms" style="color:var(--red-deep);">Όρους Χρήσης</a>, την <a data-legal="privacy" style="color:var(--red-deep);">Πολιτική Απορρήτου</a> και την <a data-legal="disclaimer" style="color:var(--red-deep);">Ιατρική Αποποίηση Ευθύνης</a>.`
+          : `I consent to data processing and accept the <a data-legal="terms" style="color:var(--red-deep);">Terms of Use</a>, <a data-legal="privacy" style="color:var(--red-deep);">Privacy Policy</a>, and <a data-legal="disclaimer" style="color:var(--red-deep);">Medical Disclaimer</a>.`}</label>
+      </div>
+      <div id="authError"></div>
+      <button class="btn" type="submit" style="width:100%; margin-top:6px;">${t('login',locale)}</button>
+    </form>
+    <div class="trustBadges" style="margin-top:16px;">
+      <span class="badge">🔒 GDPR</span><span class="badge">🇪🇺 EU hosting</span><span class="badge">🩺 Physiotherapy-led</span>
+    </div>
+  </div></div>`);
+  app.appendChild(wrap);
+  wrap.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', (e)=>{ e.preventDefault(); showLegalModal(a.dataset.legal); }));
+
+  function syncFields(){
+    wrap.querySelector('#nameField').style.display = mode==='signup' ? '' : 'none';
+    wrap.querySelector('#consentField').style.display = mode==='signup' ? '' : 'none';
+    wrap.querySelector('#roleToggle').style.display = mode==='signup' ? 'flex' : 'none';
+    wrap.querySelector('#codeField').style.display = (mode==='signup' && role==='client') ? '' : 'none';
+    wrap.querySelector('button[type=submit]').textContent = mode==='login' ? t('login',locale) : t('signup',locale);
+  }
+  wrap.querySelectorAll('#modeToggle button').forEach(b=>b.addEventListener('click', ()=>{
+    mode = b.dataset.m;
+    wrap.querySelectorAll('#modeToggle button').forEach(x=>x.classList.toggle('active', x===b));
+    syncFields();
+  }));
+  wrap.querySelectorAll('#roleToggle button').forEach(b=>b.addEventListener('click', ()=>{
+    role = b.dataset.r;
+    wrap.querySelectorAll('#roleToggle button').forEach(x=>x.classList.toggle('active', x===b));
+    syncFields();
+  }));
+
+  wrap.querySelector('#authForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const errBox = wrap.querySelector('#authError');
+    errBox.innerHTML = '';
+    const email = wrap.querySelector('#authEmail').value.trim();
+    const password = wrap.querySelector('#authPassword').value;
+    try{
+      if(mode==='login'){
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if(error) throw error;
+      } else {
+        const fullName = wrap.querySelector('#fullName').value.trim();
+        const consent = wrap.querySelector('#consentBox').checked;
+        if(!fullName) throw new Error(locale==='el' ? 'Βάλε το ονοματεπώνυμό σου.' : 'Enter your full name.');
+        if(!consent) throw new Error(locale==='el' ? 'Χρειάζεται συναίνεση.' : 'Consent is required.');
+
+        if(role==='client'){
+          const code = wrap.querySelector('#inviteCode').value.trim().toUpperCase();
+          const { data: codeRow, error: codeErr } = await supabase.from('invite_codes').select('*').eq('code', code).eq('used', false).single();
+          if(codeErr || !codeRow) throw new Error(locale==='el' ? 'Μη έγκυρος κωδικός πρόσκλησης.' : 'Invalid invite code.');
+          const { data, error } = await supabase.auth.signUp({ email, password });
+          if(error) throw error;
+          const userId = data.user.id;
+          await supabase.from('profiles').insert({ id:userId, role:'client', full_name:fullName, locale });
+          await supabase.from('clients').insert({ id:userId, coach_id:codeRow.coach_id, full_name:fullName });
+          await supabase.from('invite_codes').update({ used:true, used_by:userId }).eq('code', code);
+          await supabase.from('consents').insert({ profile_id:userId, granted:true });
+        } else {
+          const { data, error } = await supabase.auth.signUp({ email, password });
+          if(error) throw error;
+          const userId = data.user.id;
+          await supabase.from('profiles').insert({ id:userId, role:'coach', full_name:fullName, locale });
+          await supabase.from('consents').insert({ profile_id:userId, granted:true });
+        }
+      }
+      await boot();
+    }catch(err){
+      errBox.innerHTML = `<p class="errorTag">${escapeHtml(err.message || String(err))}</p>`;
+    }
+  });
+  syncFields();
+}
+
+// ============================================================
+// SHELL (sidebar + main)
+// ============================================================
+function renderShell(){
+  const isCoach = profile.role === 'coach';
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  const shell = el(`<div id="shell">
+    <div id="sidebar">
+      <div id="brandMark">
+        <img src="data:image/webp;base64,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" alt="Happy Fit Physio" style="width:74px;height:74px;border-radius:10px;">
+        <p class="tagline" style="text-align:center; margin-top:2px;">${t('tagline',locale)}</p>
+      </div>
+      <div class="langToggle" id="langToggle">
+        <button data-l="el" class="${locale==='el'?'active':''}">ΕΛ</button>
+        <button data-l="en" class="${locale==='en'?'active':''}">EN</button>
+      </div>
+      <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
+      <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
+        <button class="navBtn" id="exportBtn">${t('exportData',locale)}</button>
+        <button class="navBtn" id="logoutBtn">${t('logout',locale)}</button>
+        <div id="sidebarFooter">
+          <div class="trustBadges">
+            <span class="badge">🔒 GDPR</span><span class="badge">🇪🇺 EU hosting</span>
+          </div>
+          <div style="margin-top:8px;">
+            <a data-legal="terms">${locale==='el'?'Όροι Χρήσης':'Terms'}</a> ·
+            <a data-legal="privacy">${locale==='el'?'Απόρρητο':'Privacy'}</a> ·
+            <a data-legal="disclaimer">${locale==='el'?'Αποποίηση':'Disclaimer'}</a>
+          </div>
+          <div style="margin-top:6px;">© ${new Date().getFullYear()} Happy Fit Physio</div>
+        </div>
+      </div>
+    </div>
+    <div id="main"></div>
+  </div>`);
+  app.appendChild(shell);
+  shell.querySelectorAll('#langToggle button').forEach(b=>b.addEventListener('click', ()=>{ locale=b.dataset.l; renderShell(); }));
+  shell.querySelectorAll('.navBtn[data-v]').forEach(b=>b.addEventListener('click', ()=>{ view=b.dataset.v; selectedClient=null; renderShell(); }));
+  shell.querySelector('#logoutBtn').addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
+  shell.querySelector('#exportBtn').addEventListener('click', exportMyData);
+  shell.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', ()=>showLegalModal(a.dataset.legal)));
+
+  const main = shell.querySelector('#main');
+  if(view==='library') renderLibrary(main, isCoach);
+  else if(isCoach) renderCoachDashboard(main);
+  else renderClientDashboard(main);
+}
+
+async function exportMyData(){
+  const payload = { exportedAt:new Date().toISOString(), profile };
+  if(profile.role==='client'){
+    const [ck, rd, pr, lg] = await Promise.all([
+      supabase.from('checkins').select('*').eq('client_id', profile.id),
+      supabase.from('readiness_logs').select('*').eq('client_id', profile.id),
+      supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id),
+      supabase.from('session_logs').select('*').eq('client_id', profile.id),
+    ]);
+    payload.checkins = ck.data; payload.readiness = rd.data; payload.programs = pr.data; payload.session_logs = lg.data;
+  }
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = el(`<a href="${url}" download="happy-fit-physio-data.json"></a>`);
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast(locale==='el' ? 'Λήψη έγινε' : 'Downloaded');
+}
+
+// ============================================================
+// EXERCISE LIBRARY (shared by coach + client, read-only for client)
+// ============================================================
+let evidenceAutoCache = {};
+function youtubeEmbedUrl(url){
+  if(!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+}
+async function fetchEuropePMC(query){
+  const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}&format=json&pageSize=5&sort=P_PDATE_D%20desc`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('fetch failed');
+  const data = await res.json();
+  return (data.resultList?.result || []).map(r=>({
+    title: r.title, authors: r.authorString, journal: r.journalTitle, year: r.pubYear,
+    doi: r.doi || null, pmid: r.pmid || null,
+    url: r.doi ? `https://doi.org/${r.doi}` : (r.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/` : null),
+  }));
+}
+
+async function renderLibrary(main, isCoach){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const { data: exercises, error } = await supabase.from('exercises').select('*, evidence(*)').order('category');
+  if(error){ main.innerHTML = `<p class="errorTag">${escapeHtml(error.message)}</p>`; return; }
+
+  main.innerHTML = '';
+  const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>${t('exerciseLibrary',locale)}</h2>
+    ${isCoach ? `<button class="btn" id="newExBtn">${t('newExercise',locale)}</button>` : ''}
+  </div>`);
+  main.appendChild(header);
+
+  if(isCoach){
+    header.querySelector('#newExBtn').addEventListener('click', ()=>renderNewExerciseForm(main, ()=>renderLibrary(main, isCoach)));
+  }
+
+  exercises.forEach(ex=>{
+    const name = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
+    const desc = locale==='el' ? ex.description_el : (ex.description_en || ex.description_el);
+    const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
+
+    let reviewBadge = '';
+    if(isCoach){
+      if(!ex.last_reviewed){
+        reviewBadge = `<span class="badge" style="color:var(--danger);">${t('neverReviewed',locale)}</span>`;
+      } else {
+        const monthsAgo = (Date.now() - new Date(ex.last_reviewed).getTime()) / (1000*60*60*24*30);
+        reviewBadge = monthsAgo > 6
+          ? `<span class="badge" style="color:var(--danger);">${t('staleReview',locale)}</span>`
+          : `<span class="badge mono">${t('lastReviewed',locale)}: ${ex.last_reviewed}</span>`;
+      }
+    }
+
+    const card = el(`<div class="card">
+      <div class="clickable" style="display:flex; justify-content:space-between;">
+        <div><strong>${escapeHtml(name)}</strong> <span class="badge">${escapeHtml(ex.category||'')}</span> ${reviewBadge}</div>
+        <span class="caret">▸</span>
+      </div>
+      <div class="detail" style="display:none; margin-top:12px;">
+        ${isCoach ? `<div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="btn secondary editExBtn" type="button" style="padding:5px 12px; font-size:11.5px;">✏️ ${locale==='el'?'Επεξεργασία':'Edit'}</button>
+          <button class="btn danger delExBtn" type="button" style="padding:5px 12px; font-size:11.5px;">🗑 ${t('delete',locale)}</button>
+        </div>
+        <div class="editExForm" style="display:none;"></div>` : ''}
+        <div class="viewMode">
+        <p>${escapeHtml(desc||'')}</p>
+        <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
+        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎬 ${locale==='el'?'Βίντεο εκτέλεσης ↗':'Execution video ↗'}</a></p>` : '')}
+        ${ex.execution_steps ? `<h4 style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
+        ${ex.technique_cues ? `<h4 style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
+        ${ex.common_mistakes ? `<h4 style="font-size:12.5px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
+        <h4 style="font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;">${t('bibliography',locale)}</h4>
+        ${(ex.evidence||[]).length===0 ? '<p style="font-size:12.5px;color:var(--ink-soft);" class="noEvidenceMsg">—</p>' : ''}
+        ${(ex.evidence||[]).map(ev=>`<div class="evidenceItem">${escapeHtml(ev.citation)} ${ev.url?`<a href="${escapeHtml(ev.url)}" target="_blank" rel="noreferrer">↗</a>`:''}</div>`).join('')}
+        ${isCoach ? `<div class="autoEvidenceBox" style="margin-top:8px; font-size:12px; color:var(--ink-soft);"></div>
+        <div class="addEvidence" style="margin-top:10px;">
+          <div style="display:flex; gap:8px;">
+            <input class="evCitation" placeholder="${locale==='el'?'Νέα αναφορά/citation':'New citation'}" style="flex:1;padding:8px;border-radius:4px;border:1px solid var(--line);">
+            <input class="evUrl" placeholder="URL (προαιρετικό)" style="flex:1;padding:8px;border-radius:4px;border:1px solid var(--line);">
+            <button class="btn secondary addEvBtn" type="button">+ ${t('save',locale)}</button>
+          </div>
+        </div>` : ''}
+        </div>
+      </div>
+    </div>`);
+    card.querySelector('.clickable').addEventListener('click', async ()=>{
+      const d = card.querySelector('.detail'); const c = card.querySelector('.caret');
+      const wasOpen = d.style.display !== 'none';
+      d.style.display = wasOpen ? 'none' : 'block'; c.textContent = wasOpen ? '▸' : '▾';
+      if(!wasOpen && isCoach){
+        const box = card.querySelector('.autoEvidenceBox');
+        if(evidenceAutoCache[ex.id]){
+          renderAutoEvidenceBox(box, ex, evidenceAutoCache[ex.id]);
+        } else if(box){
+          box.textContent = locale==='el' ? '🔍 Έλεγχος για νέα βιβλιογραφία…' : '🔍 Checking for new literature…';
+          try{
+            const results = await fetchEuropePMC(ex.name_en || ex.name_el);
+            const known = (ex.evidence||[]).map(ev=>(ev.citation||'').toLowerCase());
+            const fresh = results.filter(r=> r.title && !known.some(k=>k.includes((r.title||'').toLowerCase().slice(0,25))));
+            evidenceAutoCache[ex.id] = fresh;
+            renderAutoEvidenceBox(box, ex, fresh);
+            await supabase.from('exercises').update({ last_reviewed: new Date().toISOString().slice(0,10) }).eq('id', ex.id);
+            ex.last_reviewed = new Date().toISOString().slice(0,10);
+          }catch(err){
+            box.innerHTML = `<a href="https://europepmc.org/search?query=${encodeURIComponent(ex.name_en||ex.name_el)}" target="_blank" rel="noreferrer">${locale==='el'?'Αναζήτηση χειροκίνητα στο Europe PMC ↗':'Search manually on Europe PMC ↗'}</a>`;
+          }
+        }
+      }
+    });
+    if(isCoach){
+      const addBtn = card.querySelector('.addEvBtn');
+      if(addBtn) addBtn.addEventListener('click', async ()=>{
+        const citation = card.querySelector('.evCitation').value.trim();
+        const url = card.querySelector('.evUrl').value.trim();
+        if(!citation) return;
+        await supabase.from('evidence').insert({ exercise_id: ex.id, citation, url: url||null, added_by: profile.id });
+        delete evidenceAutoCache[ex.id];
+        renderLibrary(main, isCoach);
+      });
+      card.querySelector('.delExBtn').addEventListener('click', async ()=>{
+        if(!confirm(locale==='el' ? `Διαγραφή της άσκησης "${name}"; Θα αφαιρεθεί από όλα τα προγράμματα.` : `Delete exercise "${name}"? It will be removed from all programs.`)) return;
+        await supabase.from('exercises').delete().eq('id', ex.id);
+        renderLibrary(main, isCoach);
+      });
+      card.querySelector('.editExBtn').addEventListener('click', ()=>{
+        const viewMode = card.querySelector('.viewMode');
+        const editWrap = card.querySelector('.editExForm');
+        const showingEdit = editWrap.style.display !== 'none';
+        if(showingEdit){ editWrap.style.display='none'; editWrap.innerHTML=''; viewMode.style.display=''; return; }
+        viewMode.style.display = 'none';
+        editWrap.style.display = '';
+        editWrap.innerHTML = `
+          <div class="grid2">
+            <div class="field"><label>Όνομα (EL)</label><input class="ef_name_el" value="${escapeHtml(ex.name_el||'')}"></div>
+            <div class="field"><label>Name (EN)</label><input class="ef_name_en" value="${escapeHtml(ex.name_en||'')}"></div>
+          </div>
+          <div class="field"><label>${locale==='el'?'Κατηγορία':'Category'}</label><input class="ef_cat" value="${escapeHtml(ex.category||'')}"></div>
+          <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="ef_desc">${escapeHtml(ex.description_el||'')}</textarea></div>
+          <div class="field"><label>${t('why',locale)}</label><textarea class="ef_why">${escapeHtml(ex.why_rationale_el||'')}</textarea></div>
+          <div class="field"><label>🎬 ${locale==='el'?'Βίντεο εκτέλεσης (YouTube link)':'Execution video (YouTube link)'}</label><input class="ef_video" value="${escapeHtml(ex.video_url||'')}" placeholder="https://youtube.com/watch?v=..."></div>
+          <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="ef_steps">${escapeHtml(ex.execution_steps||'')}</textarea></div>
+          <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="ef_cues">${escapeHtml(ex.technique_cues||'')}</textarea></div>
+          <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="ef_mistakes">${escapeHtml(ex.common_mistakes||'')}</textarea></div>
+          <button class="btn saveExEditBtn" type="button">${t('save',locale)}</button>
+        `;
+        editWrap.querySelector('.saveExEditBtn').addEventListener('click', async ()=>{
+          await supabase.from('exercises').update({
+            name_el: editWrap.querySelector('.ef_name_el').value.trim(),
+            name_en: editWrap.querySelector('.ef_name_en').value.trim() || null,
+            category: editWrap.querySelector('.ef_cat').value.trim(),
+            description_el: editWrap.querySelector('.ef_desc').value.trim(),
+            why_rationale_el: editWrap.querySelector('.ef_why').value.trim(),
+            video_url: editWrap.querySelector('.ef_video').value.trim() || null,
+            execution_steps: editWrap.querySelector('.ef_steps').value.trim() || null,
+            technique_cues: editWrap.querySelector('.ef_cues').value.trim() || null,
+            common_mistakes: editWrap.querySelector('.ef_mistakes').value.trim() || null,
+          }).eq('id', ex.id);
+          renderLibrary(main, isCoach);
+        });
+      });
+    }
+    main.appendChild(card);
+  });
+}
+
+function renderAutoEvidenceBox(box, ex, fresh){
+  if(!box) return;
+  if(!fresh.length){
+    box.innerHTML = `<span>✓ ${locale==='el'?'Δεν βρέθηκε νεότερη βιβλιογραφία πέρα από αυτή που έχεις ήδη.':'No newer literature found beyond what you already have.'}</span>`;
+    return;
+  }
+  box.innerHTML = `<div style="font-weight:600; margin-bottom:6px;">🔍 ${fresh.length} ${locale==='el'?'πιθανές νέες μελέτες:':'possible new studies:'}</div>`;
+  fresh.forEach(r=>{
+    const row = el(`<div class="evidenceItem">
+      <div>${escapeHtml(r.authors||'')} — <em>${escapeHtml(r.title||'')}</em> (${escapeHtml(r.journal||'')}, ${r.year||''})</div>
+      <button class="btn secondary addAutoEvBtn" style="margin-top:4px; padding:4px 10px; font-size:11.5px;" type="button">+ ${t('save',locale)}</button>
+    </div>`);
+    row.querySelector('.addAutoEvBtn').addEventListener('click', async ()=>{
+      await supabase.from('evidence').insert({
+        exercise_id: ex.id,
+        citation: `${r.authors||''} ${r.title}. ${r.journal||''} ${r.year||''}.`.trim(),
+        url: r.url, added_by: profile.id,
+      });
+      delete evidenceAutoCache[ex.id];
+      toast(locale==='el' ? 'Προστέθηκε' : 'Added');
+      row.remove();
+    });
+    box.appendChild(row);
+  });
+}
+
+
+async function renderNewExerciseForm(main, onDone){
+  const { data: catRows } = await supabase.from('exercises').select('category');
+  const categories = [...new Set((catRows||[]).map(r=>r.category).filter(Boolean))];
+
+  const form = el(`<form class="card gold">
+    <div class="grid2">
+      <div class="field"><label>${locale==='el'?'Όνομα άσκησης':'Exercise name'} *</label><input class="f_name_el" required placeholder="${locale==='el'?'π.χ. Καθίσματα με μπάρα':'e.g. Back Squat'}"></div>
+      <div class="field"><label>${locale==='el'?'Κατηγορία':'Category'} *</label>
+        <input class="f_cat" list="catList" required placeholder="${locale==='el'?'π.χ. Δύναμη — κάτω σώμα':'e.g. Strength — lower body'}">
+        <datalist id="catList">${categories.map(c=>`<option value="${escapeHtml(c)}">`).join('')}</datalist>
+      </div>
+    </div>
+    <div class="field"><label>${t('why',locale)}</label><textarea class="f_why" placeholder="${locale==='el'?'Γιατί κάνουμε αυτή την άσκηση; (προαιρετικό — μπορείς να το συμπληρώσεις αργότερα)':'Why this exercise? (optional — can fill in later)'}"></textarea></div>
+    <button class="btn" type="submit">${t('save',locale)}</button>
+    <button class="btn secondary" type="button" id="toggleMoreBtn" style="margin-left:8px;">+ ${locale==='el'?'Περισσότερα στοιχεία (προαιρετικά)':'More details (optional)'}</button>
+    <div id="moreFields" style="display:none; margin-top:14px;">
+      <div class="field"><label>Name (EN)</label><input class="f_name_en" placeholder="${locale==='el'?'Προαιρετικό':'Optional'}"></div>
+      <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="f_desc"></textarea></div>
+      <div class="field"><label>🎬 ${locale==='el'?'Βίντεο εκτέλεσης (YouTube link)':'Execution video (YouTube link)'}</label><input class="f_video" placeholder="https://youtube.com/watch?v=..."></div>
+      <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="f_steps" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>
+      <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="f_cues"></textarea></div>
+      <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="f_mistakes"></textarea></div>
+    </div>
+  </form>`);
+  form.querySelector('#toggleMoreBtn').addEventListener('click', ()=>{
+    const box = form.querySelector('#moreFields');
+    const showing = box.style.display !== 'none';
+    box.style.display = showing ? 'none' : 'block';
+    form.querySelector('#toggleMoreBtn').textContent = (showing?'+ ':'− ') + (locale==='el'?'Περισσότερα στοιχεία (προαιρετικά)':'More details (optional)');
+  });
+  main.insertBefore(form, main.children[1] || null);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    await supabase.from('exercises').insert({
+      name_el: form.querySelector('.f_name_el').value.trim(),
+      name_en: form.querySelector('.f_name_en').value.trim() || null,
+      category: form.querySelector('.f_cat').value.trim(),
+      description_el: form.querySelector('.f_desc').value.trim(),
+      why_rationale_el: form.querySelector('.f_why').value.trim(),
+      video_url: form.querySelector('.f_video').value.trim() || null,
+      execution_steps: form.querySelector('.f_steps').value.trim() || null,
+      technique_cues: form.querySelector('.f_cues').value.trim() || null,
+      common_mistakes: form.querySelector('.f_mistakes').value.trim() || null,
+      created_by: profile.id,
+    });
+    onDone();
+  });
+}
+
+// ============================================================
+// COACH DASHBOARD
+// ============================================================
+async function renderCoachDashboard(main){
+  if(selectedClient){ return renderClientDetail(main); }
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: clients }, { data: invites }] = await Promise.all([
+    supabase.from('clients').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false}),
+    supabase.from('invite_codes').select('*').eq('coach_id', profile.id).eq('used', false).order('created_at',{ascending:false}),
+  ]);
+
+  const clientIds = (clients||[]).map(c=>c.id);
+  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {};
+  if(clientIds.length){
+    const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }] = await Promise.all([
+      supabase.from('checkins').select('client_id,date,adherence,pain_level,avg_energy').in('client_id', clientIds).order('date',{ascending:false}),
+      supabase.from('programs').select('client_id,title').in('client_id', clientIds).eq('active', true),
+      supabase.from('readiness_logs').select('client_id,date,energy,motivation').in('client_id', clientIds).order('date',{ascending:false}),
+    ]);
+    (allCheckins||[]).forEach(c=>{
+      if(!latestCheckinByClient[c.client_id]) latestCheckinByClient[c.client_id] = c;
+      (checkinsByClient[c.client_id] = checkinsByClient[c.client_id]||[]).push(c);
+    });
+    (allPrograms||[]).forEach(p=>{ if(!programByClient[p.client_id]) programByClient[p.client_id] = p; });
+    (allReadiness||[]).forEach(r=>{ (readinessByClient[r.client_id] = readinessByClient[r.client_id]||[]).push(r); });
+  }
+
+  function computeAlerts(client){
+    const alerts = [];
+    const cks = checkinsByClient[client.id] || [];
+    const rds = readinessByClient[client.id] || [];
+    const daysSince = (dateStr)=> (Date.now() - new Date(dateStr).getTime()) / (1000*60*60*24);
+
+    if(cks.length===0 || daysSince(cks[0].date) > 10){
+      alerts.push(t('alertNoCheckin',locale));
+    }
+    if(cks.length>=2 && cks[0].pain_level!=null && cks[1].pain_level!=null && cks[0].pain_level > cks[1].pain_level && cks[0].pain_level >= 4){
+      alerts.push(t('alertPainRising',locale));
+    }
+    if(cks.length>=2 && cks[1].adherence!=null && cks[0].adherence!=null && (cks[1].adherence - cks[0].adherence) >= 20){
+      alerts.push(t('alertAdherenceDrop',locale));
+    }
+    if(rds.length>=2){
+      const recent = rds.slice(0,3);
+      const avgEnergy = recent.reduce((s,r)=>s+(r.energy||0),0)/recent.length;
+      const avgMotivation = recent.reduce((s,r)=>s+(r.motivation||0),0)/recent.length;
+      if(avgEnergy < 4 || avgMotivation < 4) alerts.push(t('alertLowEnergy',locale));
+    }
+    return alerts;
+  }
+
+  main.innerHTML = '';
+  main.appendChild(el(`<h2 style="margin-bottom:14px;">${t('clients',locale)}</h2>`));
+
+  const alertsByClient = {};
+  (clients||[]).forEach(c=>{ alertsByClient[c.id] = computeAlerts(c); });
+  const flaggedClients = (clients||[]).filter(c=>alertsByClient[c.id].length>0);
+
+  if(clients?.length){
+    const panel = el(`<div class="card" style="border-left-color:${flaggedClients.length?'var(--danger)':'var(--red)'};">
+      <h3 style="font-size:13px; margin-bottom:10px;">🔎 ${t('needsAttention',locale)}</h3>
+    </div>`);
+    if(!flaggedClients.length){
+      panel.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft);">${t('noAlerts',locale)}</p>`));
+    } else {
+      flaggedClients.forEach(c=>{
+        const row = el(`<div class="clickable" style="padding:6px 0; border-top:1px solid var(--line);">
+          <strong style="font-size:13px;">${escapeHtml(c.full_name)}</strong>
+          <div style="font-size:11.5px; color:var(--danger); margin-top:2px;">${alertsByClient[c.id].map(a=>`⚠ ${escapeHtml(a)}`).join(' · ')}</div>
+        </div>`);
+        row.addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='checkins'; renderShell(); });
+        panel.appendChild(row);
+      });
+    }
+    main.appendChild(panel);
+  }
+
+  if(clients?.length){
+    const adherenceVals = Object.values(latestCheckinByClient).map(c=>c.adherence).filter(v=>v!=null);
+    const avgAdherence = adherenceVals.length ? Math.round(adherenceVals.reduce((a,b)=>a+b,0)/adherenceVals.length) : null;
+    const painCount = Object.values(latestCheckinByClient).filter(c=>c.pain_level>3).length;
+    const noProgramCount = clients.filter(c=>!programByClient[c.id]).length;
+
+    const activeClients = clients.filter(c=>(c.status||'trial')==='active');
+    const mrr = activeClients.reduce((sum,c)=>sum+(Number(c.monthly_price)||0),0);
+    const GOAL = 10000;
+    const pct = Math.min(100, Math.round((mrr/GOAL)*100));
+
+    const revenueBox = el(`<div class="card gold" style="margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+        <strong>${t('mrr',locale)}: <span class="mono" style="font-size:18px; color:var(--red-deep);">€${mrr}</span></strong>
+        <span style="font-size:12px; color:var(--ink-soft);">${t('goalProgress',locale)}: ${pct}%</span>
+      </div>
+      <div style="background:#efe4d4; border-radius:20px; height:8px; overflow:hidden;">
+        <div style="background:var(--red); height:100%; width:${pct}%;"></div>
+      </div>
+      <div style="font-size:11.5px; color:var(--ink-soft); margin-top:6px;">${t('activeClients',locale)}: ${activeClients.length}</div>
+    </div>`);
+    main.appendChild(revenueBox);
+
+    renderStatCards(main, [
+      { value: clients.length, label: locale==='el'?'Σύνολο ασκούμενων':'Total clients' },
+      { value: avgAdherence!=null ? avgAdherence+'%' : '—', label: locale==='el'?'Μέσο adherence':'Avg adherence' },
+      { value: painCount, label: locale==='el'?'Με πόνο >3/10':'Reporting pain >3/10' },
+      { value: noProgramCount, label: locale==='el'?'Χωρίς πρόγραμμα':'Without a program' },
+    ]);
+  }
+
+  const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
+    <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Όνομα νέου ασκούμενου':'New client name'}</label><input class="newClientName" required></div>
+    <button class="btn" type="submit">${t('newClient',locale)}</button>
+  </form>`);
+  main.appendChild(form);
+  const codeMsg = el(`<p class="savedTag" style="display:none;"></p>`);
+  main.appendChild(codeMsg);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name = form.querySelector('.newClientName').value.trim();
+    if(!name) return;
+    const code = uidCode();
+    await supabase.from('invite_codes').insert({ code, coach_id: profile.id, client_name: name });
+    try{ await navigator.clipboard.writeText(code); }catch(err){}
+    codeMsg.style.display = '';
+    codeMsg.innerHTML = `${locale==='el'?'Κωδικός πρόσκλησης (αντιγράφηκε ήδη)':'Invite code (already copied)'}: <span class="mono badge">${code}</span>`;
+    form.querySelector('.newClientName').value = '';
+    renderCoachDashboard(main);
+  });
+
+  if(invites?.length){
+    const box = el(`<div class="card"><h3 style="font-size:13px; margin-bottom:8px;">${locale==='el'?'Εκκρεμείς προσκλήσεις':'Pending invites'}</h3></div>`);
+    invites.forEach(i=>{
+      const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; font-size:12.8px; margin-bottom:6px;">
+        <span>${escapeHtml(i.client_name)} — <span class="mono badge">${i.code}</span></span>
+        <span style="display:flex; gap:6px;">
+          <button class="btn secondary copyInviteBtn" type="button" style="padding:4px 10px; font-size:11.5px;">${locale==='el'?'Αντιγραφή':'Copy'}</button>
+          <button class="btn danger cancelInviteBtn" type="button" style="padding:4px 10px; font-size:11.5px;">${locale==='el'?'Ακύρωση':'Cancel'}</button>
+        </span>
+      </div>`);
+      row.querySelector('.copyInviteBtn').addEventListener('click', async ()=>{
+        try{ await navigator.clipboard.writeText(i.code); toast(locale==='el'?'Αντιγράφηκε':'Copied'); }catch(err){}
+      });
+      row.querySelector('.cancelInviteBtn').addEventListener('click', async ()=>{
+        await supabase.from('invite_codes').delete().eq('code', i.code);
+        renderCoachDashboard(main);
+      });
+      box.appendChild(row);
+    });
+    main.appendChild(box);
+  }
+
+  if(!clients?.length){ main.appendChild(el(`<p>${t('noClients',locale)}</p>`)); return; }
+
+  const sports = [...new Set(clients.map(c=>c.sport).filter(Boolean))];
+  let activeSportFilter = renderCoachDashboard._sportFilter || '';
+  if(sports.length){
+    const filterBar = el(`<div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <label style="font-size:12px; color:var(--ink-soft);">${t('filterBySport',locale)}:</label>
+      <select class="sportFilterSelect" style="padding:6px 10px; border-radius:4px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
+        <option value="">${t('allClients',locale)}</option>
+        ${sports.map(s=>`<option value="${escapeHtml(s)}" ${activeSportFilter===s?'selected':''}>${escapeHtml(s)}</option>`).join('')}
+      </select>
+    </div>`);
+    filterBar.querySelector('.sportFilterSelect').addEventListener('change', (e)=>{
+      renderCoachDashboard._sportFilter = e.target.value;
+      renderCoachDashboard(main);
+    });
+    main.appendChild(filterBar);
+  }
+  const visibleClients = activeSportFilter ? clients.filter(c=>c.sport===activeSportFilter) : clients;
+
+  visibleClients.forEach(c=>{
+    const lastCk = latestCheckinByClient[c.id];
+    const prog = programByClient[c.id];
+    const painFlag = lastCk && lastCk.pain_level > 3;
+    const status = c.status || 'trial';
+    const statusColor = status==='active' ? 'var(--red-deep)' : (status==='paused' ? 'var(--gold)' : (status==='cancelled' ? 'var(--danger)' : 'var(--ink-soft)'));
+    const card = el(`<div class="card clientCard">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div class="clickable clientCardMain" style="flex:1; min-width:160px;">
+          <strong>${escapeHtml(c.full_name)}</strong>
+          <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="badge" style="color:${statusColor};">${t('status'+status.charAt(0).toUpperCase()+status.slice(1),locale)}</span>
+            ${c.sport ? `<span class="badge">🏃 ${escapeHtml(c.sport)}</span>` : ''}
+            ${c.pathway ? `<span class="badge" style="color:var(--red-deep);">${escapeHtml(c.pathway)}</span>` : ''}
+            ${c.monthly_price ? `<span class="badge mono">€${c.monthly_price}/${locale==='el'?'μήνα':'mo'}</span>` : ''}
+            ${prog ? `<span class="badge">${escapeHtml(prog.title)}</span>` : `<span class="badge" style="color:var(--danger);">${locale==='el'?'Χωρίς πρόγραμμα':'No program'}</span>`}
+            ${lastCk ? `<span class="badge">${locale==='el'?'Adherence':'Adherence'} ${lastCk.adherence}%</span>` : ''}
+            ${lastCk ? `<span class="badge mono">${lastCk.date}</span>` : ''}
+            ${painFlag ? `<span class="badge" style="background:#f6e0da; color:var(--danger);">⚠ ${locale==='el'?'Πόνος':'Pain'} ${lastCk.pain_level}/10</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn secondary jumpBtn" data-jump="live" style="padding:6px 12px; font-size:12px;">${t('liveSession',locale)}</button>
+          <button class="btn secondary jumpBtn" data-jump="program" style="padding:6px 12px; font-size:12px;">${t('program',locale)}</button>
+          <button class="btn secondary jumpBtn" data-jump="messages" style="padding:6px 12px; font-size:12px;">💬</button>
+          <button class="btn danger delClientBtn" type="button" style="padding:6px 12px; font-size:12px;">🗑</button>
+        </div>
+      </div>
+    </div>`);
+    card.querySelector('.clientCardMain').addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
+    card.querySelectorAll('.jumpBtn').forEach(b=>b.addEventListener('click', ()=>{
+      selectedClient = c; renderClientDetail._tab = b.dataset.jump; renderShell();
+    }));
+    card.querySelector('.delClientBtn').addEventListener('click', async ()=>{
+      if(!confirm(locale==='el' ? `Οριστική διαγραφή του/της ${c.full_name} και όλων των δεδομένων του (πρόγραμμα, check-ins, μηνύματα); Δεν αναιρείται.` : `Permanently delete ${c.full_name} and all their data (program, check-ins, messages)? This cannot be undone.`)) return;
+      await supabase.from('clients').delete().eq('id', c.id);
+      renderCoachDashboard(main);
+    });
+    main.appendChild(card);
+  });
+}
+
+async function renderClientDetail(main){
+  const client = selectedClient;
+  let tab = renderClientDetail._tab || 'program';
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: programs }, { data: exercises }, { data: checkins }, { data: readiness }, { data: intakeRow }] = await Promise.all([
+    supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', client.id).eq('active', true).order('created_at',{ascending:false}),
+    supabase.from('exercises').select('*').order('category'),
+    supabase.from('checkins').select('*').eq('client_id', client.id).order('date',{ascending:false}),
+    supabase.from('readiness_logs').select('*').eq('client_id', client.id).order('date',{ascending:false}),
+    supabase.from('client_intake').select('*').eq('client_id', client.id).maybeSingle(),
+  ]);
+  const program = programs?.[0] || null;
+
+  main.innerHTML = '';
+  const back = el(`<button class="btn secondary">← ${locale==='el'?'Πίσω':'Back'}</button>`);
+  back.addEventListener('click', ()=>{ selectedClient=null; renderShell(); });
+  main.appendChild(back);
+  main.appendChild(el(`<h2 style="margin-top:14px;">${escapeHtml(client.full_name)}</h2>`));
+
+  const tabs = el(`<div style="display:flex; gap:8px; margin:16px 0; flex-wrap:wrap;">
+    <button class="btn ${tab==='intake'?'':'secondary'}" data-t="intake">${t('intake',locale)}</button>
+    <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
+    <button class="btn ${tab==='live'?'':'secondary'}" data-t="live">${t('liveSession',locale)}</button>
+    <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
+    <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
+    <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
+    <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
+    <button class="btn ${tab==='business'?'':'secondary'}" data-t="business">${t('business',locale)}</button>
+  </div>`);
+  tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDetail._tab = b.dataset.t; renderClientDetail(main); }));
+  main.appendChild(tabs);
+
+  const body = el('<div></div>');
+  main.appendChild(body);
+
+  if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null);
+  else if(tab==='program') renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main), intakeRow?.data || null);
+  else if(tab==='live'){
+    if(program) await renderLiveSessionTab(body, client, program, true);
+    else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
+  }
+  else if(tab==='messages') await renderMessagesTab(body, client, 'coach');
+  else if(tab==='reassess') await renderReassessmentTab(body, client, true);
+  else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main));
+  else if(tab==='checkins'){
+    renderCheckinForm(body, checkins, client.id);
+    renderTrendChart(body, locale==='el'?'Adherence % & Ενέργεια ανά check-in':'Adherence % & Energy per check-in', checkins, 'date', [
+      {key:'adherence', label:'Adherence %'}, {key:'avg_energy', label:locale==='el'?'Ενέργεια':'Energy'},
+    ]);
+    renderHistTable(body, checkins, ['date','sessions_completed','avg_sleep','avg_energy','pain_level','adherence']);
+  }
+  else if(tab==='readiness'){
+    renderTrendChart(body, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
+      {key:'sleep', label:locale==='el'?'Ύπνος':'Sleep'}, {key:'energy', label:locale==='el'?'Ενέργεια':'Energy'},
+      {key:'stress', label:locale==='el'?'Στρες':'Stress'}, {key:'pain', label:locale==='el'?'Πόνος':'Pain'},
+    ]);
+    renderHistTable(body, readiness, ['date','sleep','energy','stress','pain','perceived_capacity']);
+  }
+}
+
+const INTAKE_SECTIONS = [
+  { key:'pain', title:'painCharacterization', fields:[
+    ['intensity','text'], ['extent','text'], ['frequency','text'],
+    ['movementRest','text'], ['neurological','text'], ['nocturnal','text'],
+  ]},
+  { key:'subjective', title:'subjectiveAssessment', fields:[
+    ['injuryDate','date'], ['mechanism','area'], ['symptoms','area'],
+    ['management','area'], ['tests','area'], ['medications','area'], ['contraindications','area'],
+  ]},
+  { key:'goals', title:'goalsAndHistory', fields:[
+    ['mainGoal','select',['Μυϊκή ανάπτυξη','Απώλεια λίπους','Αύξηση δύναμης','Βελτίωση φυσικής κατάστασης','Βελτίωση κινητικότητας','Μείωση ενοχλήσεων','Επιστροφή μετά τραυματισμό','Αθλητική απόδοση','Άλλο']],
+    ['goalWhy','area'], ['goalDeadline','text'], ['conditions','area'], ['medicalClearance','area'],
+    ['currentPain','area'], ['injuryHistory','area'], ['fearedMovement','area'],
+    ['yearsTraining','text'], ['currentProgram','area'], ['likedExercises','area'], ['dislikedExercises','area'],
+  ]},
+  { key:'lifestyle', title:'lifestyleAndEquipment', fields:[
+    ['trainingLocation','select',['Γυμναστήριο','Σπίτι','Εξωτερικός χώρος','Μικτό']],
+    ['equipmentAvailable','area'], ['adherenceDifficulty','text'], ['barriers','area'],
+  ]},
+  { key:'baseline', title:'baselineSection', fields:[
+    ['baselineWeight','text'], ['measurements','area'], ['restingHR','text'], ['progressPhotosNote','text'],
+  ]},
+];
+const INTAKE_FIELDS = INTAKE_SECTIONS.flatMap(s=>s.fields);
+
+function bodyOutlineSvg(view){
+  // Simple, recognizable front/back silhouette — not anatomically precise, matches a clinical pain-marking diagram.
+  return `<svg viewBox="0 0 100 210" data-view="${view}">
+    <circle cx="50" cy="18" r="13"/>
+    <path d="M50 31 C30 31 24 42 24 60 L24 95 C24 100 30 100 30 95 L32 62 L32 130 L26 205 L40 205 L48 120 L52 120 L60 205 L74 205 L68 130 L68 62 L70 95 C70 100 76 100 76 95 L76 60 C76 42 70 31 50 31 Z"/>
+  </svg>`;
+}
+
+function renderBodyDiagram(container, state, onChange){
+  const points = state.painPoints || [];
+  const wrap = el(`<div class="bodyDiagram">
+    <div class="bodyCol">
+      <div class="lbl">${t('frontView',locale)}</div>
+      <div class="svgHolder"></div>
+      <span class="clearMarkers" data-view="front">${t('clearMarkers',locale)}</span>
+    </div>
+    <div class="bodyCol">
+      <div class="lbl">${t('backView',locale)}</div>
+      <div class="svgHolder"></div>
+      <span class="clearMarkers" data-view="back">${t('clearMarkers',locale)}</span>
+    </div>
+  </div>
+  <p style="font-size:10.5px; color:var(--ink-soft); text-align:center; margin:-6px 0 14px;">${t('clickToMark',locale)}</p>`);
+
+  ['front','back'].forEach(view=>{
+    const holder = wrap.querySelectorAll('.svgHolder')[view==='front'?0:1];
+    const svgEl = el(bodyOutlineSvg(view));
+    svgEl.style.fill = '#e8dcc9';
+    svgEl.style.stroke = 'var(--ink-soft)';
+    svgEl.style.strokeWidth = '1';
+
+    function drawMarkers(){
+      svgEl.querySelectorAll('.painMarker').forEach(m=>m.remove());
+      points.filter(p=>p.view===view).forEach(p=>{
+        const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); dot.setAttribute('r', '4');
+        dot.setAttribute('class','painMarker');
+        svgEl.appendChild(dot);
+      });
+    }
+    drawMarkers();
+
+    svgEl.addEventListener('click', (e)=>{
+      const rect = svgEl.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 210;
+      points.push({ view, x: Math.round(x), y: Math.round(y) });
+      state.painPoints = points;
+      drawMarkers();
+      onChange();
+    });
+    holder.appendChild(svgEl);
+  });
+
+  wrap.querySelectorAll('.clearMarkers').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.painPoints = points.filter(p=>p.view!==btn.dataset.view);
+      container.querySelectorAll('svg').forEach(s=>{
+        if(s.dataset.view===btn.dataset.view) s.querySelectorAll('.painMarker').forEach(m=>m.remove());
+      });
+      onChange();
+    });
+  });
+
+  container.appendChild(wrap);
+}
+
+
+
+function renderIntakeForm(body, client, existingData){
+  const state = { ...(existingData||{}) };
+  let timer = null;
+
+  const card = el(`<div class="clinicalCard">
+    <div class="clinicalHeader">
+      <img src="data:image/webp;base64,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" alt="Happy Fit Physio" style="width:26px;height:26px;border-radius:5px;">
+      <span class="brand">Happy Fit Physio</span>
+      <span class="doc-title">${t('assessmentCard',locale)}</span>
+    </div>
+    <div style="margin-bottom:16px;"><strong>${escapeHtml(client.full_name||'')}</strong></div>
+    <div class="sectionsWrap"></div>
+    <span class="savedTag statusSpan"></span>
+  </div>`);
+  const sectionsWrap = card.querySelector('.sectionsWrap');
+  const statusEl = card.querySelector('.statusSpan');
+
+  function scheduleSave(){
+    statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+    clearTimeout(timer);
+    timer = setTimeout(async ()=>{
+      await supabase.from('client_intake').upsert({ client_id: client.id, data: state, updated_at: new Date().toISOString() }, { onConflict:'client_id' });
+      statusEl.textContent = t('intakeSaved',locale);
+    }, 700);
+  }
+
+  INTAKE_SECTIONS.forEach(section=>{
+    const secEl = el(`<div class="clinicalSection"><h4>${t(section.title,locale)}</h4><div class="grid2 fieldsGrid"></div></div>`);
+    const fieldsGrid = secEl.querySelector('.fieldsGrid');
+
+    if(section.key==='pain'){
+      renderBodyDiagram(secEl, state, scheduleSave);
+    }
+
+    section.fields.forEach(([key, type, opts])=>{
+      let input;
+      if(type==='select'){
+        input = el(`<select><option value="">—</option>${opts.map(o=>`<option value="${escapeHtml(o)}" ${state[key]===o?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`);
+      } else if(type==='area'){
+        input = el(`<textarea>${escapeHtml(state[key]||'')}</textarea>`);
+      } else if(type==='date'){
+        input = el(`<input type="date" value="${escapeHtml(state[key]||'')}">`);
+      } else {
+        input = el(`<input value="${escapeHtml(state[key]||'')}">`);
+      }
+      input.addEventListener(type==='select'?'change':'input', ()=>{
+        state[key] = input.value;
+        scheduleSave();
+      });
+      const fieldDiv = el(`<div class="field"><label>${t(key,locale)}</label></div>`);
+      fieldDiv.appendChild(input);
+      fieldsGrid.appendChild(fieldDiv);
+    });
+    sectionsWrap.appendChild(secEl);
+  });
+
+  body.appendChild(card);
+}
+
+async function renderReassessmentTab(body, client, isCoach){
+  const { data: rows } = await supabase.from('reassessments').select('*').eq('client_id', client.id).order('session_number',{ascending:true});
+
+  if(isCoach){
+    const form = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="field" style="width:90px; margin-bottom:0;"><label>${t('sessionNumber',locale)}</label><input class="f_sn" type="number" value="${(rows?.length||0)+1}"></div>
+      <div class="field" style="width:70px; margin-bottom:0;"><label>${t('pain',locale)}</label><input class="f_pain" type="number" min="0" max="10"></div>
+      <div class="field" style="min-width:140px; margin-bottom:0;"><label>${t('otherSymptoms',locale)}</label><input class="f_other"></div>
+      <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('passiveRom',locale)}</label><input class="f_prom"></div>
+      <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('activeRom',locale)}</label><input class="f_arom"></div>
+      <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('strength',locale)}</label><input class="f_str"></div>
+      <button class="btn" type="submit">${t('addSession',locale)}</button>
+    </form>`);
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      await supabase.from('reassessments').insert({
+        client_id: client.id,
+        session_number: Number(form.querySelector('.f_sn').value)||null,
+        pain: Number(form.querySelector('.f_pain').value)||null,
+        other_symptoms: form.querySelector('.f_other').value.trim(),
+        passive_rom: form.querySelector('.f_prom').value.trim(),
+        active_rom: form.querySelector('.f_arom').value.trim(),
+        strength: form.querySelector('.f_str').value.trim(),
+        created_by: profile.id,
+      });
+      body.innerHTML = '';
+      await renderReassessmentTab(body, client, isCoach);
+    });
+    body.appendChild(form);
+  }
+
+  if(!rows?.length){
+    body.appendChild(el(`<p>${t('noReassessments',locale)}</p>`));
+    return;
+  }
+  const table = el(`<table class="reassessTable"><thead><tr>
+    <th>${t('sessionNumber',locale)}</th><th>${t('pain',locale)}</th><th>${t('otherSymptoms',locale)}</th>
+    <th>${t('passiveRom',locale)}</th><th>${t('activeRom',locale)}</th><th>${t('strength',locale)}</th>
+  </tr></thead><tbody>
+    ${rows.map(r=>`<tr>
+      <td class="mono">${r.session_number??''}</td><td class="mono">${r.pain??''}</td><td>${escapeHtml(r.other_symptoms||'')}</td>
+      <td>${escapeHtml(r.passive_rom||'')}</td><td>${escapeHtml(r.active_rom||'')}</td><td>${escapeHtml(r.strength||'')}</td>
+    </tr>`).join('')}
+  </tbody></table>`);
+  body.appendChild(el('<div class="card tableScroll"></div>')).appendChild(table);
+}
+
+
+
+function renderReferFriendTab(body){
+  const card = el(`<div class="card gold">
+    <p style="font-size:13px; margin-bottom:12px;">${t('referFriendHint',locale)}</p>
+    <button class="btn genCodeBtn" type="button">${t('generateCode',locale)}</button>
+    <div class="codeResult" style="margin-top:12px;"></div>
+  </div>`);
+  card.querySelector('.genCodeBtn').addEventListener('click', async ()=>{
+    const { data: clientRow } = await supabase.from('clients').select('coach_id').eq('id', profile.id).single();
+    if(!clientRow) return;
+    const code = uidCode();
+    const { error } = await supabase.from('invite_codes').insert({ code, coach_id: clientRow.coach_id, client_name: `${locale==='el'?'Πρόταση από':'Referral from'} ${profile.full_name}` });
+    const resultBox = card.querySelector('.codeResult');
+    if(error){
+      resultBox.innerHTML = `<p class="errorTag">${escapeHtml(error.message)}</p>`;
+      return;
+    }
+    try{ await navigator.clipboard.writeText(code); }catch(err){}
+    resultBox.innerHTML = `<span class="mono badge" style="font-size:16px; padding:6px 14px;">${code}</span> <span class="savedTag">${locale==='el'?'(αντιγράφηκε)':'(copied)'}</span>`;
+  });
+  body.appendChild(card);
+}
+
+function renderBusinessTab(body, client, onChanged){
+  const profileCard = el(`<div class="card">
+    <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--red-deep); margin-bottom:10px;">${t('clientProfile',locale)}</h4>
+    <div class="grid2">
+      <div class="field"><label>${t('sport',locale)}</label>
+        <input class="f_sport" list="sportList" value="${escapeHtml(client.sport||'')}" placeholder="${locale==='el'?'π.χ. Ποδόσφαιρο':'e.g. Football'}">
+        <datalist id="sportList">
+          <option value="Τρέξιμο"><option value="Ποδόσφαιρο"><option value="Μπάσκετ"><option value="Βόλεϊ">
+          <option value="Τένις"><option value="Κολύμβηση"><option value="Γενική φυσική κατάσταση">
+        </datalist>
+      </div>
+      <div class="field"><label>${t('pathway',locale)}</label>
+        <select class="f_pathway">
+          <option value="">—</option>
+          <option value="Πρόληψη τραυματισμού" ${client.pathway==='Πρόληψη τραυματισμού'?'selected':''}>${locale==='el'?'Πρόληψη τραυματισμού':'Injury prevention'}</option>
+          <option value="Ενδυνάμωση" ${client.pathway==='Ενδυνάμωση'?'selected':''}>${locale==='el'?'Ενδυνάμωση':'Strengthening'}</option>
+          <option value="Return to Play" ${client.pathway==='Return to Play'?'selected':''}>Return to Play</option>
+          <option value="Αποκατάσταση" ${client.pathway==='Αποκατάσταση'?'selected':''}>${locale==='el'?'Αποκατάσταση':'Rehabilitation'}</option>
+          <option value="Απόδοση" ${client.pathway==='Απόδοση'?'selected':''}>${locale==='el'?'Απόδοση':'Performance'}</option>
+        </select>
+      </div>
+    </div>
+    <span class="savedTag profileStatusSpan"></span>
+  </div>`);
+  const profileStatusEl = profileCard.querySelector('.profileStatusSpan');
+  let profileTimer = null;
+  function scheduleProfileSave(){
+    profileStatusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+    clearTimeout(profileTimer);
+    profileTimer = setTimeout(async ()=>{
+      await supabase.from('clients').update({
+        sport: profileCard.querySelector('.f_sport').value.trim() || null,
+        pathway: profileCard.querySelector('.f_pathway').value || null,
+      }).eq('id', client.id);
+      profileStatusEl.textContent = t('saved',locale);
+      client.sport = profileCard.querySelector('.f_sport').value.trim();
+      client.pathway = profileCard.querySelector('.f_pathway').value;
+    }, 600);
+  }
+  profileCard.querySelector('.f_sport').addEventListener('input', scheduleProfileSave);
+  profileCard.querySelector('.f_pathway').addEventListener('change', scheduleProfileSave);
+  body.appendChild(profileCard);
+
+  const card = el(`<div class="card gold">
+    <div class="field"><label>${t('monthlyPrice',locale)}</label><input class="f_price" type="number" step="1" value="${client.monthly_price ?? ''}"></div>
+    <div class="field"><label>${t('status',locale)}</label>
+      <select class="f_status">
+        <option value="trial" ${(!client.status||client.status==='trial')?'selected':''}>${t('statusTrial',locale)}</option>
+        <option value="active" ${client.status==='active'?'selected':''}>${t('statusActive',locale)}</option>
+        <option value="paused" ${client.status==='paused'?'selected':''}>${t('statusPaused',locale)}</option>
+        <option value="cancelled" ${client.status==='cancelled'?'selected':''}>${t('statusCancelled',locale)}</option>
+      </select>
+    </div>
+    <div class="field"><label>${locale==='el'?'Προτάθηκε από':'Referred by'}</label><input class="f_ref" value="${escapeHtml(client.referred_by||'')}" placeholder="${locale==='el'?'π.χ. όνομα ασκούμενου':'e.g. client name'}"></div>
+    <div class="field"><label>${t('paymentLink',locale)}</label><input class="f_paylink" value="${escapeHtml(client.payment_link||'')}" placeholder="https://buy.stripe.com/... ή https://viva.com/..."></div>
+    <span class="savedTag statusSpan"></span>
+  </div>`);
+  const statusEl = card.querySelector('.statusSpan');
+  let timer = null;
+  function scheduleSave(){
+    statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+    clearTimeout(timer);
+    timer = setTimeout(async ()=>{
+      await supabase.from('clients').update({
+        monthly_price: card.querySelector('.f_price').value ? Number(card.querySelector('.f_price').value) : null,
+        status: card.querySelector('.f_status').value,
+        referred_by: card.querySelector('.f_ref').value.trim() || null,
+        payment_link: card.querySelector('.f_paylink').value.trim() || null,
+      }).eq('id', client.id);
+      statusEl.textContent = t('saved',locale);
+      client.monthly_price = card.querySelector('.f_price').value;
+      client.status = card.querySelector('.f_status').value;
+    }, 600);
+  }
+  card.querySelector('.f_price').addEventListener('input', scheduleSave);
+  card.querySelector('.f_status').addEventListener('change', scheduleSave);
+  card.querySelector('.f_paylink').addEventListener('input', scheduleSave);
+  card.querySelector('.f_ref').addEventListener('input', scheduleSave);
+  body.appendChild(card);
+}
+
+async function renderMessagesTab(body, client, viewerRole){
+  const headerRow = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <h3 style="font-size:13px; margin:0;">${t('messages',locale)}</h3>
+    <button class="btn secondary refreshMsgBtn" type="button" style="padding:5px 12px; font-size:11.5px;">🔄 ${locale==='el'?'Ανανέωση':'Refresh'}</button>
+  </div>`);
+  body.appendChild(headerRow);
+  headerRow.querySelector('.refreshMsgBtn').addEventListener('click', async ()=>{
+    body.innerHTML = '';
+    await renderMessagesTab(body, client, viewerRole);
+  });
+
+  const { data: msgs } = await supabase.from('messages').select('*').eq('client_id', client.id).order('created_at',{ascending:true});
+  const listWrap = el('<div class="card" style="max-height:400px; overflow-y:auto;"></div>');
+  if(!msgs?.length){
+    listWrap.appendChild(el(`<p style="color:var(--ink-soft); font-size:12.5px;">${t('noMessages',locale)}</p>`));
+  } else {
+    msgs.forEach(m=>{
+      const mine = m.sender_role === viewerRole;
+      listWrap.appendChild(el(`<div style="margin-bottom:10px; text-align:${mine?'right':'left'};">
+        <div style="display:inline-block; max-width:80%; padding:8px 12px; border-radius:10px; background:${mine?'var(--red)':'#efe4d4'}; color:${mine?'#fff':'var(--ink)'}; font-size:13px;">${escapeHtml(m.body)}</div>
+        <div style="font-size:10.5px; color:var(--ink-soft); margin-top:2px;">${new Date(m.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div>
+      </div>`));
+    });
+  }
+  body.appendChild(listWrap);
+
+  const form = el(`<form style="display:flex; gap:8px; margin-top:10px;">
+    <input class="msgInput" placeholder="${t('writeMessage',locale)}" style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid var(--line);" required>
+    <button class="btn" type="submit">${t('sendMessage',locale)}</button>
+  </form>`);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const input = form.querySelector('.msgInput');
+    const text = input.value.trim();
+    if(!text) return;
+    await supabase.from('messages').insert({ client_id: client.id, sender_id: profile.id, sender_role: viewerRole, body: text });
+    input.value = '';
+    body.innerHTML = '';
+    await renderMessagesTab(body, client, viewerRole);
+  });
+  body.appendChild(form);
+  listWrap.scrollTop = listWrap.scrollHeight;
+}
+
+function renderHistTable(body, rows, cols){
+  if(!rows?.length){ body.appendChild(el(`<p>—</p>`)); return; }
+  const table = el(`<table class="hist"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map(r=>`<tr>${cols.map(c=>`<td class="mono">${r[c]??''}</td>`).join('')}</tr>`).join('')}
+  </tbody></table>`);
+  body.appendChild(el('<div class="card tableScroll"></div>')).appendChild(table);
+}
+
+let _chartInstances = [];
+function destroyCharts(){ _chartInstances.forEach(c=>c.destroy()); _chartInstances = []; }
+
+function renderTrendChart(container, title, rows, dateKey, series){
+  // rows: array of objects sorted desc by date — we reverse for chronological display
+  if(!rows?.length){ return; }
+  const sorted = [...rows].sort((a,b)=> (a[dateKey]||'').localeCompare(b[dateKey]||''));
+  const wrap = el(`<div class="chartWrap"><div class="chartTitle">${escapeHtml(title)}</div><canvas></canvas></div>`);
+  container.appendChild(wrap);
+  const ctx = wrap.querySelector('canvas');
+  const palette = ['#c4201f','#241413','#e2a233','#6b5450'];
+  const chart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: sorted.map(r=>r[dateKey]),
+      datasets: series.map((s,i)=>({
+        label: s.label,
+        data: sorted.map(r=>r[s.key]),
+        borderColor: palette[i%palette.length],
+        backgroundColor: palette[i%palette.length],
+        tension:0.25,
+        spanGaps:true,
+      })),
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ beginAtZero:true, ticks:{font:{family:'IBM Plex Mono', size:10}} }, x:{ ticks:{font:{family:'IBM Plex Mono', size:9}} } },
+      plugins:{ legend:{ labels:{ font:{family:'Public Sans', size:10.5}, boxWidth:12 } } },
+    }
+  });
+  _chartInstances.push(chart);
+}
+
+function renderStatCards(container, stats){
+  const grid = el('<div class="statGrid"></div>');
+  stats.forEach(s=>{
+    grid.appendChild(el(`<div class="statCard"><div class="num">${s.value}</div><div class="lbl">${escapeHtml(s.label)}</div></div>`));
+  });
+  container.appendChild(grid);
+}
+
+const GOAL_CATEGORY_MAP = {
+  'Μυϊκή ανάπτυξη': ['Δύναμη'],
+  'Απώλεια λίπους': ['Δύναμη','Λειτουργική'],
+  'Αύξηση δύναμης': ['Δύναμη'],
+  'Βελτίωση φυσικής κατάστασης': ['Λειτουργική'],
+  'Βελτίωση κινητικότητας': ['Κινητικότητα','Κορμός'],
+  'Μείωση ενοχλήσεων': ['Πρόληψη τραυματισμού','Κορμός'],
+  'Επιστροφή μετά τραυματισμό': ['Πρόληψη τραυματισμού'],
+  'Αθλητική απόδοση': ['Λειτουργική','Δύναμη'],
+};
+const RISK_KEYWORDS = [
+  { match:['γόνατ','knee'], nameHints:['squat','step-up','καθίσματα','step-up'] },
+  { match:['ώμ','shoulder'], nameHints:['overhead press','pull-up','bench press','ώθηση ώμων'] },
+  { match:['μέση','οσφ','low back','lower back'], nameHints:['deadlift','άρση θανάτου','overhead press'] },
+  { match:['βουβων','προσαγωγ','groin','adductor'], nameHints:['copenhagen','step-up'] },
+  { match:['μηριαί','hamstring'], nameHints:['romanian','nordic','deadlift','άρση θανάτου'] },
+  { match:['καρπ','wrist'], nameHints:['bench press','plank','bird dog','πλανκ'] },
+];
+
+function computeRecommendations(intakeData, exercises){
+  const recommended = new Set();
+  const risky = new Map();
+  if(!intakeData) return { recommended, risky };
+
+  const goalCats = GOAL_CATEGORY_MAP[intakeData.mainGoal] || [];
+  const riskText = [intakeData.currentPain, intakeData.injuryHistory, intakeData.fearedMovement]
+    .filter(Boolean).join(' ').toLowerCase();
+
+  exercises.forEach(ex=>{
+    const cat = ex.category || '';
+    if(goalCats.some(gc=>cat.includes(gc))) recommended.add(ex.id);
+
+    const nameLower = (ex.name_el+' '+(ex.name_en||'')).toLowerCase();
+    RISK_KEYWORDS.forEach(rk=>{
+      if(rk.match.some(m=>riskText.includes(m)) && rk.nameHints.some(h=>nameLower.includes(h))){
+        risky.set(ex.id, true);
+      }
+    });
+  });
+  return { recommended, risky };
+}
+
+function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
+  if(!program){
+    const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
+      <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Τίτλος προγράμματος':'Program title'}</label><input class="progTitle" required></div>
+      <button class="btn" type="submit">${t('save',locale)}</button>
+    </form>`);
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const title = form.querySelector('.progTitle').value.trim();
+      if(!title) return;
+      await supabase.from('programs').insert({ client_id: client.id, coach_id: profile.id, title });
+      onChanged();
+    });
+    body.appendChild(form);
+    return;
+  }
+
+  const { recommended, risky } = computeRecommendations(intakeData, exercises);
+  const sortedExercises = [...exercises].sort((a,b)=>{
+    const score = ex => (risky.get(ex.id) ? 2 : (recommended.has(ex.id) ? 0 : 1));
+    return score(a) - score(b);
+  });
+
+  body.appendChild(el(`<h3 style="margin-bottom:10px;">${escapeHtml(program.title)}</h3>`));
+  if(intakeData){
+    body.appendChild(el(`<p style="font-size:11.5px; color:var(--ink-soft); margin:-4px 0 10px;">
+      ⭐ ${locale==='el'?'= ταιριάζει με τον στόχο του' : '= matches their goal'} ·
+      ⚠ ${locale==='el'?'= πιθανή σύγκρουση με ιστορικό — πρόσεξε, όχι απαγόρευση' : '= possible conflict with history — caution, not a ban'}
+    </p>`));
+  }
+  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+    <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
+      <select class="exSelect" required><option value="">—</option>${sortedExercises.map(ex=>{
+        const label = escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el));
+        const prefix = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
+        return `<option value="${ex.id}">${prefix}${label}</option>`;
+      }).join('')}</select>
+    </div>
+    <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="exSets" type="number" value="3"></div>
+    <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="exReps" value="8-10"></div>
+    <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="exLoad"></div>
+    <button class="btn" type="submit">+ ${locale==='el'?'Προσθήκη':'Add'}</button>
+  </form>`);
+  addForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const exercise_id = addForm.querySelector('.exSelect').value;
+    if(!exercise_id) return;
+    await supabase.from('program_exercises').insert({
+      program_id: program.id, exercise_id,
+      target_sets: Number(addForm.querySelector('.exSets').value)||3,
+      target_reps: addForm.querySelector('.exReps').value,
+      target_load: addForm.querySelector('.exLoad').value,
+      sort_order: (program.program_exercises||[]).length,
+    });
+    onChanged();
+  });
+  body.appendChild(addForm);
+
+  (program.program_exercises||[]).forEach(pe=>{
+    const card = el(`<div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div style="flex:1;">
+          <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>
+          <div class="mono peView" style="font-size:12.5px; color:var(--ink-soft);">${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+        </div>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="btn secondary editPeBtn" type="button" style="padding:4px 10px; font-size:11.5px;">✏️</button>
+          <button class="btn danger delPeBtn" type="button" style="padding:4px 10px; font-size:11.5px;">🗑</button>
+        </div>
+      </div>
+      <div class="peEditForm" style="display:none; margin-top:10px; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="peSets" type="number" value="${pe.target_sets||3}"></div>
+        <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="peReps" value="${escapeHtml(pe.target_reps||'')}"></div>
+        <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="peLoad" value="${escapeHtml(pe.target_load||'')}"></div>
+        <button class="btn savePeBtn" type="button" style="padding:6px 14px; font-size:12px;">${t('save',locale)}</button>
+      </div>
+    </div>`);
+    const editForm = card.querySelector('.peEditForm');
+    editForm.style.display = 'none';
+    card.querySelector('.editPeBtn').addEventListener('click', ()=>{
+      editForm.style.display = editForm.style.display==='none' ? 'flex' : 'none';
+    });
+    card.querySelector('.savePeBtn').addEventListener('click', async ()=>{
+      const newSets = Number(card.querySelector('.peSets').value)||3;
+      const newReps = card.querySelector('.peReps').value.trim();
+      const newLoad = card.querySelector('.peLoad').value.trim();
+      await supabase.from('program_exercises').update({ target_sets:newSets, target_reps:newReps, target_load:newLoad }).eq('id', pe.id);
+      onChanged();
+    });
+    card.querySelector('.delPeBtn').addEventListener('click', async ()=>{
+      if(!confirm(locale==='el' ? 'Αφαίρεση αυτής της άσκησης από το πρόγραμμα;' : 'Remove this exercise from the program?')) return;
+      await supabase.from('program_exercises').delete().eq('id', pe.id);
+      onChanged();
+    });
+    body.appendChild(card);
+  });
+}
+
+async function renderLiveSessionTab(body, client, program, loggedByCoach){
+  const today = new Date().toISOString().slice(0,10);
+  const { data: todaysLogs } = await supabase.from('session_logs').select('*').eq('client_id', client.id).eq('session_date', today);
+  const logMap = {};
+  (todaysLogs||[]).forEach(l=>{ logMap[`${l.program_exercise_id}_${l.set_number}`] = l; });
+
+  if(loggedByCoach){
+    body.appendChild(el(`<div class="card gold" style="padding:12px 16px; display:flex; align-items:center; gap:8px;">
+      <span style="font-size:16px;">🏋️</span><strong>${locale==='el'?'Καταγράφεις τη ζωντανή προπόνηση του/της':'You are logging the live session for'} ${escapeHtml(client.full_name)}</strong>
+    </div>`));
+  }
+  body.appendChild(el(`<p class="badge">${today}</p>`));
+  (program.program_exercises||[]).forEach(pe=>{
+    const card = el(`<div class="card">
+      <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>
+      <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Στόχος':'Target'}: ${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+    </div>`);
+    const setsCount = pe.target_sets || 3;
+    for(let s=1; s<=setsCount; s++){
+      const existing = logMap[`${pe.id}_${s}`];
+      let logId = existing?.id || null;
+      const row = el(`<div class="setRow">
+        <span class="mono" style="width:24px;">#${s}</span>
+        <input class="f_reps" placeholder="${t('reps',locale)}" value="${existing?.reps ?? ''}">
+        <input class="f_load" placeholder="${t('load',locale)}" value="${existing?.load_kg ?? ''}">
+        <input class="f_rpe" placeholder="${t('rpe',locale)}" value="${existing?.rpe ?? ''}">
+        <input class="f_pain" placeholder="${t('pain',locale)}" value="${existing?.pain ?? ''}">
+        <button class="btn ${existing?'':'secondary'}" type="button" style="padding:6px 12px; font-size:12px;">${existing ? '✓ '+t('saved',locale).replace('✓ ','') : t('logSet',locale)}</button>
+      </div>`);
+      row.querySelector('button').addEventListener('click', async ()=>{
+        const payload = {
+          program_exercise_id: pe.id, client_id: client.id, logged_by: profile.id, session_date: today, set_number: s,
+          reps: Number(row.querySelector('.f_reps').value)||null,
+          load_kg: Number(row.querySelector('.f_load').value)||null,
+          rpe: Number(row.querySelector('.f_rpe').value)||null,
+          pain: Number(row.querySelector('.f_pain').value)||0,
+        };
+        const btn = row.querySelector('button');
+        btn.textContent = '…';
+        try{
+          if(logId){
+            const { error } = await supabase.from('session_logs').update(payload).eq('id', logId);
+            if(error) throw error;
+          } else {
+            const { data, error } = await supabase.from('session_logs').insert(payload).select().single();
+            if(error) throw error;
+            logId = data.id;
+          }
+          btn.textContent = '✓ '+t('saved',locale).replace('✓ ','');
+          btn.classList.remove('secondary');
+          toast(t('saved',locale));
+        }catch(err){
+          btn.textContent = t('logSet',locale);
+          toast(locale==='el' ? 'Σφάλμα αποθήκευσης' : 'Save error');
+        }
+      });
+      card.appendChild(row);
+    }
+    body.appendChild(card);
+  });
+}
+
+// ============================================================
+// CLIENT DASHBOARD
+// ============================================================
+async function renderClientDashboard(main){
+  let tab = renderClientDashboard._tab || 'program';
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }] = await Promise.all([
+    supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
+    supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
+    supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
+    supabase.from('clients').select('payment_link,monthly_price').eq('id', profile.id).maybeSingle(),
+  ]);
+  const program = programs?.[0] || null;
+
+  main.innerHTML = '';
+  const tabs = el(`<div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+    <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
+    <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
+    <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
+    <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">${t('progress',locale)}</button>
+    <button class="btn ${tab==='payment'?'':'secondary'}" data-t="payment">💳 ${t('payment',locale)}</button>
+    <button class="btn ${tab==='refer'?'':'secondary'}" data-t="refer">${t('referFriend',locale)}</button>
+  </div>`);
+  tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.t; renderClientDashboard(main); }));
+  main.appendChild(tabs);
+
+  const body = el('<div></div>');
+  main.appendChild(body);
+
+  if(tab==='program'){
+    if(program) await renderLiveSessionTab(body, profile, program, false);
+    else body.appendChild(el(`<p>${locale==='el'?'Δεν έχεις ακόμα πρόγραμμα.':'No program yet.'}</p>`));
+  } else if(tab==='messages'){
+    await renderMessagesTab(body, profile, 'client');
+  } else if(tab==='payment'){
+    const card = el('<div class="card gold"></div>');
+    if(clientRow?.payment_link){
+      card.innerHTML = `
+        ${clientRow.monthly_price ? `<p style="margin-bottom:14px;">${locale==='el'?'Μηνιαία συνδρομή':'Monthly subscription'}: <strong class="mono">€${clientRow.monthly_price}</strong></p>` : ''}
+        <a class="btn" href="${escapeHtml(clientRow.payment_link)}" target="_blank" rel="noreferrer">${t('payNow',locale)} ↗</a>
+      `;
+    } else {
+      card.innerHTML = `<p style="color:var(--ink-soft);">${t('noPaymentLink',locale)}</p>`;
+    }
+    body.appendChild(card);
+  } else if(tab==='refer'){
+    renderReferFriendTab(body);
+  } else if(tab==='readiness'){
+    renderReadinessForm(body, readiness);
+  } else if(tab==='progress'){
+    body.appendChild(el(`<h3 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">Weekly check-in</h3>`));
+    renderTrendChart(body, locale==='el'?'Adherence % & Ενέργεια':'Adherence % & Energy', checkins, 'date', [
+      {key:'adherence', label:'Adherence %'}, {key:'avg_energy', label:locale==='el'?'Ενέργεια':'Energy'},
+    ]);
+    renderHistTable(body, checkins, ['date','sessions_completed','avg_sleep','avg_energy','pain_level','adherence']);
+    body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">Daily readiness</h3>`));
+    renderTrendChart(body, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
+      {key:'sleep', label:locale==='el'?'Ύπνος':'Sleep'}, {key:'energy', label:locale==='el'?'Ενέργεια':'Energy'},
+      {key:'stress', label:locale==='el'?'Στρες':'Stress'}, {key:'pain', label:locale==='el'?'Πόνος':'Pain'},
+    ]);
+    renderHistTable(body, readiness, ['date','sleep','energy','stress','pain','perceived_capacity']);
+  }
+}
+
+function renderReadinessForm(body, existing){
+  const today = new Date().toISOString().slice(0,10);
+  const todays = existing.find(r=>r.date===today) || { sleep:6, energy:6, stress:5, soreness:5, motivation:6, pain:0, perceived_capacity:6 };
+  const scales = [
+    ['sleep', {el:'Ύπνος', en:'Sleep'}], ['energy', {el:'Ενέργεια', en:'Energy'}], ['stress', {el:'Στρες', en:'Stress'}],
+    ['soreness', {el:'Πιάσιμο', en:'Soreness'}], ['motivation', {el:'Motivation', en:'Motivation'}], ['pain', {el:'Πόνος', en:'Pain'}],
+    ['perceived_capacity', {el:'Πόσο μπορείς να αποδώσεις σήμερα', en:'How capable do you feel today'}],
+  ];
+  const card = el(`<div class="card gold"><h3 style="margin-bottom:10px;">${locale==='el'?'Σήμερα':'Today'}</h3></div>`);
+  const state = { ...todays, date: today };
+  let timer = null;
+  const statusEl = el(`<span class="savedTag"></span>`);
+  scales.forEach(([k,l])=>{
+    const row = el(`<div class="field"><label>${l[locale]||l.el}: <span class="mono val">${state[k]}</span></label><input type="range" min="0" max="10" value="${state[k]}"></div>`);
+    row.querySelector('input').addEventListener('input', (e)=>{
+      state[k] = Number(e.target.value);
+      row.querySelector('.val').textContent = state[k];
+      statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+      clearTimeout(timer);
+      timer = setTimeout(async ()=>{
+        await supabase.from('readiness_logs').upsert({ ...state, client_id: profile.id }, { onConflict:'client_id,date' });
+        statusEl.textContent = t('saved',locale);
+      }, 600);
+    });
+    card.appendChild(row);
+  });
+  card.appendChild(statusEl);
+  body.appendChild(card);
+}
+
+function renderCheckinForm(body, existing, clientId){
+  const today = new Date().toISOString().slice(0,10);
+  let currentDate = today;
+  const scales = [
+    ['sessions_completed', {el:'Προπονήσεις', en:'Sessions'}, 0,14], ['avg_sleep', {el:'Ύπνος', en:'Sleep'}, 0,10],
+    ['avg_stress', {el:'Στρες', en:'Stress'}, 0,10], ['avg_energy', {el:'Ενέργεια', en:'Energy'}, 0,10],
+    ['avg_soreness', {el:'Πιάσιμο', en:'Soreness'}, 0,10], ['avg_motivation', {el:'Motivation', en:'Motivation'}, 0,10],
+    ['pain_level', {el:'Πόνος', en:'Pain'}, 0,10], ['difficulty', {el:'Δυσκολία', en:'Difficulty'}, 0,10],
+    ['adherence', {el:'Adherence %', en:'Adherence %'}, 0,100],
+  ];
+  const textLabels = {
+    problem_exercise: {el:'Άσκηση που δημιούργησε πρόβλημα', en:'Exercise that caused a problem'},
+    adherence_challenges: {el:'Τι δυσκόλεψε', en:'What was challenging'},
+    what_worked: {el:'Τι λειτούργησε', en:'What worked'},
+    feedback_changes: {el:'Τι θα άλλαζες την επόμενη εβδομάδα', en:'What would you change next week'},
+    anything_else: {el:'Κάτι άλλο σημαντικό', en:'Anything else important'},
+  };
+  const texts = ['problem_exercise','adherence_challenges','what_worked','feedback_changes','anything_else'];
+
+  const wrap = el('<div></div>');
+  body.appendChild(wrap);
+
+  function draw(){
+    wrap.innerHTML = '';
+    const existingForDate = existing.find(c=>c.date===currentDate) || {};
+    const state = { sessions_completed:0, avg_sleep:6, avg_stress:5, avg_energy:6, avg_soreness:5, avg_motivation:6, pain_level:0, difficulty:5, adherence:80, problem_exercise:'', adherence_challenges:'', what_worked:'', feedback_changes:'', anything_else:'', ...existingForDate };
+    let timer = null;
+    const card = el(`<div class="card gold">
+      <div class="field"><label>${locale==='el'?'Ημερομηνία':'Date'}</label><input type="date" class="dateInput" value="${currentDate}"></div>
+      <div class="grid2 scalesGrid"></div>
+      <div class="textsGrid"></div>
+      <span class="savedTag statusSpan"></span>
+    </div>`);
+    const statusEl = card.querySelector('.statusSpan');
+    card.querySelector('.dateInput').addEventListener('change', (e)=>{ currentDate = e.target.value; draw(); });
+
+    const grid = card.querySelector('.scalesGrid');
+    scales.forEach(([k,l,min,max])=>{
+      const row = el(`<div class="field"><label>${l[locale]||l.el}: <span class="mono val">${state[k]}</span></label><input type="range" min="${min}" max="${max}" value="${state[k]}"></div>`);
+      row.querySelector('input').addEventListener('input', (e)=>{
+        state[k] = Number(e.target.value);
+        row.querySelector('.val').textContent = state[k];
+        scheduleSave();
+      });
+      grid.appendChild(row);
+    });
+    const textsGrid = card.querySelector('.textsGrid');
+    texts.forEach(k=>{
+      const lbl = textLabels[k]?.[locale] || textLabels[k]?.el || k.replace(/_/g,' ');
+      const row = el(`<div class="field"><label>${lbl}</label><textarea>${escapeHtml(state[k])}</textarea></div>`);
+      row.querySelector('textarea').addEventListener('input', (e)=>{ state[k]=e.target.value; scheduleSave(); });
+      textsGrid.appendChild(row);
+    });
+
+    function scheduleSave(){
+      statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+      clearTimeout(timer);
+      timer = setTimeout(async ()=>{
+        await supabase.from('checkins').upsert({ ...state, client_id: clientId, date: currentDate }, { onConflict:'client_id,date' });
+        statusEl.textContent = t('saved',locale);
+      }, 700);
+    }
+
+    wrap.appendChild(card);
+  }
+  draw();
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+async function boot(){
+  const { data } = await supabase.auth.getSession();
+  session = data.session;
+  if(!session){ profile = null; renderAuth(); return; }
+  const { data: p, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+  if(error || !p){ profile = null; renderAuth(); return; }
+  profile = p; locale = p.locale || 'el';
+  view = 'dashboard'; selectedClient = null;
+  renderShell();
+}
+
+supabase.auth.onAuthStateChange((_evt, s)=>{ session = s; });
+boot();
+</script>
+</body>
+</html>
