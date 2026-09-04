@@ -93,6 +93,21 @@
     .book-section h2 { font-family:'Fraunces', serif; font-weight:300; font-style:italic; font-size:clamp(1.8rem,4.5vw,2.5rem); margin-bottom:14px; }
     .book-section p { color:rgba(255,255,255,0.75); margin-bottom:36px; font-size:14px; }
 
+    /* ── LEAD FORM ── */
+    .lead-section { padding:90px 24px; max-width:560px; margin:0 auto; }
+    .lead-card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:36px 32px; box-shadow:0 4px 20px rgba(36,20,19,0.08); }
+    .lead-card h3 { font-size:20px; margin-bottom:8px; text-align:center; }
+    .lead-card .sub { font-size:13px; color:var(--ink-soft); text-align:center; margin-bottom:26px; }
+    .lead-field { margin-bottom:14px; }
+    .lead-field label { display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:5px; }
+    .lead-field input, .lead-field select { width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--line); font-family:inherit; font-size:14px; }
+    .lead-consent { display:flex; align-items:flex-start; gap:8px; font-size:11.5px; color:var(--ink-soft); margin:16px 0 20px; line-height:1.5; }
+    .lead-consent input { width:auto; margin-top:2px; }
+    .lead-submit { width:100%; padding:13px; border-radius:8px; border:none; background:var(--red); color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
+    .lead-submit:hover { background:var(--red-deep); }
+    .lead-success { text-align:center; padding:20px 0; }
+    .lead-error { color:var(--danger); font-size:12.5px; margin-top:10px; text-align:center; }
+
     footer { text-align:center; padding:32px 24px; font-size:11.5px; color:var(--ink-soft); }
     footer a { color:var(--red-deep); text-decoration:underline; cursor:pointer; }
 
@@ -205,6 +220,37 @@
     </div>
   </section>
 
+  <!-- LEAD CAPTURE -->
+  <section class="lead-section">
+    <div class="lead-card" id="leadCard">
+      <h3>Ζήτησε δωρεάν πρώτη επικοινωνία</h3>
+      <p class="sub">Άφησε τα στοιχεία σου — θα επικοινωνήσουμε μαζί σου σύντομα.</p>
+      <form id="leadForm">
+        <div class="lead-field"><label>Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
+        <div class="lead-field"><label>Email</label><input type="email" id="leadEmail" required></div>
+        <div class="lead-field"><label>Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
+        <div class="lead-field">
+          <label>Ενδιαφέρον</label>
+          <select id="leadInterest">
+            <option value="">—</option>
+            <option>Μυϊκή ανάπτυξη / Δύναμη</option>
+            <option>Απώλεια λίπους</option>
+            <option>Return to Play / Αποκατάσταση</option>
+            <option>Πρόληψη τραυματισμού</option>
+            <option>Γενική φυσική κατάσταση</option>
+            <option>Άλλο</option>
+          </select>
+        </div>
+        <label class="lead-consent">
+          <input type="checkbox" id="leadConsent" required>
+          <span>Συναινώ να λαμβάνω ενημερωτικά email/μηνύματα σχετικά με το coaching. Μπορώ να διαγραφώ οποιαδήποτε στιγμή.</span>
+        </label>
+        <button class="lead-submit" type="submit">Στείλε τα στοιχεία μου</button>
+        <div class="lead-error" id="leadError" style="display:none;"></div>
+      </form>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer>
     <div style="margin-bottom:8px;">
@@ -234,6 +280,40 @@
       </div>
     </div>
   </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    const supabase = createClient(
+      'https://hxbpuamzisdldwbuumda.supabase.co',
+      'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH'
+    );
+    const leadForm = document.getElementById('leadForm');
+    const leadCard = document.getElementById('leadCard');
+    const leadError = document.getElementById('leadError');
+    leadForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      leadError.style.display = 'none';
+      const payload = {
+        full_name: document.getElementById('leadName').value.trim(),
+        email: document.getElementById('leadEmail').value.trim(),
+        phone: document.getElementById('leadPhone').value.trim() || null,
+        interest: document.getElementById('leadInterest').value || null,
+        marketing_consent: document.getElementById('leadConsent').checked,
+        source: 'landing_page',
+      };
+      const submitBtn = leadForm.querySelector('.lead-submit');
+      submitBtn.disabled = true; submitBtn.textContent = 'Αποστολή…';
+      try{
+        const { error } = await supabase.from('leads').insert(payload);
+        if(error) throw error;
+        leadCard.innerHTML = '<div class="lead-success"><h3>Ευχαριστούμε! 🎉</h3><p class="sub">Λάβαμε τα στοιχεία σου — θα επικοινωνήσουμε σύντομα.</p></div>';
+      }catch(err){
+        leadError.textContent = 'Κάτι πήγε στραβά. Δοκίμασε ξανά ή στείλε μας μήνυμα απευθείας.';
+        leadError.style.display = 'block';
+        submitBtn.disabled = false; submitBtn.textContent = 'Στείλε τα στοιχεία μου';
+      }
+    });
+  </script>
 
   <script>
     // ── CONFIG ──────────────────────────────────────────────
