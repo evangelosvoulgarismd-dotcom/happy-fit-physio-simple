@@ -260,6 +260,22 @@ const STR = {
   nextCall:{el:'Επόμενη κλήση', en:'Next call'},
   joinCall:{el:'Συμμετοχή στην κλήση', en:'Join call'},
   noCallScheduled:{el:'Δεν έχει οριστεί ακόμα Zoom κλήση.', en:'No Zoom call scheduled yet.'},
+  templates:{el:'Πρότυπα Προγραμμάτων', en:'Program Templates'},
+  newTemplate:{el:'+ Νέο πρότυπο', en:'+ New template'},
+  applyTemplate:{el:'Εφαρμογή προτύπου', en:'Apply template'},
+  templateApplied:{el:'✓ Το πρόγραμμα δημιουργήθηκε από το πρότυπο', en:'✓ Program created from template'},
+  noTemplates:{el:'Δεν έχεις ακόμα πρότυπα προγραμμάτων.', en:'No program templates yet.'},
+  suggestedTemplates:{el:'Προτεινόμενα (βάσει δραστηριότητας)', en:'Suggested (based on activity)'},
+  allTemplates:{el:'Όλα τα πρότυπα', en:'All templates'},
+  progressPhotos:{el:'Φωτογραφίες Προόδου', en:'Progress Photos'},
+  uploadPhoto:{el:'Ανέβασμα φωτογραφίας', en:'Upload photo'},
+  noPhotos:{el:'Δεν υπάρχουν ακόμα φωτογραφίες προόδου.', en:'No progress photos yet.'},
+  availability:{el:'Διαθεσιμότητα Κλήσεων', en:'Call Availability'},
+  addSlot:{el:'+ Προσθήκη διαθέσιμης ώρας', en:'+ Add available slot'},
+  bookThisSlot:{el:'Κράτηση', en:'Book'},
+  slotBooked:{el:'✓ Κρατήθηκε', en:'✓ Booked'},
+  noSlots:{el:'Δεν υπάρχουν ακόμα διαθέσιμες ώρες.', en:'No available slots yet.'},
+  yourBookedCall:{el:'Η κλήση σου', en:'Your call'},
 };
 function t(k, loc){ return STR[k]?.[loc] || STR[k]?.el || k; }
 
@@ -492,6 +508,8 @@ function renderShell(){
       <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
       <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button>` : ''}
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
         <button class="navBtn" id="exportBtn">${t('exportData',locale)}</button>
         <button class="navBtn" id="logoutBtn">${t('logout',locale)}</button>
@@ -520,6 +538,8 @@ function renderShell(){
   const main = shell.querySelector('#main');
   if(view==='library') renderLibrary(main, isCoach);
   else if(view==='leads' && isCoach) renderLeadsView(main);
+  else if(view==='templates' && isCoach) renderTemplatesView(main);
+  else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(isCoach) renderCoachDashboard(main);
   else renderClientDashboard(main);
 }
@@ -650,6 +670,149 @@ async function renderLeadsView(main){
       if(!confirm(locale==='el' ? `Διαγραφή του ενδιαφερόμενου "${l.full_name}";` : `Delete lead "${l.full_name}"?`)) return;
       await supabase.from('leads').delete().eq('id', l.id);
       renderLeadsView(main);
+    });
+    main.appendChild(card);
+  });
+}
+
+async function renderTemplatesView(main){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: templates }, { data: exercises }] = await Promise.all([
+    supabase.from('program_templates').select('*, program_template_exercises(*, exercises(*))').eq('coach_id', profile.id).order('created_at',{ascending:false}),
+    supabase.from('exercises').select('*').order('category'),
+  ]);
+  main.innerHTML = '';
+
+  const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>📋 ${t('templates',locale)}</h2>
+    <button class="btn" id="newTplBtn">${t('newTemplate',locale)}</button>
+  </div>`);
+  main.appendChild(header);
+
+  header.querySelector('#newTplBtn').addEventListener('click', ()=>{
+    const form = el(`<form class="card gold">
+      <div class="field"><label>${locale==='el'?'Τίτλος προτύπου':'Template title'}</label><input class="tpl_title" required placeholder="π.χ. Return to Play — Ποδόσφαιρο"></div>
+      <div class="grid2">
+        <div class="field"><label>${t('sport',locale)}</label><input class="tpl_sport" placeholder="π.χ. Ποδόσφαιρο"></div>
+        <div class="field"><label>${t('pathway',locale)}</label>
+          <select class="tpl_pathway">
+            <option value="">—</option>
+            <option>Πρόληψη τραυματισμού</option><option>Ενδυνάμωση</option>
+            <option>Return to Play</option><option>Αποκατάσταση</option><option>Απόδοση</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" type="submit">${t('save',locale)}</button>
+    </form>`);
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      await supabase.from('program_templates').insert({
+        coach_id: profile.id,
+        title: form.querySelector('.tpl_title').value.trim(),
+        sport: form.querySelector('.tpl_sport').value.trim() || null,
+        pathway: form.querySelector('.tpl_pathway').value || null,
+      });
+      renderTemplatesView(main);
+    });
+    main.insertBefore(form, main.children[1] || null);
+  });
+
+  if(!templates?.length){ main.appendChild(el(`<p>${t('noTemplates',locale)}</p>`)); return; }
+
+  templates.forEach(tpl=>{
+    const card = el(`<div class="card">
+      <div class="clickable" style="display:flex; justify-content:space-between;">
+        <div><strong>${escapeHtml(tpl.title)}</strong> ${tpl.sport?`<span class="badge">🏃 ${escapeHtml(tpl.sport)}</span>`:''} ${tpl.pathway?`<span class="badge" style="color:var(--red-deep);">${escapeHtml(tpl.pathway)}</span>`:''}</div>
+        <span class="caret">▸</span>
+      </div>
+      <div class="detail" style="display:none; margin-top:12px;">
+        <div class="exList"></div>
+        <form class="addExToTpl" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;">
+          <div class="field" style="min-width:180px; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
+            <select class="tplExSelect" required><option value="">—</option>${exercises.map(ex=>`<option value="${ex.id}">${escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el))}</option>`).join('')}</select>
+          </div>
+          <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="tplSets" type="number" value="3"></div>
+          <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="tplReps" value="8-10"></div>
+          <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="tplLoad"></div>
+          <button class="btn" type="submit">+</button>
+        </form>
+        <button class="btn danger delTplBtn" type="button" style="margin-top:12px;">${t('delete',locale)}</button>
+      </div>
+    </div>`);
+    const exList = card.querySelector('.exList');
+    (tpl.program_template_exercises||[]).forEach(te=>{
+      const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px;">
+        <span>${escapeHtml(locale==='el'?te.exercises.name_el:(te.exercises.name_en||te.exercises.name_el))} <span class="mono" style="color:var(--ink-soft);">${te.target_sets}×${escapeHtml(te.target_reps||'')} @ ${escapeHtml(te.target_load||'—')}</span></span>
+        <button class="btn danger delTeBtn" type="button" style="padding:3px 8px; font-size:11px;">✕</button>
+      </div>`);
+      row.querySelector('.delTeBtn').addEventListener('click', async ()=>{
+        await supabase.from('program_template_exercises').delete().eq('id', te.id);
+        renderTemplatesView(main);
+      });
+      exList.appendChild(row);
+    });
+    card.querySelector('.clickable').addEventListener('click', ()=>{
+      const d = card.querySelector('.detail'); const c = card.querySelector('.caret');
+      const open = d.style.display !== 'none';
+      d.style.display = open ? 'none' : 'block'; c.textContent = open ? '▸' : '▾';
+    });
+    card.querySelector('.addExToTpl').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const exercise_id = card.querySelector('.tplExSelect').value;
+      if(!exercise_id) return;
+      await supabase.from('program_template_exercises').insert({
+        template_id: tpl.id, exercise_id,
+        target_sets: Number(card.querySelector('.tplSets').value)||3,
+        target_reps: card.querySelector('.tplReps').value,
+        target_load: card.querySelector('.tplLoad').value,
+        sort_order: (tpl.program_template_exercises||[]).length,
+      });
+      renderTemplatesView(main);
+    });
+    card.querySelector('.delTplBtn').addEventListener('click', async ()=>{
+      if(!confirm(locale==='el' ? `Διαγραφή του προτύπου "${tpl.title}";` : `Delete template "${tpl.title}"?`)) return;
+      await supabase.from('program_templates').delete().eq('id', tpl.id);
+      renderTemplatesView(main);
+    });
+    main.appendChild(card);
+  });
+}
+
+async function renderAvailabilityView(main){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const { data: slots } = await supabase.from('availability_slots').select('*, clients(full_name)').eq('coach_id', profile.id).order('start_at',{ascending:true});
+  main.innerHTML = '';
+
+  main.appendChild(el(`<h2 style="margin-bottom:16px;">🗓️ ${t('availability',locale)}</h2>`));
+
+  const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+    <div class="field" style="margin-bottom:0;"><label>${locale==='el'?'Ημερομηνία & ώρα έναρξης':'Start date & time'}</label><input class="slotStart" type="datetime-local" required></div>
+    <div class="field" style="width:100px; margin-bottom:0;"><label>${locale==='el'?'Διάρκεια (λεπτά)':'Duration (min)'}</label><input class="slotDuration" type="number" value="30"></div>
+    <button class="btn" type="submit">${t('addSlot',locale)}</button>
+  </form>`);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const start = new Date(form.querySelector('.slotStart').value);
+    const mins = Number(form.querySelector('.slotDuration').value)||30;
+    const end = new Date(start.getTime() + mins*60000);
+    await supabase.from('availability_slots').insert({ coach_id: profile.id, start_at: start.toISOString(), end_at: end.toISOString() });
+    renderAvailabilityView(main);
+  });
+  main.appendChild(form);
+
+  if(!slots?.length){ main.appendChild(el(`<p>${t('noSlots',locale)}</p>`)); return; }
+
+  slots.forEach(s=>{
+    const card = el(`<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <span class="mono">${new Date(s.start_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</span>
+        ${s.booked_by ? `<span class="badge" style="margin-left:8px;">${t('slotBooked',locale)} — ${escapeHtml(s.clients?.full_name||'')}</span>` : `<span class="badge" style="margin-left:8px; color:var(--ink-soft);">${locale==='el'?'Ελεύθερο':'Open'}</span>`}
+      </div>
+      <button class="btn danger delSlotBtn" type="button" style="padding:5px 12px; font-size:12px;">🗑</button>
+    </div>`);
+    card.querySelector('.delSlotBtn').addEventListener('click', async ()=>{
+      await supabase.from('availability_slots').delete().eq('id', s.id);
+      renderAvailabilityView(main);
     });
     main.appendChild(card);
   });
@@ -1115,6 +1278,7 @@ async function renderClientDetail(main){
     <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
+    <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
     <button class="btn ${tab==='business'?'':'secondary'}" data-t="business">${t('business',locale)}</button>
   </div>`);
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDetail._tab = b.dataset.t; renderClientDetail(main); }));
@@ -1124,13 +1288,14 @@ async function renderClientDetail(main){
   main.appendChild(body);
 
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null);
-  else if(tab==='program') renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main), intakeRow?.data || null);
+  else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main), intakeRow?.data || null);
   else if(tab==='live'){
     if(program) await renderLiveSessionTab(body, client, program, true);
     else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
   }
   else if(tab==='messages') await renderMessagesTab(body, client, 'coach');
   else if(tab==='reassess') await renderReassessmentTab(body, client, true);
+  else if(tab==='photos') await renderPhotosTab(body, client);
   else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main));
   else if(tab==='checkins'){
     renderCheckinForm(body, checkins, client.id);
@@ -1459,6 +1624,67 @@ function renderBusinessTab(body, client, onChanged){
   body.appendChild(card);
 }
 
+async function renderPhotosTab(body, client){
+  const { data: photos } = await supabase.from('progress_photos').select('*').eq('client_id', client.id).order('taken_at',{ascending:false});
+
+  const uploadForm = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+    <div class="field" style="margin-bottom:0;"><label>${t('uploadPhoto',locale)}</label><input type="file" class="photoFile" accept="image/*" required></div>
+    <div class="field" style="width:160px; margin-bottom:0;"><label>${locale==='el'?'Ημερομηνία':'Date'}</label><input type="date" class="photoDate" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field" style="min-width:160px; margin-bottom:0;"><label>${locale==='el'?'Σημείωση (προαιρετικό)':'Note (optional)'}</label><input class="photoNote"></div>
+    <button class="btn" type="submit">${t('save',locale)}</button>
+  </form>`);
+  uploadForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fileInput = uploadForm.querySelector('.photoFile');
+    const file = fileInput.files[0];
+    if(!file) return;
+    const btn = uploadForm.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = '…';
+    try{
+      const ext = file.name.split('.').pop();
+      const path = `${client.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('progress-photos').upload(path, file);
+      if(upErr) throw upErr;
+      await supabase.from('progress_photos').insert({
+        client_id: client.id, storage_path: path,
+        note: uploadForm.querySelector('.photoNote').value.trim() || null,
+        taken_at: uploadForm.querySelector('.photoDate').value,
+      });
+      toast(t('saved',locale));
+      body.innerHTML = '';
+      await renderPhotosTab(body, client);
+    }catch(err){
+      toast(locale==='el' ? 'Σφάλμα ανεβάσματος' : 'Upload error');
+      btn.disabled = false; btn.textContent = t('save',locale);
+    }
+  });
+  body.appendChild(uploadForm);
+
+  if(!photos?.length){
+    body.appendChild(el(`<p>${t('noPhotos',locale)}</p>`));
+    return;
+  }
+
+  const grid = el('<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;"></div>');
+  for(const p of photos){
+    const { data: signed } = await supabase.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600);
+    const card = el(`<div class="card" style="padding:8px;">
+      <img src="${signed?.signedUrl||''}" style="width:100%; height:140px; object-fit:cover; border-radius:6px; display:block;">
+      <div class="mono" style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${p.taken_at}</div>
+      ${p.note ? `<div style="font-size:12px; margin-top:2px;">${escapeHtml(p.note)}</div>` : ''}
+      <button class="btn danger delPhotoBtn" type="button" style="margin-top:6px; padding:3px 10px; font-size:11px;">🗑</button>
+    </div>`);
+    card.querySelector('.delPhotoBtn').addEventListener('click', async ()=>{
+      await supabase.storage.from('progress-photos').remove([p.storage_path]);
+      await supabase.from('progress_photos').delete().eq('id', p.id);
+      body.innerHTML = '';
+      await renderPhotosTab(body, client);
+    });
+    grid.appendChild(card);
+  }
+  body.appendChild(grid);
+}
+
 async function renderMessagesTab(body, client, viewerRole){
   const headerRow = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
     <h3 style="font-size:13px; margin:0;">${t('messages',locale)}</h3>
@@ -1594,10 +1820,41 @@ function computeRecommendations(intakeData, exercises){
   return { recommended, risky };
 }
 
-function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
+async function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
   if(!program){
+    const { data: templates } = await supabase.from('program_templates').select('*, program_template_exercises(*)').eq('coach_id', profile.id);
+    const suggested = (templates||[]).filter(tpl => (client.sport && tpl.sport===client.sport) || (client.pathway && tpl.pathway===client.pathway));
+    const others = (templates||[]).filter(tpl => !suggested.includes(tpl));
+
+    if(templates?.length){
+      const tplBox = el(`<div class="card gold">
+        ${suggested.length ? `<h4 style="font-size:12px; color:var(--red-deep); margin-bottom:8px;">${t('suggestedTemplates',locale)}</h4><div class="sugTplList" style="margin-bottom:14px;"></div>` : ''}
+        <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${t('allTemplates',locale)}</h4>
+        <div class="allTplList"></div>
+      </div>`);
+      function tplRow(tpl){
+        const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line);">
+          <span>${escapeHtml(tpl.title)} <span class="mono badge">${(tpl.program_template_exercises||[]).length} ${locale==='el'?'ασκήσεις':'exercises'}</span></span>
+          <button class="btn secondary applyBtn" type="button" style="padding:5px 12px; font-size:12px;">${t('applyTemplate',locale)}</button>
+        </div>`);
+        row.querySelector('.applyBtn').addEventListener('click', async ()=>{
+          const { data: newProg } = await supabase.from('programs').insert({ client_id: client.id, coach_id: profile.id, title: tpl.title }).select().single();
+          const rows = (tpl.program_template_exercises||[]).map(te=>({
+            program_id: newProg.id, exercise_id: te.exercise_id, target_sets: te.target_sets, target_reps: te.target_reps, target_load: te.target_load, sort_order: te.sort_order,
+          }));
+          if(rows.length) await supabase.from('program_exercises').insert(rows);
+          toast(t('templateApplied',locale));
+          onChanged();
+        });
+        return row;
+      }
+      if(suggested.length){ suggested.forEach(tpl=>tplBox.querySelector('.sugTplList').appendChild(tplRow(tpl))); }
+      others.forEach(tpl=>tplBox.querySelector('.allTplList').appendChild(tplRow(tpl)));
+      body.appendChild(tplBox);
+    }
+
     const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
-      <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Τίτλος προγράμματος':'Program title'}</label><input class="progTitle" required></div>
+      <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Ή φτιάξε νέο πρόγραμμα από το μηδέν':'Or create a new program from scratch'}</label><input class="progTitle" required></div>
       <button class="btn" type="submit">${t('save',locale)}</button>
     </form>`);
     form.addEventListener('submit', async (e)=>{
@@ -1764,9 +2021,14 @@ async function renderClientDashboard(main){
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
-    supabase.from('clients').select('payment_link,monthly_price,zoom_link,next_call_at').eq('id', profile.id).maybeSingle(),
+    supabase.from('clients').select('coach_id,payment_link,monthly_price,zoom_link,next_call_at').eq('id', profile.id).maybeSingle(),
   ]);
   const program = programs?.[0] || null;
+  let openSlots = [];
+  if(clientRow?.coach_id){
+    const { data: slots } = await supabase.from('availability_slots').select('*').eq('coach_id', clientRow.coach_id).is('booked_by', null).gt('start_at', new Date().toISOString()).order('start_at',{ascending:true});
+    openSlots = slots || [];
+  }
 
   main.innerHTML = '';
   const tabs = el(`<div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
@@ -1776,6 +2038,7 @@ async function renderClientDashboard(main){
     <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">${t('progress',locale)}</button>
     <button class="btn ${tab==='calls'?'':'secondary'}" data-t="calls">📹 Zoom</button>
     <button class="btn ${tab==='payment'?'':'secondary'}" data-t="payment">💳 ${t('payment',locale)}</button>
+    <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
     <button class="btn ${tab==='refer'?'':'secondary'}" data-t="refer">${t('referFriend',locale)}</button>
   </div>`);
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.t; renderClientDashboard(main); }));
@@ -1794,13 +2057,33 @@ async function renderClientDashboard(main){
     if(clientRow?.zoom_link){
       const nextCallStr = clientRow.next_call_at ? new Date(clientRow.next_call_at).toLocaleString(locale==='el'?'el-GR':'en-GB') : null;
       card.innerHTML = `
-        ${nextCallStr ? `<p style="margin-bottom:14px;">${t('nextCall',locale)}: <strong class="mono">${nextCallStr}</strong></p>` : ''}
+        ${nextCallStr ? `<p style="margin-bottom:14px;">${t('yourBookedCall',locale)}: <strong class="mono">${nextCallStr}</strong></p>` : ''}
         <a class="btn" href="${escapeHtml(clientRow.zoom_link)}" target="_blank" rel="noreferrer">📹 ${t('joinCall',locale)} ↗</a>
       `;
     } else {
       card.innerHTML = `<p style="color:var(--ink-soft);">${t('noCallScheduled',locale)}</p>`;
     }
     body.appendChild(card);
+
+    body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">${t('availability',locale)}</h3>`));
+    if(!openSlots.length){
+      body.appendChild(el(`<p>${t('noSlots',locale)}</p>`));
+    } else {
+      openSlots.forEach(s=>{
+        const row = el(`<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="mono">${new Date(s.start_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</span>
+          <button class="btn secondary bookBtn" type="button" style="padding:6px 14px; font-size:12px;">${t('bookThisSlot',locale)}</button>
+        </div>`);
+        row.querySelector('.bookBtn').addEventListener('click', async ()=>{
+          const { error } = await supabase.from('availability_slots').update({ booked_by: profile.id }).eq('id', s.id).is('booked_by', null);
+          if(error){ toast(locale==='el'?'Δυστυχώς μόλις κρατήθηκε από κάποιον άλλο.':'Sorry, just got booked by someone else.'); renderClientDashboard(main); return; }
+          await supabase.from('clients').update({ next_call_at: s.start_at }).eq('id', profile.id);
+          toast(t('slotBooked',locale));
+          renderClientDashboard(main);
+        });
+        body.appendChild(row);
+      });
+    }
   } else if(tab==='payment'){
     const card = el('<div class="card gold"></div>');
     if(clientRow?.payment_link){
@@ -1812,6 +2095,8 @@ async function renderClientDashboard(main){
       card.innerHTML = `<p style="color:var(--ink-soft);">${t('noPaymentLink',locale)}</p>`;
     }
     body.appendChild(card);
+  } else if(tab==='photos'){
+    await renderPhotosTab(body, profile);
   } else if(tab==='refer'){
     renderReferFriendTab(body);
   } else if(tab==='readiness'){
