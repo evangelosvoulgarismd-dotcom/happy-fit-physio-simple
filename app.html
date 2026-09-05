@@ -1651,16 +1651,20 @@ async function renderPhotosTab(body, client){
       const path = `${client.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('progress-photos').upload(path, file);
       if(upErr) throw upErr;
-      await supabase.from('progress_photos').insert({
+      const { error: insErr } = await supabase.from('progress_photos').insert({
         client_id: client.id, storage_path: path,
         note: uploadForm.querySelector('.photoNote').value.trim() || null,
         taken_at: uploadForm.querySelector('.photoDate').value,
       });
+      if(insErr){
+        await supabase.storage.from('progress-photos').remove([path]); // rollback orphaned file
+        throw insErr;
+      }
       toast(t('saved',locale));
       body.innerHTML = '';
       await renderPhotosTab(body, client);
     }catch(err){
-      toast(locale==='el' ? 'Σφάλμα ανεβάσματος' : 'Upload error');
+      toast((locale==='el' ? 'Σφάλμα: ' : 'Error: ') + (err.message || err));
       btn.disabled = false; btn.textContent = t('save',locale);
     }
   });
