@@ -137,8 +137,50 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // ============================================================
 const SUPABASE_URL = 'https://hxbpuamzisdldwbuumda.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH';
+const VAPID_PUBLIC_KEY = 'BAiV52fua-R28j_R9K7tdThH6T6DSVDCMTQoRv1tNa7wOL4wvg8HKGsaL4wfkc49Mk2vy0ldLCmebseCUp5vp2g';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function enablePushNotifications(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    toast(locale==='el' ? 'Ο browser σου δεν υποστηρίζει notifications.' : 'Your browser does not support notifications.');
+    return;
+  }
+  try{
+    const reg = await navigator.serviceWorker.register('./sw.js');
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){
+      toast(locale==='el' ? 'Δεν δόθηκε άδεια για ειδοποιήσεις.' : 'Notification permission was not granted.');
+      return;
+    }
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    const json = sub.toJSON();
+    await supabase.from('push_subscriptions').upsert({
+      profile_id: profile.id,
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+    }, { onConflict: 'endpoint' });
+    toast(locale==='el' ? '✓ Ειδοποιήσεις ενεργές' : '✓ Notifications enabled');
+  }catch(err){
+    toast((locale==='el' ? 'Σφάλμα: ' : 'Error: ') + (err.message || err));
+  }
+}
 
 // ---------- i18n ----------
 const STR = {
@@ -511,6 +553,7 @@ function renderShell(){
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button>` : ''}
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
+        <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
         <button class="navBtn" id="exportBtn">${t('exportData',locale)}</button>
         <button class="navBtn" id="logoutBtn">${t('logout',locale)}</button>
         <div id="sidebarFooter">
@@ -533,6 +576,7 @@ function renderShell(){
   shell.querySelectorAll('.navBtn[data-v]').forEach(b=>b.addEventListener('click', ()=>{ view=b.dataset.v; selectedClient=null; renderShell(); }));
   shell.querySelector('#logoutBtn').addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
   shell.querySelector('#exportBtn').addEventListener('click', exportMyData);
+  shell.querySelector('#enablePushBtn').addEventListener('click', enablePushNotifications);
   shell.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', ()=>showLegalModal(a.dataset.legal)));
 
   const main = shell.querySelector('#main');
