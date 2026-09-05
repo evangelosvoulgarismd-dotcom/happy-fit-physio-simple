@@ -194,6 +194,7 @@
         <div class="lead-field"><label>Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
         <div class="lead-field"><label>Email</label><input type="email" id="leadEmail" required></div>
         <div class="lead-field"><label>Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
+        <div class="lead-field"><label>Instagram username ή WhatsApp (προαιρετικό)</label><input type="text" id="leadSocial" placeholder="@username ή αριθμός WhatsApp"></div>
         <div class="lead-field">
           <label>Ενδιαφέρον</label>
           <select id="leadInterest">
@@ -297,6 +298,7 @@
         full_name: document.getElementById('leadName').value.trim(),
         email: document.getElementById('leadEmail').value.trim(),
         phone: document.getElementById('leadPhone').value.trim() || null,
+        social_handle: document.getElementById('leadSocial').value.trim() || null,
         interest: document.getElementById('leadInterest').value || null,
         marketing_consent: document.getElementById('leadConsent').checked,
         source: 'landing_page',
