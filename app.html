@@ -1653,7 +1653,7 @@ async function renderPhotosTab(body, client){
       if(upErr) throw upErr;
       const { error: insErr } = await supabase.from('progress_photos').insert({
         client_id: client.id, storage_path: path,
-        note: uploadForm.querySelector('.photoNote').value.trim() || null,
+        notes: uploadForm.querySelector('.photoNote').value.trim() || null,
         taken_at: uploadForm.querySelector('.photoDate').value,
       });
       if(insErr){
@@ -1681,7 +1681,7 @@ async function renderPhotosTab(body, client){
     const card = el(`<div class="card" style="padding:8px;">
       <img src="${signed?.signedUrl||''}" style="width:100%; height:140px; object-fit:cover; border-radius:6px; display:block;">
       <div class="mono" style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${p.taken_at}</div>
-      ${p.note ? `<div style="font-size:12px; margin-top:2px;">${escapeHtml(p.note)}</div>` : ''}
+      ${p.notes ? `<div style="font-size:12px; margin-top:2px;">${escapeHtml(p.notes)}</div>` : ''}
       <button class="btn danger delPhotoBtn" type="button" style="margin-top:6px; padding:3px 10px; font-size:11px;">🗑</button>
     </div>`);
     card.querySelector('.delPhotoBtn').addEventListener('click', async ()=>{
