@@ -1677,9 +1677,11 @@ async function renderPhotosTab(body, client){
 
   const grid = el('<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;"></div>');
   for(const p of photos){
-    const { data: signed } = await supabase.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600);
+    const { data: signed, error: signErr } = await supabase.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600);
     const card = el(`<div class="card" style="padding:8px;">
-      <img src="${signed?.signedUrl||''}" style="width:100%; height:140px; object-fit:cover; border-radius:6px; display:block;">
+      ${signed?.signedUrl
+        ? `<img src="${signed.signedUrl}" style="width:100%; height:140px; object-fit:cover; border-radius:6px; display:block;">`
+        : `<div style="width:100%; height:140px; border-radius:6px; background:#efe4d4; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--danger); text-align:center; padding:8px;">${locale==='el'?'Σφάλμα φόρτωσης':'Load error'}${signErr?': '+escapeHtml(signErr.message):''}</div>`}
       <div class="mono" style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${p.taken_at}</div>
       ${p.notes ? `<div style="font-size:12px; margin-top:2px;">${escapeHtml(p.notes)}</div>` : ''}
       <button class="btn danger delPhotoBtn" type="button" style="margin-top:6px; padding:3px 10px; font-size:11px;">🗑</button>
