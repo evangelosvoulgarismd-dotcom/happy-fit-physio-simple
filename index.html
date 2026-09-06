@@ -70,7 +70,7 @@
     .stickyNav {
       position:fixed; top:0; left:0; right:0; z-index:500;
       display:flex; align-items:center; justify-content:space-between;
-      padding:12px 32px; background:rgba(36,20,19,0.72); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+      padding:12px 32px; background:rgba(28,15,14,0.94); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
       transform:translateY(-100%); transition:transform 0.35s ease;
     }
     .stickyNav.show { transform:translateY(0); }
@@ -81,7 +81,12 @@
     .stickyNav .navLinks a { color:rgba(255,255,255,0.75); font-size:12.5px; text-decoration:none; cursor:pointer; transition:color 0.2s; }
     .stickyNav .navLinks a:hover { color:#fff; }
     .stickyNav .navCta { padding:8px 18px; background:var(--gold); color:var(--red-deep); border-radius:20px; font-size:12px; font-weight:700; text-decoration:none; }
-    @media (max-width:640px){ .stickyNav .navLinks{display:none;} .stickyNav{padding:10px 18px;} }
+    @media (max-width:640px){
+      .stickyNav{ padding:10px 14px; background:rgba(36,20,19,0.92); }
+      .stickyNav .navLinks{ display:none; }
+      .stickyNav .navLogo span{ display:none; }
+      .stickyNav .navCta{ padding:7px 14px; font-size:11px; white-space:nowrap; }
+    }
 
     /* ── DARK STATEMENT PANEL ── */
     .statement-section { background:var(--ink); color:#fff; text-align:center; padding:110px 24px; }
@@ -500,12 +505,12 @@
 
     // ── Sticky nav show/hide on scroll ──
     const stickyNav = document.getElementById('stickyNav');
-    let lastY = window.scrollY;
-    window.addEventListener('scroll', () => {
-      const y = window.scrollY;
-      if (y > 420) stickyNav.classList.add('show'); else stickyNav.classList.remove('show');
-      lastY = y;
-    });
+    const showThreshold = window.innerWidth < 640 ? 160 : 420;
+    function updateStickyNav(){
+      if (window.scrollY > showThreshold) stickyNav.classList.add('show'); else stickyNav.classList.remove('show');
+    }
+    window.addEventListener('scroll', updateStickyNav, { passive: true });
+    updateStickyNav();
 
     // ── Smooth scroll for nav anchor links ──
     document.querySelectorAll('.navLinks a[href^="#"]').forEach(a => {
