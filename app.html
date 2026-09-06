@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Happy Fit Physio — Coaching</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c4201f">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Happy Fit Physio">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -121,11 +127,26 @@
     .bodyDiagram svg{width:80px; height:168px;}
     .statGrid{grid-template-columns:repeat(2,1fr);}
     table.hist, .reassessTable{font-size:11px;}
+    .field input,.field select,.field textarea{font-size:16px;}
     .navBtnsWrap{display:none; width:100%; order:4; flex-direction:column; gap:4px;}
     .navBtnsWrap.open{display:flex;}
     .navBtnsWrap .navBtn{width:100%; text-align:left;}
     #menuToggleBtn{display:inline-flex; order:3; margin-left:6px;}
+    #bottomTabBar{
+      display:flex; position:fixed; bottom:0; left:0; right:0; z-index:150;
+      background:var(--panel); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+      box-shadow:0 -2px 10px rgba(36,20,19,0.08);
+    }
+    #main{ padding-bottom:76px; }
+    .bottomTab{
+      flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:transparent; border:none;
+      color:var(--ink-soft); font-family:inherit; padding:6px 2px; cursor:pointer;
+    }
+    .bottomTab .ico{ font-size:19px; line-height:1; }
+    .bottomTab .lbl{ font-size:9.5px; font-weight:600; white-space:nowrap; }
+    .bottomTab.active{ color:var(--red); }
   }
+  #bottomTabBar{ display:none; }
   #menuToggleBtn{display:none; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell .dot{position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:var(--gold); display:none;}
@@ -622,15 +643,26 @@ function renderShell(){
       </div>
     </div>
     <div id="main"></div>
-  </div>`);
+  </div>
+  <nav id="bottomTabBar">
+    <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${isCoach ? t('clients',locale) : t('dashboard',locale)}</span></button>
+    <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
+    ${isCoach ? `<button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>` : ''}
+    <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
+  </nav>`);
   app.appendChild(shell);
   shell.querySelectorAll('#langToggle button').forEach(b=>b.addEventListener('click', ()=>{ locale=b.dataset.l; renderShell(); }));
-  shell.querySelectorAll('.navBtn[data-v]').forEach(b=>b.addEventListener('click', ()=>{ view=b.dataset.v; selectedClient=null; renderShell(); }));
+  shell.querySelectorAll('.navBtn[data-v], .bottomTab[data-v]').forEach(b=>b.addEventListener('click', ()=>{ view=b.dataset.v; selectedClient=null; renderShell(); }));
   shell.querySelector('#logoutBtn').addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
   shell.querySelector('#exportBtn').addEventListener('click', exportMyData);
   shell.querySelector('#enablePushBtn').addEventListener('click', enablePushNotifications);
   shell.querySelector('#menuToggleBtn').addEventListener('click', ()=>{
     shell.querySelector('#navBtnsWrap').classList.toggle('open');
+  });
+  const bottomMoreBtn = shell.querySelector('#bottomMoreBtn');
+  if(bottomMoreBtn) bottomMoreBtn.addEventListener('click', ()=>{
+    shell.querySelector('#navBtnsWrap').classList.toggle('open');
+    shell.querySelector('#navBtnsWrap').scrollIntoView({ behavior:'smooth', block:'start' });
   });
   shell.querySelector('#notifBell').addEventListener('click', (e)=>{
     e.stopPropagation();
@@ -2346,6 +2378,9 @@ async function boot(){
 }
 
 supabase.auth.onAuthStateChange((_evt, s)=>{ session = s; });
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
 boot();
 </script>
 </body>
