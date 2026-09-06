@@ -86,7 +86,20 @@
       .stickyNav .navLinks{ display:none; }
       .stickyNav .navLogo span{ display:none; }
       .stickyNav .navCta{ padding:7px 14px; font-size:11px; white-space:nowrap; }
+      #navMobileToggle{ display:inline-flex; }
     }
+    #navMobileToggle{
+      display:none; background:transparent; border:1px solid rgba(255,255,255,0.35); color:#fff;
+      width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:15px; align-items:center; justify-content:center;
+    }
+    .navMobileDropdown{
+      display:none; position:fixed; top:54px; left:14px; right:14px; z-index:499;
+      background:rgba(28,15,14,0.97); border-radius:10px; padding:8px; flex-direction:column;
+      box-shadow:0 12px 30px rgba(0,0,0,0.3);
+    }
+    .navMobileDropdown.open{ display:flex; }
+    .navMobileDropdown a{ color:#f5ddd6; text-decoration:none; padding:12px 10px; font-size:13.5px; border-bottom:1px solid rgba(255,255,255,0.08); cursor:pointer; }
+    .navMobileDropdown a:last-child{ border-bottom:none; }
 
     /* ── DARK STATEMENT PANEL ── */
     .statement-section { background:var(--ink); color:#fff; text-align:center; padding:110px 24px; }
@@ -203,8 +216,15 @@
       <a href="#how">Πώς λειτουργεί</a>
       <a href="#lead">Επικοινωνία</a>
     </div>
+    <button id="navMobileToggle">☰</button>
     <a class="navCta js-signup-link" href="app.html">Ξεκίνα Coaching</a>
   </nav>
+  <div class="navMobileDropdown" id="navMobileDropdown">
+    <a href="#features">Τι περιλαμβάνει</a>
+    <a href="#how">Πώς λειτουργεί</a>
+    <a href="#lead">Επικοινωνία</a>
+    <a class="js-open-chat">Ρώτησέ μας</a>
+  </div>
 
   <!-- HERO -->
   <section class="hero">
@@ -513,12 +533,26 @@
     updateStickyNav();
 
     // ── Smooth scroll for nav anchor links ──
-    document.querySelectorAll('.navLinks a[href^="#"]').forEach(a => {
+    document.querySelectorAll('.navLinks a[href^="#"], .navMobileDropdown a[href^="#"]').forEach(a => {
       a.addEventListener('click', (e) => {
         e.preventDefault();
         const target = document.querySelector(a.getAttribute('href'));
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('navMobileDropdown').classList.remove('open');
       });
+    });
+
+    // ── Mobile nav dropdown toggle ──
+    const navMobileToggle = document.getElementById('navMobileToggle');
+    const navMobileDropdown = document.getElementById('navMobileDropdown');
+    navMobileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navMobileDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!navMobileDropdown.contains(e.target) && e.target !== navMobileToggle) {
+        navMobileDropdown.classList.remove('open');
+      }
     });
   </script>
 </body>
