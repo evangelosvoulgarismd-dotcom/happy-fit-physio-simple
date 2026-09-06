@@ -643,13 +643,13 @@ function renderShell(){
       </div>
     </div>
     <div id="main"></div>
-  </div>
-  <nav id="bottomTabBar">
-    <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${isCoach ? t('clients',locale) : t('dashboard',locale)}</span></button>
-    <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
-    ${isCoach ? `<button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>` : ''}
-    <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
-  </nav>`);
+    <nav id="bottomTabBar">
+      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${isCoach ? t('clients',locale) : t('dashboard',locale)}</span></button>
+      <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
+      ${isCoach ? `<button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>` : ''}
+      <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
+    </nav>
+  </div>`);
   app.appendChild(shell);
   shell.querySelectorAll('#langToggle button').forEach(b=>b.addEventListener('click', ()=>{ locale=b.dataset.l; renderShell(); }));
   shell.querySelectorAll('.navBtn[data-v], .bottomTab[data-v]').forEach(b=>b.addEventListener('click', ()=>{ view=b.dataset.v; selectedClient=null; renderShell(); }));
