@@ -120,6 +120,24 @@
       box-shadow:0 1px 3px rgba(36,20,19,0.06); transition:transform 0.25s ease, box-shadow 0.25s ease;
       opacity:0;
     }
+
+    /* ── SERVICES ── */
+    .services-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:20px; }
+    .service-card {
+      background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:32px 28px;
+      box-shadow:0 1px 3px rgba(36,20,19,0.06); transition:transform 0.25s ease, box-shadow 0.25s ease; opacity:0;
+    }
+    .service-card:hover { transform:translateY(-4px); box-shadow:0 10px 24px rgba(36,20,19,0.1); }
+    .service-card .service-icon { font-size:30px; margin-bottom:16px; }
+    .service-card h3 { font-size:17px; margin-bottom:8px; }
+    .service-card .service-loc { display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--red); background:#f6e0da; padding:3px 10px; border-radius:12px; margin-bottom:12px; }
+    .service-card p { font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin-bottom:16px; }
+    .service-card a.service-cta { font-size:12.5px; font-weight:700; color:var(--red-deep); text-decoration:none; cursor:pointer; }
+    .service-card a.service-cta:hover { text-decoration:underline; }
+    .service-card.b2b { background:var(--ink); border-color:var(--ink); }
+    .service-card.b2b h3, .service-card.b2b p { color:#fff; }
+    .service-card.b2b p { color:rgba(255,255,255,0.7); }
+    .service-card.b2b a.service-cta { color:var(--gold); }
     .feature-card:hover { transform:translateY(-4px); box-shadow:0 10px 24px rgba(36,20,19,0.1); }
     .feature-icon { font-size:28px; margin-bottom:14px; }
     .feature-card h3 { font-size:16px; margin-bottom:8px; }
@@ -220,6 +238,7 @@
       <span>Happy Fit Physio</span>
     </div>
     <div class="navLinks">
+      <a href="#services">Υπηρεσίες</a>
       <a href="#features">Τι περιλαμβάνει</a>
       <a href="#how">Πώς λειτουργεί</a>
       <a href="#lead">Επικοινωνία</a>
@@ -228,6 +247,7 @@
     <a class="navCta js-signup-link" href="app.html">Ξεκίνα Coaching</a>
   </nav>
   <div class="navMobileDropdown" id="navMobileDropdown">
+    <a href="#services">Υπηρεσίες</a>
     <a href="#features">Τι περιλαμβάνει</a>
     <a href="#how">Πώς λειτουργεί</a>
     <a href="#lead">Επικοινωνία</a>
@@ -284,6 +304,42 @@
         <button class="lead-submit" type="submit">Στείλε τα στοιχεία μου</button>
         <div class="lead-error" id="leadError" style="display:none;"></div>
       </form>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="section" id="services">
+    <div class="section-label">Τι κάνω</div>
+    <h2 class="section-title">Υπηρεσίες</h2>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">💆</div>
+        <span class="service-loc">Αθήνα · Σαντορίνη</span>
+        <h3>Κατ' Οίκον Θεραπευτική Μάλαξη</h3>
+        <p>Εξατομικευμένη θεραπευτική μάλαξη στον χώρο σου — στην Αθήνα ή στη Σαντορίνη. Ιδανικό για μυϊκή ένταση, ανάρρωση μετά από προπόνηση, ή απλά αποφόρτιση.</p>
+        <a class="service-cta js-open-chat">Κλείσε ραντεβού →</a>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🏋️</div>
+        <span class="service-loc">Online</span>
+        <h3>Online Fitness Coaching</h3>
+        <p>Εξατομικευμένο πρόγραμμα προπόνησης με πλήρη παρακολούθηση μέσα από την πλατφόρμα μας — βιβλιογραφία, weekly check-in, ζωντανή καταγραφή προόδου.</p>
+        <a class="service-cta js-signup-link" href="app.html">Ξεκίνα coaching →</a>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🩺</div>
+        <span class="service-loc">Τηλεδιάσκεψη</span>
+        <h3>Αξιολόγηση Μυοσκελετικών Περιστατικών</h3>
+        <p>Online συνεδρία με φυσικοθεραπευτή για μυοσκελετικά προβλήματα — πόνο, τραυματισμό, ή απορίες σχετικά με την αποκατάστασή σου, χωρίς να χρειάζεται μετακίνηση.</p>
+        <a class="service-cta js-open-chat">Ρώτησέ μας →</a>
+      </div>
+      <div class="service-card b2b">
+        <div class="service-icon">🤝</div>
+        <span class="service-loc" style="background:rgba(226,162,51,0.18); color:var(--gold);">Για επαγγελματίες</span>
+        <h3>Συνεργασία με Προπονητές & Φυσικοθεραπευτές</h3>
+        <p>Χρησιμοποίησε την πλατφόρμα Happy Fit Physio για τους δικούς σου ασκούμενους/ασθενείς — πρόγραμμα, παρακολούθηση, επικοινωνία, όλα σε ένα εργαλείο.</p>
+        <a class="service-cta js-open-chat">Μάθε περισσότερα →</a>
+      </div>
     </div>
   </section>
 
@@ -544,7 +600,7 @@
         }
       });
     }, { threshold: 0.1 });
-    document.querySelectorAll('.feature-card, .step, .lead-card, .statement-section p').forEach(el => observer.observe(el));
+    document.querySelectorAll('.feature-card, .step, .lead-card, .statement-section p, .service-card').forEach(el => observer.observe(el));
 
     // ── Sticky nav show/hide on scroll ──
     const stickyNav = document.getElementById('stickyNav');
