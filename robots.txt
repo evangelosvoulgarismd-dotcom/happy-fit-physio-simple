@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://evangelosvoulgarismd-dotcom.github.io/happy-fit-physio-simple/sitemap.xml
