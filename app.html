@@ -58,7 +58,6 @@
   .reassessTable th, .reassessTable td{border:1px solid var(--line); padding:6px 8px; text-align:center;}
   .reassessTable th{background:#efe4d4; font-weight:600; color:var(--ink-soft); font-size:10.5px; text-transform:uppercase;}
   #sidebar .tagline{font-size:11px; color:#f1c9c1; text-align:center; margin:2px 0 0;}
-  .menuGroupLabel{font-size:9px;letter-spacing:1.4px;color:#a98c87;padding:8px 10px 4px;font-weight:700;}
   .navBtn{background:transparent; border:none; color:#f0d9d4; text-align:left; padding:9px 10px; border-radius:var(--radius); cursor:pointer; font-size:13.5px; font-family:inherit; border-left:3px solid transparent;}
   .navBtn:hover{background:rgba(255,255,255,.08);}
   .navBtn.active{background:rgba(255,255,255,.12); border-left-color:var(--gold); color:#fff; font-weight:600;}
@@ -163,8 +162,6 @@
     #main{ padding:0 !important; }
     body{ background:#fff; }
   }
-
-.clinicalRecommendation .card{border:1px solid var(--line);box-shadow:0 10px 30px rgba(36,20,19,.06)}
 </style>
 </head>
 <body>
@@ -330,20 +327,6 @@ const STR = {
   clientProfile:{el:'Προφίλ Ασκούμενου', en:'Client Profile'},
   sport:{el:'Δραστηριότητα / Άθλημα', en:'Activity / Sport'},
   pathway:{el:'Κλινική Πορεία', en:'Clinical Pathway'},
-  clinicalClassification:{el:'Κλινική Ταξινόμηση & Αρχικός Έλεγχος', en:'Clinical Classification & Initial Screening'},
-  primaryConcern:{el:'Κύριος λόγος προσέλευσης', en:'Primary reason for visit'},
-  bodyRegion:{el:'Περιοχή που σε απασχολεί περισσότερο', en:'Main area of concern'},
-  symptomDuration:{el:'Διάρκεια συμπτωμάτων', en:'Symptom duration'},
-  redFlagScreen:{el:'Αρχικός έλεγχος κινδύνου', en:'Initial risk screening'},
-  redFlagDetails:{el:'Αν υπάρχει κάτι ανησυχητικό, περιέγραψέ το', en:'If anything concerning, describe it'},
-  activityGoal:{el:'Δραστηριότητα ή λειτουργία που θέλεις να βελτιώσεις', en:'Activity or function you want to improve'},
-  priorityGoal:{el:'Βασικός στόχος', en:'Primary goal'},
-  pathwayRecommendation:{el:'Προτεινόμενη κλινική πορεία', en:'Recommended clinical pathway'},
-  riskReferral:{el:'Απαιτείται επαγγελματικός έλεγχος πριν από την άσκηση', en:'Professional assessment is required before exercise'},
-  templateLink:{el:'Δες το σχετικό πρότυπο', en:'View related template'},
-  screeningClear:{el:'Δεν αναφέρθηκαν ενδείξεις άμεσου κινδύνου στον αρχικό έλεγχο.', en:'No immediate risk indicators were reported during initial screening.'},
-  screeningUnclear:{el:'Χρειάζεται αξιολόγηση από επαγγελματία υγείας πριν από την έναρξη ή συνέχιση προγράμματος.', en:'A healthcare professional assessment is needed before starting or continuing a program.'},
-
   filterBySport:{el:'Φίλτρο ανά δραστηριότητα', en:'Filter by activity'},
   allClients:{el:'Όλοι', en:'All'},
   paymentLink:{el:'Link Πληρωμής (Stripe/Viva Wallet)', en:'Payment Link (Stripe/Viva Wallet)'},
@@ -404,6 +387,24 @@ const STR = {
   viewSummary:{el:'Προβολή Σύνοψης', en:'View Summary'},
   printSummary:{el:'Εκτύπωση', en:'Print'},
   notFilled:{el:'— δεν συμπληρώθηκε —', en:'— not filled —'},
+  changeReason:{el:'Γιατί άλλαξε (θα το δει ο ασκούμενος)', en:'Why it changed (client will see this)'},
+  changeReasonPlaceholder:{el:'π.χ. Μειώσαμε το volume λόγω χαμηλής ανάρρωσης τις τελευταίες μέρες', en:'e.g. Reduced volume due to low recovery recently'},
+  today:{el:'Σήμερα', en:'Today'},
+  readinessScore:{el:'Readiness σήμερα', en:"Today's readiness"},
+  fillReadiness:{el:'Δεν έχεις καταγράψει ακόμα το readiness σήμερα', en:"You haven't logged today's readiness yet"},
+  todaysWorkout:{el:"Η προπόνηση σήμερα", en:"Today's Workout"},
+  noWorkoutToday:{el:'Δεν υπάρχει ενεργό πρόγραμμα', en:'No active program'},
+  startWorkout:{el:'Ξεκίνα προπόνηση →', en:'Start workout →'},
+  goToReadiness:{el:'Συμπλήρωσε →', en:'Fill in →'},
+  recoveryCard:{el:'Ανάρρωση', en:'Recovery'},
+  nutritionCard:{el:'Διατροφή', en:'Nutrition'},
+  progressCard:{el:'Πρόοδος', en:'Progress'},
+  coachChatCard:{el:'Coach Chat', en:'Coach Chat'},
+  viewNutritionInfo:{el:'Δες τις διατροφικές οδηγίες σου →', en:'See your nutrition guidance →'},
+  noNutritionInfo:{el:'Δεν έχει καταγραφεί ακόμα από τον coach σου.', en:'Not recorded yet by your coach.'},
+  viewProgress:{el:'Δες την πρόοδό σου →', en:'See your progress →'},
+  openChat:{el:'Άνοιξε τη συνομιλία →', en:'Open chat →'},
+  noMessagesYet:{el:'Καμία συνομιλία ακόμα.', en:'No conversation yet.'},
 };
 function t(k, loc){ return STR[k]?.[loc] || STR[k]?.el || k; }
 
@@ -711,14 +712,11 @@ function renderShell(){
       <button id="menuToggleBtn" aria-label="${locale==='el'?'Άνοιγμα μενού':'Open menu'}">☰</button>
       <button id="notifBell" aria-label="${locale==='el'?'Ειδοποιήσεις':'Notifications'}">🔔<span class="dot" id="notifDot"></span></button>
       <div class="navBtnsWrap" id="navBtnsWrap">
-      <div class="menuGroupLabel">${isCoach ? 'ΚΥΡΙΟ ΜΕΝΟΥ' : ''}</div>
-      <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">🏠 ${isCoach ? t('dashboard',locale) : t('dashboard',locale)}</button>
-      ${isCoach ? `<button class="navBtn ${view==='clients'?'active':''}" data-v="clients">👥 ${t('clientsMenu',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='programs'?'active':''}" data-v="programs">📋 ${t('programsMenu',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='monitoring'?'active':''}" data-v="monitoring">📈 ${t('monitoringMenu',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='reassessment'?'active':''}" data-v="reassessment">🔄 ${t('reassessmentMenu',locale)}</button>` : ''}
-      <button class="navBtn ${view==='library'?'active':''}" data-v="library">📚 ${t('exerciseLibrary',locale)}</button>
-      ${isCoach ? `<div class="menuGroupLabel" style="margin-top:10px;">ΕΡΓΑΛΕΙΑ</div><button class="navBtn ${view==='templates'?'active':''}" data-v="templates">🧩 ${t('templates',locale)}</button><button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button><button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button>` : ''}
+      <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
+      <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
+      ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
         <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
@@ -741,9 +739,9 @@ function renderShell(){
     </div>
     <div id="main"></div>
     <nav id="bottomTabBar">
-      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${t('dashboard',locale)}</span></button>
-      ${isCoach ? `<button class="bottomTab ${view==='clients'?'active':''}" data-v="clients"><span class="ico">👥</span><span class="lbl">${t('clientsMenu',locale)}</span></button>` : `<button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>`}
-      ${isCoach ? `<button class="bottomTab ${view==='monitoring'?'active':''}" data-v="monitoring"><span class="ico">📈</span><span class="lbl">${t('monitoringMenu',locale)}</span></button>` : ''}
+      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${isCoach ? t('clients',locale) : t('dashboard',locale)}</span></button>
+      <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
+      ${isCoach ? `<button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>` : ''}
       <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
     </nav>
   </div>`);
@@ -771,31 +769,11 @@ function renderShell(){
 
   const main = shell.querySelector('#main');
   if(view==='library') renderLibrary(main, isCoach);
-  else if(isCoach && ['clients','programs','monitoring','reassessment','messages'].includes(view)) renderCoachMenuView(main, view);
   else if(view==='leads' && isCoach) renderLeadsView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(isCoach) renderCoachDashboard(main);
   else renderClientDashboard(main);
-}
-
-async function renderCoachMenuView(main, target){
-  if(target==='clients'){ return renderCoachDashboard(main); }
-  if(target==='programs' || target==='monitoring' || target==='reassessment' || target==='messages'){
-    main.innerHTML = `<p>${t('loading',locale)}</p>`;
-    const { data: clients } = await supabase.from('clients').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false});
-    const titleMap={programs:t('programsMenu',locale),monitoring:t('monitoringMenu',locale),reassessment:t('reassessmentMenu',locale),messages:t('messagesMenu',locale)};
-    main.innerHTML=`<h2 style="margin-bottom:14px;">${titleMap[target]}</h2><p style="font-size:12px;color:var(--ink-soft);margin-bottom:14px;">Επίλεξε ασκούμενο για να ανοίξεις την αντίστοιχη καρτέλα.</p>`;
-    if(!clients?.length){ main.appendChild(el(`<div class="card">Δεν υπάρχουν ακόμη ασκούμενοι.</div>`)); return; }
-    const list=el('<div></div>');
-    for(const c of clients){
-      const row=el(`<div class="card clickable" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;"><div><strong>${escapeHtml(c.full_name)}</strong><div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">${escapeHtml(c.email||'')}</div></div><span class="btn secondary" style="padding:6px 10px;">Άνοιγμα</span></div>`);
-      row.addEventListener('click',()=>{selectedClient=c; renderClientDetail._tab = target==='programs'?'program':target==='monitoring'?'checkins':target==='reassessment'?'reassess':'messages'; renderShell();});
-      list.appendChild(row);
-    }
-    main.appendChild(list);
-    return;
-  }
 }
 
 async function exportMyData(){
@@ -1305,19 +1283,31 @@ async function renderCoachDashboard(main){
   ]);
 
   const clientIds = (clients||[]).map(c=>c.id);
-  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {};
+  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {};
   if(clientIds.length){
-    const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }] = await Promise.all([
+    const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }, { data: allIntake }] = await Promise.all([
       supabase.from('checkins').select('client_id,date,adherence,pain_level,avg_energy').in('client_id', clientIds).order('date',{ascending:false}),
       supabase.from('programs').select('client_id,title').in('client_id', clientIds).eq('active', true),
-      supabase.from('readiness_logs').select('client_id,date,energy,motivation').in('client_id', clientIds).order('date',{ascending:false}),
+      supabase.from('readiness_logs').select('client_id,date,sleep,energy,motivation,stress,soreness,pain,perceived_capacity').in('client_id', clientIds).order('date',{ascending:false}),
+      supabase.from('client_intake').select('client_id,data').in('client_id', clientIds),
     ]);
     (allCheckins||[]).forEach(c=>{
       if(!latestCheckinByClient[c.client_id]) latestCheckinByClient[c.client_id] = c;
       (checkinsByClient[c.client_id] = checkinsByClient[c.client_id]||[]).push(c);
     });
     (allPrograms||[]).forEach(p=>{ if(!programByClient[p.client_id]) programByClient[p.client_id] = p; });
-    (allReadiness||[]).forEach(r=>{ (readinessByClient[r.client_id] = readinessByClient[r.client_id]||[]).push(r); });
+    (allReadiness||[]).forEach(r=>{
+      (readinessByClient[r.client_id] = readinessByClient[r.client_id]||[]).push(r);
+      if(!latestReadinessByClient[r.client_id]) latestReadinessByClient[r.client_id] = r;
+    });
+    (allIntake||[]).forEach(i=>{ intakeByClient[i.client_id] = i.data || {}; });
+  }
+  function readinessScoreFor(id){
+    const r = latestReadinessByClient[id];
+    if(!r) return null;
+    const positives = (r.sleep||0)+(r.energy||0)+(r.motivation||0)+(r.perceived_capacity||0);
+    const negatives = (10-(r.stress||0))+(10-(r.soreness||0))+(10-(r.pain||0));
+    return Math.round(((positives+negatives)/7)*10);
   }
 
   function computeAlerts(client){
@@ -1463,6 +1453,52 @@ async function renderCoachDashboard(main){
   }
   const visibleClients = activeSportFilter ? clients.filter(c=>c.sport===activeSportFilter) : clients;
 
+  const viewMode = renderCoachDashboard._viewMode || 'table';
+  const toggleBar = el(`<div style="margin-bottom:12px; display:flex; justify-content:flex-end; gap:6px;">
+    <button class="btn ${viewMode==='table'?'':'secondary'} viewTableBtn" type="button" style="padding:6px 14px; font-size:12px;">📋 ${locale==='el'?'Πίνακας':'Table'}</button>
+    <button class="btn ${viewMode==='cards'?'':'secondary'} viewCardsBtn" type="button" style="padding:6px 14px; font-size:12px;">🗂 ${locale==='el'?'Κάρτες':'Cards'}</button>
+  </div>`);
+  toggleBar.querySelector('.viewTableBtn').addEventListener('click', ()=>{ renderCoachDashboard._viewMode='table'; renderCoachDashboard(main); });
+  toggleBar.querySelector('.viewCardsBtn').addEventListener('click', ()=>{ renderCoachDashboard._viewMode='cards'; renderCoachDashboard(main); });
+  main.appendChild(toggleBar);
+
+  if(viewMode==='table'){
+    const tableWrap = el('<div class="card tableScroll" style="padding:0;"></div>');
+    const table = el(`<table class="hist" style="width:100%;">
+      <thead><tr>
+        <th>${locale==='el'?'Ασκούμενος':'Client'}</th>
+        <th>${locale==='el'?'Στόχος':'Goal'}</th>
+        <th>Readiness</th>
+        <th>${t('pain',locale)}</th>
+        <th>${locale==='el'?'Ύπνος':'Sleep'}</th>
+        <th>Adherence</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>`);
+    const tbody = table.querySelector('tbody');
+    visibleClients.forEach(c=>{
+      const lastCk = latestCheckinByClient[c.id];
+      const lastRd = latestReadinessByClient[c.id];
+      const rScore = readinessScoreFor(c.id);
+      const goal = intakeByClient[c.id]?.mainGoal || c.sport || '—';
+      const painVal = lastCk?.pain_level;
+      const painColor = painVal>3 ? 'color:var(--danger); font-weight:700;' : '';
+      const row = el(`<tr class="clickable">
+        <td><strong>${escapeHtml(c.full_name)}</strong></td>
+        <td>${escapeHtml(goal)}</td>
+        <td class="mono">${rScore!==null ? rScore : '—'}</td>
+        <td class="mono" style="${painColor}">${painVal!=null ? painVal : '—'}</td>
+        <td class="mono">${lastRd?.sleep!=null ? lastRd.sleep : '—'}</td>
+        <td class="mono">${lastCk?.adherence!=null ? lastCk.adherence+'%' : '—'}</td>
+      </tr>`);
+      row.addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
+      tbody.appendChild(row);
+    });
+    tableWrap.appendChild(table);
+    main.appendChild(tableWrap);
+    return;
+  }
+
   visibleClients.forEach(c=>{
     const lastCk = latestCheckinByClient[c.id];
     const prog = programByClient[c.id];
@@ -1574,15 +1610,6 @@ async function renderClientDetail(main){
 }
 
 const INTAKE_SECTIONS = [
-  { key:'classification', title:'clinicalClassification', fields:[
-    ['primaryConcern','select',['Πόνος ή ενόχληση','Κάκωση ή τραυματισμός','Επιστροφή μετά από τραυματισμό','Πρόληψη','Βελτίωση φυσικής κατάστασης','Αύξηση δύναμης','Αθλητική απόδοση','Εγκυμοσύνη ή λοχεία','Άλλο']],
-    ['bodyRegion','select',['Σπονδυλική στήλη','Ώμος και ωμική ζώνη','Αγκώνας και αντιβράχιο','Καρπός και χέρι','Ισχίο','Γόνατο','Ποδοκνημική και πόδι','Άσκηση για ηλικιωμένους','Υγεία της γυναίκας','Γενική φυσική κατάσταση']],
-    ['symptomDuration','select',['Χωρίς συμπτώματα','Λιγότερο από 2 εβδομάδες','2–6 εβδομάδες','Πάνω από 6 εβδομάδες','Επαναλαμβανόμενο πρόβλημα','Δεν είμαι σίγουρος/η']],
-    ['redFlagScreen','select',['Όχι, δεν αναφέρω κάτι ανησυχητικό','Ναι, υπάρχει κάτι ανησυχητικό','Δεν είμαι σίγουρος/η']],
-    ['redFlagDetails','area'],
-    ['activityGoal','area'],
-    ['priorityGoal','select',['Μείωση συμπτωμάτων','Βελτίωση λειτουργικότητας','Αύξηση δύναμης','Βελτίωση κινητικότητας','Επιστροφή στην καθημερινότητα','Επιστροφή στην άθληση','Αθλητική απόδοση','Πρόληψη']],
-  ]},
   { key:'baseline', title:'baselineSection', fields:[
     ['baselineWeight','text'], ['measurements','area'], ['restingHR','text'], ['progressPhotosNote','text'],
   ]},
@@ -1686,42 +1713,6 @@ function renderBodyDiagram(container, state, onChange){
 
 
 
-function getClinicalRecommendation(state){
-  const region = state.bodyRegion || '';
-  const risk = state.redFlagScreen || '';
-  const riskPresent = risk === 'Ναι, υπάρχει κάτι ανησυχητικό' || risk === 'Δεν είμαι σίγουρος/η';
-  const map = {
-    'Σπονδυλική στήλη': ['Σπονδυλική στήλη','index.html#templates'],
-    'Ώμος και ωμική ζώνη': ['Ώμος και ωμική ζώνη','index.html#templates'],
-    'Αγκώνας και αντιβράχιο': ['Αγκώνας και αντιβράχιο','index.html#templates'],
-    'Καρπός και χέρι': ['Καρπός και χέρι','index.html#templates'],
-    'Ισχίο': ['Ισχίο','index.html#templates'],
-    'Γόνατο': ['Γόνατο','index.html#templates'],
-    'Ποδοκνημική και πόδι': ['Ποδοκνημική και πόδι','index.html#templates'],
-    'Άσκηση για ηλικιωμένους': ['Άσκηση για ηλικιωμένους','index.html#templates'],
-    'Υγεία της γυναίκας': ['Υγεία της γυναίκας','index.html#templates'],
-    'Γενική φυσική κατάσταση': ['Γενική φυσική κατάσταση','index.html#templates']
-  };
-  const pathway = map[region] || ['Αρχική αξιολόγηση','index.html#templates'];
-  return { riskPresent, pathway, region };
-}
-
-function renderClinicalRecommendation(container, state){
-  const rec = getClinicalRecommendation(state);
-  const title = rec.riskPresent ? t('riskReferral',locale) : t('pathwayRecommendation',locale);
-  const text = rec.riskPresent ? t('screeningUnclear',locale) : t('screeningClear',locale);
-  const card = el(`<div class="card gold" style="margin-top:14px;">
-    <div style="font-size:11px;color:var(--ink-soft);margin-bottom:5px;">${t('pathway',locale)}</div>
-    <h3 style="margin:0 0 8px;">${escapeHtml(title)}</h3>
-    <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">${escapeHtml(text)}</p>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-      <strong>${escapeHtml(rec.pathway[0])}</strong>
-      <a class="btn secondary" href="${rec.pathway[1]}">${t('templateLink',locale)} →</a>
-    </div>
-  </div>`);
-  container.appendChild(card);
-}
-
 function renderIntakeForm(body, client, existingData, isCoach){
   const state = { ...(existingData||{}) };
   let timer = null;
@@ -1823,11 +1814,6 @@ function renderIntakeForm(body, client, existingData, isCoach){
       state._completed = true;
       scheduleSave();
       statusEl.textContent = t('intakeComplete',locale);
-      sectionsWrap.querySelectorAll('.clinicalRecommendation').forEach(x=>x.remove());
-      const recommendation = el('<div class="clinicalRecommendation"></div>');
-      renderClinicalRecommendation(recommendation, state);
-      sectionsWrap.appendChild(recommendation);
-      recommendation.scrollIntoView({ behavior:'smooth', block:'center' });
     }
   });
 
@@ -2229,69 +2215,6 @@ function computeRecommendations(intakeData, exercises){
   return { recommended, risky };
 }
 
-
-function buildPersonalizedDraft(intakeData, exercises){
-  if(!intakeData) return {items:[], phase:'Απροσδιόριστη', reason:'Δεν υπάρχει ολοκληρωμένη αξιολόγηση.'};
-  const region = (intakeData.bodyRegion || '').toLowerCase();
-  const goal = intakeData.priorityGoal || intakeData.mainGoal || '';
-  const risk = (intakeData.redFlagScreen || '').toLowerCase();
-  if(risk.includes('ναι') || risk.includes('σίγουρ')) return {items:[], phase:'Δεν δημιουργείται αυτόματα πρόταση', reason:'Απαιτείται κλινικός έλεγχος πριν από την επιλογή ασκήσεων.'};
-
-  const regionTerms = {
-    'σπονδυλική στήλη':['κορμός','σπονδυλ','μέση','ράχη','neck','back','bird dog','bridge','dead bug','row'],
-    'ώμος και ωμική ζώνη':['ώμος','ωμ','shoulder','row','press','scap'],
-    'αγκώνας και αντιβράχιο':['αγκώ','αντιβράχ','elbow','forearm','curl','extension','row'],
-    'καρπός και χέρι':['καρπ','χέρι','wrist','hand','grip','λαβ'],
-    'ισχίο':['ισχ','hip','glute','γλουτ','bridge','split squat','step'],
-    'γόνατο':['γόν','knee','squat','step','quadriceps','τετρακέφαλ'],
-    'ποδοκνημική και πόδι':['ποδοκνημ','πόδι','ankle','foot','calf','γάμπ','balance','ισορροπ'],
-    'άσκηση για ηλικιωμένους':['ισορροπ','βάδιση','sit to stand','chair','squat','strength','δύναμ'],
-    'υγεία της γυναίκας':['πυελ','pelvic','core','breath','αναπν','glute','γλουτ']
-  };
-  const terms = regionTerms[region] || [];
-  const goalCats = GOAL_CATEGORY_MAP[goal] || [];
-  const scored = exercises.map(ex=>{
-    const text = ((ex.name_el||'')+' '+(ex.name_en||'')+' '+(ex.category||'')).toLowerCase();
-    let score=0;
-    terms.forEach(t=>{ if(text.includes(t)) score+=3; });
-    goalCats.forEach(t=>{ if((ex.category||'').includes(t)) score+=2; });
-    if(ex.evidence) score+=1;
-    return {ex,score};
-  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
-  const unique=[]; const seen=new Set();
-  for(const x of scored){ if(!seen.has(x.ex.id)){ seen.add(x.ex.id); unique.push(x.ex); } if(unique.length>=6) break; }
-  let phase='Αρχική φάση';
-  const dur=(intakeData.symptomDuration||'').toLowerCase();
-  if(goal.includes('Επιστροφή') || goal.includes('απόδοση')) phase='Λειτουργική επανεκπαίδευση / επιστροφή στη δραστηριότητα';
-  else if(dur.includes('πάνω') || dur.includes('επαναλαμβαν')) phase='Προοδευτική φόρτιση';
-  return {items:unique, phase, reason:`Πρόταση με βάση την αξιολόγηση: ${goal||'κύριος στόχος'}.`};
-}
-
-function renderPersonalizedDraft(body, client, intakeData, exercises, onCreated){
-  const draft=buildPersonalizedDraft(intakeData, exercises);
-  const card=el(`<div class="card gold" style="margin-bottom:14px;">
-    <div style="font-size:11px;color:var(--ink-soft);margin-bottom:5px;">ΠΡΟΤΑΣΗ ΑΠΟ ΤΗΝ ΑΞΙΟΛΟΓΗΣΗ</div>
-    <h3 style="margin:0 0 7px;">Πρόχειρο εξατομικευμένου προγράμματος</h3>
-    <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">${escapeHtml(draft.reason)}</p>
-    <p style="font-size:12px;margin-bottom:10px;"><strong>Φάση:</strong> ${escapeHtml(draft.phase)}</p>
-    ${draft.items.length ? `<div class="draftList"></div>` : `<div style="padding:10px;border:1px solid var(--line);border-radius:8px;">${escapeHtml(draft.reason)}</div>`}
-    ${draft.items.length ? `<p style="font-size:11px;color:var(--ink-soft);margin:10px 0;">Οι ασκήσεις αποτελούν πρόταση για έλεγχο από τον επαγγελματία και δεν ενεργοποιούνται αυτόματα για τον ασκούμενο.</p><button class="btn createDraft" type="button">Δημιουργία προγράμματος για έλεγχο</button>` : ''}
-  </div>`);
-  if(draft.items.length){
-    const list=card.querySelector('.draftList');
-    draft.items.forEach((ex,i)=>list.appendChild(el(`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);"><span><strong>${i+1}.</strong> ${escapeHtml(ex.name_el||ex.name_en||'Άσκηση')}</span><span class="mono" style="font-size:10px;color:var(--ink-soft);">${escapeHtml(ex.category||'')}</span></div>`)));
-    card.querySelector('.createDraft').addEventListener('click', async()=>{
-      const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα — ${new Date().toLocaleDateString('el-GR')}`}).select().single();
-      if(error||!newProg){ toast('Δεν δημιουργήθηκε το πρόγραμμα.'); return; }
-      const rows=draft.items.map((ex,i)=>({program_id:newProg.id,exercise_id:ex.id,target_sets:2,target_reps:'8–12',target_load:'',sort_order:i}));
-      const {error:e2}=await supabase.from('program_exercises').insert(rows);
-      if(e2){ toast('Το πρόγραμμα δημιουργήθηκε, αλλά δεν προστέθηκαν όλες οι ασκήσεις.'); } else { toast('Δημιουργήθηκε πρόγραμμα για έλεγχο.'); }
-      onCreated();
-    });
-  }
-  body.appendChild(card);
-}
-
 async function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
   if(!program){
     const { data: templates } = await supabase.from('program_templates').select('*, program_template_exercises(*)').eq('coach_id', profile.id);
@@ -2323,10 +2246,6 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       if(suggested.length){ suggested.forEach(tpl=>tplBox.querySelector('.sugTplList').appendChild(tplRow(tpl))); }
       others.forEach(tpl=>tplBox.querySelector('.allTplList').appendChild(tplRow(tpl)));
       body.appendChild(tplBox);
-    }
-
-    if(intakeData){
-      renderPersonalizedDraft(body, client, intakeData, exercises, onChanged);
     }
 
     const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
@@ -2391,6 +2310,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
         <div style="flex:1;">
           <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>
           <div class="mono peView" style="font-size:12.5px; color:var(--ink-soft);">${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+          ${pe.change_reason ? `<div style="font-size:11.5px; color:var(--red-deep); margin-top:4px;">💡 ${escapeHtml(pe.change_reason)}</div>` : ''}
         </div>
         <div style="display:flex; gap:6px; flex-shrink:0;">
           <button class="btn secondary editPeBtn" type="button" style="padding:4px 10px; font-size:11.5px;">✏️</button>
@@ -2401,6 +2321,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
         <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="peSets" type="number" value="${pe.target_sets||3}"></div>
         <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="peReps" value="${escapeHtml(pe.target_reps||'')}"></div>
         <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="peLoad" value="${escapeHtml(pe.target_load||'')}"></div>
+        <div class="field" style="min-width:200px; flex:1; margin-bottom:0;"><label>${t('changeReason',locale)}</label><input class="peReason" placeholder="${t('changeReasonPlaceholder',locale)}" value="${escapeHtml(pe.change_reason||'')}"></div>
         <button class="btn savePeBtn" type="button" style="padding:6px 14px; font-size:12px;">${t('save',locale)}</button>
       </div>
     </div>`);
@@ -2413,7 +2334,13 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       const newSets = Number(card.querySelector('.peSets').value)||3;
       const newReps = card.querySelector('.peReps').value.trim();
       const newLoad = card.querySelector('.peLoad').value.trim();
-      await supabase.from('program_exercises').update({ target_sets:newSets, target_reps:newReps, target_load:newLoad }).eq('id', pe.id);
+      const newReason = card.querySelector('.peReason').value.trim();
+      const changed = newSets!==pe.target_sets || newReps!==(pe.target_reps||'') || newLoad!==(pe.target_load||'');
+      await supabase.from('program_exercises').update({
+        target_sets:newSets, target_reps:newReps, target_load:newLoad,
+        change_reason: newReason || null,
+        change_reason_at: (newReason && changed) ? new Date().toISOString() : pe.change_reason_at,
+      }).eq('id', pe.id);
       onChanged();
     });
     card.querySelector('.delPeBtn').addEventListener('click', async ()=>{
@@ -2423,6 +2350,77 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     });
     body.appendChild(card);
   });
+}
+
+function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
+  const wrap = el('<div></div>');
+
+  // Readiness card
+  let readinessScore = null;
+  if(todayReadiness){
+    const r = todayReadiness;
+    const positives = (r.sleep||0)+(r.energy||0)+(r.motivation||0)+(r.perceived_capacity||0);
+    const negatives = (10-(r.stress||0))+(10-(r.soreness||0))+(10-(r.pain||0));
+    readinessScore = Math.round(((positives+negatives)/7)*10);
+  }
+  const readinessColor = readinessScore===null ? 'var(--ink-soft)' : (readinessScore>=70 ? 'var(--red-deep)' : (readinessScore>=45 ? 'var(--gold)' : 'var(--danger)'));
+  const readinessCard = el(`<div class="card gold">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">${t('readinessScore',locale)}</h3>
+        ${readinessScore!==null
+          ? `<div style="font-size:32px; font-weight:800; color:${readinessColor};" class="mono">${readinessScore}<span style="font-size:16px; color:var(--ink-soft);">/100</span></div>`
+          : `<p style="font-size:13px; color:var(--ink-soft);">${t('fillReadiness',locale)}</p>`}
+      </div>
+      <button class="btn secondary goReadinessBtn" type="button">${t('goToReadiness',locale)}</button>
+    </div>
+  </div>`);
+  readinessCard.querySelector('.goReadinessBtn').addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
+  wrap.appendChild(readinessCard);
+
+  // Today's workout card
+  const workoutCard = el(`<div class="card">
+    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🏋️ ${t('todaysWorkout',locale)}</h3>
+    ${program ? `
+      <div style="margin-bottom:10px; font-weight:600;">${escapeHtml(program.title)}</div>
+      <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">
+        ${(program.program_exercises||[]).slice(0,4).map(pe=>escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))).join(' · ')}
+        ${(program.program_exercises||[]).length>4 ? ` +${(program.program_exercises||[]).length-4}` : ''}
+      </div>
+      <button class="btn startWorkoutBtn" type="button">${t('startWorkout',locale)}</button>
+    ` : `<p style="font-size:13px; color:var(--ink-soft);">${t('noWorkoutToday',locale)}</p>`}
+  </div>`);
+  const startBtn = workoutCard.querySelector('.startWorkoutBtn');
+  if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
+  wrap.appendChild(workoutCard);
+
+  const grid = el('<div class="grid2"></div>');
+
+  const recoveryCard = el(`<div class="card">
+    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">😴 ${t('recoveryCard',locale)}</h3>
+    <a class="service-cta" style="cursor:pointer; font-size:12.5px; color:var(--red-deep); font-weight:700;">${t('viewProgress',locale)}</a>
+  </div>`);
+  recoveryCard.querySelector('a').addEventListener('click', ()=>{ renderClientDashboard._tab='progress'; renderClientDashboard(body.closest('#main')); });
+  grid.appendChild(recoveryCard);
+
+  const progressCard = el(`<div class="card">
+    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">📈 ${t('progressCard',locale)}</h3>
+    <a class="service-cta" style="cursor:pointer; font-size:12.5px; color:var(--red-deep); font-weight:700;">${t('viewProgress',locale)}</a>
+  </div>`);
+  progressCard.querySelector('a').addEventListener('click', ()=>{ renderClientDashboard._tab='progress'; renderClientDashboard(body.closest('#main')); });
+  grid.appendChild(progressCard);
+
+  wrap.appendChild(grid);
+
+  const chatCard = el(`<div class="card">
+    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">💬 ${t('coachChatCard',locale)}</h3>
+    ${lastMsg ? `<p style="font-size:12.5px; margin-bottom:8px;">${lastMsg.sender_role==='coach'?'👤 ':'Εσύ: '}${escapeHtml((lastMsg.body||'').slice(0,80))}</p>` : `<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:8px;">${t('noMessagesYet',locale)}</p>`}
+    <a class="service-cta openChatLink" style="cursor:pointer; font-size:12.5px; color:var(--red-deep); font-weight:700;">${t('openChat',locale)}</a>
+  </div>`);
+  chatCard.querySelector('.openChatLink').addEventListener('click', ()=>{ renderClientDashboard._tab='messages'; renderClientDashboard(body.closest('#main')); });
+  wrap.appendChild(chatCard);
+
+  body.appendChild(wrap);
 }
 
 async function renderLiveSessionTab(body, client, program, loggedByCoach){
@@ -2438,10 +2436,26 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
   }
   body.appendChild(el(`<p class="badge">${today}</p>`));
   (program.program_exercises||[]).forEach(pe=>{
+    const ex = pe.exercises;
+    const exName = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
+    const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
     const card = el(`<div class="card">
-      <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <strong>${escapeHtml(exName)}</strong>
+        <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:11px; flex-shrink:0;">ℹ️ ${t('why',locale)}</button>
+      </div>
       <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Στόχος':'Target'}: ${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+      <div class="whyPanel" style="display:none; background:#f6efe4; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12.5px;">
+        ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
+        ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
+        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎬 ${locale==='el'?'Βίντεο εκτέλεσης':'Execution video'} ↗</a>` : ''}
+        ${!why && !ex.technique_cues && !ex.video_url ? `<span style="color:var(--ink-soft);">—</span>` : ''}
+      </div>
     </div>`);
+    card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
+      const p = card.querySelector('.whyPanel');
+      p.style.display = p.style.display==='none' ? 'block' : 'none';
+    });
     const setsCount = pe.target_sets || 3;
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
@@ -2451,6 +2465,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
         <input class="f_reps" placeholder="${t('reps',locale)}" value="${existing?.reps ?? ''}">
         <input class="f_load" placeholder="${t('load',locale)}" value="${existing?.load_kg ?? ''}">
         <input class="f_rpe" placeholder="${t('rpe',locale)}" value="${existing?.rpe ?? ''}">
+        <input class="f_rir" placeholder="RIR" value="${existing?.rir ?? ''}">
         <input class="f_pain" placeholder="${t('pain',locale)}" value="${existing?.pain ?? ''}">
         <button class="btn ${existing?'':'secondary'}" type="button" style="padding:6px 12px; font-size:12px;">${existing ? '✓ '+t('saved',locale).replace('✓ ','') : t('logSet',locale)}</button>
       </div>`);
@@ -2460,6 +2475,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
           reps: Number(row.querySelector('.f_reps').value)||null,
           load_kg: Number(row.querySelector('.f_load').value)||null,
           rpe: Number(row.querySelector('.f_rpe').value)||null,
+          rir: Number(row.querySelector('.f_rir').value)||null,
           pain: Number(row.querySelector('.f_pain').value)||0,
         };
         const btn = row.querySelector('button');
@@ -2491,13 +2507,16 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
 // CLIENT DASHBOARD
 // ============================================================
 async function renderClientDashboard(main){
-  let tab = renderClientDashboard._tab || 'program';
+  let tab = renderClientDashboard._tab || 'today';
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
-  const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }] = await Promise.all([
+  const today = new Date().toISOString().slice(0,10);
+  const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }, { data: todayReadiness }, { data: lastMsg }] = await Promise.all([
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('clients').select('coach_id,payment_link,monthly_price,zoom_link,next_call_at').eq('id', profile.id).maybeSingle(),
+    supabase.from('readiness_logs').select('*').eq('client_id', profile.id).eq('date', today).maybeSingle(),
+    supabase.from('messages').select('body,sender_role,created_at').eq('client_id', profile.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
   ]);
   const program = programs?.[0] || null;
   let openSlots = [];
@@ -2508,6 +2527,7 @@ async function renderClientDashboard(main){
 
   main.innerHTML = '';
   const tabs = el(`<div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+    <button class="btn ${tab==='today'?'':'secondary'}" data-t="today">☀️ ${t('today',locale)}</button>
     <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
     <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
@@ -2523,7 +2543,9 @@ async function renderClientDashboard(main){
   const body = el('<div></div>');
   main.appendChild(body);
 
-  if(tab==='program'){
+  if(tab==='today'){
+    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins });
+  } else if(tab==='program'){
     if(program) await renderLiveSessionTab(body, profile, program, false);
     else body.appendChild(el(`<p>${locale==='el'?'Δεν έχεις ακόμα πρόγραμμα.':'No program yet.'}</p>`));
   } else if(tab==='messages'){
@@ -2578,18 +2600,61 @@ async function renderClientDashboard(main){
   } else if(tab==='readiness'){
     renderReadinessForm(body, readiness);
   } else if(tab==='progress'){
-    body.appendChild(el(`<h3 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">Weekly check-in</h3>`));
-    renderTrendChart(body, locale==='el'?'Adherence % & Ενέργεια':'Adherence % & Energy', checkins, 'date', [
-      {key:'adherence', label:'Adherence %'}, {key:'avg_energy', label:locale==='el'?'Ενέργεια':'Energy'},
-    ]);
-    renderHistTable(body, checkins, ['date','sessions_completed','avg_sleep','avg_energy','pain_level','adherence']);
-    body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">Daily readiness</h3>`));
-    renderTrendChart(body, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
-      {key:'sleep', label:locale==='el'?'Ύπνος':'Sleep'}, {key:'energy', label:locale==='el'?'Ενέργεια':'Energy'},
-      {key:'stress', label:locale==='el'?'Στρες':'Stress'}, {key:'pain', label:locale==='el'?'Πόνος':'Pain'},
-    ]);
-    renderHistTable(body, readiness, ['date','sleep','energy','stress','pain','perceived_capacity']);
+    await renderProgressTab(body, profile.id, checkins, readiness);
   }
+}
+
+async function renderProgressTab(body, clientId, checkins, readiness){
+  const [{ data: sessionLogs }, { data: intakeRow }] = await Promise.all([
+    supabase.from('session_logs').select('*, program_exercises(exercises(name_el,name_en))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
+    supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
+  ]);
+  const intakeData = intakeRow?.data || {};
+
+  // BODY
+  body.appendChild(el(`<h3 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">📏 ${locale==='el'?'ΣΩΜΑ':'BODY'}</h3>`));
+  const bodyCard = el(`<div class="card">
+    ${intakeData.baselineWeight ? `<div style="margin-bottom:6px;"><span style="font-size:12px; color:var(--ink-soft);">${t('baselineWeight',locale)}:</span> <strong>${escapeHtml(intakeData.baselineWeight)}</strong></div>` : ''}
+    ${intakeData.measurements ? `<div><span style="font-size:12px; color:var(--ink-soft);">${t('measurements',locale)}:</span> <strong>${escapeHtml(intakeData.measurements)}</strong></div>` : ''}
+    ${!intakeData.baselineWeight && !intakeData.measurements ? `<p style="font-size:12.5px; color:var(--ink-soft);">${t('notFilled',locale)}</p>` : ''}
+  </div>`);
+  body.appendChild(bodyCard);
+
+  // PERFORMANCE
+  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">🏋️ ${locale==='el'?'ΑΠΟΔΟΣΗ':'PERFORMANCE'}</h3>`));
+  if(sessionLogs?.length){
+    renderHistTable(body,
+      sessionLogs.map(s=>({
+        date: s.session_date,
+        exercise: locale==='el' ? s.program_exercises?.exercises?.name_el : (s.program_exercises?.exercises?.name_en || s.program_exercises?.exercises?.name_el),
+        load_kg: s.load_kg, reps: s.reps, rpe: s.rpe,
+      })),
+      ['date','exercise','load_kg','reps','rpe']
+    );
+  } else {
+    body.appendChild(el(`<p>${t('notFilled',locale)}</p>`));
+  }
+
+  // RECOVERY
+  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">😴 ${locale==='el'?'ΑΝΑΡΡΩΣΗ':'RECOVERY'}</h3>`));
+  renderTrendChart(body, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
+    {key:'sleep', label:locale==='el'?'Ύπνος':'Sleep'}, {key:'energy', label:locale==='el'?'Ενέργεια':'Energy'},
+    {key:'stress', label:locale==='el'?'Στρες':'Stress'},
+  ]);
+  renderHistTable(body, readiness, ['date','sleep','energy','stress','perceived_capacity']);
+
+  // PAIN
+  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">⚠️ ${locale==='el'?'ΠΟΝΟΣ (0-10)':'PAIN (0-10)'}</h3>`));
+  renderTrendChart(body, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [
+    {key:'pain', label:locale==='el'?'Πόνος':'Pain'},
+  ]);
+
+  // ADHERENCE
+  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">✅ ${locale==='el'?'ADHERENCE':'ADHERENCE'}</h3>`));
+  renderTrendChart(body, 'Adherence %', checkins, 'date', [
+    {key:'adherence', label:'Adherence %'},
+  ]);
+  renderHistTable(body, checkins, ['date','sessions_completed','adherence']);
 }
 
 function renderReadinessForm(body, existing){
