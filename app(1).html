@@ -58,6 +58,7 @@
   .reassessTable th, .reassessTable td{border:1px solid var(--line); padding:6px 8px; text-align:center;}
   .reassessTable th{background:#efe4d4; font-weight:600; color:var(--ink-soft); font-size:10.5px; text-transform:uppercase;}
   #sidebar .tagline{font-size:11px; color:#f1c9c1; text-align:center; margin:2px 0 0;}
+  .menuGroupLabel{font-size:9px;letter-spacing:1.4px;color:#a98c87;padding:8px 10px 4px;font-weight:700;}
   .navBtn{background:transparent; border:none; color:#f0d9d4; text-align:left; padding:9px 10px; border-radius:var(--radius); cursor:pointer; font-size:13.5px; font-family:inherit; border-left:3px solid transparent;}
   .navBtn:hover{background:rgba(255,255,255,.08);}
   .navBtn.active{background:rgba(255,255,255,.12); border-left-color:var(--gold); color:#fff; font-weight:600;}
@@ -710,11 +711,14 @@ function renderShell(){
       <button id="menuToggleBtn" aria-label="${locale==='el'?'Άνοιγμα μενού':'Open menu'}">☰</button>
       <button id="notifBell" aria-label="${locale==='el'?'Ειδοποιήσεις':'Notifications'}">🔔<span class="dot" id="notifDot"></span></button>
       <div class="navBtnsWrap" id="navBtnsWrap">
-      <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
-      <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
-      ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button>` : ''}
+      <div class="menuGroupLabel">${isCoach ? 'ΚΥΡΙΟ ΜΕΝΟΥ' : ''}</div>
+      <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">🏠 ${isCoach ? t('dashboard',locale) : t('dashboard',locale)}</button>
+      ${isCoach ? `<button class="navBtn ${view==='clients'?'active':''}" data-v="clients">👥 ${t('clientsMenu',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='programs'?'active':''}" data-v="programs">📋 ${t('programsMenu',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='monitoring'?'active':''}" data-v="monitoring">📈 ${t('monitoringMenu',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='reassessment'?'active':''}" data-v="reassessment">🔄 ${t('reassessmentMenu',locale)}</button>` : ''}
+      <button class="navBtn ${view==='library'?'active':''}" data-v="library">📚 ${t('exerciseLibrary',locale)}</button>
+      ${isCoach ? `<div class="menuGroupLabel" style="margin-top:10px;">ΕΡΓΑΛΕΙΑ</div><button class="navBtn ${view==='templates'?'active':''}" data-v="templates">🧩 ${t('templates',locale)}</button><button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button><button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
         <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
@@ -737,9 +741,9 @@ function renderShell(){
     </div>
     <div id="main"></div>
     <nav id="bottomTabBar">
-      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${isCoach ? t('clients',locale) : t('dashboard',locale)}</span></button>
-      <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
-      ${isCoach ? `<button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>` : ''}
+      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${t('dashboard',locale)}</span></button>
+      ${isCoach ? `<button class="bottomTab ${view==='clients'?'active':''}" data-v="clients"><span class="ico">👥</span><span class="lbl">${t('clientsMenu',locale)}</span></button>` : `<button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>`}
+      ${isCoach ? `<button class="bottomTab ${view==='monitoring'?'active':''}" data-v="monitoring"><span class="ico">📈</span><span class="lbl">${t('monitoringMenu',locale)}</span></button>` : ''}
       <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
     </nav>
   </div>`);
@@ -767,11 +771,31 @@ function renderShell(){
 
   const main = shell.querySelector('#main');
   if(view==='library') renderLibrary(main, isCoach);
+  else if(isCoach && ['clients','programs','monitoring','reassessment','messages'].includes(view)) renderCoachMenuView(main, view);
   else if(view==='leads' && isCoach) renderLeadsView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(isCoach) renderCoachDashboard(main);
   else renderClientDashboard(main);
+}
+
+async function renderCoachMenuView(main, target){
+  if(target==='clients'){ return renderCoachDashboard(main); }
+  if(target==='programs' || target==='monitoring' || target==='reassessment' || target==='messages'){
+    main.innerHTML = `<p>${t('loading',locale)}</p>`;
+    const { data: clients } = await supabase.from('clients').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false});
+    const titleMap={programs:t('programsMenu',locale),monitoring:t('monitoringMenu',locale),reassessment:t('reassessmentMenu',locale),messages:t('messagesMenu',locale)};
+    main.innerHTML=`<h2 style="margin-bottom:14px;">${titleMap[target]}</h2><p style="font-size:12px;color:var(--ink-soft);margin-bottom:14px;">Επίλεξε ασκούμενο για να ανοίξεις την αντίστοιχη καρτέλα.</p>`;
+    if(!clients?.length){ main.appendChild(el(`<div class="card">Δεν υπάρχουν ακόμη ασκούμενοι.</div>`)); return; }
+    const list=el('<div></div>');
+    for(const c of clients){
+      const row=el(`<div class="card clickable" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;"><div><strong>${escapeHtml(c.full_name)}</strong><div style="font-size:11px;color:var(--ink-soft);margin-top:3px;">${escapeHtml(c.email||'')}</div></div><span class="btn secondary" style="padding:6px 10px;">Άνοιγμα</span></div>`);
+      row.addEventListener('click',()=>{selectedClient=c; renderClientDetail._tab = target==='programs'?'program':target==='monitoring'?'checkins':target==='reassessment'?'reassess':'messages'; renderShell();});
+      list.appendChild(row);
+    }
+    main.appendChild(list);
+    return;
+  }
 }
 
 async function exportMyData(){
