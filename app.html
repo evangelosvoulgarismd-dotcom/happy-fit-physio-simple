@@ -521,8 +521,8 @@ function renderAuth(){
     </div>
     <form id="authForm">
       <div class="field" id="nameField" style="display:none;"><label>${t('fullName',locale)}</label><input id="fullName"></div>
-      <div class="field"><label>${t('email',locale)}</label><input id="authEmail" type="email" required></div>
-      <div class="field"><label>${t('password',locale)}</label><input id="authPassword" type="password" required minlength="6"></div>
+      <div class="field"><label>${t('email',locale)}</label><input id="authEmail" name="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label>${t('password',locale)}</label><input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="6"></div>
       <div class="field" id="codeField" style="display:none;"><label>${t('inviteCode',locale)}</label><input id="inviteCode" placeholder="π.χ. A1B2C3D4"></div>
       <div class="field" id="consentField" style="display:none; flex-direction:row; align-items:flex-start; gap:8px;">
         <input type="checkbox" id="consentBox" style="width:auto; margin-top:3px;">
@@ -546,6 +546,7 @@ function renderAuth(){
     wrap.querySelector('#roleToggle').style.display = mode==='signup' ? 'flex' : 'none';
     wrap.querySelector('#codeField').style.display = (mode==='signup' && role==='client') ? '' : 'none';
     wrap.querySelector('button[type=submit]').textContent = mode==='login' ? t('login',locale) : t('signup',locale);
+    wrap.querySelector('#authPassword').autocomplete = mode==='signup' ? 'new-password' : 'current-password';
   }
   wrap.querySelectorAll('#modeToggle button').forEach(b=>b.addEventListener('click', ()=>{
     mode = b.dataset.m;
