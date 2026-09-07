@@ -52,9 +52,9 @@
       text-decoration:none; cursor:pointer; border-radius:6px; white-space:nowrap;
       transition: all 0.25s ease; border:1.5px solid transparent;
     }
-    .cta-btn.secondary { background:transparent; border-color:var(--gold); color:var(--gold); }
-    .cta-btn.secondary:hover { background:var(--gold); color:var(--red-deep); }
-    .cta-btn.primary { background:var(--gold); color:var(--red-deep); }
+    .cta-btn.secondary { background:transparent; border-color:var(--gold); color:#e6b052; }
+    .cta-btn.secondary:hover { background:var(--gold); color:#7d1312; }
+    .cta-btn.primary { background:var(--gold); color:#7d1312; }
     .cta-btn.primary:hover { background:#f0c976; transform:translateY(-1px); }
     .trustRow { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:36px; animation:fadeUp 1s 0.55s ease forwards; opacity:0; }
     .trustPill { font-size:11px; padding:5px 12px; border:1px solid rgba(255,255,255,0.25); border-radius:20px; color:rgba(255,255,255,0.8); }
@@ -80,7 +80,7 @@
     .stickyNav .navLinks { display:flex; gap:22px; }
     .stickyNav .navLinks a { color:rgba(255,255,255,0.75); font-size:12.5px; text-decoration:none; cursor:pointer; transition:color 0.2s; }
     .stickyNav .navLinks a:hover { color:#fff; }
-    .stickyNav .navCta { padding:8px 18px; background:var(--gold); color:var(--red-deep); border-radius:20px; font-size:12px; font-weight:700; text-decoration:none; }
+    .stickyNav .navCta { padding:8px 18px; background:var(--gold); color:#7d1312; border-radius:20px; font-size:12px; font-weight:700; text-decoration:none; }
     @media (max-width:640px){
       .stickyNav{ padding:10px 14px; background:rgba(36,20,19,0.92); }
       .stickyNav .navLinks{ display:none; }
@@ -216,7 +216,7 @@
       <a href="#how">Πώς λειτουργεί</a>
       <a href="#lead">Επικοινωνία</a>
     </div>
-    <button id="navMobileToggle">☰</button>
+    <button id="navMobileToggle" aria-label="Άνοιγμα μενού">☰</button>
     <a class="navCta js-signup-link" href="app.html">Ξεκίνα Coaching</a>
   </nav>
   <div class="navMobileDropdown" id="navMobileDropdown">
@@ -252,12 +252,12 @@
       <h3>Ζήτησε δωρεάν πρώτη επικοινωνία</h3>
       <p class="sub">Άφησε τα στοιχεία σου — θα επικοινωνήσουμε μαζί σου σύντομα.</p>
       <form id="leadForm">
-        <div class="lead-field"><label>Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
-        <div class="lead-field"><label>Email</label><input type="email" id="leadEmail" required></div>
-        <div class="lead-field"><label>Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
-        <div class="lead-field"><label>Instagram username ή WhatsApp (προαιρετικό)</label><input type="text" id="leadSocial" placeholder="@username ή αριθμός WhatsApp"></div>
+        <div class="lead-field"><label for="leadName">Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
+        <div class="lead-field"><label for="leadEmail">Email</label><input type="email" id="leadEmail" required></div>
+        <div class="lead-field"><label for="leadPhone">Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
+        <div class="lead-field"><label for="leadSocial">Instagram username ή WhatsApp (προαιρετικό)</label><input type="text" id="leadSocial" placeholder="@username ή αριθμός WhatsApp"></div>
         <div class="lead-field">
-          <label>Ενδιαφέρον</label>
+          <label for="leadInterest">Ενδιαφέρον</label>
           <select id="leadInterest">
             <option value="">—</option>
             <option>Μυϊκή ανάπτυξη / Δύναμη</option>
@@ -321,7 +321,7 @@
   <!-- FOOTER -->
   <footer>
     <div style="margin-bottom:8px;">
-      <a data-legal="terms">Όροι Χρήσης</a> · <a data-legal="privacy">Απόρρητο</a> · <a data-legal="disclaimer">Ιατρική Αποποίηση</a>
+      <a data-legal="terms">Όροι Χρήσης</a> · <a data-legal="privacy">Απόρρητο</a> · <a data-legal="cookies">Cookies</a> · <a data-legal="refund">Επιστροφές</a> · <a data-legal="disclaimer">Ιατρική Αποποίηση</a>
     </div>
     <p>© 2026 Happy Fit Physio · Online Coaching</p>
   </footer>
@@ -338,12 +338,12 @@
             <small>● Online · Βοηθός</small>
           </div>
         </div>
-        <button class="chat-close" id="closeChat">✕</button>
+        <button class="chat-close" id="closeChat" aria-label="Κλείσιμο συνομιλίας">✕</button>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Ρώτησέ μας για το coaching…" autocomplete="off" />
-        <button class="chat-send" id="sendBtn">➤</button>
+        <input class="chat-input" id="chatInput" type="text" placeholder="Ρώτησέ μας για το coaching…" autocomplete="off" aria-label="Γράψε το μήνυμά σου" />
+        <button class="chat-send" id="sendBtn" aria-label="Αποστολή μηνύματος">➤</button>
       </div>
     </div>
   </div>
@@ -490,22 +490,31 @@
     const LEGAL_CONTENT = {
       terms: { title:'Όροι Χρήσης', body:`<p>Η χρήση της πλατφόρμας Happy Fit Physio ("η Υπηρεσία") προϋποθέτει την αποδοχή των παρόντων όρων.</p>
         <h4>1. Περιγραφή Υπηρεσίας</h4><p>Online coaching φυσικής κατάστασης: πρόγραμμα άσκησης, καταγραφή προόδου, επικοινωνία με τον προπονητή.</p>
-        <h4>2. Πληρωμές</h4><p>Οι όροι χρέωσης συμφωνούνται ξεχωριστά μεταξύ προπονητή και ασκούμενου.</p>
+        <h4>2. Πληρωμές</h4><p>Οι όροι χρέωσης συμφωνούνται ξεχωριστά μεταξύ προπονητή και ασκούμενου. Βλ. Πολιτική Επιστροφών.</p>
         <h4>3. Περιορισμός Ευθύνης</h4><p>Βλ. Ιατρική Αποποίηση Ευθύνης. Η Υπηρεσία παρέχεται «ως έχει».</p>
         <h4>4. Εφαρμοστέο Δίκαιο</h4><p>Ελληνικό δίκαιο.</p>` },
       privacy: { title:'Πολιτική Απορρήτου', body:`<p>Σεβόμαστε τα προσωπικά σας δεδομένα σύμφωνα με τον GDPR.</p>
-        <h4>Δεδομένα</h4><p>Στοιχεία εγγραφής, ιστορικό υγείας/στόχων, καταγραφές προπόνησης, μηνύματα.</p>
+        <h4>Δεδομένα που συλλέγουμε</h4><p>Συλλέγουμε μόνο ό,τι είναι απαραίτητο: στοιχεία εγγραφής (όνομα, email), ιστορικό υγείας/στόχων που εσείς μας δίνετε, καταγραφές προπόνησης, μηνύματα, και — αν συναινέσετε ρητά — στοιχεία επικοινωνίας για ενημερωτικά email.</p>
+        <h4>Τρίτοι πάροχοι</h4><p>Χρησιμοποιούμε Supabase (βάση δεδομένων, εντός ΕΕ) και Google Fonts για τυπογραφία. Δεν χρησιμοποιούμε Google Analytics, Facebook Pixel, ή αντίστοιχα εργαλεία παρακολούθησης· δεν μοιραζόμαστε δεδομένα με διαφημιστικά δίκτυα.</p>
         <h4>Νομική βάση</h4><p>Η ρητή συναίνεσή σας, ανακλητή οποτεδήποτε.</p>
         <h4>Αποθήκευση</h4><p>Υποδομή εντός Ευρωπαϊκής Ένωσης.</p>
         <h4>Δικαιώματα</h4><p>Πρόσβαση, διόρθωση, διαγραφή — επικοινωνήστε με τον coach σας.</p>` },
       disclaimer: { title:'Ιατρική Αποποίηση Ευθύνης', body:`<p><strong>Το περιεχόμενο δεν αποτελεί ιατρική διάγνωση ή θεραπεία.</strong></p>
         <p>Συμβουλευτείτε γιατρό πριν ξεκινήσετε πρόγραμμα άσκησης, ιδίως με προϋπάρχουσα πάθηση.</p>
         <p>Σε περίπτωση οξέος πόνου ή επείγοντος, αναζητήστε άμεσα ιατρική βοήθεια.</p>` },
+      cookies: { title:'Πολιτική Cookies', body:`<p>Αυτός ο ιστότοπος <strong>δεν χρησιμοποιεί cookies παρακολούθησης ή διαφήμισης</strong>, και δεν απαιτεί banner συγκατάθεσης cookies.</p>
+        <h4>Τι χρησιμοποιούμε</h4><p>Μόνο τεχνικά απαραίτητα στοιχεία αποθήκευσης του browser (π.χ. για να παραμένεις συνδεδεμένος στο app) — όχι cookies παρακολούθησης τρίτων.</p>
+        <h4>Εξωτερικές πηγές</h4><p>Φορτώνουμε γραμματοσειρές από Google Fonts, που ενδέχεται να λαμβάνει τη διεύθυνση IP σας κατά το φόρτωμα της σελίδας — αυτό είναι τεχνικό, όχι για διαφήμιση.</p>
+        <h4>Αν αλλάξει κάτι</h4><p>Αν στο μέλλον προστεθεί εργαλείο ανάλυσης επισκεψιμότητας, θα ενημερωθεί αυτή η σελίδα και θα ζητηθεί η συγκατάθεσή σας πριν ενεργοποιηθεί.</p>` },
+      refund: { title:'Πολιτική Επιστροφών', body:`<p>Το online coaching είναι υπηρεσία, όχι φυσικό προϊόν — η πολιτική επιστροφών διαφέρει ανάλογα.</p>
+        <h4>Μηνιαία συνδρομή</h4><p>Μπορείτε να ακυρώσετε ανά πάσα στιγμή· η ακύρωση ισχύει από την επόμενη περίοδο χρέωσης. Δεν γίνεται αναδρομική επιστροφή για ήδη παρασχεθείσες υπηρεσίες τρέχοντος μήνα.</p>
+        <h4>Τεχνικό πρόβλημα</h4><p>Αν χρεωθήκατε λόγω τεχνικού σφάλματος, επικοινωνήστε άμεσα μαζί μας για πλήρη επιστροφή.</p>
+        <h4>Επικοινωνία</h4><p>Για οποιοδήποτε αίτημα επιστροφής, απευθυνθείτε στον coach σας.</p>` },
     };
     function showLegalModal(key){
       const doc = LEGAL_CONTENT[key]; if(!doc) return;
       const ov = document.createElement('div'); ov.className = 'modalOverlay';
-      ov.innerHTML = `<div class="modalBox"><button class="modalCloseBtn">&times;</button><h2>${doc.title}</h2>${doc.body}</div>`;
+      ov.innerHTML = `<div class="modalBox"><button class="modalCloseBtn" aria-label="Κλείσιμο">&times;</button><h2>${doc.title}</h2>${doc.body}</div>`;
       ov.addEventListener('click', (e)=>{ if(e.target===ov) ov.remove(); });
       ov.querySelector('.modalCloseBtn').addEventListener('click', ()=>ov.remove());
       document.body.appendChild(ov);

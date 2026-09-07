@@ -446,6 +446,44 @@ const LEGAL_CONTENT = {
         <p>The coach/physiotherapist is not liable for injury resulting from improper technique, undisclosed medical history, or non-compliance with instructions.</p>`,
     }
   },
+  cookies: {
+    title: {el:'Πολιτική Cookies', en:'Cookie Policy'},
+    body: {
+      el: `<p>Αυτή η εφαρμογή <strong>δεν χρησιμοποιεί cookies παρακολούθησης ή διαφήμισης</strong>, και δεν απαιτεί banner συγκατάθεσης cookies.</p>
+        <h4>Τι χρησιμοποιούμε</h4>
+        <p>Μόνο τεχνικά απαραίτητα στοιχεία αποθήκευσης του browser (localStorage) για να παραμένεις συνδεδεμένος — όχι cookies παρακολούθησης τρίτων ή διαφημιστικά δίκτυα.</p>
+        <h4>Εξωτερικές πηγές</h4>
+        <p>Φορτώνουμε γραμματοσειρές από Google Fonts, που ενδέχεται να λαμβάνει τη διεύθυνση IP σας κατά το φόρτωμα της σελίδας — αυτό είναι τεχνικό, όχι για διαφήμιση.</p>
+        <h4>Push notifications</h4>
+        <p>Αν ενεργοποιήσετε ειδοποιήσεις, ο browser σας αποθηκεύει ένα μοναδικό "push subscription" ώστε να μπορούμε να σας στέλνουμε ειδοποιήσεις. Μπορείτε να το απενεργοποιήσετε από τις ρυθμίσεις ειδοποιήσεων του browser/συσκευής σας οποιαδήποτε στιγμή.</p>`,
+      en: `<p>This app <strong>does not use tracking or advertising cookies</strong>, and does not require a cookie consent banner.</p>
+        <h4>What we use</h4>
+        <p>Only technically necessary browser storage (localStorage) to keep you signed in — no third-party tracking cookies or ad networks.</p>
+        <h4>External resources</h4>
+        <p>We load fonts from Google Fonts, which may receive your IP address when the page loads — this is technical, not for advertising.</p>
+        <h4>Push notifications</h4>
+        <p>If you enable notifications, your browser stores a unique "push subscription" so we can send you alerts. You can disable this anytime from your browser/device notification settings.</p>`,
+    }
+  },
+  refund: {
+    title: {el:'Πολιτική Επιστροφών', en:'Refund Policy'},
+    body: {
+      el: `<p>Το online coaching είναι υπηρεσία, όχι φυσικό προϊόν — η πολιτική επιστροφών διαφέρει ανάλογα.</p>
+        <h4>Μηνιαία συνδρομή</h4>
+        <p>Μπορείτε να ακυρώσετε ανά πάσα στιγμή· η ακύρωση ισχύει από την επόμενη περίοδο χρέωσης. Δεν γίνεται αναδρομική επιστροφή για ήδη παρασχεθείσες υπηρεσίες τρέχοντος μήνα.</p>
+        <h4>Τεχνικό πρόβλημα</h4>
+        <p>Αν χρεωθήκατε λόγω τεχνικού σφάλματος, επικοινωνήστε άμεσα μαζί μας για πλήρη επιστροφή.</p>
+        <h4>Επικοινωνία</h4>
+        <p>Για οποιοδήποτε αίτημα επιστροφής, απευθυνθείτε στον coach σας μέσω του tab "Μηνύματα".</p>`,
+      en: `<p>Online coaching is a service, not a physical product — the refund policy differs accordingly.</p>
+        <h4>Monthly subscription</h4>
+        <p>You may cancel at any time; cancellation takes effect from the next billing period. No retroactive refund for services already provided during the current month.</p>
+        <h4>Technical issue</h4>
+        <p>If you were charged due to a technical error, contact us immediately for a full refund.</p>
+        <h4>Contact</h4>
+        <p>For any refund request, reach out to your coach via the "Messages" tab.</p>`,
+    }
+  },
 };
 
 function showLegalModal(key){
@@ -616,8 +654,8 @@ function renderShell(){
         <button data-l="el" class="${locale==='el'?'active':''}">ΕΛ</button>
         <button data-l="en" class="${locale==='en'?'active':''}">EN</button>
       </div>
-      <button id="menuToggleBtn">☰</button>
-      <button id="notifBell">🔔<span class="dot" id="notifDot"></span></button>
+      <button id="menuToggleBtn" aria-label="${locale==='el'?'Άνοιγμα μενού':'Open menu'}">☰</button>
+      <button id="notifBell" aria-label="${locale==='el'?'Ειδοποιήσεις':'Notifications'}">🔔<span class="dot" id="notifDot"></span></button>
       <div class="navBtnsWrap" id="navBtnsWrap">
       <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
       <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
@@ -636,6 +674,8 @@ function renderShell(){
           <div style="margin-top:8px;">
             <a data-legal="terms">${locale==='el'?'Όροι Χρήσης':'Terms'}</a> ·
             <a data-legal="privacy">${locale==='el'?'Απόρρητο':'Privacy'}</a> ·
+            <a data-legal="cookies">Cookies</a> ·
+            <a data-legal="refund">${locale==='el'?'Επιστροφές':'Refunds'}</a> ·
             <a data-legal="disclaimer">${locale==='el'?'Αποποίηση':'Disclaimer'}</a>
           </div>
           <div style="margin-top:6px;">© ${new Date().getFullYear()} Happy Fit Physio</div>
@@ -1351,7 +1391,7 @@ async function renderCoachDashboard(main){
     const prog = programByClient[c.id];
     const painFlag = lastCk && lastCk.pain_level > 3;
     const status = c.status || 'trial';
-    const statusColor = status==='active' ? 'var(--red-deep)' : (status==='paused' ? 'var(--gold)' : (status==='cancelled' ? 'var(--danger)' : 'var(--ink-soft)'));
+    const statusColor = status==='active' ? 'var(--red-deep)' : (status==='paused' ? '#996915' : (status==='cancelled' ? 'var(--danger)' : 'var(--ink-soft)'));
     const card = el(`<div class="card clientCard">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div class="clickable clientCardMain" style="flex:1; min-width:160px;">
