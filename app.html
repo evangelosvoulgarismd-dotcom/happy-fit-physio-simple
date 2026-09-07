@@ -157,6 +157,11 @@
   .notifPanel{position:absolute; top:56px; right:14px; width:300px; max-height:400px; overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:0 10px 30px rgba(36,20,19,0.25); z-index:200; padding:12px;}
   .notifPanel .notifItem{padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
   .notifPanel .notifItem:last-child{border-bottom:none;}
+  @media print{
+    #sidebar, #bottomTabBar, .wizardNav, .summaryBtn, #printBtn, #backToFormBtn { display:none !important; }
+    #main{ padding:0 !important; }
+    body{ background:#fff; }
+  }
 </style>
 </head>
 <body>
@@ -354,6 +359,34 @@ const STR = {
   slotBooked:{el:'✓ Κρατήθηκε', en:'✓ Booked'},
   noSlots:{el:'Δεν υπάρχουν ακόμα διαθέσιμες ώρες.', en:'No available slots yet.'},
   yourBookedCall:{el:'Η κλήση σου', en:'Your call'},
+  painInjuryHistory:{el:'Πόνος, Τραυματισμός & Αποκατάσταση', en:'Pain, Injury & Rehabilitation'},
+  sleepRecovery:{el:'Ύπνος & Ανάρρωση', en:'Sleep & Recovery'},
+  nutritionSection:{el:'Διατροφή', en:'Nutrition'},
+  trainingPreferences:{el:'Προτιμήσεις Προπόνησης', en:'Training Preferences'},
+  coachingDecisions:{el:'Αποφάσεις Coach & Παρακολούθηση', en:'Coaching Decisions & Monitoring'},
+  typicalSleepHours:{el:'Τυπικές ώρες ύπνου', en:'Typical sleep hours'},
+  sleepQuality:{el:'Ποιότητα ύπνου', en:'Sleep quality'},
+  recoveryHabits:{el:'Συνήθειες ανάρρωσης', en:'Recovery habits'},
+  stressLevel:{el:'Επίπεδο στρες', en:'Stress level'},
+  dietType:{el:'Τύπος διατροφής', en:'Diet type'},
+  foodPreferences:{el:'Προτιμήσεις/δυσανεξίες τροφίμων', en:'Food preferences/intolerances'},
+  hydration:{el:'Ενυδάτωση (ημερήσια)', en:'Hydration (daily)'},
+  supplements:{el:'Συμπληρώματα', en:'Supplements'},
+  eatingHabits:{el:'Διατροφικές συνήθειες', en:'Eating habits'},
+  redFlags:{el:'Κόκκινες σημαίες / προσοχή', en:'Red flags / caution'},
+  chosenApproach:{el:'Επιλεγμένη προσέγγιση', en:'Chosen approach'},
+  monitoringPlan:{el:'Πλάνο παρακολούθησης', en:'Monitoring plan'},
+  nextReviewDate:{el:'Επόμενη επανεξέταση', en:'Next review date'},
+  coachSummary:{el:'Σύνοψη Αξιολόγησης', en:'Assessment Summary'},
+  step:{el:'Βήμα', en:'Step'},
+  of:{el:'από', en:'of'},
+  next:{el:'Επόμενο', en:'Next'},
+  back:{el:'Πίσω', en:'Back'},
+  finish:{el:'Ολοκλήρωση', en:'Finish'},
+  intakeComplete:{el:'✓ Η αξιολόγηση ολοκληρώθηκε', en:'✓ Assessment completed'},
+  viewSummary:{el:'Προβολή Σύνοψης', en:'View Summary'},
+  printSummary:{el:'Εκτύπωση', en:'Print'},
+  notFilled:{el:'— δεν συμπληρώθηκε —', en:'— not filled —'},
 };
 function t(k, loc){ return STR[k]?.[loc] || STR[k]?.el || k; }
 
@@ -1474,7 +1507,7 @@ async function renderClientDetail(main){
   const body = el('<div></div>');
   main.appendChild(body);
 
-  if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null);
+  if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
   else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main), intakeRow?.data || null);
   else if(tab==='live'){
     if(program) await renderLiveSessionTab(body, client, program, true);
@@ -1501,29 +1534,39 @@ async function renderClientDetail(main){
 }
 
 const INTAKE_SECTIONS = [
-  { key:'pain', title:'painCharacterization', fields:[
+  { key:'baseline', title:'baselineSection', fields:[
+    ['baselineWeight','text'], ['measurements','area'], ['restingHR','text'], ['progressPhotosNote','text'],
+  ]},
+  { key:'pain', title:'painInjuryHistory', fields:[
     ['intensity','text'], ['extent','text'], ['frequency','text'],
     ['movementRest','text'], ['neurological','text'], ['nocturnal','text'],
-  ]},
-  { key:'subjective', title:'subjectiveAssessment', fields:[
     ['injuryDate','date'], ['mechanism','area'], ['symptoms','area'],
     ['management','area'], ['tests','area'], ['medications','area'], ['contraindications','area'],
+    ['conditions','area'], ['medicalClearance','area'], ['currentPain','area'], ['injuryHistory','area'], ['fearedMovement','area'],
   ]},
-  { key:'goals', title:'goalsAndHistory', fields:[
+  { key:'sleep', title:'sleepRecovery', fields:[
+    ['typicalSleepHours','text'], ['sleepQuality','select',['Πολύ καλή','Καλή','Μέτρια','Κακή','Πολύ κακή']],
+    ['recoveryHabits','area'], ['stressLevel','select',['Χαμηλό','Μέτριο','Υψηλό','Πολύ υψηλό']],
+  ]},
+  { key:'nutrition', title:'nutritionSection', fields:[
+    ['dietType','text'], ['foodPreferences','area'], ['hydration','text'], ['supplements','area'], ['eatingHabits','area'],
+  ]},
+  { key:'goals', title:'trainingPreferences', fields:[
     ['mainGoal','select',['Μυϊκή ανάπτυξη','Απώλεια λίπους','Αύξηση δύναμης','Βελτίωση φυσικής κατάστασης','Βελτίωση κινητικότητας','Μείωση ενοχλήσεων','Επιστροφή μετά τραυματισμό','Αθλητική απόδοση','Άλλο']],
-    ['goalWhy','area'], ['goalDeadline','text'], ['conditions','area'], ['medicalClearance','area'],
-    ['currentPain','area'], ['injuryHistory','area'], ['fearedMovement','area'],
+    ['goalWhy','area'], ['goalDeadline','text'],
     ['yearsTraining','text'], ['currentProgram','area'], ['likedExercises','area'], ['dislikedExercises','area'],
   ]},
   { key:'lifestyle', title:'lifestyleAndEquipment', fields:[
     ['trainingLocation','select',['Γυμναστήριο','Σπίτι','Εξωτερικός χώρος','Μικτό']],
     ['equipmentAvailable','area'], ['adherenceDifficulty','text'], ['barriers','area'],
   ]},
-  { key:'baseline', title:'baselineSection', fields:[
-    ['baselineWeight','text'], ['measurements','area'], ['restingHR','text'], ['progressPhotosNote','text'],
-  ]},
 ];
-const INTAKE_FIELDS = INTAKE_SECTIONS.flatMap(s=>s.fields);
+const COACH_ONLY_SECTION = {
+  key:'coachDecisions', title:'coachingDecisions', fields:[
+    ['redFlags','area'], ['chosenApproach','area'], ['monitoringPlan','area'], ['nextReviewDate','date'],
+  ]
+};
+const INTAKE_FIELDS = INTAKE_SECTIONS.flatMap(s=>s.fields).concat(COACH_ONLY_SECTION.fields);
 
 function bodyOutlineSvg(view){
   // Simple, recognizable front/back silhouette — not anatomically precise, matches a clinical pain-marking diagram.
@@ -1594,9 +1637,11 @@ function renderBodyDiagram(container, state, onChange){
 
 
 
-function renderIntakeForm(body, client, existingData){
+function renderIntakeForm(body, client, existingData, isCoach){
   const state = { ...(existingData||{}) };
   let timer = null;
+  const allSteps = isCoach ? [...INTAKE_SECTIONS, COACH_ONLY_SECTION] : INTAKE_SECTIONS;
+  let stepIndex = Math.min(state._step || 0, allSteps.length - 1);
 
   const card = el(`<div class="clinicalCard">
     <div class="clinicalHeader">
@@ -1604,23 +1649,47 @@ function renderIntakeForm(body, client, existingData){
       <span class="brand">Happy Fit Physio</span>
       <span class="doc-title">${t('assessmentCard',locale)}</span>
     </div>
-    <div style="margin-bottom:16px;"><strong>${escapeHtml(client.full_name||'')}</strong></div>
+    <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <strong>${escapeHtml(client.full_name||'')}</strong>
+      ${isCoach ? `<button class="btn secondary summaryBtn" type="button" style="padding:6px 14px; font-size:12px;">📋 ${t('viewSummary',locale)}</button>` : ''}
+    </div>
+    <div class="progressBarWrap"></div>
     <div class="sectionsWrap"></div>
-    <span class="savedTag statusSpan"></span>
+    <div class="wizardNav" style="display:flex; justify-content:space-between; margin-top:16px;">
+      <button class="btn secondary backBtn" type="button">← ${t('back',locale)}</button>
+      <span class="savedTag statusSpan"></span>
+      <button class="btn nextBtn" type="button"></button>
+    </div>
   </div>`);
   const sectionsWrap = card.querySelector('.sectionsWrap');
   const statusEl = card.querySelector('.statusSpan');
+  const progressWrap = card.querySelector('.progressBarWrap');
+  const backBtn = card.querySelector('.backBtn');
+  const nextBtn = card.querySelector('.nextBtn');
+  const summaryBtn = card.querySelector('.summaryBtn');
+  if(summaryBtn) summaryBtn.addEventListener('click', ()=>{ renderCoachSummary(body, client, state); });
 
-  function scheduleSave(){
+  function scheduleSave(extra){
     statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
     clearTimeout(timer);
     timer = setTimeout(async ()=>{
-      await supabase.from('client_intake').upsert({ client_id: client.id, data: state, updated_at: new Date().toISOString() }, { onConflict:'client_id' });
+      await supabase.from('client_intake').upsert({ client_id: client.id, data: { ...state, ...extra }, updated_at: new Date().toISOString() }, { onConflict:'client_id' });
       statusEl.textContent = t('intakeSaved',locale);
     }, 700);
   }
 
-  INTAKE_SECTIONS.forEach(section=>{
+  function renderProgress(){
+    const pct = Math.round(((stepIndex+1)/allSteps.length)*100);
+    progressWrap.innerHTML = `
+      <div style="font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;">${t('step',locale)} ${stepIndex+1} ${t('of',locale)} ${allSteps.length} — ${t(allSteps[stepIndex].title,locale)}</div>
+      <div style="height:6px; background:var(--line); border-radius:3px; overflow:hidden;">
+        <div style="height:100%; width:${pct}%; background:var(--red); transition:width 0.3s ease;"></div>
+      </div>`;
+  }
+
+  function renderStep(){
+    sectionsWrap.innerHTML = '';
+    const section = allSteps[stepIndex];
     const secEl = el(`<div class="clinicalSection"><h4>${t(section.title,locale)}</h4><div class="grid2 fieldsGrid"></div></div>`);
     const fieldsGrid = secEl.querySelector('.fieldsGrid');
 
@@ -1648,10 +1717,67 @@ function renderIntakeForm(body, client, existingData){
       fieldsGrid.appendChild(fieldDiv);
     });
     sectionsWrap.appendChild(secEl);
+
+    renderProgress();
+    backBtn.style.visibility = stepIndex===0 ? 'hidden' : 'visible';
+    const isLast = stepIndex === allSteps.length - 1;
+    nextBtn.textContent = isLast ? `✓ ${t('finish',locale)}` : `${t('next',locale)} →`;
+  }
+
+  backBtn.addEventListener('click', ()=>{
+    if(stepIndex>0){ stepIndex--; state._step = stepIndex; scheduleSave(); renderStep(); }
+  });
+  nextBtn.addEventListener('click', ()=>{
+    if(stepIndex < allSteps.length-1){
+      stepIndex++;
+      state._step = stepIndex;
+      scheduleSave();
+      renderStep();
+      sectionsWrap.scrollIntoView({ behavior:'smooth', block:'start' });
+    } else {
+      state._completed = true;
+      scheduleSave();
+      statusEl.textContent = t('intakeComplete',locale);
+    }
   });
 
+  renderStep();
   body.appendChild(card);
 }
+
+async function renderCoachSummary(body, client, state){
+  body.innerHTML = '';
+  const card = el(`<div class="clinicalCard" id="summaryPrintArea">
+    <div class="clinicalHeader">
+      <span class="brand">Happy Fit Physio</span>
+      <span class="doc-title">${t('coachSummary',locale)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <strong>${escapeHtml(client.full_name||'')}</strong>
+      <div style="display:flex; gap:8px;">
+        <button class="btn secondary" id="printBtn" type="button">🖨️ ${t('printSummary',locale)}</button>
+        <button class="btn secondary" id="backToFormBtn" type="button">← ${t('back',locale)}</button>
+      </div>
+    </div>
+    <div class="summaryBody"></div>
+  </div>`);
+  const summaryBody = card.querySelector('.summaryBody');
+  const allSteps = [...INTAKE_SECTIONS, COACH_ONLY_SECTION];
+  allSteps.forEach(section=>{
+    const rows = section.fields.map(([key])=>{
+      const val = state[key];
+      return `<div style="margin-bottom:8px;"><span style="font-size:11.5px; color:var(--ink-soft);">${t(key,locale)}:</span> <strong>${val ? escapeHtml(val) : `<span style="color:var(--ink-soft); font-weight:400;">${t('notFilled',locale)}</span>`}</strong></div>`;
+    }).join('');
+    summaryBody.appendChild(el(`<div class="clinicalSection"><h4>${t(section.title,locale)}</h4>${rows}</div>`));
+  });
+  card.querySelector('#backToFormBtn').addEventListener('click', async ()=>{
+    body.innerHTML = '';
+    renderIntakeForm(body, client, state, true);
+  });
+  card.querySelector('#printBtn').addEventListener('click', ()=>window.print());
+  body.appendChild(card);
+}
+
 
 async function renderReassessmentTab(body, client, isCoach){
   const { data: rows } = await supabase.from('reassessments').select('*').eq('client_id', client.id).order('session_number',{ascending:true});
