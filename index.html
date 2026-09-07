@@ -223,6 +223,42 @@
     .modalBox h4{font-size:13px; margin:16px 0 6px;}
     .modalCloseBtn{float:right; background:transparent; border:none; font-size:20px; cursor:pointer; color:var(--ink-soft); line-height:1;}
 
+
+    /* ── PROGRAM TEMPLATES ── */
+    .templates-section { background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .templates-intro { max-width:720px; margin:-28px auto 42px; text-align:center; color:var(--ink-soft); font-size:14px; line-height:1.7; }
+    .templates-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:18px; }
+    .template-card { background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:26px 22px; min-height:235px; display:flex; flex-direction:column; transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+    .template-card:hover { transform:translateY(-4px); box-shadow:0 12px 28px rgba(36,20,19,.10); border-color:#d8c7ad; }
+    .template-number { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--red); font-weight:700; letter-spacing:.12em; margin-bottom:14px; }
+    .template-card h3 { font-size:18px; line-height:1.25; margin-bottom:9px; }
+    .template-card p { color:var(--ink-soft); font-size:12.8px; line-height:1.6; margin-bottom:20px; }
+    .template-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; margin-bottom:18px; }
+    .template-tag { display:inline-flex; padding:5px 8px; border-radius:999px; background:#f1e5d5; color:var(--ink-soft); font-size:10.5px; font-weight:700; }
+    .template-open { border:0; background:var(--red); color:#fff; border-radius:8px; padding:11px 14px; font:700 12px 'Public Sans',sans-serif; cursor:pointer; width:100%; transition:background .2s ease, transform .2s ease; }
+    .template-open:hover { background:var(--red-deep); transform:translateY(-1px); }
+    .program-modal { position:fixed; inset:0; background:rgba(36,20,19,.68); display:none; align-items:center; justify-content:center; z-index:1200; padding:18px; backdrop-filter:blur(4px); }
+    .program-modal.open { display:flex; }
+    .program-modal-box { width:min(920px,100%); max-height:90vh; overflow:auto; background:var(--panel); border-radius:16px; box-shadow:0 25px 70px rgba(0,0,0,.28); }
+    .program-modal-head { position:sticky; top:0; z-index:2; display:flex; justify-content:space-between; gap:18px; align-items:flex-start; padding:24px 26px 20px; background:rgba(255,253,249,.96); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+    .program-modal-kicker { color:var(--red); font:700 10px 'IBM Plex Mono',monospace; letter-spacing:.16em; text-transform:uppercase; margin-bottom:6px; }
+    .program-modal-head h2 { font-size:25px; line-height:1.2; }
+    .program-modal-close { flex:0 0 auto; width:38px; height:38px; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:50%; cursor:pointer; font-size:18px; }
+    .program-modal-content { padding:26px; }
+    .program-lead { background:#f8efe3; border-left:3px solid var(--gold); border-radius:8px; padding:15px 16px; margin-bottom:24px; color:var(--ink); font-size:13.5px; line-height:1.65; }
+    .program-block { margin-bottom:24px; }
+    .program-block h3 { font-size:15px; margin-bottom:9px; color:var(--ink); }
+    .program-block p, .program-block li { color:var(--ink-soft); font-size:13px; line-height:1.65; }
+    .program-block ul { padding-left:19px; display:grid; gap:5px; }
+    .program-phases { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .program-phase { border:1px solid var(--line); border-radius:10px; padding:14px; background:#fff; }
+    .program-phase strong { display:block; font-size:12.5px; color:var(--red-deep); margin-bottom:5px; }
+    .program-phase span { color:var(--ink-soft); font-size:12px; line-height:1.55; }
+    .program-note { padding:13px 15px; border-radius:9px; background:#f4e5df; color:var(--red-deep); font-size:12.5px; line-height:1.6; }
+    .program-footer-note { padding-top:16px; border-top:1px solid var(--line); color:var(--ink-soft); font-size:11.5px; line-height:1.6; }
+    @media (max-width:900px){ .templates-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+    @media (max-width:640px){ .templates-grid{grid-template-columns:1fr;} .program-modal{padding:0;} .program-modal-box{max-height:100vh;height:100%;border-radius:0;} .program-modal-head{padding:18px;} .program-modal-content{padding:20px 18px 28px;} .program-phases{grid-template-columns:1fr;} }
+
     @media (max-width:640px){
       .chat-overlay{ padding:0; }
       .chat-box{ width:100%; height:100%; max-height:100%; border-radius:0; }
@@ -239,6 +275,7 @@
     </div>
     <div class="navLinks">
       <a href="#services">Υπηρεσίες</a>
+      <a href="#templates">Πρότυπα Προγραμμάτων</a>
       <a href="#features">Τι περιλαμβάνει</a>
       <a href="#how">Πώς λειτουργεί</a>
       <a href="#lead">Επικοινωνία</a>
@@ -343,6 +380,15 @@
     </div>
   </section>
 
+
+  <!-- PROGRAM TEMPLATES -->
+  <section class="section templates-section" id="templates">
+    <div class="section-label">Κλινικός κορμός</div>
+    <h2 class="section-title">Πρότυπα Προγραμμάτων</h2>
+    <p class="templates-intro">Τα πρότυπα δεν είναι έτοιμα γενικά προγράμματα άσκησης. Αποτελούν τον βασικό κλινικό κορμό πάνω στον οποίο χτίζεται κάθε εξατομικευμένο πρόγραμμα, μετά την αξιολόγηση και τον έλεγχο ασφάλειας.</p>
+    <div class="templates-grid" id="templatesGrid"></div>
+  </section>
+
   <!-- DARK STATEMENT PANEL -->
   <section class="statement-section">
     <p>Δεν χτίζουμε προγράμματα με μαντεψιά. <span>Κάθε άσκηση</span> έχει το δικό της "γιατί", τεκμηριωμένο με πραγματική επιστήμη.</p>
@@ -390,6 +436,18 @@
     </div>
     <p>© 2026 Happy Fit Physio · Online Coaching</p>
   </footer>
+
+
+  <!-- PROGRAM DETAIL MODAL -->
+  <div class="program-modal" id="programModal" aria-hidden="true">
+    <div class="program-modal-box" role="dialog" aria-modal="true" aria-labelledby="programModalTitle">
+      <div class="program-modal-head">
+        <div><div class="program-modal-kicker">Πρότυπο προγράμματος</div><h2 id="programModalTitle"></h2></div>
+        <button class="program-modal-close" id="programModalClose" aria-label="Κλείσιμο">✕</button>
+      </div>
+      <div class="program-modal-content" id="programModalContent"></div>
+    </div>
+  </div>
 
   <!-- CHAT LAUNCHER + OVERLAY -->
   <button class="chat-launcher js-open-chat" aria-label="Άνοιγμα συνομιλίας">💬</button>
@@ -451,6 +509,56 @@
         submitBtn.disabled = false; submitBtn.textContent = 'Στείλε τα στοιχεία μου';
       }
     });
+  </script>
+
+
+  <script>
+    const programTemplates = [
+      {title:'Σπονδυλική στήλη', subtitle:'Αυχένας · Θώρακας · Μέση', goal:'Έλεγχος συμπτωμάτων, βελτίωση λειτουργικότητας, προοδευτική φόρτιση και ασφαλής επιστροφή στην καθημερινότητα, την άσκηση ή την άθληση.', who:'Άτομα με μυοσκελετικά ενοχλήματα στην αυχενική, θωρακική ή οσφυϊκή μοίρα, όταν μετά την αξιολόγηση δεν προκύπτει ανάγκη για άμεση ιατρική παραπομπή.', assess:['Ιστορικό και συμπτώματα','Λειτουργικοί περιορισμοί και στόχοι','Κινητικότητα και έλεγχος κίνησης','Δύναμη και μυϊκή αντοχή','Νευρολογικός έλεγχος όταν ενδείκνυται'], risks:'Απαιτείται άμεση αξιολόγηση όταν υπάρχουν σοβαρό τραύμα, υποψία κατάγματος ή σοβαρής νόσου, προοδευτικό νευρολογικό έλλειμμα, νέα αδυναμία ή συμπτώματα από την ουροδόχο κύστη/έντερο και την περιοχή του περινέου.', phases:[['1. Έλεγχος συμπτωμάτων','Εκπαίδευση, καθημερινή κίνηση, βάδιση, ήπια κινητικότητα και προσαρμογή δραστηριότητας.'],['2. Κινητικότητα και βασική δύναμη','Προοδευτική άσκηση για κορμό, ισχία και τις απαιτούμενες μυϊκές ομάδες.'],['3. Προοδευτική φόρτιση','Αύξηση αντίστασης, επαναλήψεων, εύρους, διάρκειας ή πολυπλοκότητας ανάλογα με την ανοχή.'],['4. Λειτουργική επανεκπαίδευση','Εξάσκηση σε κινήσεις και απαιτήσεις εργασίας, καθημερινότητας ή αθλήματος.'],['5. Επιστροφή','Σταδιακή επιστροφή στην επιθυμητή δραστηριότητα με βάση την ανοχή στο φορτίο και τη λειτουργικότητα.']], outcomes:'Πόνος, λειτουργικότητα, κινητικότητα, δύναμη, αντοχή, ανοχή στο φορτίο και ειδικοί δείκτες λειτουργικότητας όπου χρειάζεται.'},
+      {title:'Ώμος και ωμική ζώνη', subtitle:'Κινητικότητα · Σταθερότητα · Δύναμη', goal:'Βελτίωση της κίνησης και της ικανότητας φόρτισης του ώμου, με σταδιακή επιστροφή στις καθημερινές και αθλητικές απαιτήσεις.', who:'Άτομα με πόνο ή περιορισμό λειτουργίας του ώμου, μετά από κατάλληλη αξιολόγηση.', assess:['Ιστορικό και μηχανισμός συμπτωμάτων','Ενεργητικό και παθητικό εύρος κίνησης','Δύναμη και αντοχή των μυών του ώμου','Κινητικός έλεγχος και λειτουργικές κινήσεις','Στόχοι και απαιτήσεις εργασίας ή αθλήματος'], risks:'Ιδιαίτερη προσοχή σε σοβαρό τραυματισμό, οξεία απώλεια λειτουργίας, σημαντική παραμόρφωση, νευρολογικά σημεία ή συμπτώματα που απαιτούν ιατρικό έλεγχο.', phases:[['1. Έλεγχος συμπτωμάτων','Εκπαίδευση, προσαρμογή δραστηριότητας και ανεκτή κίνηση.'],['2. Κινητικότητα και βασική δύναμη','Ελεγχόμενες κινήσεις και ασκήσεις αντίστασης ανάλογα με την ανοχή.'],['3. Προοδευτική φόρτιση','Σταδιακή αύξηση αντίστασης, όγκου και πολυπλοκότητας.'],['4. Λειτουργική επανεκπαίδευση','Εξειδίκευση στις απαιτήσεις της καθημερινότητας, εργασίας ή άθλησης.'],['5. Επιστροφή','Προοδευτική έκθεση στις απαιτήσεις του στόχου με παρακολούθηση της ανοχής.']], outcomes:'Πόνος, λειτουργικότητα, εύρος κίνησης, δύναμη, αντοχή και ειδικοί δείκτες του ώμου όπου ενδείκνυται.'},
+      {title:'Αγκώνας και αντιβράχιο', subtitle:'Λαβή · Δύναμη · Φόρτιση', goal:'Αποκατάσταση της ικανότητας του αγκώνα και του αντιβραχίου να δέχονται και να διαχειρίζονται προοδευτικά φορτία.', who:'Άτομα με πόνο ή μειωμένη λειτουργία στον αγκώνα και το αντιβράχιο, όπως σε προβλήματα που σχετίζονται με επαναλαμβανόμενη φόρτιση.', assess:['Ιστορικό και δραστηριότητες που προκαλούν συμπτώματα','Κινητικότητα αγκώνα και αντιβραχίου','Δύναμη και αντοχή','Δύναμη λαβής όπου χρειάζεται','Λειτουργικές απαιτήσεις και διαχείριση φορτίου'], risks:'Έλεγχος για σοβαρό τραυματισμό, κάταγμα, έντονο οίδημα, νευρολογικά συμπτώματα ή σημαντική απώλεια λειτουργίας.', phases:[['1. Έλεγχος συμπτωμάτων','Μείωση ερεθιστικών φορτίων και διατήρηση ανεκτής κίνησης.'],['2. Βασική δύναμη','Στοχευμένη ενδυνάμωση αγκώνα, καρπού και αντιβραχίου.'],['3. Προοδευτική φόρτιση','Σταδιακή αύξηση αντίστασης, όγκου και διάρκειας.'],['4. Λειτουργική επανεκπαίδευση','Εξάσκηση σε λαβή, άρση, έλξη, πίεση και ειδικές απαιτήσεις.'],['5. Επιστροφή','Προοδευτική έκθεση στο πλήρες φορτίο εργασίας ή άθλησης.']], outcomes:'Πόνος, λειτουργικότητα, δύναμη λαβής, δύναμη και ανοχή σε επαναλαμβανόμενη φόρτιση.'},
+      {title:'Καρπός και χέρι', subtitle:'Κινητικότητα · Λαβή · Λειτουργικότητα', goal:'Επαναφορά της κινητικότητας, της δύναμης και της λειτουργικής χρήσης του χεριού και του καρπού.', who:'Άτομα με περιορισμό κίνησης, πόνο ή μειωμένη ικανότητα χρήσης του χεριού, όταν είναι κατάλληλη η συντηρητική αποκατάσταση.', assess:['Κινητικότητα αρθρώσεων και δακτύλων','Δύναμη λαβής και σύλληψης','Λεπτή κινητικότητα και επιδεξιότητα','Πόνος και λειτουργικοί περιορισμοί','Απαιτήσεις εργασίας, καθημερινότητας και χόμπι'], risks:'Ιατρικός έλεγχος απαιτείται όταν υπάρχει σοβαρό τραύμα, παραμόρφωση, σημαντική νευρολογική διαταραχή ή απότομη απώλεια λειτουργίας.', phases:[['1. Έλεγχος συμπτωμάτων','Ανεκτή κίνηση και προστασία από υπερβολική φόρτιση.'],['2. Κινητικότητα και βασική δύναμη','Σταδιακή επαναφορά εύρους και βασικής μυϊκής ικανότητας.'],['3. Προοδευτική φόρτιση','Αύξηση αντίστασης και διάρκειας σε λαβές και λειτουργικές κινήσεις.'],['4. Λειτουργική επανεκπαίδευση','Ειδικές δεξιότητες χεριού και απαιτήσεις καθημερινότητας ή εργασίας.'],['5. Επιστροφή','Πλήρης ή σχεδόν πλήρης έκθεση στις απαιτήσεις του στόχου.']], outcomes:'Πόνος, εύρος κίνησης, δύναμη λαβής, επιδεξιότητα και λειτουργικότητα.'},
+      {title:'Ισχίο', subtitle:'Κινητικότητα · Δύναμη · Έλεγχος κίνησης', goal:'Βελτίωση της ικανότητας του ισχίου να κινείται, να παράγει δύναμη και να διαχειρίζεται φορτία σε καθημερινές ή αθλητικές δραστηριότητες.', who:'Άτομα με πόνο, δυσκαμψία ή μειωμένη λειτουργία του ισχίου μετά από κατάλληλη αξιολόγηση.', assess:['Ιστορικό και λειτουργικοί στόχοι','Κινητικότητα ισχίου','Δύναμη γλουτιαίων, τετρακεφάλου και οπίσθιων μηριαίων','Έλεγχος μονής στήριξης και βάδισης','Ανοχή σε καθημερινά και αθλητικά φορτία'], risks:'Έλεγχος για σοβαρό τραύμα, αδυναμία φόρτισης, σημαντικό περιορισμό κίνησης ή άλλα σημεία που απαιτούν ιατρική διερεύνηση.', phases:[['1. Έλεγχος συμπτωμάτων','Ανεκτή κίνηση, βάδιση και προσαρμογή δραστηριότητας.'],['2. Βασική δύναμη','Ενδυνάμωση ισχίου και κάτω άκρου με ελεγχόμενο φορτίο.'],['3. Προοδευτική φόρτιση','Αύξηση αντίστασης, εύρους, ταχύτητας ή πολυπλοκότητας.'],['4. Λειτουργική επανεκπαίδευση','Καθίσματα, προβολές, μονή στήριξη, βάδιση και ειδικές κινήσεις.'],['5. Επιστροφή','Σταδιακή επανένταξη σε τρέξιμο, άλματα ή άλλες απαιτήσεις όταν ενδείκνυται.']], outcomes:'Πόνος, λειτουργικότητα, κινητικότητα, δύναμη, έλεγχος μονής στήριξης και ανοχή στο φορτίο.'},
+      {title:'Γόνατο', subtitle:'Δύναμη · Σταθερότητα · Λειτουργική φόρτιση', goal:'Ανάκτηση της δύναμης και της ικανότητας φόρτισης του γόνατος με προοδευτική επιστροφή στη λειτουργία.', who:'Άτομα με πόνο ή μειωμένη λειτουργία του γόνατος, συμπεριλαμβανομένων επιλεγμένων περιπτώσεων εκφυλιστικών προβλημάτων, μετά από αξιολόγηση.', assess:['Ιστορικό και λειτουργικοί στόχοι','Κινητικότητα και οίδημα όπου υπάρχει','Δύναμη τετρακεφάλου, οπίσθιων μηριαίων και ισχίου','Έλεγχος καθίσματος και μονής στήριξης','Βάδιση, σκάλες, τρέξιμο ή άλματα ανάλογα με τον στόχο'], risks:'Έλεγχος για σοβαρό τραυματισμό, σημαντική αστάθεια, αδυναμία φόρτισης, έντονο οίδημα ή άλλα σημεία που απαιτούν ιατρική αξιολόγηση.', phases:[['1. Έλεγχος συμπτωμάτων','Διατήρηση κίνησης και προσαρμογή της φόρτισης.'],['2. Βασική δύναμη','Σταδιακή ενδυνάμωση τετρακεφάλου, ισχίου και οπίσθιων μηριαίων.'],['3. Προοδευτική φόρτιση','Αύξηση αντίστασης, όγκου και απαιτήσεων.'],['4. Λειτουργική επανεκπαίδευση','Σκάλες, καθίσματα, μονή στήριξη, τρέξιμο ή άλματα όπου χρειάζεται.'],['5. Επιστροφή','Προοδευτική έκθεση στις απαιτήσεις του στόχου.']], outcomes:'Πόνος, λειτουργικότητα, δύναμη, κινητικότητα, ικανότητα σκάλας/καθίσματος και ανοχή σε τρέξιμο ή άλματα όπου ενδείκνυται.'},
+      {title:'Ποδοκνημική και πόδι', subtitle:'Κινητικότητα · Ισορροπία · Δύναμη', goal:'Αποκατάσταση της κινητικότητας, της δύναμης και του ελέγχου της ποδοκνημικής και του ποδιού.', who:'Άτομα με πόνο, δυσκαμψία, ιστορικό διαστρέμματος ή λειτουργική αστάθεια, όταν είναι κατάλληλη η συντηρητική αποκατάσταση.', assess:['Κινητικότητα ποδοκνημικής','Δύναμη γάμπας και κάτω άκρου','Ισορροπία και νευρομυϊκός έλεγχος','Βάδιση και μονή στήριξη','Ανοχή σε τρέξιμο, άλματα ή αλλαγές κατεύθυνσης όπου χρειάζεται'], risks:'Έλεγχος για σοβαρό τραυματισμό, κάταγμα, αδυναμία φόρτισης, έντονο οίδημα ή νευρολογικά συμπτώματα.', phases:[['1. Έλεγχος συμπτωμάτων','Προοδευτική κίνηση και φόρτιση ανάλογα με την ανοχή.'],['2. Κινητικότητα και δύναμη','Εύρος κίνησης, ενδυνάμωση γάμπας και μυών του κάτω άκρου.'],['3. Προοδευτική φόρτιση','Αύξηση αντίστασης, μονής στήριξης και λειτουργικού φορτίου.'],['4. Ισορροπία και λειτουργία','Νευρομυϊκές ασκήσεις, αλλαγές κατεύθυνσης και ειδικές απαιτήσεις.'],['5. Επιστροφή','Σταδιακή επιστροφή σε τρέξιμο, άλματα και άθληση όταν χρειάζεται.']], outcomes:'Πόνος, κινητικότητα, δύναμη, ισορροπία, έλεγχος μονής στήριξης και ανοχή σε δυναμικές απαιτήσεις.'},
+      {title:'Άσκηση για ηλικιωμένους', subtitle:'Δύναμη · Ισορροπία · Βάδιση', goal:'Διατήρηση ή βελτίωση της δύναμης, της ισορροπίας, της κινητικότητας, της αντοχής και της ανεξαρτησίας.', who:'Μεγαλύτεροι ενήλικες με στόχο την ασφαλή άσκηση, τη λειτουργική ικανότητα και τη μείωση του κινδύνου πτώσεων, με προσαρμογή στις δυνατότητες και τις παθήσεις τους.', assess:['Λειτουργική ικανότητα και επίπεδο δραστηριότητας','Δύναμη κάτω και άνω άκρων','Ισορροπία και κίνδυνος πτώσης','Βάδιση και αντοχή','Ιατρικό ιστορικό, φάρμακα και περιορισμοί'], risks:'Προσαρμογή της άσκησης σε καρδιοαναπνευστικές, νευρολογικές, μυοσκελετικές ή άλλες καταστάσεις. Παραπομπή όταν υπάρχουν μη ελεγχόμενα ή νέα συμπτώματα που απαιτούν ιατρική εκτίμηση.', phases:[['1. Βασική κινητικότητα','Ασφαλής μετακίνηση, βάδιση και απλές ασκήσεις.'],['2. Δύναμη και ισορροπία','Προοδευτική ενδυνάμωση και ασκήσεις ισορροπίας.'],['3. Προοδευτική φόρτιση','Σταδιακή αύξηση αντίστασης, επαναλήψεων και διάρκειας.'],['4. Λειτουργική επανεκπαίδευση','Σηκώνομαι από καρέκλα, σκάλες, βάδιση και καθημερινές δραστηριότητες.'],['5. Μακροχρόνια διατήρηση','Σταθερή συμμετοχή σε αερόβια άσκηση, δύναμη και ισορροπία σύμφωνα με τις δυνατότητες.']], outcomes:'Δύναμη, ισορροπία, βάδιση, αντοχή, λειτουργικότητα, αυτοπεποίθηση και συμμετοχή στις καθημερινές δραστηριότητες.'},
+      {title:'Υγεία της γυναίκας', subtitle:'Εγκυμοσύνη · Λοχεία · Πυελικό έδαφος', goal:'Ασφαλής και εξατομικευμένη άσκηση και αποκατάσταση με βάση το στάδιο, τα συμπτώματα, τη λειτουργικότητα και τους στόχους της γυναίκας.', who:'Γυναίκες κατά την εγκυμοσύνη ή τη λοχεία και γυναίκες με συμπτώματα ή λειτουργικές δυσκολίες που σχετίζονται με το πυελικό έδαφος, όταν ενδείκνυται φυσικοθεραπευτική προσέγγιση.', assess:['Στάδιο εγκυμοσύνης ή λοχείας και ιστορικό','Συμπτώματα πυελικού εδάφους','Κοιλιακή και πυελική λειτουργία όπου ενδείκνυται','Δύναμη, κινητικότητα και γενική φυσική κατάσταση','Στόχοι επιστροφής στην καθημερινότητα και την άσκηση'], risks:'Απαιτείται συνεργασία με ιατρό ή μαία όταν υπάρχουν μαιευτικές ή γυναικολογικές ενδείξεις, αιμορραγία, έντονος ή ασυνήθιστος πόνος, σημαντική ζάλη/δύσπνοια ή άλλα συμπτώματα που δεν πρέπει να αξιολογούνται μόνο μέσω άσκησης.', phases:[['1. Ασφάλεια και έλεγχος συμπτωμάτων','Προσαρμογή δραστηριότητας και εκπαίδευση σύμφωνα με το στάδιο και την ανοχή.'],['2. Βασική λειτουργία','Αναπνοή, κινητικότητα, ήπια ενδυνάμωση και λειτουργικές κινήσεις.'],['3. Προοδευτική φόρτιση','Σταδιακή αύξηση δύναμης και αντοχής με σεβασμό στα συμπτώματα.'],['4. Λειτουργική επανεκπαίδευση','Καθημερινές απαιτήσεις, άρση, βάδιση και σταδιακή επιστροφή στην άσκηση.'],['5. Επιστροφή','Εξατομικευμένη επανένταξη σε προπόνηση και αθλητικές απαιτήσεις όταν είναι κατάλληλο.']], outcomes:'Συμπτώματα, λειτουργικότητα, δύναμη, αντοχή, κινητικότητα, αυτοπεποίθηση και δείκτες ειδικοί για το πυελικό έδαφος όταν ενδείκνυται.'}
+    ];
+
+    const templatesGrid = document.getElementById('templatesGrid');
+    const programModal = document.getElementById('programModal');
+    const programModalTitle = document.getElementById('programModalTitle');
+    const programModalContent = document.getElementById('programModalContent');
+    const programModalClose = document.getElementById('programModalClose');
+
+    templatesGrid.innerHTML = programTemplates.map((t,i)=>`
+      <article class="template-card">
+        <div class="template-number">0${i+1}</div>
+        <h3>${t.title}</h3>
+        <p>${t.subtitle}</p>
+        <div class="template-tags"><span class="template-tag">Αξιολόγηση</span><span class="template-tag">Προοδευτική φόρτιση</span><span class="template-tag">Επανεκτίμηση</span></div>
+        <button class="template-open" data-template="${i}">Δες το πρόγραμμα</button>
+      </article>`).join('');
+
+    function openProgram(index){
+      const t=programTemplates[index];
+      programModalTitle.textContent=t.title;
+      programModalContent.innerHTML=`
+        <div class="program-lead"><strong>Στόχος:</strong> ${t.goal}</div>
+        <div class="program-block"><h3>Για ποιον είναι</h3><p>${t.who}</p></div>
+        <div class="program-block"><h3>Αρχική αξιολόγηση</h3><ul>${t.assess.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+        <div class="program-block"><h3>Έλεγχος ασφάλειας</h3><div class="program-note">${t.risks}</div></div>
+        <div class="program-block"><h3>Πορεία αποκατάστασης</h3><div class="program-phases">${t.phases.map(x=>`<div class="program-phase"><strong>${x[0]}</strong><span>${x[1]}</span></div>`).join('')}</div></div>
+        <div class="program-block"><h3>Παρακολούθηση και επανεκτίμηση</h3><p>Η πρόοδος αξιολογείται με βάση τα συμπτώματα, τη λειτουργικότητα, την ανοχή στο φορτίο, την επίτευξη των στόχων και την προσήλωση στο πρόγραμμα. Η δόση και οι ασκήσεις τροποποιούνται ανάλογα με την απόκριση.</p></div>
+        <div class="program-block"><h3>Δείκτες αποτελέσματος</h3><p>${t.outcomes}</p></div>
+        <div class="program-footer-note">Το πρότυπο αποτελεί κλινικό πλαίσιο και όχι έτοιμο ατομικό πρόγραμμα. Το εξατομικευμένο πρόγραμμα δημιουργείται μετά την αρχική αξιολόγηση και προσαρμόζεται στην πορεία.</div>`;
+      programModal.classList.add('open'); programModal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+    }
+    function closeProgram(){ programModal.classList.remove('open'); programModal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+    templatesGrid.addEventListener('click',e=>{ const b=e.target.closest('.template-open'); if(b) openProgram(Number(b.dataset.template)); });
+    programModalClose.addEventListener('click',closeProgram);
+    programModal.addEventListener('click',e=>{if(e.target===programModal) closeProgram();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape' && programModal.classList.contains('open')) closeProgram();});
   </script>
 
   <script>
