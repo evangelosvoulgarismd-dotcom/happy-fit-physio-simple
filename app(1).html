@@ -2205,6 +2205,69 @@ function computeRecommendations(intakeData, exercises){
   return { recommended, risky };
 }
 
+
+function buildPersonalizedDraft(intakeData, exercises){
+  if(!intakeData) return {items:[], phase:'Απροσδιόριστη', reason:'Δεν υπάρχει ολοκληρωμένη αξιολόγηση.'};
+  const region = (intakeData.bodyRegion || '').toLowerCase();
+  const goal = intakeData.priorityGoal || intakeData.mainGoal || '';
+  const risk = (intakeData.redFlagScreen || '').toLowerCase();
+  if(risk.includes('ναι') || risk.includes('σίγουρ')) return {items:[], phase:'Δεν δημιουργείται αυτόματα πρόταση', reason:'Απαιτείται κλινικός έλεγχος πριν από την επιλογή ασκήσεων.'};
+
+  const regionTerms = {
+    'σπονδυλική στήλη':['κορμός','σπονδυλ','μέση','ράχη','neck','back','bird dog','bridge','dead bug','row'],
+    'ώμος και ωμική ζώνη':['ώμος','ωμ','shoulder','row','press','scap'],
+    'αγκώνας και αντιβράχιο':['αγκώ','αντιβράχ','elbow','forearm','curl','extension','row'],
+    'καρπός και χέρι':['καρπ','χέρι','wrist','hand','grip','λαβ'],
+    'ισχίο':['ισχ','hip','glute','γλουτ','bridge','split squat','step'],
+    'γόνατο':['γόν','knee','squat','step','quadriceps','τετρακέφαλ'],
+    'ποδοκνημική και πόδι':['ποδοκνημ','πόδι','ankle','foot','calf','γάμπ','balance','ισορροπ'],
+    'άσκηση για ηλικιωμένους':['ισορροπ','βάδιση','sit to stand','chair','squat','strength','δύναμ'],
+    'υγεία της γυναίκας':['πυελ','pelvic','core','breath','αναπν','glute','γλουτ']
+  };
+  const terms = regionTerms[region] || [];
+  const goalCats = GOAL_CATEGORY_MAP[goal] || [];
+  const scored = exercises.map(ex=>{
+    const text = ((ex.name_el||'')+' '+(ex.name_en||'')+' '+(ex.category||'')).toLowerCase();
+    let score=0;
+    terms.forEach(t=>{ if(text.includes(t)) score+=3; });
+    goalCats.forEach(t=>{ if((ex.category||'').includes(t)) score+=2; });
+    if(ex.evidence) score+=1;
+    return {ex,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  const unique=[]; const seen=new Set();
+  for(const x of scored){ if(!seen.has(x.ex.id)){ seen.add(x.ex.id); unique.push(x.ex); } if(unique.length>=6) break; }
+  let phase='Αρχική φάση';
+  const dur=(intakeData.symptomDuration||'').toLowerCase();
+  if(goal.includes('Επιστροφή') || goal.includes('απόδοση')) phase='Λειτουργική επανεκπαίδευση / επιστροφή στη δραστηριότητα';
+  else if(dur.includes('πάνω') || dur.includes('επαναλαμβαν')) phase='Προοδευτική φόρτιση';
+  return {items:unique, phase, reason:`Πρόταση με βάση την αξιολόγηση: ${goal||'κύριος στόχος'}.`};
+}
+
+function renderPersonalizedDraft(body, client, intakeData, exercises, onCreated){
+  const draft=buildPersonalizedDraft(intakeData, exercises);
+  const card=el(`<div class="card gold" style="margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--ink-soft);margin-bottom:5px;">ΠΡΟΤΑΣΗ ΑΠΟ ΤΗΝ ΑΞΙΟΛΟΓΗΣΗ</div>
+    <h3 style="margin:0 0 7px;">Πρόχειρο εξατομικευμένου προγράμματος</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">${escapeHtml(draft.reason)}</p>
+    <p style="font-size:12px;margin-bottom:10px;"><strong>Φάση:</strong> ${escapeHtml(draft.phase)}</p>
+    ${draft.items.length ? `<div class="draftList"></div>` : `<div style="padding:10px;border:1px solid var(--line);border-radius:8px;">${escapeHtml(draft.reason)}</div>`}
+    ${draft.items.length ? `<p style="font-size:11px;color:var(--ink-soft);margin:10px 0;">Οι ασκήσεις αποτελούν πρόταση για έλεγχο από τον επαγγελματία και δεν ενεργοποιούνται αυτόματα για τον ασκούμενο.</p><button class="btn createDraft" type="button">Δημιουργία προγράμματος για έλεγχο</button>` : ''}
+  </div>`);
+  if(draft.items.length){
+    const list=card.querySelector('.draftList');
+    draft.items.forEach((ex,i)=>list.appendChild(el(`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);"><span><strong>${i+1}.</strong> ${escapeHtml(ex.name_el||ex.name_en||'Άσκηση')}</span><span class="mono" style="font-size:10px;color:var(--ink-soft);">${escapeHtml(ex.category||'')}</span></div>`)));
+    card.querySelector('.createDraft').addEventListener('click', async()=>{
+      const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα — ${new Date().toLocaleDateString('el-GR')}`}).select().single();
+      if(error||!newProg){ toast('Δεν δημιουργήθηκε το πρόγραμμα.'); return; }
+      const rows=draft.items.map((ex,i)=>({program_id:newProg.id,exercise_id:ex.id,target_sets:2,target_reps:'8–12',target_load:'',sort_order:i}));
+      const {error:e2}=await supabase.from('program_exercises').insert(rows);
+      if(e2){ toast('Το πρόγραμμα δημιουργήθηκε, αλλά δεν προστέθηκαν όλες οι ασκήσεις.'); } else { toast('Δημιουργήθηκε πρόγραμμα για έλεγχο.'); }
+      onCreated();
+    });
+  }
+  body.appendChild(card);
+}
+
 async function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
   if(!program){
     const { data: templates } = await supabase.from('program_templates').select('*, program_template_exercises(*)').eq('coach_id', profile.id);
@@ -2236,6 +2299,10 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       if(suggested.length){ suggested.forEach(tpl=>tplBox.querySelector('.sugTplList').appendChild(tplRow(tpl))); }
       others.forEach(tpl=>tplBox.querySelector('.allTplList').appendChild(tplRow(tpl)));
       body.appendChild(tplBox);
+    }
+
+    if(intakeData){
+      renderPersonalizedDraft(body, client, intakeData, exercises, onChanged);
     }
 
     const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
