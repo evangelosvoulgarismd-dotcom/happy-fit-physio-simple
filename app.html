@@ -163,6 +163,78 @@
     body{ background:#fff; }
   }
   .clinicalRecommendation .card{border:1px solid var(--line);box-shadow:0 10px 30px rgba(36,20,19,.06)}
+
+  /* ===== MOBILE / TOUCH OPTIMIZATION ===== */
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  body { min-width:320px; }
+  button, a, input, select, textarea { -webkit-tap-highlight-color:transparent; }
+  a, button { touch-action:manipulation; }
+
+  @media (max-width:760px){
+    body { overflow-x:hidden; }
+    #shell { min-height:100svh; min-height:100dvh; }
+    #sidebar { padding-top:max(10px, env(safe-area-inset-top)); }
+    #brandMark { min-width:0; flex:1 1 auto; overflow:hidden; }
+    #brandMark img { width:40px !important; height:40px !important; flex:0 0 40px; }
+    #brandMark h1, #brandMark .brandName { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #menuToggleBtn, #notifBell { width:42px; height:42px; min-width:42px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+    .langToggle { flex:0 0 auto; }
+    .langToggle button { min-width:42px; min-height:38px; }
+    .navBtnsWrap { width:100%; max-height:calc(100dvh - 145px); overflow:auto; -webkit-overflow-scrolling:touch; }
+    .navBtnsWrap .navBtn { min-height:44px; padding:10px 12px; }
+    .menuGroupLabel { padding:10px 10px 5px; }
+
+    #main { width:100%; max-width:none; padding:14px 12px calc(86px + env(safe-area-inset-bottom)); }
+    #main > * { max-width:100%; }
+    .card, .statCard, .chartWrap { border-radius:12px; }
+    .card { padding:15px; margin-bottom:12px; }
+    .statGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .statCard { padding:12px; min-width:0; }
+    .statCard .num { font-size:22px; }
+    .statCard .lbl { font-size:10.5px; line-height:1.35; }
+    .grid2 { grid-template-columns:1fr !important; gap:0; }
+    .field { margin-bottom:12px; }
+    .field label { font-size:12px; line-height:1.35; }
+    .field input, .field select, .field textarea { min-height:46px; font-size:16px !important; padding:10px 12px; border-radius:10px; }
+    .field textarea { min-height:90px; }
+    .btn { min-height:46px; padding:10px 14px; border-radius:10px; }
+    .row { flex-wrap:wrap !important; }
+    .row > .btn { flex:1 1 140px; }
+    .tableScroll { width:100%; overflow-x:auto; overscroll-behavior-x:contain; }
+    table.hist, .reassessTable { min-width:620px; }
+    .chartWrap { height:210px; overflow:hidden; }
+    .authWrap { width:100%; max-width:420px; margin:20px auto; padding:0 4px; }
+    .authWrap .card { padding:18px; }
+
+    #bottomTabBar { padding-left:3px; padding-right:3px; padding-bottom:max(6px, env(safe-area-inset-bottom)); min-height:64px; }
+    .bottomTab { min-height:52px; border-radius:10px; }
+    .bottomTab .ico { font-size:20px; }
+    .bottomTab .lbl { font-size:9px; line-height:1.1; }
+
+    .bodyDiagram { gap:8px; }
+    .bodyDiagram svg { width:min(26vw,92px); height:auto; aspect-ratio:100/210; }
+    .reassessTable { font-size:10.5px; }
+
+    .clinicalHeader { flex-wrap:wrap; gap:8px; }
+    .clinicalHeader .doc-title { width:100%; margin-left:0; font-size:13px; }
+    .wizardNav { gap:8px; flex-wrap:wrap; }
+    .wizardNav .btn { flex:1 1 120px; }
+    .progressBarWrap { width:100%; }
+
+    .notifPanel { position:fixed; top:calc(60px + env(safe-area-inset-top)); left:10px; right:10px; width:auto; max-height:60dvh; }
+  }
+
+  @media (max-width:380px){
+    #sidebar { padding-left:8px; padding-right:8px; gap:5px; }
+    #brandMark img { width:34px !important; height:34px !important; flex-basis:34px; }
+    #menuToggleBtn, #notifBell { width:38px; height:38px; min-width:38px; }
+    #main { padding-left:9px; padding-right:9px; }
+    .statCard .num { font-size:20px; }
+    .bottomTab .lbl { font-size:8.5px; }
+  }
+
+  /* Reduce accidental selection/zoom while keeping form usability */
+  button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell { user-select:none; }
 </style>
 </head>
 <body>
