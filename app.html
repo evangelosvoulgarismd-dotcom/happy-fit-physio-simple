@@ -307,7 +307,7 @@ const STR = {
   clients:{el:'Ασκούμενοι', en:'Clients'}, dashboard:{el:'Πίνακας', en:'Dashboard'}, exerciseLibrary:{el:'Βιβλιοθήκη ασκήσεων', en:'Exercise library'},
   newClient:{el:'+ Νέος ασκούμενος', en:'+ New client'}, newExercise:{el:'+ Νέα άσκηση', en:'+ New exercise'},
   program:{el:'Πρόγραμμα', en:'Program'}, liveSession:{el:'Ζωντανή προπόνηση', en:'Live session'},
-  checkins:{el:'Weekly check-in', en:'Weekly check-in'}, readiness:{el:'Daily readiness', en:'Daily readiness'},
+  checkins:{el:'Εβδομαδιαία καταγραφή', en:'Weekly check-in'}, readiness:{el:'Καθημερινή ετοιμότητα', en:'Daily readiness'},
   why:{el:'Το γιατί', en:'The why'}, bibliography:{el:'Βιβλιογραφία', en:'Bibliography'},
   save:{el:'Αποθήκευση', en:'Save'}, saved:{el:'✓ Αποθηκεύτηκε', en:'✓ Saved'},
   sets:{el:'Σετ', en:'Sets'}, reps:{el:'Επαναλήψεις', en:'Reps'}, load:{el:'Φορτίο (kg)', en:'Load (kg)'},
@@ -390,7 +390,7 @@ const STR = {
   alertNoCheckin:{el:'Καμία καταγραφή check-in >10 ημέρες', en:'No check-in logged for >10 days'},
   alertPainRising:{el:'Ο πόνος αυξάνεται στα τελευταία check-ins', en:'Pain is rising over recent check-ins'},
   alertAdherenceDrop:{el:'Το adherence έπεσε απότομα', en:'Adherence dropped sharply'},
-  alertLowEnergy:{el:'Χαμηλή ενέργεια/motivation τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
+  alertLowEnergy:{el:'Χαμηλή ενέργεια/κίνητρο τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
   baselineSection:{el:'Baseline — Αρχικά Δεδομένα', en:'Baseline — Initial Data'},
   baselineWeight:{el:'Βάρος (kg)', en:'Weight (kg)'},
   measurements:{el:'Περίμετροι (στήθος/μέση/ισχίο/μηρός κ.λπ.)', en:'Circumferences (chest/waist/hip/thigh etc.)'},
@@ -1468,6 +1468,16 @@ async function renderCoachDashboard(main){
     return alerts;
   }
 
+  function clinicalStatusFor(client){
+    const alerts = computeAlerts(client);
+    const cks = checkinsByClient[client.id] || [];
+    const rds = readinessByClient[client.id] || [];
+    if(cks.length===0 && rds.length===0) return { dot:'⚪', label: locale==='el'?'Χωρίς δεδομένα ακόμα':'No data yet' };
+    if(alerts.length >= 2) return { dot:'🔴', label: locale==='el'?'Χρειάζεται προσοχή':'Needs attention' };
+    if(alerts.length === 1) return { dot:'🟡', label: locale==='el'?'Παρακολούθησε':'Keep an eye' };
+    return { dot:'🟢', label: locale==='el'?'Σταθερή πορεία':'On track' };
+  }
+
   main.innerHTML = '';
   main.appendChild(el(`<h2 style="margin-bottom:14px;">${t('clients',locale)}</h2>`));
 
@@ -1519,7 +1529,7 @@ async function renderCoachDashboard(main){
 
     renderStatCards(main, [
       { value: clients.length, label: locale==='el'?'Σύνολο ασκούμενων':'Total clients' },
-      { value: avgAdherence!=null ? avgAdherence+'%' : '—', label: locale==='el'?'Μέσο adherence':'Avg adherence' },
+      { value: avgAdherence!=null ? avgAdherence+'%' : '—', label: locale==='el'?'Μέση συνέπεια':'Avg adherence' },
       { value: painCount, label: locale==='el'?'Με πόνο >3/10':'Reporting pain >3/10' },
       { value: noProgramCount, label: locale==='el'?'Χωρίς πρόγραμμα':'Without a program' },
     ]);
@@ -1596,16 +1606,21 @@ async function renderCoachDashboard(main){
   toggleBar.querySelector('.viewCardsBtn').addEventListener('click', ()=>{ renderCoachDashboard._viewMode='cards'; renderCoachDashboard(main); });
   main.appendChild(toggleBar);
 
+  main.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin:-6px 0 12px;">🧠 ${locale==='el'
+    ? 'Η ένδειξη 🟢🟡🔴 είναι βοήθημα παρακολούθησης — δεν αποφασίζει θεραπεία ή αλλαγή προγράμματος. Η τελική κρίση είναι πάντα δική σου.'
+    : 'The 🟢🟡🔴 indicator is a monitoring aid — it does not decide treatment or program changes. The final judgment is always yours.'}</p>`));
+
   if(viewMode==='table'){
     const tableWrap = el('<div class="card tableScroll" style="padding:0;"></div>');
     const table = el(`<table class="hist" style="width:100%;">
       <thead><tr>
+        <th>${locale==='el'?'Κατάσταση':'Status'}</th>
         <th>${locale==='el'?'Ασκούμενος':'Client'}</th>
         <th>${locale==='el'?'Στόχος':'Goal'}</th>
         <th>Readiness</th>
         <th>${t('pain',locale)}</th>
         <th>${locale==='el'?'Ύπνος':'Sleep'}</th>
-        <th>Adherence</th>
+        <th>${locale==='el'?'Συνέπεια':'Adherence'}</th>
       </tr></thead>
       <tbody></tbody>
     </table>`);
@@ -1617,7 +1632,9 @@ async function renderCoachDashboard(main){
       const goal = intakeByClient[c.id]?.mainGoal || c.sport || '—';
       const painVal = lastCk?.pain_level;
       const painColor = painVal>3 ? 'color:var(--danger); font-weight:700;' : '';
+      const clinStatus = clinicalStatusFor(c);
       const row = el(`<tr class="clickable">
+        <td title="${escapeHtml(clinStatus.label)}" style="text-align:center;">${clinStatus.dot}</td>
         <td><strong>${escapeHtml(c.full_name)}</strong></td>
         <td>${escapeHtml(goal)}</td>
         <td class="mono">${rScore!==null ? rScore : '—'}</td>
@@ -1639,17 +1656,18 @@ async function renderCoachDashboard(main){
     const painFlag = lastCk && lastCk.pain_level > 3;
     const status = c.status || 'trial';
     const statusColor = status==='active' ? 'var(--red-deep)' : (status==='paused' ? '#996915' : (status==='cancelled' ? 'var(--danger)' : 'var(--ink-soft)'));
+    const clinStatus = clinicalStatusFor(c);
     const card = el(`<div class="card clientCard">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div class="clickable clientCardMain" style="flex:1; min-width:160px;">
-          <strong>${escapeHtml(c.full_name)}</strong>
+          <strong title="${escapeHtml(clinStatus.label)}">${clinStatus.dot} ${escapeHtml(c.full_name)}</strong>
           <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
             <span class="badge" style="color:${statusColor};">${t('status'+status.charAt(0).toUpperCase()+status.slice(1),locale)}</span>
             ${c.sport ? `<span class="badge">🏃 ${escapeHtml(c.sport)}</span>` : ''}
             ${c.pathway ? `<span class="badge" style="color:var(--red-deep);">${escapeHtml(c.pathway)}</span>` : ''}
             ${c.monthly_price ? `<span class="badge mono">€${c.monthly_price}/${locale==='el'?'μήνα':'mo'}</span>` : ''}
             ${prog ? `<span class="badge">${escapeHtml(prog.title)}</span>` : `<span class="badge" style="color:var(--danger);">${locale==='el'?'Χωρίς πρόγραμμα':'No program'}</span>`}
-            ${lastCk ? `<span class="badge">${locale==='el'?'Adherence':'Adherence'} ${lastCk.adherence}%</span>` : ''}
+            ${lastCk ? `<span class="badge">${locale==='el'?'Συνέπεια':'Adherence'} ${lastCk.adherence}%</span>` : ''}
             ${lastCk ? `<span class="badge mono">${lastCk.date}</span>` : ''}
             ${painFlag ? `<span class="badge" style="background:#f6e0da; color:var(--danger);">⚠ ${locale==='el'?'Πόνος':'Pain'} ${lastCk.pain_level}/10</span>` : ''}
           </div>
@@ -2048,7 +2066,7 @@ async function renderReassessmentTab(body, client, isCoach){
   if(isCoach && (readiness?.length || checkins?.length)){
     body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Δες τις τάσεις πριν αποφασίσεις':'Review trends before deciding'}</p>`));
     if(readiness?.length) renderTrendChart(body, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [{key:'pain', label:locale==='el'?'Πόνος':'Pain', color:'#c4201f'}]);
-    if(checkins?.length) renderTrendChart(body, locale==='el'?'Συμμόρφωση %':'Adherence %', checkins, 'date', [{key:'adherence', label:'Adherence %', color:'#8f1615'}]);
+    if(checkins?.length) renderTrendChart(body, locale==='el'?'Συνέπεια %':'Adherence %', checkins, 'date', [{key:'adherence', label:'Adherence %', color:'#8f1615'}]);
   }
 
   const DECISION_OPTIONS = ['Συνέχεια ίδιου προγράμματος','Πρόοδος φόρτισης','Μείωση φόρτισης','Αλλαγή ασκήσεων','Παραπομπή για ιατρικό έλεγχο','Ολοκλήρωση αποκατάστασης'];
@@ -2952,7 +2970,7 @@ function renderReadinessForm(body, existing){
   const todays = existing.find(r=>r.date===today) || { sleep:6, energy:6, stress:5, soreness:5, motivation:6, pain:0, perceived_capacity:6 };
   const scales = [
     ['sleep', {el:'Ύπνος', en:'Sleep'}], ['energy', {el:'Ενέργεια', en:'Energy'}], ['stress', {el:'Στρες', en:'Stress'}],
-    ['soreness', {el:'Πιάσιμο', en:'Soreness'}], ['motivation', {el:'Motivation', en:'Motivation'}], ['pain', {el:'Πόνος', en:'Pain'}],
+    ['soreness', {el:'Πιάσιμο', en:'Soreness'}], ['motivation', {el:'Κίνητρο', en:'Motivation'}], ['pain', {el:'Πόνος', en:'Pain'}],
     ['perceived_capacity', {el:'Πόσο μπορείς να αποδώσεις σήμερα', en:'How capable do you feel today'}],
   ];
   const card = el(`<div class="card gold"><h3 style="margin-bottom:10px;">${locale==='el'?'Σήμερα':'Today'}</h3></div>`);
@@ -2983,7 +3001,7 @@ function renderCheckinForm(body, existing, clientId){
   const scales = [
     ['sessions_completed', {el:'Προπονήσεις', en:'Sessions'}, 0,14], ['avg_sleep', {el:'Ύπνος', en:'Sleep'}, 0,10],
     ['avg_stress', {el:'Στρες', en:'Stress'}, 0,10], ['avg_energy', {el:'Ενέργεια', en:'Energy'}, 0,10],
-    ['avg_soreness', {el:'Πιάσιμο', en:'Soreness'}, 0,10], ['avg_motivation', {el:'Motivation', en:'Motivation'}, 0,10],
+    ['avg_soreness', {el:'Πιάσιμο', en:'Soreness'}, 0,10], ['avg_motivation', {el:'Κίνητρο', en:'Motivation'}, 0,10],
     ['pain_level', {el:'Πόνος', en:'Pain'}, 0,10], ['difficulty', {el:'Δυσκολία', en:'Difficulty'}, 0,10],
     ['adherence', {el:'Adherence %', en:'Adherence %'}, 0,100],
   ];
