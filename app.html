@@ -2039,7 +2039,19 @@ async function renderCoachSummary(body, client, state){
 
 
 async function renderReassessmentTab(body, client, isCoach){
-  const { data: rows } = await supabase.from('reassessments').select('*').eq('client_id', client.id).order('session_number',{ascending:true});
+  const [{ data: rows }, { data: readiness }, { data: checkins }] = await Promise.all([
+    supabase.from('reassessments').select('*').eq('client_id', client.id).order('session_number',{ascending:true}),
+    supabase.from('readiness_logs').select('*').eq('client_id', client.id).order('date',{ascending:true}),
+    supabase.from('checkins').select('*').eq('client_id', client.id).order('date',{ascending:true}),
+  ]);
+
+  if(isCoach && (readiness?.length || checkins?.length)){
+    body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Δες τις τάσεις πριν αποφασίσεις':'Review trends before deciding'}</p>`));
+    if(readiness?.length) renderTrendChart(body, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [{key:'pain', label:locale==='el'?'Πόνος':'Pain', color:'#c4201f'}]);
+    if(checkins?.length) renderTrendChart(body, locale==='el'?'Συμμόρφωση %':'Adherence %', checkins, 'date', [{key:'adherence', label:'Adherence %', color:'#8f1615'}]);
+  }
+
+  const DECISION_OPTIONS = ['Συνέχεια ίδιου προγράμματος','Πρόοδος φόρτισης','Μείωση φόρτισης','Αλλαγή ασκήσεων','Παραπομπή για ιατρικό έλεγχο','Ολοκλήρωση αποκατάστασης'];
 
   if(isCoach){
     const form = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
@@ -2049,6 +2061,10 @@ async function renderReassessmentTab(body, client, isCoach){
       <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('passiveRom',locale)}</label><input class="f_prom"></div>
       <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('activeRom',locale)}</label><input class="f_arom"></div>
       <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('strength',locale)}</label><input class="f_str"></div>
+      <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Απόφαση':'Decision'}</label>
+        <select class="f_decision"><option value="">—</option>${DECISION_OPTIONS.map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}</select>
+      </div>
+      <div class="field" style="min-width:220px; flex:1; margin-bottom:0;"><label>${locale==='el'?'Σκεπτικό απόφασης':'Decision rationale'}</label><input class="f_decisionNotes" placeholder="${locale==='el'?'π.χ. Πόνος σταθερά χαμηλός, συμμόρφωση καλή — προχωράμε φόρτιση':'e.g. Pain stable and low, good adherence — progressing load'}"></div>
       <button class="btn" type="submit">${t('addSession',locale)}</button>
     </form>`);
     form.addEventListener('submit', async (e)=>{
@@ -2061,6 +2077,8 @@ async function renderReassessmentTab(body, client, isCoach){
         passive_rom: form.querySelector('.f_prom').value.trim(),
         active_rom: form.querySelector('.f_arom').value.trim(),
         strength: form.querySelector('.f_str').value.trim(),
+        decision: form.querySelector('.f_decision').value || null,
+        decision_notes: form.querySelector('.f_decisionNotes').value.trim() || null,
         created_by: profile.id,
       });
       body.innerHTML = '';
@@ -2076,10 +2094,12 @@ async function renderReassessmentTab(body, client, isCoach){
   const table = el(`<table class="reassessTable"><thead><tr>
     <th>${t('sessionNumber',locale)}</th><th>${t('pain',locale)}</th><th>${t('otherSymptoms',locale)}</th>
     <th>${t('passiveRom',locale)}</th><th>${t('activeRom',locale)}</th><th>${t('strength',locale)}</th>
+    <th>${locale==='el'?'Απόφαση':'Decision'}</th>
   </tr></thead><tbody>
     ${rows.map(r=>`<tr>
       <td class="mono">${r.session_number??''}</td><td class="mono">${r.pain??''}</td><td>${escapeHtml(r.other_symptoms||'')}</td>
       <td>${escapeHtml(r.passive_rom||'')}</td><td>${escapeHtml(r.active_rom||'')}</td><td>${escapeHtml(r.strength||'')}</td>
+      <td>${r.decision?`<strong>${escapeHtml(r.decision)}</strong>${r.decision_notes?`<div style="color:var(--ink-soft);font-size:11px;margin-top:2px;">${escapeHtml(r.decision_notes)}</div>`:''}`:''}</td>
     </tr>`).join('')}
   </tbody></table>`);
   body.appendChild(el('<div class="card tableScroll"></div>')).appendChild(table);
