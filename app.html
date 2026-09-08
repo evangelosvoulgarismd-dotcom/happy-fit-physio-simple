@@ -1686,7 +1686,7 @@ async function renderClientDetail(main){
   let tab = renderClientDetail._tab || 'program';
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
   const [{ data: programs }, { data: exercises }, { data: checkins }, { data: readiness }, { data: intakeRow }] = await Promise.all([
-    supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', client.id).eq('active', true).order('created_at',{ascending:false}),
+    supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', client.id).order('created_at',{ascending:false}),
     supabase.from('exercises').select('*').order('category'),
     supabase.from('checkins').select('*').eq('client_id', client.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', client.id).order('date',{ascending:false}),
@@ -2450,7 +2450,7 @@ function renderPersonalizedDraft(body, client, intakeData, exercises, onCreated)
     const list=card.querySelector('.draftList');
     draft.items.forEach((ex,i)=>list.appendChild(el(`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);"><span><strong>${i+1}.</strong> ${escapeHtml(ex.name_el||ex.name_en||'Άσκηση')}</span><span class="mono" style="font-size:10px;color:var(--ink-soft);">${escapeHtml(ex.category||'')}</span></div>`)));
     card.querySelector('.createDraft').addEventListener('click', async()=>{
-      const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα — ${new Date().toLocaleDateString('el-GR')}`}).select().single();
+      const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα — ${new Date().toLocaleDateString('el-GR')}`,active:false,phase:draft.phase}).select().single();
       if(error||!newProg){ toast('Δεν δημιουργήθηκε το πρόγραμμα.'); return; }
       const rows=draft.items.map((ex,i)=>({program_id:newProg.id,exercise_id:ex.id,target_sets:2,target_reps:'8–12',target_load:'',sort_order:i}));
       const {error:e2}=await supabase.from('program_exercises').insert(rows);
@@ -2479,7 +2479,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
           <button class="btn secondary applyBtn" type="button" style="padding:5px 12px; font-size:12px;">${t('applyTemplate',locale)}</button>
         </div>`);
         row.querySelector('.applyBtn').addEventListener('click', async ()=>{
-          const { data: newProg } = await supabase.from('programs').insert({ client_id: client.id, coach_id: profile.id, title: tpl.title }).select().single();
+          const { data: newProg } = await supabase.from('programs').insert({ client_id: client.id, coach_id: profile.id, title: tpl.title, active:false }).select().single();
           const rows = (tpl.program_template_exercises||[]).map(te=>({
             program_id: newProg.id, exercise_id: te.exercise_id, target_sets: te.target_sets, target_reps: te.target_reps, target_load: te.target_load, sort_order: te.sort_order,
           }));
@@ -2506,7 +2506,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       e.preventDefault();
       const title = form.querySelector('.progTitle').value.trim();
       if(!title) return;
-      await supabase.from('programs').insert({ client_id: client.id, coach_id: profile.id, title });
+      await supabase.from('programs').insert({ client_id: client.id, coach_id: profile.id, title, active:false });
       onChanged();
     });
     body.appendChild(form);
@@ -2520,6 +2520,26 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
 
   body.appendChild(el(`<h3 style="margin-bottom:10px;">${escapeHtml(program.title)}</h3>`));
+
+  const phaseBar = el(`<div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; ${program.active ? '' : 'border-left:4px solid var(--gold);'}">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      ${program.active ? `<span class="badge" style="background:#e3f0e6; color:#1f6b3a;">✅ ${locale==='el'?'Ενεργό':'Active'}</span>` : `<span class="badge" style="background:#fff2d9; color:#8a5a00;">🔒 ${locale==='el'?'Πρόχειρο — δεν το βλέπει ακόμα ο ασκούμενος':'Draft — client cannot see this yet'}</span>`}
+      <div class="field" style="margin-bottom:0;"><input class="phaseInput" placeholder="${locale==='el'?'Φάση (π.χ. Προοδευτική φόρτιση)':'Phase (e.g. Progressive loading)'}" value="${escapeHtml(program.phase||'')}" style="min-width:220px;"></div>
+      <button class="btn secondary savePhaseBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('save',locale)}</button>
+    </div>
+    ${!program.active ? `<button class="btn activateProgBtn" type="button">✅ ${locale==='el'?'Ενεργοποίηση για τον ασκούμενο':'Activate for client'}</button>` : ''}
+  </div>`);
+  phaseBar.querySelector('.savePhaseBtn').addEventListener('click', async ()=>{
+    await supabase.from('programs').update({ phase: phaseBar.querySelector('.phaseInput').value.trim() || null }).eq('id', program.id);
+    onChanged();
+  });
+  const activateBtn = phaseBar.querySelector('.activateProgBtn');
+  if(activateBtn) activateBtn.addEventListener('click', async ()=>{
+    if(!confirm(locale==='el' ? 'Ενεργοποίηση — ο ασκούμενος θα δει αυτό το πρόγραμμα. Συνέχεια;' : 'Activate — the client will see this program. Continue?')) return;
+    await supabase.from('programs').update({ active:true }).eq('id', program.id);
+    onChanged();
+  });
+  body.appendChild(phaseBar);
   if(intakeData){
     body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin:-4px 0 10px;">
       ⭐ ${locale==='el'?'= ταιριάζει με τον στόχο του' : '= matches their goal'} ·
