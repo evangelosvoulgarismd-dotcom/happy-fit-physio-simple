@@ -162,6 +162,7 @@
     #main{ padding:0 !important; }
     body{ background:#fff; }
   }
+  .clinicalRecommendation .card{border:1px solid var(--line);box-shadow:0 10px 30px rgba(36,20,19,.06)}
 </style>
 </head>
 <body>
@@ -387,6 +388,21 @@ const STR = {
   viewSummary:{el:'Προβολή Σύνοψης', en:'View Summary'},
   printSummary:{el:'Εκτύπωση', en:'Print'},
   notFilled:{el:'— δεν συμπληρώθηκε —', en:'— not filled —'},
+  clinicalClassification:{el:'Κλινική Ταξινόμηση & Αρχικός Έλεγχος', en:'Clinical Classification & Initial Screening'},
+  primaryConcern:{el:'Κύριος λόγος προσέλευσης', en:'Primary reason for visit'},
+  bodyRegion:{el:'Περιοχή που σε απασχολεί περισσότερο', en:'Main area of concern'},
+  symptomDuration:{el:'Διάρκεια συμπτωμάτων', en:'Symptom duration'},
+  redFlagScreen:{el:'Αρχικός έλεγχος κινδύνου', en:'Initial risk screening'},
+  redFlagDetails:{el:'Αν υπάρχει κάτι ανησυχητικό, περιέγραψέ το', en:'If anything concerning, describe it'},
+  activityGoal:{el:'Δραστηριότητα ή λειτουργία που θέλεις να βελτιώσεις', en:'Activity or function you want to improve'},
+  priorityGoal:{el:'Βασικός στόχος', en:'Primary goal'},
+  pathwayRecommendation:{el:'Προτεινόμενη κλινική πορεία', en:'Recommended clinical pathway'},
+  riskReferral:{el:'Απαιτείται επαγγελματικός έλεγχος πριν από την άσκηση', en:'Professional assessment is required before exercise'},
+  templateLink:{el:'Δες το σχετικό πρότυπο', en:'View related template'},
+  screeningClear:{el:'Δεν αναφέρθηκαν ενδείξεις άμεσου κινδύνου στον αρχικό έλεγχο.', en:'No immediate risk indicators were reported during initial screening.'},
+  screeningUnclear:{el:'Χρειάζεται αξιολόγηση από επαγγελματία υγείας πριν από την έναρξη ή συνέχιση προγράμματος.', en:'A healthcare professional assessment is needed before starting or continuing a program.'},
+  projection:{el:'Οικονομική Πρόβλεψη', en:'Financial Projection'},
+  projectionNote:{el:'Ενδεικτική επιχειρηματική πρόβλεψη πριν από φόρους και ασφαλιστικές υποχρεώσεις.', en:'Indicative business projection before taxes and social contributions.'},
   changeReason:{el:'Γιατί άλλαξε (θα το δει ο ασκούμενος)', en:'Why it changed (client will see this)'},
   changeReasonPlaceholder:{el:'π.χ. Μειώσαμε το volume λόγω χαμηλής ανάρρωσης τις τελευταίες μέρες', en:'e.g. Reduced volume due to low recovery recently'},
   today:{el:'Σήμερα', en:'Today'},
@@ -716,7 +732,7 @@ function renderShell(){
       <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
         <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
@@ -772,6 +788,7 @@ function renderShell(){
   else if(view==='leads' && isCoach) renderLeadsView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
+  else if(view==='projection' && isCoach) renderProjectionView(main);
   else if(isCoach) renderCoachDashboard(main);
   else renderClientDashboard(main);
 }
@@ -1048,6 +1065,51 @@ async function renderAvailabilityView(main){
     });
     main.appendChild(card);
   });
+}
+
+async function renderProjectionView(main){
+  const wrap=el(`<div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+      <div><h2 style="margin:0 0 6px;">💶 ${t('projection',locale)}</h2><p style="margin:0;color:var(--ink-soft);font-size:12px;">${t('projectionNote',locale)}</p></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3 style="margin-bottom:12px;">Μηνιαία έσοδα</h3>
+        <div class="field"><label>Ενεργοί πελάτες καθοδήγησης</label><input class="pOnline" type="number" min="0" value="100"></div>
+        <div class="field"><label>Τιμή καθοδήγησης / μήνα</label><input class="pOnlinePrice" type="number" min="0" value="89"></div>
+        <div class="field"><label>Συνεδρίες κατ' οίκον / μήνα</label><input class="pMassage" type="number" min="0" value="25"></div>
+        <div class="field"><label>Τιμή συνεδρίας</label><input class="pMassagePrice" type="number" min="0" value="60"></div>
+        <div class="field"><label>Αξιολογήσεις / μήνα</label><input class="pAssess" type="number" min="0" value="10"></div>
+        <div class="field"><label>Τιμή αξιολόγησης</label><input class="pAssessPrice" type="number" min="0" value="50"></div>
+        <div class="field"><label>Επαγγελματικές συνεργασίες</label><input class="pPartners" type="number" min="0" value="4"></div>
+        <div class="field"><label>Μηνιαία τιμή συνεργασίας</label><input class="pPartnerPrice" type="number" min="0" value="250"></div>
+        <div class="field"><label>Λειτουργικά έξοδα (%)</label><input class="pCosts" type="number" min="0" max="100" value="25"></div>
+      </div>
+      <div>
+        <div class="statGrid" style="margin-bottom:12px;">
+          <div class="statCard"><div class="num pMonthly">—</div><div class="lbl">Μηνιαίος τζίρος</div></div>
+          <div class="statCard"><div class="num pAnnual">—</div><div class="lbl">Ετήσιος τζίρος</div></div>
+          <div class="statCard"><div class="num pMonthlyCosts">—</div><div class="lbl">Μηνιαία λειτουργικά έξοδα</div></div>
+          <div class="statCard"><div class="num pPreTax">—</div><div class="lbl">Ετήσιο αποτέλεσμα πριν από φόρους</div></div>
+        </div>
+        <div class="card"><h3 style="margin-bottom:10px;">Ανάλυση εσόδων</h3><div class="pBreakdown"></div></div>
+        <div class="card" style="margin-top:12px;border-left-color:var(--gold);"><strong>Σημείωση</strong><p style="font-size:12px;color:var(--ink-soft);line-height:1.6;margin-top:6px;">Η πρόβλεψη είναι εργαλείο επιχειρηματικού σχεδιασμού. Δεν υπολογίζει φόρους, ασφαλιστικές εισφορές, ΦΠΑ ή προσωπικές αναλήψεις και δεν αποτελεί φορολογική συμβουλή.</p></div>
+      </div>
+    </div>
+  </div>`);
+  main.innerHTML=''; main.appendChild(wrap);
+  const ids=['pOnline','pOnlinePrice','pMassage','pMassagePrice','pAssess','pAssessPrice','pPartners','pPartnerPrice','pCosts'];
+  const val=cls=>Number(wrap.querySelector('.'+cls).value)||0;
+  const euro=n=>new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+  function calc(){
+    const online=val('pOnline')*val('pOnlinePrice');
+    const massage=val('pMassage')*val('pMassagePrice');
+    const assess=val('pAssess')*val('pAssessPrice');
+    const partners=val('pPartners')*val('pPartnerPrice');
+    const monthly=online+massage+assess+partners, annual=monthly*12, costs=monthly*val('pCosts')/100, preTax=(monthly-costs)*12;
+    wrap.querySelector('.pMonthly').textContent=euro(monthly); wrap.querySelector('.pAnnual').textContent=euro(annual); wrap.querySelector('.pMonthlyCosts').textContent=euro(costs); wrap.querySelector('.pPreTax').textContent=euro(preTax);
+    wrap.querySelector('.pBreakdown').innerHTML=`<div style="display:grid;gap:8px;font-size:12.5px;"><div style="display:flex;justify-content:space-between"><span>Online καθοδήγηση</span><strong>${euro(online)}</strong></div><div style="display:flex;justify-content:space-between"><span>Κατ' οίκον θεραπευτική μάλαξη</span><strong>${euro(massage)}</strong></div><div style="display:flex;justify-content:space-between"><span>Αξιολογήσεις</span><strong>${euro(assess)}</strong></div><div style="display:flex;justify-content:space-between"><span>Επαγγελματικές συνεργασίες</span><strong>${euro(partners)}</strong></div><hr style="border:0;border-top:1px solid var(--line);width:100%"><div style="display:flex;justify-content:space-between"><strong>Σύνολο</strong><strong>${euro(monthly)}</strong></div></div>`;
+  }
+  ids.forEach(cls=>wrap.querySelector('.'+cls).addEventListener('input',calc)); calc();
 }
 
 async function renderLibrary(main, isCoach){
@@ -1610,6 +1672,15 @@ async function renderClientDetail(main){
 }
 
 const INTAKE_SECTIONS = [
+  { key:'classification', title:'clinicalClassification', fields:[
+    ['primaryConcern','select',['Πόνος ή ενόχληση','Κάκωση ή τραυματισμός','Επιστροφή μετά από τραυματισμό','Πρόληψη','Βελτίωση φυσικής κατάστασης','Αύξηση δύναμης','Αθλητική απόδοση','Εγκυμοσύνη ή λοχεία','Άλλο']],
+    ['bodyRegion','select',['Σπονδυλική στήλη','Ώμος και ωμική ζώνη','Αγκώνας και αντιβράχιο','Καρπός και χέρι','Ισχίο','Γόνατο','Ποδοκνημική και πόδι','Άσκηση για ηλικιωμένους','Υγεία της γυναίκας','Γενική φυσική κατάσταση']],
+    ['symptomDuration','select',['Χωρίς συμπτώματα','Λιγότερο από 2 εβδομάδες','2–6 εβδομάδες','Πάνω από 6 εβδομάδες','Επαναλαμβανόμενο πρόβλημα','Δεν είμαι σίγουρος/η']],
+    ['redFlagScreen','select',['Όχι, δεν αναφέρω κάτι ανησυχητικό','Ναι, υπάρχει κάτι ανησυχητικό','Δεν είμαι σίγουρος/η']],
+    ['redFlagDetails','area'],
+    ['activityGoal','area'],
+    ['priorityGoal','select',['Μείωση συμπτωμάτων','Βελτίωση λειτουργικότητας','Αύξηση δύναμης','Βελτίωση κινητικότητας','Επιστροφή στην καθημερινότητα','Επιστροφή στην άθληση','Αθλητική απόδοση','Πρόληψη']],
+  ]},
   { key:'baseline', title:'baselineSection', fields:[
     ['baselineWeight','text'], ['measurements','area'], ['restingHR','text'], ['progressPhotosNote','text'],
   ]},
@@ -1712,6 +1783,41 @@ function renderBodyDiagram(container, state, onChange){
 }
 
 
+function getClinicalRecommendation(state){
+  const region = state.bodyRegion || '';
+  const risk = state.redFlagScreen || '';
+  const riskPresent = risk === 'Ναι, υπάρχει κάτι ανησυχητικό' || risk === 'Δεν είμαι σίγουρος/η';
+  const map = {
+    'Σπονδυλική στήλη': ['Σπονδυλική στήλη','index.html#templates'],
+    'Ώμος και ωμική ζώνη': ['Ώμος και ωμική ζώνη','index.html#templates'],
+    'Αγκώνας και αντιβράχιο': ['Αγκώνας και αντιβράχιο','index.html#templates'],
+    'Καρπός και χέρι': ['Καρπός και χέρι','index.html#templates'],
+    'Ισχίο': ['Ισχίο','index.html#templates'],
+    'Γόνατο': ['Γόνατο','index.html#templates'],
+    'Ποδοκνημική και πόδι': ['Ποδοκνημική και πόδι','index.html#templates'],
+    'Άσκηση για ηλικιωμένους': ['Άσκηση για ηλικιωμένους','index.html#templates'],
+    'Υγεία της γυναίκας': ['Υγεία της γυναίκας','index.html#templates'],
+    'Γενική φυσική κατάσταση': ['Γενική φυσική κατάσταση','index.html#templates']
+  };
+  const pathway = map[region] || ['Αρχική αξιολόγηση','index.html#templates'];
+  return { riskPresent, pathway, region };
+}
+
+function renderClinicalRecommendation(container, state){
+  const rec = getClinicalRecommendation(state);
+  const title = rec.riskPresent ? t('riskReferral',locale) : t('pathwayRecommendation',locale);
+  const text = rec.riskPresent ? t('screeningUnclear',locale) : t('screeningClear',locale);
+  const card = el(`<div class="card gold" style="margin-top:14px;">
+    <div style="font-size:11px;color:var(--ink-soft);margin-bottom:5px;">${t('pathway',locale)}</div>
+    <h3 style="margin:0 0 8px;">${escapeHtml(title)}</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">${escapeHtml(text)}</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+      <strong>${escapeHtml(rec.pathway[0])}</strong>
+      <a class="btn secondary" href="${rec.pathway[1]}">${t('templateLink',locale)} →</a>
+    </div>
+  </div>`);
+  container.appendChild(card);
+}
 
 function renderIntakeForm(body, client, existingData, isCoach){
   const state = { ...(existingData||{}) };
@@ -1814,6 +1920,11 @@ function renderIntakeForm(body, client, existingData, isCoach){
       state._completed = true;
       scheduleSave();
       statusEl.textContent = t('intakeComplete',locale);
+      sectionsWrap.querySelectorAll('.clinicalRecommendation').forEach(x=>x.remove());
+      const recommendation = el('<div class="clinicalRecommendation"></div>');
+      renderClinicalRecommendation(recommendation, state);
+      sectionsWrap.appendChild(recommendation);
+      recommendation.scrollIntoView({ behavior:'smooth', block:'center' });
     }
   });
 
@@ -2215,6 +2326,69 @@ function computeRecommendations(intakeData, exercises){
   return { recommended, risky };
 }
 
+
+function buildPersonalizedDraft(intakeData, exercises){
+  if(!intakeData) return {items:[], phase:'Απροσδιόριστη', reason:'Δεν υπάρχει ολοκληρωμένη αξιολόγηση.'};
+  const region = (intakeData.bodyRegion || '').toLowerCase();
+  const goal = intakeData.priorityGoal || intakeData.mainGoal || '';
+  const risk = (intakeData.redFlagScreen || '').toLowerCase();
+  if(risk.includes('ναι') || risk.includes('σίγουρ')) return {items:[], phase:'Δεν δημιουργείται αυτόματα πρόταση', reason:'Απαιτείται κλινικός έλεγχος πριν από την επιλογή ασκήσεων.'};
+
+  const regionTerms = {
+    'σπονδυλική στήλη':['κορμός','σπονδυλ','μέση','ράχη','neck','back','bird dog','bridge','dead bug','row'],
+    'ώμος και ωμική ζώνη':['ώμος','ωμ','shoulder','row','press','scap'],
+    'αγκώνας και αντιβράχιο':['αγκώ','αντιβράχ','elbow','forearm','curl','extension','row'],
+    'καρπός και χέρι':['καρπ','χέρι','wrist','hand','grip','λαβ'],
+    'ισχίο':['ισχ','hip','glute','γλουτ','bridge','split squat','step'],
+    'γόνατο':['γόν','knee','squat','step','quadriceps','τετρακέφαλ'],
+    'ποδοκνημική και πόδι':['ποδοκνημ','πόδι','ankle','foot','calf','γάμπ','balance','ισορροπ'],
+    'άσκηση για ηλικιωμένους':['ισορροπ','βάδιση','sit to stand','chair','squat','strength','δύναμ'],
+    'υγεία της γυναίκας':['πυελ','pelvic','core','breath','αναπν','glute','γλουτ']
+  };
+  const terms = regionTerms[region] || [];
+  const goalCats = GOAL_CATEGORY_MAP[goal] || [];
+  const scored = exercises.map(ex=>{
+    const text = ((ex.name_el||'')+' '+(ex.name_en||'')+' '+(ex.category||'')).toLowerCase();
+    let score=0;
+    terms.forEach(term=>{ if(text.includes(term)) score+=3; });
+    goalCats.forEach(gc=>{ if((ex.category||'').includes(gc)) score+=2; });
+    if(ex.evidence) score+=1;
+    return {ex,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  const unique=[]; const seen=new Set();
+  for(const x of scored){ if(!seen.has(x.ex.id)){ seen.add(x.ex.id); unique.push(x.ex); } if(unique.length>=6) break; }
+  let phase='Αρχική φάση';
+  const dur=(intakeData.symptomDuration||'').toLowerCase();
+  if(goal.includes('Επιστροφή') || goal.includes('απόδοση')) phase='Λειτουργική επανεκπαίδευση / επιστροφή στη δραστηριότητα';
+  else if(dur.includes('πάνω') || dur.includes('επαναλαμβαν')) phase='Προοδευτική φόρτιση';
+  return {items:unique, phase, reason:`Πρόταση με βάση την αξιολόγηση: ${goal||'κύριος στόχος'}.`};
+}
+
+function renderPersonalizedDraft(body, client, intakeData, exercises, onCreated){
+  const draft=buildPersonalizedDraft(intakeData, exercises);
+  const card=el(`<div class="card gold" style="margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--ink-soft);margin-bottom:5px;">ΠΡΟΤΑΣΗ ΑΠΟ ΤΗΝ ΑΞΙΟΛΟΓΗΣΗ</div>
+    <h3 style="margin:0 0 7px;">Πρόχειρο εξατομικευμένου προγράμματος</h3>
+    <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">${escapeHtml(draft.reason)}</p>
+    <p style="font-size:12px;margin-bottom:10px;"><strong>Φάση:</strong> ${escapeHtml(draft.phase)}</p>
+    ${draft.items.length ? `<div class="draftList"></div>` : `<div style="padding:10px;border:1px solid var(--line);border-radius:8px;">${escapeHtml(draft.reason)}</div>`}
+    ${draft.items.length ? `<p style="font-size:11px;color:var(--ink-soft);margin:10px 0;">Οι ασκήσεις αποτελούν πρόταση για έλεγχο από τον επαγγελματία και δεν ενεργοποιούνται αυτόματα για τον ασκούμενο.</p><button class="btn createDraft" type="button">Δημιουργία προγράμματος για έλεγχο</button>` : ''}
+  </div>`);
+  if(draft.items.length){
+    const list=card.querySelector('.draftList');
+    draft.items.forEach((ex,i)=>list.appendChild(el(`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);"><span><strong>${i+1}.</strong> ${escapeHtml(ex.name_el||ex.name_en||'Άσκηση')}</span><span class="mono" style="font-size:10px;color:var(--ink-soft);">${escapeHtml(ex.category||'')}</span></div>`)));
+    card.querySelector('.createDraft').addEventListener('click', async()=>{
+      const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα — ${new Date().toLocaleDateString('el-GR')}`}).select().single();
+      if(error||!newProg){ toast('Δεν δημιουργήθηκε το πρόγραμμα.'); return; }
+      const rows=draft.items.map((ex,i)=>({program_id:newProg.id,exercise_id:ex.id,target_sets:2,target_reps:'8–12',target_load:'',sort_order:i}));
+      const {error:e2}=await supabase.from('program_exercises').insert(rows);
+      if(e2){ toast('Το πρόγραμμα δημιουργήθηκε, αλλά δεν προστέθηκαν όλες οι ασκήσεις.'); } else { toast('Δημιουργήθηκε πρόγραμμα για έλεγχο.'); }
+      onCreated();
+    });
+  }
+  body.appendChild(card);
+}
+
 async function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
   if(!program){
     const { data: templates } = await supabase.from('program_templates').select('*, program_template_exercises(*)').eq('coach_id', profile.id);
@@ -2246,6 +2420,10 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       if(suggested.length){ suggested.forEach(tpl=>tplBox.querySelector('.sugTplList').appendChild(tplRow(tpl))); }
       others.forEach(tpl=>tplBox.querySelector('.allTplList').appendChild(tplRow(tpl)));
       body.appendChild(tplBox);
+    }
+
+    if(intakeData){
+      renderPersonalizedDraft(body, client, intakeData, exercises, onChanged);
     }
 
     const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
