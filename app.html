@@ -804,7 +804,7 @@ function renderShell(){
       <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
         <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
@@ -861,6 +861,7 @@ function renderShell(){
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(view==='projection' && isCoach) renderProjectionView(main);
+  else if(view==='courses' && isCoach) renderCoursesAdminView(main);
   else if(isCoach) renderCoachDashboard(main);
   else renderClientDashboard(main);
 }
@@ -1137,6 +1138,90 @@ async function renderAvailabilityView(main){
     });
     main.appendChild(card);
   });
+}
+
+async function renderCoursesAdminView(main){
+  const { data: courses } = await supabase.from('courses').select('*, course_modules(id)').eq('coach_id', profile.id).order('sort_order');
+  main.innerHTML = '';
+  main.appendChild(el(`<h2 style="margin-bottom:6px;">📚 ${locale==='el'?'Μαθήματα':'Courses'}</h2>`));
+  main.appendChild(el(`<p style="color:var(--ink-soft); font-size:12px; margin-bottom:16px;">${locale==='el'?'Όρισε τιμή και σύνδεσμο πληρωμής (Stripe/Viva Payment Link) για κάθε μάθημα. Χωρίς σύνδεσμο πληρωμής, το κουμπί στη δημόσια σελίδα ανοίγει το chat για χειροκίνητη κράτηση.':'Set price and payment link (Stripe/Viva Payment Link) per course. Without a payment link, the public button opens chat for manual booking.'}</p>`));
+
+  (courses||[]).forEach(c=>{
+    const card = el(`<div class="card" style="margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <strong>${escapeHtml(c.title)}</strong>
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+          <input type="checkbox" class="publishedChk" ${c.published?'checked':''}> ${locale==='el'?'Δημοσιευμένο':'Published'}
+        </label>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>${locale==='el'?'Τιμή (€)':'Price (€)'}</label><input class="priceInput" type="number" min="0" value="${c.price??''}"></div>
+        <div class="field"><label>Payment Link (Stripe/Viva)</label><input class="linkInput" value="${escapeHtml(c.payment_link||'')}" placeholder="https://buy.stripe.com/..."></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+        <button class="btn secondary manageModulesBtn" type="button" style="padding:6px 12px; font-size:12px;">${locale==='el'?'Ενότητες & Μαθήματα':'Modules & Lessons'} (${c.course_modules?.length||0})</button>
+        <button class="btn saveCourseBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('save',locale)}</button>
+      </div>
+      <div class="modulesArea" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);"></div>
+    </div>`);
+    card.querySelector('.saveCourseBtn').addEventListener('click', async ()=>{
+      await supabase.from('courses').update({
+        price: Number(card.querySelector('.priceInput').value)||null,
+        payment_link: card.querySelector('.linkInput').value.trim()||null,
+        published: card.querySelector('.publishedChk').checked,
+      }).eq('id', c.id);
+      toast(locale==='el'?'Αποθηκεύτηκε.':'Saved.');
+    });
+    card.querySelector('.manageModulesBtn').addEventListener('click', async ()=>{
+      const area = card.querySelector('.modulesArea');
+      if(area.style.display==='block'){ area.style.display='none'; return; }
+      area.style.display='block';
+      await renderCourseModules(area, c);
+    });
+    main.appendChild(card);
+  });
+}
+
+async function renderCourseModules(area, course){
+  area.innerHTML = '';
+  const { data: modules } = await supabase.from('course_modules').select('*, course_lessons(*)').eq('course_id', course.id).order('sort_order');
+
+  (modules||[]).forEach(m=>{
+    const modCard = el(`<div class="card gold" style="margin-bottom:10px;">
+      <strong style="font-size:13px;">${escapeHtml(m.title)}</strong>
+      <div class="lessonsList" style="margin:8px 0;"></div>
+      <form class="addLessonForm" style="display:flex; gap:6px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><input class="lessonTitle" placeholder="${locale==='el'?'Τίτλος μαθήματος':'Lesson title'}" required></div>
+        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><input class="lessonVideo" placeholder="${locale==='el'?'Σύνδεσμος βίντεο (προαιρετικό)':'Video URL (optional)'}"></div>
+        <button class="btn secondary" type="submit" style="padding:6px 12px; font-size:12px;">+ ${locale==='el'?'Μάθημα':'Lesson'}</button>
+      </form>
+    </div>`);
+    const lessonsList = modCard.querySelector('.lessonsList');
+    (m.course_lessons||[]).sort((a,b)=>a.sort_order-b.sort_order).forEach(l=>{
+      lessonsList.appendChild(el(`<div style="display:flex; justify-content:space-between; padding:5px 0; font-size:12.5px; border-bottom:1px solid var(--line);"><span>${escapeHtml(l.title)}</span>${l.video_url?'🎬':''}</div>`));
+    });
+    modCard.querySelector('.addLessonForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const title = modCard.querySelector('.lessonTitle').value.trim();
+      if(!title) return;
+      await supabase.from('course_lessons').insert({ module_id:m.id, title, video_url: modCard.querySelector('.lessonVideo').value.trim()||null, sort_order:(m.course_lessons?.length||0) });
+      await renderCourseModules(area, course);
+    });
+    area.appendChild(modCard);
+  });
+
+  const addModForm = el(`<form style="display:flex; gap:6px;">
+    <div class="field" style="flex:1; margin-bottom:0;"><input class="newModuleTitle" placeholder="${locale==='el'?'Νέα ενότητα (π.χ. Κατανόηση)':'New module (e.g. Understanding)'}" required></div>
+    <button class="btn" type="submit" style="padding:6px 14px; font-size:12px;">+ ${locale==='el'?'Ενότητα':'Module'}</button>
+  </form>`);
+  addModForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const title = addModForm.querySelector('.newModuleTitle').value.trim();
+    if(!title) return;
+    await supabase.from('course_modules').insert({ course_id: course.id, title, sort_order:(modules?.length||0) });
+    await renderCourseModules(area, course);
+  });
+  area.appendChild(addModForm);
 }
 
 async function renderProjectionView(main){

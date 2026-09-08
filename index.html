@@ -357,6 +357,8 @@
       <a href="#services">Υπηρεσίες</a>
       <a href="#pricing">Τιμές</a>
       <a href="#templates">Πρότυπα προγραμμάτων</a>
+    <a href="#courses">Μαθήματα</a>
+      <a href="#courses">Μαθήματα</a>
       <a href="#features">Τι περιλαμβάνει</a>
       <a href="#how">Πώς λειτουργεί</a>
       <a href="#lead">Επικοινωνία</a>
@@ -507,6 +509,14 @@
     <div class="templates-grid" id="templatesGrid"></div>
   </section>
 
+  <!-- COURSES -->
+  <section class="section" id="courses">
+    <div class="section-label">Μάθε μόνος/η σου</div>
+    <h2 class="section-title">Μαθήματα</h2>
+    <p class="templates-intro">Εννέα εκπαιδευτικά μαθήματα, ένα ανά περιοχή σώματος — Κατανόηση → Αυτοδιαχείριση → Προοδευτική άσκηση → Επανεκτίμηση. Γενική εκπαίδευση, όχι εξατομικευμένη θεραπεία.</p>
+    <div class="services-grid" id="coursesGrid"><p style="text-align:center; color:var(--ink-soft); grid-column:1/-1;">Φόρτωση…</p></div>
+  </section>
+
   <!-- DARK STATEMENT PANEL -->
   <section class="statement-section">
     <p>Δεν χτίζουμε προγράμματα με μαντεψιά. <span>Κάθε άσκηση</span> έχει το δικό της "γιατί", τεκμηριωμένο με πραγματική επιστήμη.</p>
@@ -626,6 +636,34 @@
         submitBtn.disabled = false; submitBtn.textContent = 'Στείλε τα στοιχεία μου';
       }
     });
+
+    // ── COURSES ──
+    const coursesGrid = document.getElementById('coursesGrid');
+    const openChatFromCourses = ()=> document.querySelector('.js-open-chat')?.click();
+    try{
+      const { data: courses, error: cErr } = await supabase.from('courses').select('*').eq('published', true).order('sort_order');
+      if(cErr) throw cErr;
+      if(!courses || !courses.length){
+        coursesGrid.innerHTML = '<p style="text-align:center; color:var(--ink-soft); grid-column:1/-1;">Έρχονται σύντομα.</p>';
+      } else {
+        coursesGrid.innerHTML = courses.map(c => `
+          <div class="service-card">
+            <div class="service-icon">📚</div>
+            ${c.subtitle ? `<span class="service-loc">${c.subtitle}</span>` : ''}
+            <h3>${c.title}</h3>
+            <p>Κατανόηση → Αυτοδιαχείριση → Προοδευτική άσκηση → Επανεκτίμηση.</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              ${c.price ? `<strong style="font-size:18px;">${c.price}€</strong>` : ''}
+              ${c.payment_link
+                ? `<a class="service-cta" href="${c.payment_link}" target="_blank" rel="noopener">Αγόρασε →</a>`
+                : `<a class="service-cta courseChatBtn" style="cursor:pointer;">Ζήτησε πρόσβαση →</a>`}
+            </div>
+          </div>`).join('');
+        coursesGrid.querySelectorAll('.courseChatBtn').forEach(b => b.addEventListener('click', openChatFromCourses));
+      }
+    }catch(err){
+      coursesGrid.innerHTML = '<p style="text-align:center; color:var(--ink-soft); grid-column:1/-1;">Έρχονται σύντομα.</p>';
+    }
   </script>
 
   <script>
