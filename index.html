@@ -121,6 +121,17 @@
       opacity:0;
     }
 
+    /* ── BIO / ABOUT ── */
+    .bio-section { background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .bio-grid { display:grid; grid-template-columns:220px 1fr; gap:36px; align-items:start; max-width:840px; margin:0 auto; }
+    .bio-photo { width:220px; height:220px; border-radius:16px; background:var(--bg); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--ink-soft); text-align:center; overflow:hidden; }
+    .bio-photo img { width:100%; height:100%; object-fit:cover; }
+    .bio-text h3 { font-size:20px; margin-bottom:4px; }
+    .bio-text .bio-role { font-size:12.5px; color:var(--red); font-weight:700; margin-bottom:14px; }
+    .bio-text p { font-size:14px; color:var(--ink-soft); line-height:1.75; margin-bottom:12px; }
+    .bio-text .bio-quote { font-family:'Fraunces', serif; font-style:italic; font-weight:300; font-size:17px; color:var(--ink); border-left:3px solid var(--red); padding-left:16px; margin-top:16px; }
+    @media (max-width:640px){ .bio-grid{ grid-template-columns:1fr; text-align:center; } .bio-photo{ margin:0 auto; } .bio-text .bio-quote{ text-align:left; } }
+
     /* ── SERVICES ── */
     .services-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:20px; }
     .service-card {
@@ -354,7 +365,9 @@
       <span>Happy Fit Physio</span>
     </div>
     <div class="navLinks">
-      <a href="#services">Υπηρεσίες</a>
+      <a href="#about">Ποιος είμαι</a>
+      <a href="#about">Ποιος είμαι</a>
+    <a href="#services">Υπηρεσίες</a>
       <a href="#pricing">Τιμές</a>
       <a href="#features">Τι περιλαμβάνει</a>
       <a href="#how">Πώς λειτουργεί</a>
@@ -426,6 +439,21 @@
         <button class="lead-submit" type="submit">Στείλε τα στοιχεία μου</button>
         <div class="lead-error" id="leadError" style="display:none;"></div>
       </form>
+    </div>
+  </section>
+
+  <!-- BIO / ABOUT -->
+  <section class="section bio-section" id="about">
+    <div class="section-label">Ποιος είμαι</div>
+    <div class="bio-grid">
+      <div class="bio-photo" id="bioPhotoSlot">Πρόσθεσε τη φωτογραφία σου εδώ</div>
+      <div class="bio-text">
+        <h3>Ευάγγελος Βουλγαρής</h3>
+        <p class="bio-role">Φοιτητής Φυσικοθεραπείας · Ιδρυτής Happy Fit Physio</p>
+        <p>Σπουδάζω Φυσικοθεραπεία στο Mediterranean College, σε συνεργασία με το University of Wolverhampton, και ζω ανάμεσα στην Αθήνα και τη Σαντορίνη. Η πορεία μου ξεκίνησε μέσα από την πράξη — καλοκαίρια δουλεύοντας με μάλαξη σε βίλες και ξενοδοχεία, και σε φυσικοθεραπευτήριο — πριν φτάσω στη σπουδή της κλινικής φυσικοθεραπείας.</p>
+        <p>Αυτό που με ενδιαφέρει πραγματικά είναι η σύνδεση ανάμεσα στην επιστήμη και την καθημερινή πράξη: κάθε άσκηση που προτείνω έχει ένα ξεκάθαρο "γιατί" πίσω της, τεκμηριωμένο σε βιβλιογραφία — όχι έτοιμα προγράμματα που κόβονται και ράβονται στα ίσια για τον καθένα.</p>
+        <p class="bio-quote">Πιστεύω ότι κάθε πρόγραμμα οφείλει να έχει ένα ξεκάθαρο "γιατί" — για τον ασκούμενο, όχι μόνο για μένα.</p>
+      </div>
     </div>
   </section>
 
