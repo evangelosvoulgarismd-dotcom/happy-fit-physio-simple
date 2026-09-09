@@ -1159,10 +1159,14 @@ async function renderCoursesAdminView(main){
         <div class="field"><label>Payment Link (Stripe/Viva)</label><input class="linkInput" value="${escapeHtml(c.payment_link||'')}" placeholder="https://buy.stripe.com/..."></div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-        <button class="btn secondary manageModulesBtn" type="button" style="padding:6px 12px; font-size:12px;">${locale==='el'?'Ενότητες & Μαθήματα':'Modules & Lessons'} (${c.course_modules?.length||0})</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn secondary manageModulesBtn" type="button" style="padding:6px 12px; font-size:12px;">${locale==='el'?'Ενότητες & Μαθήματα':'Modules & Lessons'} (${c.course_modules?.length||0})</button>
+          <button class="btn secondary manageAccessBtn" type="button" style="padding:6px 12px; font-size:12px;">🔑 ${locale==='el'?'Πρόσβαση αγοραστών':'Buyer access'}</button>
+        </div>
         <button class="btn saveCourseBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('save',locale)}</button>
       </div>
       <div class="modulesArea" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);"></div>
+      <div class="accessArea" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);"></div>
     </div>`);
     card.querySelector('.saveCourseBtn').addEventListener('click', async ()=>{
       await supabase.from('courses').update({
@@ -1177,6 +1181,12 @@ async function renderCoursesAdminView(main){
       if(area.style.display==='block'){ area.style.display='none'; return; }
       area.style.display='block';
       await renderCourseModules(area, c);
+    });
+    card.querySelector('.manageAccessBtn').addEventListener('click', async ()=>{
+      const area = card.querySelector('.accessArea');
+      if(area.style.display==='block'){ area.style.display='none'; return; }
+      area.style.display='block';
+      await renderCourseAccess(area, c);
     });
     main.appendChild(card);
   });
@@ -1222,6 +1232,35 @@ async function renderCourseModules(area, course){
     await renderCourseModules(area, course);
   });
   area.appendChild(addModForm);
+}
+
+async function renderCourseAccess(area, course){
+  area.innerHTML = '';
+  const { data: enrollments } = await supabase.from('course_enrollments').select('*').eq('course_id', course.id).order('purchased_at',{ascending:false});
+  area.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πρόσθεσε το email του αγοραστή μετά την πληρωμή (Viva/Stripe) για να ξεκλειδώσει το μάθημα στο courses.html':'Add the buyer email after payment (Viva/Stripe) to unlock the course on courses.html'}</p>`));
+  (enrollments||[]).forEach(e=>{
+    const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px;">
+      <span>${escapeHtml(e.email)}</span>
+      <button class="btn danger delEnrollBtn" type="button" style="padding:3px 10px; font-size:11px;">🗑</button>
+    </div>`);
+    row.querySelector('.delEnrollBtn').addEventListener('click', async ()=>{
+      await supabase.from('course_enrollments').delete().eq('id', e.id);
+      await renderCourseAccess(area, course);
+    });
+    area.appendChild(row);
+  });
+  const form = el(`<form style="display:flex; gap:6px; margin-top:10px;">
+    <div class="field" style="flex:1; margin-bottom:0;"><input class="newEmail" type="email" placeholder="${locale==='el'?'email αγοραστή':'buyer email'}" required></div>
+    <button class="btn" type="submit" style="padding:6px 14px; font-size:12px;">+ ${locale==='el'?'Πρόσβαση':'Access'}</button>
+  </form>`);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = form.querySelector('.newEmail').value.trim();
+    if(!email) return;
+    await supabase.from('course_enrollments').insert({ course_id: course.id, email });
+    await renderCourseAccess(area, course);
+  });
+  area.appendChild(form);
 }
 
 async function renderProjectionView(main){

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Τα Μαθήματά μου — Happy Fit Physio</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f5f5f5; --ink-soft:#9a9a9a; --bg:#0b0b0b; --panel:#121212; --line:#242424; --red:#e50914;
+  }
+  *,*::before,*::after{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; line-height:1.6; min-height:100vh;}
+  .wrap{max-width:720px; margin:0 auto; padding:48px 20px 80px;}
+  h1{font-family:'Poppins',sans-serif; font-size:26px; margin-bottom:6px;}
+  .sub{color:var(--ink-soft); font-size:13.5px; margin-bottom:28px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:24px;}
+  .field label{display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px;}
+  .field input{width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--line); background:#1a1a1a; color:#fff; font-size:15px; margin-bottom:14px;}
+  .btn{display:inline-flex; align-items:center; justify-content:center; background:var(--red); color:#fff; border:none; border-radius:8px; padding:12px 20px; font-size:14px; font-weight:700; cursor:pointer; width:100%;}
+  .btn:hover{background:#b8080f;}
+  .courseCard{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:14px; cursor:pointer; transition:border-color .2s;}
+  .courseCard:hover{border-color:var(--red);}
+  .courseCard h3{font-size:16px; margin-bottom:4px;}
+  .courseCard p{color:var(--ink-soft); font-size:12.5px;}
+  .moduleBlock{margin-bottom:22px;}
+  .moduleBlock h3{font-size:14px; color:var(--red); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;}
+  .lesson{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:10px;}
+  .lesson h4{font-size:14.5px; margin-bottom:8px;}
+  .lesson p{font-size:13.5px; color:#ddd; line-height:1.7;}
+  .lesson a{display:inline-block; margin-top:10px; color:var(--red); font-size:12.5px; text-decoration:none; font-weight:700;}
+  .backLink{display:inline-block; margin-bottom:20px; color:var(--ink-soft); font-size:12.5px; text-decoration:none; cursor:pointer;}
+  .backLink:hover{color:var(--ink);}
+  .empty{color:var(--ink-soft); font-size:13px; text-align:center; padding:40px 0;}
+  .errorMsg{color:#ff6b6b; font-size:12.5px; margin-top:-6px; margin-bottom:14px; display:none;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>📚 Τα Μαθήματά μου</h1>
+    <p class="sub">Happy Fit Physio — εκπαιδευτικά μαθήματα</p>
+
+    <div id="emailView" class="card">
+      <div class="field">
+        <label>Email που χρησιμοποίησες στην αγορά</label>
+        <input type="email" id="emailInput" placeholder="you@example.com" required>
+      </div>
+      <div class="errorMsg" id="errorMsg"></div>
+      <button class="btn" id="unlockBtn">Δες τα μαθήματά μου →</button>
+    </div>
+
+    <div id="listView" style="display:none;"></div>
+    <div id="courseView" style="display:none;"></div>
+  </div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const supabase = createClient(
+    'https://hxbpuamzisdldwbuumda.supabase.co',
+    'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH'
+  );
+
+  const emailView = document.getElementById('emailView');
+  const listView = document.getElementById('listView');
+  const courseView = document.getElementById('courseView');
+  const errorMsg = document.getElementById('errorMsg');
+  let currentEmail = '';
+
+  document.getElementById('unlockBtn').addEventListener('click', unlock);
+  document.getElementById('emailInput').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
+
+  async function unlock(){
+    const email = document.getElementById('emailInput').value.trim();
+    errorMsg.style.display = 'none';
+    if(!email) return;
+    const btn = document.getElementById('unlockBtn');
+    btn.disabled = true; btn.textContent = 'Έλεγχος…';
+    const { data, error } = await supabase.rpc('list_my_enrollments', { p_email: email });
+    btn.disabled = false; btn.textContent = 'Δες τα μαθήματά μου →';
+    if(error || !data || !data.length){
+      errorMsg.textContent = 'Δεν βρέθηκε αγορά με αυτό το email. Έλεγξε το email ή επικοινώνησε μαζί μας.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+    currentEmail = email;
+    emailView.style.display = 'none';
+    renderList(data);
+  }
+
+  function renderList(courses){
+    listView.style.display = 'block';
+    listView.innerHTML = `<a class="backLink" id="logoutLink">← Αλλαγή email</a>` + courses.map(c => `
+      <div class="courseCard" data-id="${c.course_id}">
+        <h3>${c.title}</h3>
+        <p>${c.subtitle || ''}</p>
+      </div>`).join('');
+    listView.querySelectorAll('.courseCard').forEach(el => el.addEventListener('click', () => openCourse(el.dataset.id, el.querySelector('h3').textContent)));
+    document.getElementById('logoutLink').addEventListener('click', () => {
+      listView.style.display = 'none'; emailView.style.display = 'block';
+    });
+  }
+
+  async function openCourse(courseId, title){
+    listView.style.display = 'none';
+    courseView.style.display = 'block';
+    courseView.innerHTML = `<p class="empty">Φόρτωση…</p>`;
+    const { data, error } = await supabase.rpc('get_course_content', { p_email: currentEmail, p_course_id: courseId });
+    if(error || !data || !data.length){
+      courseView.innerHTML = `<a class="backLink" id="backLink">← Πίσω</a><p class="empty">Δεν βρέθηκε ακόμα περιεχόμενο για αυτό το μάθημα.</p>`;
+      document.getElementById('backLink').addEventListener('click', backToList);
+      return;
+    }
+    const modules = {};
+    data.forEach(row => {
+      if(!modules[row.module_title]) modules[row.module_title] = [];
+      modules[row.module_title].push(row);
+    });
+    let html = `<a class="backLink" id="backLink">← Πίσω</a><h1 style="font-size:20px; margin-bottom:20px;">${title}</h1>`;
+    Object.entries(modules).forEach(([modTitle, lessons]) => {
+      html += `<div class="moduleBlock"><h3>${modTitle}</h3>`;
+      lessons.forEach(l => {
+        html += `<div class="lesson"><h4>${l.lesson_title}</h4><p>${(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${l.video_url ? `<a href="${l.video_url}" target="_blank" rel="noopener">🎬 Βίντεο →</a>` : ''}</div>`;
+      });
+      html += `</div>`;
+    });
+    courseView.innerHTML = html;
+    document.getElementById('backLink').addEventListener('click', backToList);
+  }
+
+  async function backToList(){
+    courseView.style.display = 'none';
+    const { data } = await supabase.rpc('list_my_enrollments', { p_email: currentEmail });
+    renderList(data || []);
+    listView.style.display = 'block';
+  }
+</script>
+</body>
+</html>
