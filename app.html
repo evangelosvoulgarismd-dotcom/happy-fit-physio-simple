@@ -2826,14 +2826,19 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       ⚠ ${locale==='el'?'= πιθανή σύγκρουση με ιστορικό, πρόσεξε, όχι απαγόρευση' : '= possible conflict with history, caution, not a ban'}
     </p>`));
   }
-  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
-    <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
+  const dayLabels = [...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+  const dayNums = dayLabels.map(d=>parseInt(d.match(/\d+/)?.[0]||'0',10));
+  const nextDayLabel = dayLabels.length ? `${locale==='el'?'Ημέρα':'Day'} ${Math.max(0,...dayNums)+1}` : `${locale==='el'?'Ημέρα':'Day'} 1`;
+
+  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">    <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
       <select class="exSelect" required><option value="">—</option>${sortedExercises.map(ex=>{
         const label = escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el));
         const prefix = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
         return `<option value="${ex.id}">${prefix}${label}</option>`;
       }).join('')}</select>
     </div>
+    <div class="field" style="width:110px; margin-bottom:0;"><label>${locale==='el'?'Ημέρα':'Day'}</label><input class="exDay" list="dayList" value="${escapeHtml(nextDayLabel)}"></div>
+    <datalist id="dayList">${dayLabels.map(d=>`<option value="${escapeHtml(d)}">`).join('')}</datalist>
     <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="exSets" type="number" value="3"></div>
     <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="exReps" value="8-10"></div>
     <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="exLoad"></div>
@@ -2845,6 +2850,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     if(!exercise_id) return;
     await supabase.from('program_exercises').insert({
       program_id: program.id, exercise_id,
+      day_label: addForm.querySelector('.exDay').value.trim() || 'Ημέρα 1',
       target_sets: Number(addForm.querySelector('.exSets').value)||3,
       target_reps: addForm.querySelector('.exReps').value,
       target_load: addForm.querySelector('.exLoad').value,
@@ -2854,7 +2860,15 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
   body.appendChild(addForm);
 
+  const grouped = {};
   (program.program_exercises||[]).forEach(pe=>{
+    const day = pe.day_label || 'Ημέρα 1';
+    if(!grouped[day]) grouped[day] = [];
+    grouped[day].push(pe);
+  });
+  Object.keys(grouped).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true})).forEach(day=>{
+    body.appendChild(el(`<h4 style="margin:18px 0 8px; font-size:13px; color:var(--red-deep); text-transform:uppercase; letter-spacing:.04em;">📅 ${escapeHtml(day)}</h4>`));
+    grouped[day].forEach(pe=>{
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
         <div style="flex:1;">
@@ -2868,6 +2882,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
         </div>
       </div>
       <div class="peEditForm" style="display:none; margin-top:10px; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="width:110px; margin-bottom:0;"><label>${locale==='el'?'Ημέρα':'Day'}</label><input class="peDay" list="dayList" value="${escapeHtml(pe.day_label||'Ημέρα 1')}"></div>
         <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="peSets" type="number" value="${pe.target_sets||3}"></div>
         <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="peReps" value="${escapeHtml(pe.target_reps||'')}"></div>
         <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="peLoad" value="${escapeHtml(pe.target_load||'')}"></div>
@@ -2885,9 +2900,10 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       const newReps = card.querySelector('.peReps').value.trim();
       const newLoad = card.querySelector('.peLoad').value.trim();
       const newReason = card.querySelector('.peReason').value.trim();
+      const newDay = card.querySelector('.peDay').value.trim() || 'Ημέρα 1';
       const changed = newSets!==pe.target_sets || newReps!==(pe.target_reps||'') || newLoad!==(pe.target_load||'');
       await supabase.from('program_exercises').update({
-        target_sets:newSets, target_reps:newReps, target_load:newLoad,
+        target_sets:newSets, target_reps:newReps, target_load:newLoad, day_label:newDay,
         change_reason: newReason || null,
         change_reason_at: (newReason && changed) ? new Date().toISOString() : pe.change_reason_at,
       }).eq('id', pe.id);
@@ -2899,6 +2915,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       onChanged();
     });
     body.appendChild(card);
+  });
   });
 }
 
@@ -2929,13 +2946,16 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
   wrap.appendChild(readinessCard);
 
   // Today's workout card
+  const firstDayLabel = program ? ([...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}))[0] || 'Ημέρα 1') : null;
+  const firstDayExercises = program ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===firstDayLabel) : [];
   const workoutCard = el(`<div class="card">
     <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🏋️ ${t('todaysWorkout',locale)}</h3>
     ${program ? `
-      <div style="margin-bottom:10px; font-weight:600;">${escapeHtml(program.title)}</div>
+      <div style="margin-bottom:4px; font-weight:600;">${escapeHtml(program.title)}</div>
+      <div style="font-size:11px; color:var(--red-deep); margin-bottom:8px;">📅 ${escapeHtml(firstDayLabel)}</div>
       <div style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">
-        ${(program.program_exercises||[]).slice(0,4).map(pe=>escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))).join(' · ')}
-        ${(program.program_exercises||[]).length>4 ? ` +${(program.program_exercises||[]).length-4}` : ''}
+        ${firstDayExercises.slice(0,4).map(pe=>escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))).join(' · ')}
+        ${firstDayExercises.length>4 ? ` +${firstDayExercises.length-4}` : ''}
       </div>
       <button class="btn startWorkoutBtn" type="button">${t('startWorkout',locale)}</button>
     ` : `<p style="font-size:13px; color:var(--ink-soft);">${t('noWorkoutToday',locale)}</p>`}
@@ -2985,7 +3005,28 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
     </div>`));
   }
   body.appendChild(el(`<p class="badge">${today}</p>`));
-  (program.program_exercises||[]).forEach(pe=>{
+
+  const dayLabels = [...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+  let selectedDay = dayLabels[0] || 'Ημέρα 1';
+  const exercisesWrap = el('<div></div>');
+
+  if(dayLabels.length > 1){
+    const dayTabs = el(`<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">${dayLabels.map(d=>`<button class="btn ${d===selectedDay?'':'secondary'} dayTabBtn" type="button" data-day="${escapeHtml(d)}" style="padding:6px 14px; font-size:12px;">${escapeHtml(d)}</button>`).join('')}</div>`);
+    dayTabs.querySelectorAll('.dayTabBtn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        selectedDay = btn.dataset.day;
+        dayTabs.querySelectorAll('.dayTabBtn').forEach(b=>b.classList.toggle('secondary', b!==btn));
+        renderExercises();
+      });
+    });
+    body.appendChild(dayTabs);
+  }
+  body.appendChild(exercisesWrap);
+
+  function renderExercises(){
+    exercisesWrap.innerHTML = '';
+    const dayExercises = dayLabels.length > 1 ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===selectedDay) : (program.program_exercises||[]);
+    dayExercises.forEach(pe=>{
     const ex = pe.exercises;
     const exName = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
     const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
@@ -3049,8 +3090,10 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
       });
       card.appendChild(row);
     }
-    body.appendChild(card);
+    exercisesWrap.appendChild(card);
   });
+  }
+  renderExercises();
 }
 
 // ============================================================
