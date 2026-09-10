@@ -367,9 +367,9 @@
     <div class="navLinks">
       <a href="#about">Ποιος είμαι</a>
       <a href="#services">Υπηρεσίες</a>
-      <a href="#pricing">Τιμές</a>
-      <a href="#features">Τι περιλαμβάνει</a>
       <a href="#how">Πώς λειτουργεί</a>
+      <a href="#features">Τι περιλαμβάνει</a>
+      <a href="#pricing">Τιμές</a>
       <a href="#templates">Πρότυπα προγραμμάτων</a>
       <a href="#courses">Μαθήματα</a>
       <a href="#lead">Επικοινωνία</a>
@@ -380,9 +380,9 @@
   <div class="navMobileDropdown" id="navMobileDropdown">
     <a href="#about">Ποιος είμαι</a>
     <a href="#services">Υπηρεσίες</a>
-    <a href="#pricing">Τιμές</a>
-    <a href="#features">Τι περιλαμβάνει</a>
     <a href="#how">Πώς λειτουργεί</a>
+    <a href="#features">Τι περιλαμβάνει</a>
+    <a href="#pricing">Τιμές</a>
     <a href="#templates">Πρότυπα προγραμμάτων</a>
     <a href="#courses">Μαθήματα</a>
     <a href="#lead">Επικοινωνία</a>
@@ -406,39 +406,6 @@
       <span class="trustPill">🩺 Physiotherapy-led</span>
       <span class="trustPill">📚 Evidence-based</span>
       <span class="trustPill">🔒 GDPR</span>
-    </div>
-  </section>
-
-  <!-- LEAD CAPTURE -->
-  <section class="lead-section" id="lead">
-    <div class="lead-card" id="leadCard">
-      <h3>Ζήτησε δωρεάν πρώτη επικοινωνία</h3>
-      <p class="sub">Άφησε τα στοιχεία σου — θα επικοινωνήσουμε μαζί σου σύντομα.</p>
-      <form id="leadForm">
-        <input type="text" id="leadWebsite" name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" aria-hidden="true">
-        <div class="lead-field"><label for="leadName">Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
-        <div class="lead-field"><label for="leadEmail">Email</label><input type="email" id="leadEmail" required></div>
-        <div class="lead-field"><label for="leadPhone">Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
-        <div class="lead-field"><label for="leadSocial">Instagram username ή WhatsApp (προαιρετικό)</label><input type="text" id="leadSocial" placeholder="@username ή αριθμός WhatsApp"></div>
-        <div class="lead-field">
-          <label for="leadInterest">Ενδιαφέρον</label>
-          <select id="leadInterest">
-            <option value="">—</option>
-            <option>Μυϊκή ανάπτυξη / Δύναμη</option>
-            <option>Απώλεια λίπους</option>
-            <option>Return to Play / Αποκατάσταση</option>
-            <option>Πρόληψη τραυματισμού</option>
-            <option>Γενική φυσική κατάσταση</option>
-            <option>Άλλο</option>
-          </select>
-        </div>
-        <label class="lead-consent">
-          <input type="checkbox" id="leadConsent" required>
-          <span>Συναινώ να λαμβάνω ενημερωτικά email/μηνύματα σχετικά με το coaching. Μπορώ να διαγραφώ οποιαδήποτε στιγμή.</span>
-        </label>
-        <button class="lead-submit" type="submit">Στείλε τα στοιχεία μου</button>
-        <div class="lead-error" id="leadError" style="display:none;"></div>
-      </form>
     </div>
   </section>
 
@@ -494,6 +461,31 @@
     </div>
   </section>
 
+
+  <!-- HOW IT WORKS -->
+  <section class="section steps-section" id="how">
+    <div class="section-label">Πώς λειτουργεί</div>
+    <h2 class="section-title">Από εγγραφή σε πρόγραμμα, σε 3 βήματα</h2>
+    <div class="steps-grid">
+      <div class="step"><div class="stepNum">1</div><h3>Αξιολόγηση</h3><p>Συμπληρώνουμε μαζί το ιστορικό σου — στόχοι, τραυματισμοί, καθημερινότητα.</p></div>
+      <div class="step"><div class="stepNum">2</div><h3>Πρόγραμμα</h3><p>Φτιάχνουμε το πρόγραμμά σου με ασκήσεις τεκμηριωμένες με βιβλιογραφία.</p></div>
+      <div class="step"><div class="stepNum">3</div><h3>Παρακολούθηση</h3><p>Κάθε εβδομάδα προσαρμόζουμε βάσει της προόδου και της ανατροφοδότησής σου.</p></div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="section-label">Τι περιλαμβάνει</div>
+    <h2 class="section-title">Ένα coaching σύστημα, όχι ένα PDF</h2>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">🏋️</div><h3>Εξατομικευμένο Πρόγραμμα</h3><p>Χτίζεται γύρω από τους στόχους, το ιστορικό, και τυχόν τραυματισμούς σου — όχι γενικό template.</p></div>
+      <div class="feature-card"><div class="feature-icon">📚</div><h3>Το "Γιατί" Κάθε Άσκησης</h3><p>Κάθε άσκηση συνοδεύεται από πραγματική επιστημονική βιβλιογραφία, όχι απλά "κάν' το γιατί σου λέω".</p></div>
+      <div class="feature-card"><div class="feature-icon">🔄</div><h3>Weekly Check-in</h3><p>Παρακολούθηση ύπνου, ενέργειας, πόνου και προόδου κάθε εβδομάδα — το πρόγραμμα προσαρμόζεται ανάλογα.</p></div>
+      <div class="feature-card"><div class="feature-icon">💬</div><h3>Άμεση Επικοινωνία</h3><p>Μηνύματα κατευθείαν με τον coach σου — χωρίς να περιμένεις την επόμενη εβδομάδα για απάντηση.</p></div>
+      <div class="feature-card"><div class="feature-icon">📈</div><h3>Ιστορικό Προόδου</h3><p>Βλέπεις με γραφήματα πώς εξελίσσεσαι — δύναμη, adherence, ενέργεια, όλα σε ένα μέρος.</p></div>
+      <div class="feature-card"><div class="feature-icon">🎯</div><h3>Return-to-Play & Πρόληψη</h3><p>Πρωτόκολλα φτιαγμένα για το άθλημά σου — από ενδυνάμωση έως επιστροφή μετά από τραυματισμό.</p></div>
+    </div>
+  </section>
 
   <!-- PRICING -->
   <section class="section pricing-section" id="pricing">
@@ -552,28 +544,36 @@
     <p>Δεν χτίζουμε προγράμματα με μαντεψιά. <span>Κάθε άσκηση</span> έχει το δικό της "γιατί", τεκμηριωμένο με πραγματική επιστήμη.</p>
   </section>
 
-  <!-- FEATURES -->
-  <section class="section" id="features">
-    <div class="section-label">Τι περιλαμβάνει</div>
-    <h2 class="section-title">Ένα coaching σύστημα, όχι ένα PDF</h2>
-    <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon">🏋️</div><h3>Εξατομικευμένο Πρόγραμμα</h3><p>Χτίζεται γύρω από τους στόχους, το ιστορικό, και τυχόν τραυματισμούς σου — όχι γενικό template.</p></div>
-      <div class="feature-card"><div class="feature-icon">📚</div><h3>Το "Γιατί" Κάθε Άσκησης</h3><p>Κάθε άσκηση συνοδεύεται από πραγματική επιστημονική βιβλιογραφία, όχι απλά "κάν' το γιατί σου λέω".</p></div>
-      <div class="feature-card"><div class="feature-icon">🔄</div><h3>Weekly Check-in</h3><p>Παρακολούθηση ύπνου, ενέργειας, πόνου και προόδου κάθε εβδομάδα — το πρόγραμμα προσαρμόζεται ανάλογα.</p></div>
-      <div class="feature-card"><div class="feature-icon">💬</div><h3>Άμεση Επικοινωνία</h3><p>Μηνύματα κατευθείαν με τον coach σου — χωρίς να περιμένεις την επόμενη εβδομάδα για απάντηση.</p></div>
-      <div class="feature-card"><div class="feature-icon">📈</div><h3>Ιστορικό Προόδου</h3><p>Βλέπεις με γραφήματα πώς εξελίσσεσαι — δύναμη, adherence, ενέργεια, όλα σε ένα μέρος.</p></div>
-      <div class="feature-card"><div class="feature-icon">🎯</div><h3>Return-to-Play & Πρόληψη</h3><p>Πρωτόκολλα φτιαγμένα για το άθλημά σου — από ενδυνάμωση έως επιστροφή μετά από τραυματισμό.</p></div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section class="section steps-section" id="how">
-    <div class="section-label">Πώς λειτουργεί</div>
-    <h2 class="section-title">Από εγγραφή σε πρόγραμμα, σε 3 βήματα</h2>
-    <div class="steps-grid">
-      <div class="step"><div class="stepNum">1</div><h3>Αξιολόγηση</h3><p>Συμπληρώνουμε μαζί το ιστορικό σου — στόχοι, τραυματισμοί, καθημερινότητα.</p></div>
-      <div class="step"><div class="stepNum">2</div><h3>Πρόγραμμα</h3><p>Φτιάχνουμε το πρόγραμμά σου με ασκήσεις τεκμηριωμένες με βιβλιογραφία.</p></div>
-      <div class="step"><div class="stepNum">3</div><h3>Παρακολούθηση</h3><p>Κάθε εβδομάδα προσαρμόζουμε βάσει της προόδου και της ανατροφοδότησής σου.</p></div>
+  <!-- LEAD CAPTURE -->
+  <section class="lead-section" id="lead">
+    <div class="lead-card" id="leadCard">
+      <h3>Ζήτησε δωρεάν πρώτη επικοινωνία</h3>
+      <p class="sub">Άφησε τα στοιχεία σου — θα επικοινωνήσουμε μαζί σου σύντομα.</p>
+      <form id="leadForm">
+        <input type="text" id="leadWebsite" name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" aria-hidden="true">
+        <div class="lead-field"><label for="leadName">Ονοματεπώνυμο</label><input type="text" id="leadName" required></div>
+        <div class="lead-field"><label for="leadEmail">Email</label><input type="email" id="leadEmail" required></div>
+        <div class="lead-field"><label for="leadPhone">Τηλέφωνο (προαιρετικό)</label><input type="tel" id="leadPhone"></div>
+        <div class="lead-field"><label for="leadSocial">Instagram username ή WhatsApp (προαιρετικό)</label><input type="text" id="leadSocial" placeholder="@username ή αριθμός WhatsApp"></div>
+        <div class="lead-field">
+          <label for="leadInterest">Ενδιαφέρον</label>
+          <select id="leadInterest">
+            <option value="">—</option>
+            <option>Μυϊκή ανάπτυξη / Δύναμη</option>
+            <option>Απώλεια λίπους</option>
+            <option>Return to Play / Αποκατάσταση</option>
+            <option>Πρόληψη τραυματισμού</option>
+            <option>Γενική φυσική κατάσταση</option>
+            <option>Άλλο</option>
+          </select>
+        </div>
+        <label class="lead-consent">
+          <input type="checkbox" id="leadConsent" required>
+          <span>Συναινώ να λαμβάνω ενημερωτικά email/μηνύματα σχετικά με το coaching. Μπορώ να διαγραφώ οποιαδήποτε στιγμή.</span>
+        </label>
+        <button class="lead-submit" type="submit">Στείλε τα στοιχεία μου</button>
+        <div class="lead-error" id="leadError" style="display:none;"></div>
+      </form>
     </div>
   </section>
 
