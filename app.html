@@ -1060,15 +1060,21 @@ async function renderTemplatesView(main){
 
   templates.forEach(tpl=>{
     const card = el(`<div class="card">
-      <div class="clickable" style="display:flex; justify-content:space-between;">
-        <div><strong>${escapeHtml(tpl.title)}</strong> ${tpl.sport?`<span class="badge">🏃 ${escapeHtml(tpl.sport)}</span>`:''} ${tpl.pathway?`<span class="badge" style="color:var(--red-deep);">${escapeHtml(tpl.pathway)}</span>`:''}</div>
-        <span class="caret">▸</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div class="clickable" style="flex:1; display:flex; justify-content:space-between; align-items:center;">
+          <div><strong>${escapeHtml(tpl.title)}</strong> ${tpl.sport?`<span class="badge">🏃 ${escapeHtml(tpl.sport)}</span>`:''} ${tpl.pathway?`<span class="badge" style="color:var(--red-deep);">${escapeHtml(tpl.pathway)}</span>`:''} <span class="badge mono">${(tpl.program_template_exercises||[]).length} ${locale==='el'?'ασκήσεις':'exercises'}</span></div>
+          <span class="caret">▸</span>
+        </div>
+        <button class="btn secondary dupTplBtn" type="button" title="${locale==='el'?'Αντιγραφή προτύπου':'Duplicate template'}" style="padding:5px 10px; font-size:12px; flex-shrink:0;">⧉</button>
       </div>
       <div class="detail" style="display:none; margin-top:12px;">
         <div class="exList"></div>
         <form class="addExToTpl" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;">
-          <div class="field" style="min-width:180px; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
-            <select class="tplExSelect" required><option value="">—</option>${exercises.map(ex=>`<option value="${ex.id}">${escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el))}</option>`).join('')}</select>
+          <div class="field" style="min-width:220px; flex:1; margin-bottom:0; position:relative;">
+            <label>${locale==='el'?'Άσκηση (πληκτρολόγησε για αναζήτηση)':'Exercise (type to search)'}</label>
+            <input class="tplExSearch" autocomplete="off" placeholder="${locale==='el'?'π.χ. καθίσματα...':'e.g. squat...'}">
+            <input type="hidden" class="tplExSelect">
+            <div class="tplExResults" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:20; background:var(--panel); border:1px solid var(--line); border-radius:8px; max-height:220px; overflow-y:auto; box-shadow:0 8px 20px rgba(36,20,19,.15);"></div>
           </div>
           <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="tplSets" type="number" value="3"></div>
           <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="tplReps" value="8-10"></div>
@@ -1078,41 +1084,136 @@ async function renderTemplatesView(main){
         <button class="btn danger delTplBtn" type="button" style="margin-top:12px;">${t('delete',locale)}</button>
       </div>
     </div>`);
-    const exList = card.querySelector('.exList');
-    (tpl.program_template_exercises||[]).forEach(te=>{
-      const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px;">
-        <span>${escapeHtml(locale==='el'?te.exercises.name_el:(te.exercises.name_en||te.exercises.name_el))} <span class="mono" style="color:var(--ink-soft);">${te.target_sets}×${escapeHtml(te.target_reps||'')} @ ${escapeHtml(te.target_load||'—')}</span></span>
-        <button class="btn danger delTeBtn" type="button" style="padding:3px 8px; font-size:11px;">✕</button>
-      </div>`);
-      row.querySelector('.delTeBtn').addEventListener('click', async ()=>{
-        await supabase.from('program_template_exercises').delete().eq('id', te.id);
-        renderTemplatesView(main);
+
+    function renderExList(){
+      const exList = card.querySelector('.exList');
+      exList.innerHTML = '';
+      const items = (tpl.program_template_exercises||[]).slice().sort((a,b)=>(a.sort_order??0)-(b.sort_order??0));
+      items.forEach((te, idx)=>{
+        const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px; gap:6px;">
+          <div style="display:flex; flex-direction:column; gap:0;">
+            <button class="btn secondary reorderUpBtn" type="button" style="padding:0 6px; font-size:10px; line-height:1.4; ${idx===0?'visibility:hidden;':''}">▲</button>
+            <button class="btn secondary reorderDownBtn" type="button" style="padding:0 6px; font-size:10px; line-height:1.4; ${idx===items.length-1?'visibility:hidden;':''}">▼</button>
+          </div>
+          <span style="flex:1;">${escapeHtml(locale==='el'?te.exercises.name_el:(te.exercises.name_en||te.exercises.name_el))}</span>
+          <input class="mono editSets" value="${te.target_sets??''}" style="width:36px; padding:3px; font-size:12px; text-align:center;">
+          <span style="color:var(--ink-soft);">×</span>
+          <input class="mono editReps" value="${escapeHtml(te.target_reps||'')}" style="width:50px; padding:3px; font-size:12px; text-align:center;">
+          <span style="color:var(--ink-soft);">@</span>
+          <input class="mono editLoad" value="${escapeHtml(te.target_load||'')}" style="width:60px; padding:3px; font-size:12px; text-align:center;">
+          <button class="btn danger delTeBtn" type="button" style="padding:3px 8px; font-size:11px;">✕</button>
+        </div>`);
+        async function saveEdit(){
+          await supabase.from('program_template_exercises').update({
+            target_sets: Number(row.querySelector('.editSets').value)||null,
+            target_reps: row.querySelector('.editReps').value.trim(),
+            target_load: row.querySelector('.editLoad').value.trim(),
+          }).eq('id', te.id);
+        }
+        row.querySelector('.editSets').addEventListener('change', saveEdit);
+        row.querySelector('.editReps').addEventListener('change', saveEdit);
+        row.querySelector('.editLoad').addEventListener('change', saveEdit);
+        row.querySelector('.delTeBtn').addEventListener('click', async ()=>{
+          await supabase.from('program_template_exercises').delete().eq('id', te.id);
+          tpl.program_template_exercises = tpl.program_template_exercises.filter(x=>x.id!==te.id);
+          renderExList();
+        });
+        row.querySelector('.reorderUpBtn').addEventListener('click', async ()=>{
+          const prev = items[idx-1];
+          await Promise.all([
+            supabase.from('program_template_exercises').update({ sort_order: prev.sort_order }).eq('id', te.id),
+            supabase.from('program_template_exercises').update({ sort_order: te.sort_order }).eq('id', prev.id),
+          ]);
+          [te.sort_order, prev.sort_order] = [prev.sort_order, te.sort_order];
+          renderExList();
+        });
+        row.querySelector('.reorderDownBtn').addEventListener('click', async ()=>{
+          const next = items[idx+1];
+          await Promise.all([
+            supabase.from('program_template_exercises').update({ sort_order: next.sort_order }).eq('id', te.id),
+            supabase.from('program_template_exercises').update({ sort_order: te.sort_order }).eq('id', next.id),
+          ]);
+          [te.sort_order, next.sort_order] = [next.sort_order, te.sort_order];
+          renderExList();
+        });
+        exList.appendChild(row);
       });
-      exList.appendChild(row);
-    });
+    }
+    renderExList();
+
     card.querySelector('.clickable').addEventListener('click', ()=>{
       const d = card.querySelector('.detail'); const c = card.querySelector('.caret');
       const open = d.style.display !== 'none';
       d.style.display = open ? 'none' : 'block'; c.textContent = open ? '▸' : '▾';
     });
+
+    // Searchable exercise picker
+    const searchInput = card.querySelector('.tplExSearch');
+    const hiddenSelect = card.querySelector('.tplExSelect');
+    const resultsBox = card.querySelector('.tplExResults');
+    searchInput.addEventListener('input', ()=>{
+      const q = searchInput.value.trim().toLowerCase();
+      hiddenSelect.value = '';
+      if(!q){ resultsBox.style.display = 'none'; return; }
+      const matches = exercises.filter(ex => (ex.name_el||'').toLowerCase().includes(q) || (ex.name_en||'').toLowerCase().includes(q) || (ex.category||'').toLowerCase().includes(q)).slice(0, 20);
+      resultsBox.innerHTML = matches.map(ex => `<div class="exMatchRow" data-id="${ex.id}" data-name="${escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el))}" style="padding:8px 10px; cursor:pointer; border-bottom:1px solid var(--line); font-size:13px;">${escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el))} <span class="mono" style="color:var(--ink-soft); font-size:11px;">${escapeHtml(ex.category||'')}</span></div>`).join('') || `<div style="padding:10px; color:var(--ink-soft); font-size:12px;">${locale==='el'?'Καμία άσκηση':'No exercises'}</div>`;
+      resultsBox.style.display = 'block';
+      resultsBox.querySelectorAll('.exMatchRow').forEach(row=>{
+        row.addEventListener('click', ()=>{
+          hiddenSelect.value = row.dataset.id;
+          searchInput.value = row.dataset.name;
+          resultsBox.style.display = 'none';
+        });
+        row.addEventListener('mouseenter', ()=>row.style.background='var(--bg)');
+        row.addEventListener('mouseleave', ()=>row.style.background='');
+      });
+    });
+    document.addEventListener('click', (e)=>{ if(!card.contains(e.target)) resultsBox.style.display='none'; });
+
     card.querySelector('.addExToTpl').addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const exercise_id = card.querySelector('.tplExSelect').value;
-      if(!exercise_id) return;
-      await supabase.from('program_template_exercises').insert({
+      const exercise_id = hiddenSelect.value;
+      if(!exercise_id){ toast(locale==='el'?'Διάλεξε άσκηση από τη λίστα.':'Pick an exercise from the list.'); return; }
+      const maxOrder = Math.max(-1, ...(tpl.program_template_exercises||[]).map(x=>x.sort_order??0));
+      const { data: inserted } = await supabase.from('program_template_exercises').insert({
         template_id: tpl.id, exercise_id,
         target_sets: Number(card.querySelector('.tplSets').value)||3,
         target_reps: card.querySelector('.tplReps').value,
         target_load: card.querySelector('.tplLoad').value,
-        sort_order: (tpl.program_template_exercises||[]).length,
-      });
-      renderTemplatesView(main);
+        sort_order: maxOrder + 1,
+      }).select('*, exercises(*)').single();
+      if(inserted){ tpl.program_template_exercises = [...(tpl.program_template_exercises||[]), inserted]; renderExList(); }
+      searchInput.value = ''; hiddenSelect.value = '';
+      card.querySelector('.tplReps').value = '8-10';
+      card.querySelector('.tplLoad').value = '';
+      searchInput.focus();
     });
+
     card.querySelector('.delTplBtn').addEventListener('click', async ()=>{
       if(!confirm(locale==='el' ? `Διαγραφή του προτύπου "${tpl.title}";` : `Delete template "${tpl.title}"?`)) return;
       await supabase.from('program_templates').delete().eq('id', tpl.id);
       renderTemplatesView(main);
     });
+
+    card.querySelector('.dupTplBtn').addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const newTitle = prompt(locale==='el'?'Τίτλος νέου προτύπου:':'New template title:', `${tpl.title} (${locale==='el'?'αντίγραφο':'copy'})`);
+      if(!newTitle) return;
+      const { data: newTpl } = await supabase.from('program_templates').insert({
+        coach_id: profile.id, title: newTitle.trim(), sport: tpl.sport, pathway: tpl.pathway,
+      }).select().single();
+      if(newTpl && tpl.program_template_exercises?.length){
+        await supabase.from('program_template_exercises').insert(
+          tpl.program_template_exercises.map(te => ({
+            template_id: newTpl.id, exercise_id: te.exercise_id,
+            target_sets: te.target_sets, target_reps: te.target_reps, target_load: te.target_load,
+            sort_order: te.sort_order,
+          }))
+        );
+      }
+      renderTemplatesView(main);
+    });
+
     main.appendChild(card);
   });
 }
