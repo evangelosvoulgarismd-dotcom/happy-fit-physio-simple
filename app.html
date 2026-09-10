@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Happy Fit Physio — Coaching</title>
+<title>Happy Fit Physio · Coaching</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#c4201f">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -240,14 +240,14 @@
 <body>
 <div id="app"><div style="padding:40px;">Φόρτωση…</div></div>
 
-<!-- Supabase client via CDN — no npm/build step needed -->
+<!-- Supabase client via CDN, no npm/build step needed -->
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ============================================================
 // !!! ΒΑΛΕ ΕΔΩ ΤΑ ΔΙΚΑ ΣΟΥ ΚΛΕΙΔΙΑ (Supabase → Project Settings → API) !!!
 // Το "anon public" key είναι ΑΣΦΑΛΕΣ να είναι δημόσιο μέσα σε αυτό το
-// αρχείο — η προστασία γίνεται από τις πολιτικές RLS που ήδη έτρεξες.
+// αρχείο. Η προστασία γίνεται από τις πολιτικές RLS που ήδη έτρεξες.
 // ============================================================
 const SUPABASE_URL = 'https://hxbpuamzisdldwbuumda.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH';
@@ -348,7 +348,7 @@ const STR = {
   activeClients:{el:'Ενεργοί συνδρομητές', en:'Active clients'},
   goalProgress:{el:'Πρόοδος προς €10.000', en:'Progress to €10,000'},
   referFriend:{el:'Πρόσκλησε φίλο', en:'Refer a friend'},
-  referFriendHint:{el:'Δώσε αυτόν τον κωδικό σε κάποιον που θέλεις να προτείνεις — θα εγγραφεί στον ίδιο coach.', en:'Give this code to someone you want to refer — they will sign up with the same coach.'},
+  referFriendHint:{el:'Δώσε αυτόν τον κωδικό σε κάποιον που θέλεις να προτείνεις. Θα εγγραφεί στον ίδιο coach.', en:'Give this code to someone you want to refer. They will sign up with the same coach.'},
   generateCode:{el:'Δημιουργία κωδικού', en:'Generate code'},
   assessmentCard:{el:'Καρτέλα Αξιολόγησης', en:'Assessment Card'},
   painCharacterization:{el:'Χαρακτηρισμός Πόνου', en:'Pain Characterization'},
@@ -386,12 +386,12 @@ const STR = {
   neverReviewed:{el:'Δεν έχει ελεγχθεί ποτέ', en:'Never checked'},
   staleReview:{el:'⚠ Χρειάζεται νέος έλεγχος (>6 μήνες)', en:'⚠ Needs re-check (>6 months)'},
   needsAttention:{el:'Χρειάζονται προσοχή', en:'Need attention'},
-  noAlerts:{el:'✓ Όλα καλά — κανένας ασκούμενος δεν χρειάζεται άμεση προσοχή.', en:'✓ All good — no client needs immediate attention.'},
+  noAlerts:{el:'✓ Όλα καλά. Κανένας ασκούμενος δεν χρειάζεται άμεση προσοχή.', en:'✓ All good. No client needs immediate attention.'},
   alertNoCheckin:{el:'Καμία καταγραφή check-in >10 ημέρες', en:'No check-in logged for >10 days'},
   alertPainRising:{el:'Ο πόνος αυξάνεται στα τελευταία check-ins', en:'Pain is rising over recent check-ins'},
   alertAdherenceDrop:{el:'Το adherence έπεσε απότομα', en:'Adherence dropped sharply'},
   alertLowEnergy:{el:'Χαμηλή ενέργεια/κίνητρο τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
-  baselineSection:{el:'Baseline — Αρχικά Δεδομένα', en:'Baseline — Initial Data'},
+  baselineSection:{el:'Baseline · Αρχικά Δεδομένα', en:'Baseline · Initial Data'},
   baselineWeight:{el:'Βάρος (kg)', en:'Weight (kg)'},
   measurements:{el:'Περίμετροι (στήθος/μέση/ισχίο/μηρός κ.λπ.)', en:'Circumferences (chest/waist/hip/thigh etc.)'},
   restingHR:{el:'Καρδιακή συχνότητα ηρεμίας', en:'Resting heart rate'},
@@ -405,7 +405,7 @@ const STR = {
   paymentLink:{el:'Link Πληρωμής (Stripe/Viva Wallet)', en:'Payment Link (Stripe/Viva Wallet)'},
   payment:{el:'Πληρωμή', en:'Payment'},
   payNow:{el:'Πλήρωσε τώρα', en:'Pay now'},
-  noPaymentLink:{el:'Δεν έχει οριστεί ακόμα link πληρωμής — επικοινώνησε με τον coach σου.', en:'No payment link set up yet — contact your coach.'},
+  noPaymentLink:{el:'Δεν έχει οριστεί ακόμα link πληρωμής. Επικοινώνησε με τον coach σου.', en:'No payment link set up yet. Contact your coach.'},
   leads:{el:'Ενδιαφερόμενοι', en:'Leads'},
   downloadCsv:{el:'Λήψη CSV', en:'Download CSV'},
   convertToClient:{el:'Μετατροπή σε ασκούμενο', en:'Convert to client'},
@@ -511,7 +511,7 @@ function toast(msg){
 
 // ============================================================
 // LEGAL / TRUST CONTENT
-// Template only — not legal advice. Have a lawyer review before
+// Template only, not legal advice. Have a lawyer review before
 // relying on this commercially, especially given health data handling.
 // ============================================================
 const LEGAL_CONTENT = {
@@ -522,11 +522,11 @@ const LEGAL_CONTENT = {
         <h4>1. Περιγραφή Υπηρεσίας</h4>
         <p>Η Υπηρεσία παρέχει online coaching φυσικής κατάστασης: πρόγραμμα άσκησης, καταγραφή προόδου, επικοινωνία με τον προπονητή/φυσικοθεραπευτή, και σχετικό εκπαιδευτικό υλικό (συμπεριλαμβανομένων αυτοτελών εκπαιδευτικών μαθημάτων προς πώληση).</p>
         <h4>2. Ελάχιστη ηλικία χρήστη</h4>
-        <p>Η Υπηρεσία προορίζεται για χρήστες 18 ετών και άνω. Αν επιθυμείτε εγγραφή ανηλίκου, απαιτείται ρητή συγκατάθεση γονέα/κηδεμόνα πριν από οποιαδήποτε χρήση — επικοινωνήστε μαζί μας πρώτα.</p>
+        <p>Η Υπηρεσία προορίζεται για χρήστες 18 ετών και άνω. Αν επιθυμείτε εγγραφή ανηλίκου, απαιτείται ρητή συγκατάθεση γονέα/κηδεμόνα πριν από οποιαδήποτε χρήση. Επικοινωνήστε μαζί μας πρώτα.</p>
         <h4>3. Ευθύνες Χρήστη</h4>
         <p>Ο χρήστης δεσμεύεται να παρέχει ακριβή στοιχεία στο ιστορικό υγείας/στόχων του, να ενημερώνει άμεσα τον προπονητή για μεταβολές στην κατάστασή του, και να συμμορφώνεται με τυχόν ιατρικές οδηγίες τρίτων που υπερισχύουν του προγράμματος.</p>
         <h4>4. Πληρωμές & Συνδρομή</h4>
-        <p>Οι όροι χρέωσης (τιμή, συχνότητα, ακύρωση) συμφωνούνται ξεχωριστά μεταξύ προπονητή και ασκούμενου. Η πλατφόρμα δεν επεξεργάζεται η ίδια πληρωμές — αυτές διεκπεραιώνονται μέσω τρίτου παρόχου πληρωμών όταν ενεργοποιηθεί.</p>
+        <p>Οι όροι χρέωσης (τιμή, συχνότητα, ακύρωση) συμφωνούνται ξεχωριστά μεταξύ προπονητή και ασκούμενου. Η πλατφόρμα δεν επεξεργάζεται η ίδια πληρωμές. Αυτές διεκπεραιώνονται μέσω τρίτου παρόχου πληρωμών όταν ενεργοποιηθεί.</p>
         <h4>5. Περιορισμός Ευθύνης</h4>
         <p>Βλ. ξεχωριστή <a data-legal="disclaimer">Ιατρική Αποποίηση Ευθύνης</a>. Η Υπηρεσία παρέχεται "ως έχει" χωρίς εγγύηση αδιάλειπτης λειτουργίας.</p>
         <h4>6. Καταγγελία</h4>
@@ -537,11 +537,11 @@ const LEGAL_CONTENT = {
         <h4>1. Service Description</h4>
         <p>The Service provides online fitness coaching: exercise programming, progress tracking, coach communication, and related educational content (including standalone educational courses offered for sale).</p>
         <h4>2. Minimum user age</h4>
-        <p>The Service is intended for users aged 18 and over. If registering a minor, explicit parental/guardian consent is required before any use — please contact us first.</p>
+        <p>The Service is intended for users aged 18 and over. If registering a minor, explicit parental/guardian consent is required before any use. Please contact us first.</p>
         <h4>3. User Responsibilities</h4>
         <p>The user agrees to provide accurate information in their intake/history, to promptly inform the coach of changes in their condition, and to follow any third-party medical instructions that supersede the program.</p>
         <h4>4. Payments & Subscription</h4>
-        <p>Billing terms (price, frequency, cancellation) are agreed separately between coach and client. The platform itself does not process payments — these are handled via a third-party payment provider once enabled.</p>
+        <p>Billing terms (price, frequency, cancellation) are agreed separately between coach and client. The platform itself does not process payments. These are handled via a third-party payment provider once enabled.</p>
         <h4>5. Limitation of Liability</h4>
         <p>See the separate <a data-legal="disclaimer">Medical Disclaimer</a>. The Service is provided "as is" without guarantee of uninterrupted operation.</p>
         <h4>6. Termination</h4>
@@ -557,9 +557,9 @@ const LEGAL_CONTENT = {
         <h4>Ποια δεδομένα συλλέγουμε</h4>
         <p>Στοιχεία εγγραφής (όνομα, email), ιστορικό υγείας/στόχων που δηλώνετε οικειοθελώς, καταγραφές προπόνησης, weekly check-in και daily readiness, μηνύματα προς τον προπονητή σας.</p>
         <h4>Ειδική κατηγορία δεδομένων (δεδομένα υγείας)</h4>
-        <p>Το ιστορικό υγείας/τραυματισμών/πόνου που δηλώνετε αποτελεί «ειδική κατηγορία δεδομένων» υπό το Άρθρο 9 GDPR. Η συμπλήρωσή του απαιτεί τη ξεχωριστή, ρητή συναίνεσή σας, διακριτή από την απλή αποδοχή των Όρων Χρήσης — αυτή δίνεται συγκεκριμένα κατά τη συμπλήρωση της φόρμας αξιολόγησης.</p>
+        <p>Το ιστορικό υγείας/τραυματισμών/πόνου που δηλώνετε αποτελεί «ειδική κατηγορία δεδομένων» υπό το Άρθρο 9 GDPR. Η συμπλήρωσή του απαιτεί τη ξεχωριστή, ρητή συναίνεσή σας, διακριτή από την απλή αποδοχή των Όρων Χρήσης. Αυτή δίνεται συγκεκριμένα κατά τη συμπλήρωση της φόρμας αξιολόγησης.</p>
         <h4>Σκοπός επεξεργασίας</h4>
-        <p>Αποκλειστικά για την παροχή της υπηρεσίας coaching — εξατομίκευση προγράμματος, παρακολούθηση προόδου, επικοινωνία.</p>
+        <p>Αποκλειστικά για την παροχή της υπηρεσίας coaching: εξατομίκευση προγράμματος, παρακολούθηση προόδου, επικοινωνία.</p>
         <h4>Νομική βάση</h4>
         <p>Η ρητή συναίνεσή σας, την οποία δίνετε κατά την εγγραφή και μπορείτε να ανακαλέσετε οποτεδήποτε.</p>
         <h4>Περίοδος διατήρησης</h4>
@@ -572,9 +572,9 @@ const LEGAL_CONTENT = {
         <h4>What we collect</h4>
         <p>Registration details (name, email), health/goals history you voluntarily provide, training logs, weekly check-ins and daily readiness, messages to your coach.</p>
         <h4>Special category data (health data)</h4>
-        <p>The injury/pain/health history you provide is "special category data" under GDPR Article 9. Completing it requires your separate, explicit consent, distinct from simply accepting the Terms of Use — this is given specifically when completing the assessment form.</p>
+        <p>The injury/pain/health history you provide is "special category data" under GDPR Article 9. Completing it requires your separate, explicit consent, distinct from simply accepting the Terms of Use. This is given specifically when completing the assessment form.</p>
         <h4>Purpose of processing</h4>
-        <p>Solely to provide the coaching service — program personalization, progress tracking, communication.</p>
+        <p>Solely to provide the coaching service: program personalization, progress tracking, communication.</p>
         <h4>Legal basis</h4>
         <p>Your explicit consent, given at signup and revocable at any time.</p>
         <h4>Retention period</h4>
@@ -590,12 +590,12 @@ const LEGAL_CONTENT = {
     body: {
       el: `<p><strong>Το περιεχόμενο και τα προγράμματα αυτής της πλατφόρμας δεν αποτελούν ιατρική διάγνωση, θεραπεία ή ιατρική συμβουλή.</strong></p>
         <p>Συμβουλευτείτε γιατρό πριν ξεκινήσετε οποιοδήποτε πρόγραμμα άσκησης, ιδίως αν έχετε προϋπάρχουσα πάθηση, τραυματισμό, ή είστε έγκυος.</p>
-        <p>Η βιβλιογραφία που εμφανίζεται ανά άσκηση είναι υποστηρικτικό, ενημερωτικό υλικό — δεν αντικαθιστά την κλινική κρίση επαγγελματία υγείας για την περίπτωσή σας.</p>
+        <p>Η βιβλιογραφία που εμφανίζεται ανά άσκηση είναι υποστηρικτικό, ενημερωτικό υλικό. Δεν αντικαθιστά την κλινική κρίση επαγγελματία υγείας για την περίπτωσή σας.</p>
         <p>Σε περίπτωση οξέος πόνου, τραυματισμού, ή επείγοντος ιατρικού συμβάντος, διακόψτε αμέσως και αναζητήστε ιατρική βοήθεια.</p>
         <p>Στο μέτρο που επιτρέπεται από τον νόμο, ο προπονητής/φυσικοθεραπευτής δεν φέρει ευθύνη για τραυματισμό που προκύπτει από μη τήρηση της σωστής τεχνικής, απόκρυψη ιατρικού ιστορικού, ή μη συμμόρφωση με τις οδηγίες.</p>`,
       en: `<p><strong>The content and programs on this platform do not constitute medical diagnosis, treatment, or medical advice.</strong></p>
         <p>Consult a physician before starting any exercise program, especially if you have a pre-existing condition, injury, or are pregnant.</p>
-        <p>The bibliography shown per exercise is supportive, informational material — it does not replace the clinical judgment of a healthcare professional for your specific case.</p>
+        <p>The bibliography shown per exercise is supportive, informational material. It does not replace the clinical judgment of a healthcare professional for your specific case.</p>
         <p>In case of acute pain, injury, or a medical emergency, stop immediately and seek medical attention.</p>
         <p>To the extent permitted by law, the coach/physiotherapist is not liable for injury resulting from improper technique, undisclosed medical history, or non-compliance with instructions.</p>`,
     }
@@ -605,16 +605,16 @@ const LEGAL_CONTENT = {
     body: {
       el: `<p>Αυτή η εφαρμογή <strong>δεν χρησιμοποιεί cookies παρακολούθησης ή διαφήμισης</strong>, και δεν απαιτεί banner συγκατάθεσης cookies.</p>
         <h4>Τι χρησιμοποιούμε</h4>
-        <p>Μόνο τεχνικά απαραίτητα στοιχεία αποθήκευσης του browser (localStorage) για να παραμένεις συνδεδεμένος — όχι cookies παρακολούθησης τρίτων ή διαφημιστικά δίκτυα.</p>
+        <p>Μόνο τεχνικά απαραίτητα στοιχεία αποθήκευσης του browser (localStorage) για να παραμένεις συνδεδεμένος, όχι cookies παρακολούθησης τρίτων ή διαφημιστικά δίκτυα.</p>
         <h4>Εξωτερικές πηγές</h4>
-        <p>Φορτώνουμε γραμματοσειρές από Google Fonts, που ενδέχεται να λαμβάνει τη διεύθυνση IP σας κατά το φόρτωμα της σελίδας — αυτό είναι τεχνικό, όχι για διαφήμιση.</p>
+        <p>Φορτώνουμε γραμματοσειρές από Google Fonts, που ενδέχεται να λαμβάνει τη διεύθυνση IP σας κατά το φόρτωμα της σελίδας. Αυτό είναι τεχνικό, όχι για διαφήμιση.</p>
         <h4>Push notifications</h4>
         <p>Αν ενεργοποιήσετε ειδοποιήσεις, ο browser σας αποθηκεύει ένα μοναδικό "push subscription" ώστε να μπορούμε να σας στέλνουμε ειδοποιήσεις. Μπορείτε να το απενεργοποιήσετε από τις ρυθμίσεις ειδοποιήσεων του browser/συσκευής σας οποιαδήποτε στιγμή.</p>`,
       en: `<p>This app <strong>does not use tracking or advertising cookies</strong>, and does not require a cookie consent banner.</p>
         <h4>What we use</h4>
-        <p>Only technically necessary browser storage (localStorage) to keep you signed in — no third-party tracking cookies or ad networks.</p>
+        <p>Only technically necessary browser storage (localStorage) to keep you signed in, no third-party tracking cookies or ad networks.</p>
         <h4>External resources</h4>
-        <p>We load fonts from Google Fonts, which may receive your IP address when the page loads — this is technical, not for advertising.</p>
+        <p>We load fonts from Google Fonts, which may receive your IP address when the page loads. This is technical, not for advertising.</p>
         <h4>Push notifications</h4>
         <p>If you enable notifications, your browser stores a unique "push subscription" so we can send you alerts. You can disable this anytime from your browser/device notification settings.</p>`,
     }
@@ -622,7 +622,7 @@ const LEGAL_CONTENT = {
   refund: {
     title: {el:'Πολιτική Επιστροφών', en:'Refund Policy'},
     body: {
-      el: `<p>Το online coaching είναι υπηρεσία, όχι φυσικό προϊόν — η πολιτική επιστροφών διαφέρει ανάλογα με τον τύπο αγοράς.</p>
+      el: `<p>Το online coaching είναι υπηρεσία, όχι φυσικό προϊόν. Η πολιτική επιστροφών διαφέρει ανάλογα με τον τύπο αγοράς.</p>
         <h4>Μηνιαία συνδρομή coaching</h4>
         <p>Μπορείτε να ακυρώσετε ανά πάσα στιγμή· η ακύρωση ισχύει από την επόμενη περίοδο χρέωσης. Δεν γίνεται αναδρομική επιστροφή για ήδη παρασχεθείσες υπηρεσίες τρέχοντος μήνα.</p>
         <h4>Εφάπαξ αγορά εκπαιδευτικού μαθήματος</h4>
@@ -631,7 +631,7 @@ const LEGAL_CONTENT = {
         <p>Αν χρεωθήκατε λόγω τεχνικού σφάλματος, επικοινωνήστε άμεσα μαζί μας για πλήρη επιστροφή.</p>
         <h4>Επικοινωνία</h4>
         <p>Για οποιοδήποτε αίτημα επιστροφής, απευθυνθείτε στον coach σας μέσω του tab "Μηνύματα" ή στα στοιχεία επικοινωνίας που σας δόθηκαν κατά την αγορά.</p>`,
-      en: `<p>Online coaching is a service, not a physical product — the refund policy differs depending on purchase type.</p>
+      en: `<p>Online coaching is a service, not a physical product. The refund policy differs depending on purchase type.</p>
         <h4>Monthly coaching subscription</h4>
         <p>You may cancel at any time; cancellation takes effect from the next billing period. No retroactive refund for services already provided during the current month.</p>
         <h4>One-time educational course purchase</h4>
@@ -787,7 +787,7 @@ async function renderNotifPanel(anchorEl, isCoach){
     ]);
     (leads||[]).forEach(l=>items.push({ t: l.created_at, text: `📥 ${l.full_name} (${locale==='el'?'νέο ενδιαφέρον':'new lead'})` }));
     (msgs||[]).forEach(m=>items.push({ t: m.created_at, text: `💬 ${m.clients?.full_name||''}: ${(m.body||'').slice(0,40)}` }));
-    (slots||[]).forEach(s=>items.push({ t: s.created_at, text: `🗓️ ${s.clients?.full_name||''} — ${new Date(s.start_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}` }));
+    (slots||[]).forEach(s=>items.push({ t: s.created_at, text: `🗓️ ${s.clients?.full_name||''} · ${new Date(s.start_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}` }));
   } else {
     const { data: msgs } = await supabase.from('messages').select('body,created_at').eq('sender_role','coach').order('created_at',{ascending:false}).limit(8);
     (msgs||[]).forEach(m=>items.push({ t: m.created_at, text: `💬 ${(m.body||'').slice(0,60)}` }));
@@ -1030,7 +1030,7 @@ async function renderTemplatesView(main){
 
   header.querySelector('#newTplBtn').addEventListener('click', ()=>{
     const form = el(`<form class="card gold">
-      <div class="field"><label>${locale==='el'?'Τίτλος προτύπου':'Template title'}</label><input class="tpl_title" required placeholder="π.χ. Return to Play — Ποδόσφαιρο"></div>
+      <div class="field"><label>${locale==='el'?'Τίτλος προτύπου':'Template title'}</label><input class="tpl_title" required placeholder="π.χ. Return to Play, Ποδόσφαιρο"></div>
       <div class="grid2">
         <div class="field"><label>${t('sport',locale)}</label><input class="tpl_sport" placeholder="π.χ. Ποδόσφαιρο"></div>
         <div class="field"><label>${t('pathway',locale)}</label>
@@ -1145,7 +1145,7 @@ async function renderAvailabilityView(main){
     const card = el(`<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
       <div>
         <span class="mono">${new Date(s.start_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</span>
-        ${s.booked_by ? `<span class="badge" style="margin-left:8px;">${t('slotBooked',locale)} — ${escapeHtml(s.clients?.full_name||'')}</span>` : `<span class="badge" style="margin-left:8px; color:var(--ink-soft);">${locale==='el'?'Ελεύθερο':'Open'}</span>`}
+        ${s.booked_by ? `<span class="badge" style="margin-left:8px;">${t('slotBooked',locale)}: ${escapeHtml(s.clients?.full_name||'')}</span>` : `<span class="badge" style="margin-left:8px; color:var(--ink-soft);">${locale==='el'?'Ελεύθερο':'Open'}</span>`}
       </div>
       <button class="btn danger delSlotBtn" type="button" style="padding:5px 12px; font-size:12px;">🗑</button>
     </div>`);
@@ -1219,7 +1219,7 @@ async function renderCourseModules(area, course){
       <div class="lessonsList" style="margin:8px 0;"></div>
       <form class="addLessonForm" style="display:flex; gap:6px; flex-wrap:wrap; align-items:flex-end;">
         <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><input class="lessonTitle" placeholder="${locale==='el'?'Τίτλος μαθήματος':'Lesson title'}" required></div>
-        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><input class="lessonVideo" placeholder="${locale==='el'?'Σύνδεσμος βίντεο (προαιρετικό)':'Video URL (optional)'}"></div>
+        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><input class="lessonVideo" placeholder="${locale==='el'?'🎥 Δικό σου βίντεο εξήγησης (YouTube Unlisted, προαιρετικό)':'🎥 Your own explainer video (YouTube Unlisted, optional)'}"></div>
         <button class="btn secondary" type="submit" style="padding:6px 12px; font-size:12px;">+ ${locale==='el'?'Μάθημα':'Lesson'}</button>
       </form>
     </div>`);
@@ -1372,7 +1372,7 @@ async function renderLibrary(main, isCoach){
         <div class="viewMode">
         <p>${escapeHtml(desc||'')}</p>
         <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
-        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎬 ${locale==='el'?'Βίντεο εκτέλεσης ↗':'Execution video ↗'}</a></p>` : '')}
+        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : '')}
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
@@ -1444,7 +1444,7 @@ async function renderLibrary(main, isCoach){
           <div class="field"><label>${locale==='el'?'Κατηγορία':'Category'}</label><input class="ef_cat" value="${escapeHtml(ex.category||'')}"></div>
           <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="ef_desc">${escapeHtml(ex.description_el||'')}</textarea></div>
           <div class="field"><label>${t('why',locale)}</label><textarea class="ef_why">${escapeHtml(ex.why_rationale_el||'')}</textarea></div>
-          <div class="field"><label>🎬 ${locale==='el'?'Βίντεο εκτέλεσης (YouTube link)':'Execution video (YouTube link)'}</label><input class="ef_video" value="${escapeHtml(ex.video_url||'')}" placeholder="https://youtube.com/watch?v=..."></div>
+          <div class="field"><label>🎥 ${locale==='el'?'Προσωπικό βίντεο εξήγησης (YouTube link, Unlisted)':'Personal explainer video (YouTube link, Unlisted)'}</label><input class="ef_video" value="${escapeHtml(ex.video_url||'')}" placeholder="https://youtube.com/watch?v=..."></div>
           <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="ef_steps">${escapeHtml(ex.execution_steps||'')}</textarea></div>
           <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="ef_cues">${escapeHtml(ex.technique_cues||'')}</textarea></div>
           <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="ef_mistakes">${escapeHtml(ex.common_mistakes||'')}</textarea></div>
@@ -1479,7 +1479,7 @@ function renderAutoEvidenceBox(box, ex, fresh){
   box.innerHTML = `<div style="font-weight:600; margin-bottom:6px;">🔍 ${fresh.length} ${locale==='el'?'πιθανές νέες μελέτες:':'possible new studies:'}</div>`;
   fresh.forEach(r=>{
     const row = el(`<div class="evidenceItem">
-      <div>${escapeHtml(r.authors||'')} — <em>${escapeHtml(r.title||'')}</em> (${escapeHtml(r.journal||'')}, ${r.year||''})</div>
+      <div>${escapeHtml(r.authors||'')}, <em>${escapeHtml(r.title||'')}</em> (${escapeHtml(r.journal||'')}, ${r.year||''})</div>
       <button class="btn secondary addAutoEvBtn" style="margin-top:4px; padding:4px 10px; font-size:11px;" type="button">+ ${t('save',locale)}</button>
     </div>`);
     row.querySelector('.addAutoEvBtn').addEventListener('click', async ()=>{
@@ -1505,17 +1505,17 @@ async function renderNewExerciseForm(main, onDone){
     <div class="grid2">
       <div class="field"><label>${locale==='el'?'Όνομα άσκησης':'Exercise name'} *</label><input class="f_name_el" required placeholder="${locale==='el'?'π.χ. Καθίσματα με μπάρα':'e.g. Back Squat'}"></div>
       <div class="field"><label>${locale==='el'?'Κατηγορία':'Category'} *</label>
-        <input class="f_cat" list="catList" required placeholder="${locale==='el'?'π.χ. Δύναμη — κάτω σώμα':'e.g. Strength — lower body'}">
+        <input class="f_cat" list="catList" required placeholder="${locale==='el'?'π.χ. Δύναμη, κάτω σώμα':'e.g. Strength, lower body'}">
         <datalist id="catList">${categories.map(c=>`<option value="${escapeHtml(c)}">`).join('')}</datalist>
       </div>
     </div>
-    <div class="field"><label>${t('why',locale)}</label><textarea class="f_why" placeholder="${locale==='el'?'Γιατί κάνουμε αυτή την άσκηση; (προαιρετικό — μπορείς να το συμπληρώσεις αργότερα)':'Why this exercise? (optional — can fill in later)'}"></textarea></div>
+    <div class="field"><label>${t('why',locale)}</label><textarea class="f_why" placeholder="${locale==='el'?'Γιατί κάνουμε αυτή την άσκηση; (προαιρετικό, μπορείς να το συμπληρώσεις αργότερα)':'Why this exercise? (optional, can fill in later)'}"></textarea></div>
     <button class="btn" type="submit">${t('save',locale)}</button>
     <button class="btn secondary" type="button" id="toggleMoreBtn" style="margin-left:8px;">+ ${locale==='el'?'Περισσότερα στοιχεία (προαιρετικά)':'More details (optional)'}</button>
     <div id="moreFields" style="display:none; margin-top:14px;">
       <div class="field"><label>Name (EN)</label><input class="f_name_en" placeholder="${locale==='el'?'Προαιρετικό':'Optional'}"></div>
       <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="f_desc"></textarea></div>
-      <div class="field"><label>🎬 ${locale==='el'?'Βίντεο εκτέλεσης (YouTube link)':'Execution video (YouTube link)'}</label><input class="f_video" placeholder="https://youtube.com/watch?v=..."></div>
+      <div class="field"><label>🎥 ${locale==='el'?'Προσωπικό βίντεο εξήγησης (YouTube link, Unlisted)':'Personal explainer video (YouTube link, Unlisted)'}</label><input class="f_video" placeholder="https://youtube.com/watch?v=..."></div>
       <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="f_steps" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>
       <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="f_cues"></textarea></div>
       <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="f_mistakes"></textarea></div>
@@ -1700,7 +1700,7 @@ async function renderCoachDashboard(main){
     const box = el(`<div class="card"><h3 style="font-size:13px; margin-bottom:8px;">${locale==='el'?'Εκκρεμείς προσκλήσεις':'Pending invites'}</h3></div>`);
     invites.forEach(i=>{
       const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:6px;">
-        <span>${escapeHtml(i.client_name)} — <span class="mono badge">${i.code}</span></span>
+        <span>${escapeHtml(i.client_name)}: <span class="mono badge">${i.code}</span></span>
         <span style="display:flex; gap:6px;">
           <button class="btn secondary copyInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Αντιγραφή':'Copy'}</button>
           <button class="btn danger cancelInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Ακύρωση':'Cancel'}</button>
@@ -1748,8 +1748,8 @@ async function renderCoachDashboard(main){
   main.appendChild(toggleBar);
 
   main.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin:-6px 0 12px;">🧠 ${locale==='el'
-    ? 'Η ένδειξη 🟢🟡🔴 είναι βοήθημα παρακολούθησης — δεν αποφασίζει θεραπεία ή αλλαγή προγράμματος. Η τελική κρίση είναι πάντα δική σου.'
-    : 'The 🟢🟡🔴 indicator is a monitoring aid — it does not decide treatment or program changes. The final judgment is always yours.'}</p>`));
+    ? 'Η ένδειξη 🟢🟡🔴 είναι βοήθημα παρακολούθησης. Δεν αποφασίζει θεραπεία ή αλλαγή προγράμματος. Η τελική κρίση είναι πάντα δική σου.'
+    : 'The 🟢🟡🔴 indicator is a monitoring aid. It does not decide treatment or program changes. The final judgment is always yours.'}</p>`));
 
   if(viewMode==='table'){
     const tableWrap = el('<div class="card tableScroll" style="padding:0;"></div>');
@@ -1830,7 +1830,7 @@ async function renderCoachDashboard(main){
         ? `Αυτή η ενέργεια ΔΕΝ αναιρείται και θα διαγράψει το πρόγραμμα, τα check-ins, τα μηνύματα και τις φωτογραφίες του/της ${c.full_name}.\n\nΓια επιβεβαίωση, γράψε ακριβώς το όνομα: ${c.full_name}`
         : `This action CANNOT be undone and will delete ${c.full_name}'s program, check-ins, messages and photos.\n\nTo confirm, type their exact name: ${c.full_name}`);
       if(typed !== c.full_name){
-        if(typed !== null) toast(locale==='el' ? 'Το όνομα δεν ταιριάζει — δεν έγινε διαγραφή.' : "Name didn't match — nothing was deleted.");
+        if(typed !== null) toast(locale==='el' ? 'Το όνομα δεν ταιριάζει. Δεν έγινε διαγραφή.' : "Name didn't match. Nothing was deleted.");
         return;
       }
       await supabase.from('clients').delete().eq('id', c.id);
@@ -1947,7 +1947,7 @@ const COACH_ONLY_SECTION = {
 const INTAKE_FIELDS = INTAKE_SECTIONS.flatMap(s=>s.fields).concat(COACH_ONLY_SECTION.fields);
 
 function bodyOutlineSvg(view){
-  // Simple, recognizable front/back silhouette — not anatomically precise, matches a clinical pain-marking diagram.
+  // Simple, recognizable front/back silhouette, not anatomically precise, matches a clinical pain-marking diagram.
   return `<svg viewBox="0 0 100 210" data-view="${view}">
     <circle cx="50" cy="18" r="13"/>
     <path d="M50 31 C30 31 24 42 24 60 L24 95 C24 100 30 100 30 95 L32 62 L32 130 L26 205 L40 205 L48 120 L52 120 L60 205 L74 205 L68 130 L68 62 L70 95 C70 100 76 100 76 95 L76 60 C76 42 70 31 50 31 Z"/>
@@ -2094,7 +2094,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
   function renderProgress(){
     const pct = Math.round(((stepIndex+1)/allSteps.length)*100);
     progressWrap.innerHTML = `
-      <div style="font-size:11px; color:var(--ink-soft); margin-bottom:6px;">${t('step',locale)} ${stepIndex+1} ${t('of',locale)} ${allSteps.length} — ${t(allSteps[stepIndex].title,locale)}</div>
+      <div style="font-size:11px; color:var(--ink-soft); margin-bottom:6px;">${t('step',locale)} ${stepIndex+1} ${t('of',locale)} ${allSteps.length} · ${t(allSteps[stepIndex].title,locale)}</div>
       <div style="height:6px; background:var(--line); border-radius:3px; overflow:hidden;">
         <div style="height:100%; width:${pct}%; background:var(--red); transition:width 0.3s ease;"></div>
       </div>`;
@@ -2223,7 +2223,7 @@ async function renderReassessmentTab(body, client, isCoach){
       <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Απόφαση':'Decision'}</label>
         <select class="f_decision"><option value="">—</option>${DECISION_OPTIONS.map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}</select>
       </div>
-      <div class="field" style="min-width:220px; flex:1; margin-bottom:0;"><label>${locale==='el'?'Σκεπτικό απόφασης':'Decision rationale'}</label><input class="f_decisionNotes" placeholder="${locale==='el'?'π.χ. Πόνος σταθερά χαμηλός, συμμόρφωση καλή — προχωράμε φόρτιση':'e.g. Pain stable and low, good adherence — progressing load'}"></div>
+      <div class="field" style="min-width:220px; flex:1; margin-bottom:0;"><label>${locale==='el'?'Σκεπτικό απόφασης':'Decision rationale'}</label><input class="f_decisionNotes" placeholder="${locale==='el'?'π.χ. Πόνος σταθερά χαμηλός, συμμόρφωση καλή, προχωράμε φόρτιση':'e.g. Pain stable and low, good adherence, progressing load'}"></div>
       <button class="btn" type="submit">${t('addSession',locale)}</button>
     </form>`);
     form.addEventListener('submit', async (e)=>{
@@ -2498,7 +2498,7 @@ let _chartInstances = [];
 function destroyCharts(){ _chartInstances.forEach(c=>c.destroy()); _chartInstances = []; }
 
 function renderTrendChart(container, title, rows, dateKey, series){
-  // rows: array of objects sorted desc by date — we reverse for chronological display
+  // rows: array of objects sorted desc by date, we reverse for chronological display
   if(!rows?.length){ return; }
   const sorted = [...rows].sort((a,b)=> (a[dateKey]||'').localeCompare(b[dateKey]||''));
   const wrap = el(`<div class="chartWrap"><div class="chartTitle">${escapeHtml(title)}</div><canvas></canvas></div>`);
@@ -2629,7 +2629,7 @@ function renderPersonalizedDraft(body, client, intakeData, exercises, onCreated)
     const list=card.querySelector('.draftList');
     draft.items.forEach((ex,i)=>list.appendChild(el(`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);"><span><strong>${i+1}.</strong> ${escapeHtml(ex.name_el||ex.name_en||'Άσκηση')}</span><span class="mono" style="font-size:10px;color:var(--ink-soft);">${escapeHtml(ex.category||'')}</span></div>`)));
     card.querySelector('.createDraft').addEventListener('click', async()=>{
-      const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα — ${new Date().toLocaleDateString('el-GR')}`,active:false,phase:draft.phase}).select().single();
+      const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα · ${new Date().toLocaleDateString('el-GR')}`,active:false,phase:draft.phase}).select().single();
       if(error||!newProg){ toast('Δεν δημιουργήθηκε το πρόγραμμα.'); return; }
       const rows=draft.items.map((ex,i)=>({program_id:newProg.id,exercise_id:ex.id,target_sets:2,target_reps:'8–12',target_load:'',sort_order:i}));
       const {error:e2}=await supabase.from('program_exercises').insert(rows);
@@ -2702,7 +2702,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
 
   const phaseBar = el(`<div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; ${program.active ? '' : 'border-left:4px solid var(--gold);'}">
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      ${program.active ? `<span class="badge" style="background:#e3f0e6; color:#1f6b3a;">✅ ${locale==='el'?'Ενεργό':'Active'}</span>` : `<span class="badge" style="background:#fff2d9; color:#8a5a00;">🔒 ${locale==='el'?'Πρόχειρο — δεν το βλέπει ακόμα ο ασκούμενος':'Draft — client cannot see this yet'}</span>`}
+      ${program.active ? `<span class="badge" style="background:#e3f0e6; color:#1f6b3a;">✅ ${locale==='el'?'Ενεργό':'Active'}</span>` : `<span class="badge" style="background:#fff2d9; color:#8a5a00;">🔒 ${locale==='el'?'Πρόχειρο, δεν το βλέπει ακόμα ο ασκούμενος':'Draft, client cannot see this yet'}</span>`}
       <div class="field" style="margin-bottom:0;"><input class="phaseInput" placeholder="${locale==='el'?'Φάση (π.χ. Προοδευτική φόρτιση)':'Phase (e.g. Progressive loading)'}" value="${escapeHtml(program.phase||'')}" style="min-width:220px;"></div>
       <button class="btn secondary savePhaseBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('save',locale)}</button>
     </div>
@@ -2714,7 +2714,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
   const activateBtn = phaseBar.querySelector('.activateProgBtn');
   if(activateBtn) activateBtn.addEventListener('click', async ()=>{
-    if(!confirm(locale==='el' ? 'Ενεργοποίηση — ο ασκούμενος θα δει αυτό το πρόγραμμα. Συνέχεια;' : 'Activate — the client will see this program. Continue?')) return;
+    if(!confirm(locale==='el' ? 'Ενεργοποίηση. Ο ασκούμενος θα δει αυτό το πρόγραμμα. Συνέχεια;' : 'Activate. The client will see this program. Continue?')) return;
     await supabase.from('programs').update({ active:true }).eq('id', program.id);
     onChanged();
   });
@@ -2722,7 +2722,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   if(intakeData){
     body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin:-4px 0 10px;">
       ⭐ ${locale==='el'?'= ταιριάζει με τον στόχο του' : '= matches their goal'} ·
-      ⚠ ${locale==='el'?'= πιθανή σύγκρουση με ιστορικό — πρόσεξε, όχι απαγόρευση' : '= possible conflict with history — caution, not a ban'}
+      ⚠ ${locale==='el'?'= πιθανή σύγκρουση με ιστορικό, πρόσεξε, όχι απαγόρευση' : '= possible conflict with history, caution, not a ban'}
     </p>`));
   }
   const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
@@ -2897,7 +2897,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
       <div class="whyPanel" style="display:none; background:#f6efe4; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
-        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎬 ${locale==='el'?'Βίντεο εκτέλεσης':'Execution video'} ↗</a>` : ''}
+        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : ''}
         ${!why && !ex.technique_cues && !ex.video_url ? `<span style="color:var(--ink-soft);">—</span>` : ''}
       </div>
     </div>`);

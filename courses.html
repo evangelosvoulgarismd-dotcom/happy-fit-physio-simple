@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Τα Μαθήματά μου — Happy Fit Physio</title>
+<title>Τα Μαθήματά μου · Happy Fit Physio</title>
 <meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -39,7 +39,7 @@
 <body>
   <div class="wrap">
     <h1>📚 Τα Μαθήματά μου</h1>
-    <p class="sub">Happy Fit Physio — εκπαιδευτικά μαθήματα</p>
+    <p class="sub">Happy Fit Physio · εκπαιδευτικά μαθήματα</p>
 
     <div id="emailView" class="card">
       <div class="field">
@@ -120,7 +120,7 @@
     Object.entries(modules).forEach(([modTitle, lessons]) => {
       html += `<div class="moduleBlock"><h3>${modTitle}</h3>`;
       lessons.forEach(l => {
-        html += `<div class="lesson"><h4>${l.lesson_title}</h4><p>${(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${l.video_url ? `<a href="${l.video_url}" target="_blank" rel="noopener">🎬 Βίντεο →</a>` : ''}</div>`;
+        html += `<div class="lesson"><h4>${l.lesson_title}</h4><p>${(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${l.video_url ? `<a href="${l.video_url}" target="_blank" rel="noopener">🎥 Σου το εξηγώ ο ίδιος →</a>` : ''}</div>`;
       });
       html += `</div>`;
     });
