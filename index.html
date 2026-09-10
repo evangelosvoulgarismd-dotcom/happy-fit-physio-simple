@@ -131,6 +131,16 @@
     .bio-text p { font-size:14px; color:var(--ink-soft); line-height:1.75; margin-bottom:12px; }
     .bio-text .bio-quote { font-family:'Fraunces', serif; font-style:italic; font-weight:300; font-size:17px; color:var(--ink); border-left:3px solid var(--red); padding-left:16px; margin-top:16px; }
     @media (max-width:640px){ .bio-grid{ grid-template-columns:1fr; text-align:center; } .bio-photo{ margin:0 auto; } .bio-text .bio-quote{ text-align:left; } }
+    .bio-stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; max-width:840px; margin:36px auto 0; }
+    .bio-stat { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:16px 10px; text-align:center; }
+    .bio-stat .num { font-family:'Poppins',sans-serif; font-size:22px; font-weight:800; color:var(--red); }
+    .bio-stat .lbl { font-size:10px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-top:4px; }
+    .bio-placements { max-width:840px; margin:28px auto 0; }
+    .bio-placements h4 { font-size:12.5px; color:var(--red); text-transform:uppercase; letter-spacing:.05em; margin-bottom:12px; }
+    .placement-row { display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; gap:10px; flex-wrap:wrap; }
+    .placement-row .place-name { color:var(--ink); font-weight:600; }
+    .placement-row .place-score { color:var(--ink-soft); font-size:12px; white-space:nowrap; }
+    @media (max-width:640px){ .bio-stats{ grid-template-columns:repeat(2,1fr); } }
 
     /* ── SERVICES ── */
     .services-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:20px; }
@@ -422,6 +432,19 @@
         <p class="bio-quote">Πιστεύω ότι κάθε πρόγραμμα οφείλει να έχει ένα ξεκάθαρο "γιατί", για τον ασκούμενο, όχι μόνο για μένα.</p>
         <p style="margin-top:16px;"><a href="thesis.html" style="color:var(--red); font-weight:700; text-decoration:none; font-size:13px;">📄 Δες μια ακαδημαϊκή εργασία μου →</a></p>
       </div>
+    </div>
+    <div class="bio-stats">
+      <div class="bio-stat"><div class="num">4</div><div class="lbl">Κλινικές Τοποθετήσεις</div></div>
+      <div class="bio-stat"><div class="num">90/100</div><div class="lbl">Μέση Κλινική Αξιολόγηση</div></div>
+      <div class="bio-stat"><div class="num">C2</div><div class="lbl">Αγγλικά (ESOL Int.)</div></div>
+      <div class="bio-stat"><div class="num">2</div><div class="lbl">Έδρες Εργασίας · Αθήνα · Σαντορίνη</div></div>
+    </div>
+    <div class="bio-placements">
+      <h4>Κλινική Πρακτική</h4>
+      <div class="placement-row"><span class="place-name">Φυσικοθεραπευτήριο Α. Κουτσουραδής — Μυοσκελετική αξιολόγηση, θεραπευτική άσκηση</span><span class="place-score">90/100</span></div>
+      <div class="placement-row"><span class="place-name">Blocks Rehab — Φιλοκτήτης — Νευρολογική & ορθοπαιδική αποκατάσταση (480 ώρες)</span><span class="place-score">90/100</span></div>
+      <div class="placement-row"><span class="place-name">Φυσιόλυσις — Π. Παγώνης & Θ. Ζάρρας — Μυοσκελετική αξιολόγηση, clinical reasoning</span><span class="place-score">90/100</span></div>
+      <div class="placement-row"><span class="place-name">Κέντρο Φυσικοθεραπείας Φράγκου Μαρία — Διαχείριση μυοσκελετικών περιστατικών</span><span class="place-score">90/100</span></div>
     </div>
   </section>
 
