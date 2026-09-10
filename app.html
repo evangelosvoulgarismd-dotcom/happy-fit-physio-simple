@@ -1823,21 +1823,45 @@ async function renderCoachDashboard(main){
 
   const sports = [...new Set(clients.map(c=>c.sport).filter(Boolean))];
   let activeSportFilter = renderCoachDashboard._sportFilter || '';
-  if(sports.length){
-    const filterBar = el(`<div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-      <label style="font-size:12px; color:var(--ink-soft);">${t('filterBySport',locale)}:</label>
-      <select class="sportFilterSelect" style="padding:6px 10px; border-radius:4px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
+  let activeStatusFilter = renderCoachDashboard._statusFilter || '';
+  let searchQuery = renderCoachDashboard._search || '';
+  let sortBy = renderCoachDashboard._sortBy || 'name';
+  let showArchived = renderCoachDashboard._showArchived || false;
+  if(!renderCoachDashboard._selected) renderCoachDashboard._selected = new Set();
+  const selected = renderCoachDashboard._selected;
+
+  const toolbar = el(`<div class="card" style="margin-bottom:12px; padding:12px 14px;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <input class="searchInput" placeholder="${locale==='el'?'🔍 Αναζήτηση με όνομα...':'🔍 Search by name...'}" value="${escapeHtml(searchQuery)}" style="flex:1; min-width:160px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
+      ${sports.length ? `<select class="sportFilterSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
         <option value="">${t('allClients',locale)}</option>
         ${sports.map(s=>`<option value="${escapeHtml(s)}" ${activeSportFilter===s?'selected':''}>${escapeHtml(s)}</option>`).join('')}
+      </select>` : ''}
+      <select class="statusFilterSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
+        <option value="">${locale==='el'?'Όλες οι καταστάσεις':'All statuses'}</option>
+        <option value="trial" ${activeStatusFilter==='trial'?'selected':''}>${t('statusTrial',locale)}</option>
+        <option value="active" ${activeStatusFilter==='active'?'selected':''}>${t('statusActive',locale)}</option>
+        <option value="paused" ${activeStatusFilter==='paused'?'selected':''}>${t('statusPaused',locale)}</option>
+        <option value="cancelled" ${activeStatusFilter==='cancelled'?'selected':''}>${t('statusCancelled',locale)}</option>
       </select>
-    </div>`);
-    filterBar.querySelector('.sportFilterSelect').addEventListener('change', (e)=>{
-      renderCoachDashboard._sportFilter = e.target.value;
-      renderCoachDashboard(main);
-    });
-    main.appendChild(filterBar);
-  }
-  const visibleClients = activeSportFilter ? clients.filter(c=>c.sport===activeSportFilter) : clients;
+      <select class="sortSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
+        <option value="name" ${sortBy==='name'?'selected':''}>${locale==='el'?'Ταξινόμηση: Όνομα':'Sort: Name'}</option>
+        <option value="recent" ${sortBy==='recent'?'selected':''}>${locale==='el'?'Πιο πρόσφατη δραστηριότητα':'Most recent activity'}</option>
+        <option value="readiness" ${sortBy==='readiness'?'selected':''}>${locale==='el'?'Χαμηλότερη ετοιμότητα':'Lowest readiness'}</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); cursor:pointer;">
+        <input type="checkbox" class="archivedToggle" ${showArchived?'checked':''}> ${locale==='el'?'Αρχειοθετημένοι':'Archived'}
+      </label>
+    </div>
+    <div class="bulkBar" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); gap:8px; align-items:center; flex-wrap:wrap;">
+      <span class="bulkCount mono" style="font-size:12px; color:var(--ink-soft);"></span>
+      <button class="btn secondary bulkMsgBtn" type="button" style="padding:5px 12px; font-size:12px;">💬 ${locale==='el'?'Μήνυμα σε επιλεγμένους':'Message selected'}</button>
+      <button class="btn secondary bulkArchiveBtn" type="button" style="padding:5px 12px; font-size:12px;">🗄 ${locale==='el'?'Αρχειοθέτηση':'Archive'}</button>
+      <button class="btn secondary bulkUnarchiveBtn" type="button" style="padding:5px 12px; font-size:12px;">↩️ ${locale==='el'?'Επαναφορά':'Unarchive'}</button>
+      <button class="btn secondary bulkClearBtn" type="button" style="padding:5px 12px; font-size:12px;">✕ ${locale==='el'?'Καθαρισμός επιλογής':'Clear selection'}</button>
+    </div>
+  </div>`);
+  main.appendChild(toolbar);
 
   const viewMode = renderCoachDashboard._viewMode || 'table';
   const toggleBar = el(`<div style="margin-bottom:12px; display:flex; justify-content:flex-end; gap:6px;">
@@ -1852,47 +1876,133 @@ async function renderCoachDashboard(main){
     ? 'Η ένδειξη 🟢🟡🔴 είναι βοήθημα παρακολούθησης. Δεν αποφασίζει θεραπεία ή αλλαγή προγράμματος. Η τελική κρίση είναι πάντα δική σου.'
     : 'The 🟢🟡🔴 indicator is a monitoring aid. It does not decide treatment or program changes. The final judgment is always yours.'}</p>`));
 
-  if(viewMode==='table'){
-    const tableWrap = el('<div class="card tableScroll" style="padding:0;"></div>');
-    const table = el(`<table class="hist" style="width:100%;">
-      <thead><tr>
-        <th>${locale==='el'?'Κατάσταση':'Status'}</th>
-        <th>${locale==='el'?'Ασκούμενος':'Client'}</th>
-        <th>${locale==='el'?'Στόχος':'Goal'}</th>
-        <th>Readiness</th>
-        <th>${t('pain',locale)}</th>
-        <th>${locale==='el'?'Ύπνος':'Sleep'}</th>
-        <th>${locale==='el'?'Συνέπεια':'Adherence'}</th>
-      </tr></thead>
-      <tbody></tbody>
-    </table>`);
-    const tbody = table.querySelector('tbody');
-    visibleClients.forEach(c=>{
-      const lastCk = latestCheckinByClient[c.id];
-      const lastRd = latestReadinessByClient[c.id];
-      const rScore = readinessScoreFor(c.id);
-      const goal = intakeByClient[c.id]?.mainGoal || c.sport || '—';
-      const painVal = lastCk?.pain_level;
-      const painColor = painVal>3 ? 'color:var(--danger); font-weight:700;' : '';
-      const clinStatus = clinicalStatusFor(c);
-      const row = el(`<tr class="clickable">
-        <td title="${escapeHtml(clinStatus.label)}" style="text-align:center;">${clinStatus.dot}</td>
-        <td><strong>${escapeHtml(c.full_name)}</strong></td>
-        <td>${escapeHtml(goal)}</td>
-        <td class="mono">${rScore!==null ? rScore : '—'}</td>
-        <td class="mono" style="${painColor}">${painVal!=null ? painVal : '—'}</td>
-        <td class="mono">${lastRd?.sleep!=null ? lastRd.sleep : '—'}</td>
-        <td class="mono">${lastCk?.adherence!=null ? lastCk.adherence+'%' : '—'}</td>
-      </tr>`);
-      row.addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
-      tbody.appendChild(row);
-    });
-    tableWrap.appendChild(table);
-    main.appendChild(tableWrap);
-    return;
+  const listContainer = el('<div></div>');
+  main.appendChild(listContainer);
+
+  function updateBulkBar(){
+    const bar = toolbar.querySelector('.bulkBar');
+    if(selected.size > 0){
+      bar.style.display = 'flex';
+      bar.querySelector('.bulkCount').textContent = locale==='el' ? `${selected.size} επιλεγμένοι` : `${selected.size} selected`;
+    } else {
+      bar.style.display = 'none';
+    }
   }
 
-  visibleClients.forEach(c=>{
+  function getVisibleClients(){
+    let list = clients.filter(c => !!c.archived === showArchived);
+    if(activeSportFilter) list = list.filter(c=>c.sport===activeSportFilter);
+    if(activeStatusFilter) list = list.filter(c=>(c.status||'trial')===activeStatusFilter);
+    if(searchQuery.trim()){
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(c=>(c.full_name||'').toLowerCase().includes(q));
+    }
+    if(sortBy==='name'){
+      list = list.slice().sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||''));
+    } else if(sortBy==='recent'){
+      list = list.slice().sort((a,b)=>{
+        const da = latestCheckinByClient[a.id]?.date || latestReadinessByClient[a.id]?.date || '0000';
+        const db = latestCheckinByClient[b.id]?.date || latestReadinessByClient[b.id]?.date || '0000';
+        return db.localeCompare(da);
+      });
+    } else if(sortBy==='readiness'){
+      list = list.slice().sort((a,b)=>{
+        const ra = readinessScoreFor(a.id); const rb = readinessScoreFor(b.id);
+        if(ra===null) return 1; if(rb===null) return -1;
+        return ra - rb;
+      });
+    }
+    return list;
+  }
+
+  async function deleteClientCompletely(c){
+    const { data: progs } = await supabase.from('programs').select('id').eq('client_id', c.id);
+    const progIds = (progs||[]).map(p=>p.id);
+    if(progIds.length) await supabase.from('program_exercises').delete().in('program_id', progIds);
+    const results = await Promise.all([
+      supabase.from('programs').delete().eq('client_id', c.id),
+      supabase.from('session_logs').delete().eq('client_id', c.id),
+      supabase.from('checkins').delete().eq('client_id', c.id),
+      supabase.from('readiness_logs').delete().eq('client_id', c.id),
+      supabase.from('client_intake').delete().eq('client_id', c.id),
+      supabase.from('messages').delete().eq('client_id', c.id),
+      supabase.from('reassessments').delete().eq('client_id', c.id),
+      supabase.from('progress_photos').delete().eq('client_id', c.id),
+    ]);
+    const failed = results.find(r=>r.error);
+    if(failed){ toast(locale==='el' ? 'Σφάλμα κατά τη διαγραφή συνδεδεμένων δεδομένων.' : 'Error deleting linked data.'); return false; }
+    const { error } = await supabase.from('clients').delete().eq('id', c.id);
+    if(error){ toast(locale==='el' ? 'Σφάλμα διαγραφής ασκούμενου.' : 'Error deleting client.'); return false; }
+    return true;
+  }
+
+  function renderList(){
+    listContainer.innerHTML = '';
+    const visibleClients = getVisibleClients();
+    updateBulkBar();
+
+    if(!visibleClients.length){
+      listContainer.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${locale==='el'?'Κανένα αποτέλεσμα.':'No results.'}</p>`));
+      return;
+    }
+
+    if(viewMode==='table'){
+      const tableWrap = el('<div class="card tableScroll" style="padding:0;"></div>');
+      const table = el(`<table class="hist" style="width:100%;">
+        <thead><tr>
+          <th></th>
+          <th>${locale==='el'?'Κατάσταση':'Status'}</th>
+          <th>${locale==='el'?'Ασκούμενος':'Client'}</th>
+          <th>${locale==='el'?'Στόχος':'Goal'}</th>
+          <th>Readiness</th>
+          <th>${t('pain',locale)}</th>
+          <th>${locale==='el'?'Ύπνος':'Sleep'}</th>
+          <th>${locale==='el'?'Συνέπεια':'Adherence'}</th>
+          <th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>`);
+      const tbody = table.querySelector('tbody');
+      visibleClients.forEach(c=>{
+        const lastCk = latestCheckinByClient[c.id];
+        const lastRd = latestReadinessByClient[c.id];
+        const rScore = readinessScoreFor(c.id);
+        const goal = intakeByClient[c.id]?.mainGoal || c.sport || '—';
+        const painVal = lastCk?.pain_level;
+        const painColor = painVal>3 ? 'color:var(--danger); font-weight:700;' : '';
+        const clinStatus = clinicalStatusFor(c);
+        const row = el(`<tr>
+          <td><input type="checkbox" class="rowCheck" ${selected.has(c.id)?'checked':''}></td>
+          <td title="${escapeHtml(clinStatus.label)}" style="text-align:center;">${clinStatus.dot}</td>
+          <td class="clickable"><strong>${escapeHtml(c.full_name)}</strong></td>
+          <td>${escapeHtml(goal)}</td>
+          <td class="mono">${rScore!==null ? rScore : '—'}</td>
+          <td class="mono" style="${painColor}">${painVal!=null ? painVal : '—'}</td>
+          <td class="mono">${lastRd?.sleep!=null ? lastRd.sleep : '—'}</td>
+          <td class="mono">${lastCk?.adherence!=null ? lastCk.adherence+'%' : '—'}</td>
+          <td><button class="btn danger delRowBtn" type="button" style="padding:3px 8px; font-size:11px;">🗑</button></td>
+        </tr>`);
+        row.querySelector('.rowCheck').addEventListener('click', (e)=>{ e.stopPropagation(); if(e.target.checked) selected.add(c.id); else selected.delete(c.id); updateBulkBar(); });
+        row.querySelector('.clickable').addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
+        row.querySelector('.delRowBtn').addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          const typed = prompt(locale==='el'
+            ? `Αυτή η ενέργεια ΔΕΝ αναιρείται και θα διαγράψει το πρόγραμμα, τα check-ins, τα μηνύματα και τις φωτογραφίες του/της ${c.full_name}.\n\nΓια επιβεβαίωση, γράψε ακριβώς το όνομα: ${c.full_name}`
+            : `This action CANNOT be undone and will delete ${c.full_name}'s program, check-ins, messages and photos.\n\nTo confirm, type their exact name: ${c.full_name}`);
+          if(typed !== c.full_name){
+            if(typed !== null) toast(locale==='el' ? 'Το όνομα δεν ταιριάζει. Δεν έγινε διαγραφή.' : "Name didn't match. Nothing was deleted.");
+            return;
+          }
+          if(await deleteClientCompletely(c)) renderCoachDashboard(main);
+        });
+        tbody.appendChild(row);
+      });
+      tableWrap.appendChild(table);
+      listContainer.appendChild(tableWrap);
+      return;
+    }
+
+    visibleClients.forEach(c=>{
     const lastCk = latestCheckinByClient[c.id];
     const prog = programByClient[c.id];
     const painFlag = lastCk && lastCk.pain_level > 3;
@@ -1901,10 +2011,12 @@ async function renderCoachDashboard(main){
     const clinStatus = clinicalStatusFor(c);
     const card = el(`<div class="card clientCard">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <input type="checkbox" class="cardCheck" ${selected.has(c.id)?'checked':''} style="flex-shrink:0;">
         <div class="clickable clientCardMain" style="flex:1; min-width:160px;">
           <strong title="${escapeHtml(clinStatus.label)}">${clinStatus.dot} ${escapeHtml(c.full_name)}</strong>
           <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
             <span class="badge" style="color:${statusColor};">${t('status'+status.charAt(0).toUpperCase()+status.slice(1),locale)}</span>
+            ${c.archived ? `<span class="badge" style="color:var(--ink-soft);">🗄 ${locale==='el'?'Αρχειοθετημένος':'Archived'}</span>` : ''}
             ${c.sport ? `<span class="badge">🏃 ${escapeHtml(c.sport)}</span>` : ''}
             ${c.pathway ? `<span class="badge" style="color:var(--red-deep);">${escapeHtml(c.pathway)}</span>` : ''}
             ${c.monthly_price ? `<span class="badge mono">€${c.monthly_price}/${locale==='el'?'μήνα':'mo'}</span>` : ''}
@@ -1918,14 +2030,20 @@ async function renderCoachDashboard(main){
           <button class="btn secondary jumpBtn" data-jump="live" style="padding:6px 12px; font-size:12px;">${t('liveSession',locale)}</button>
           <button class="btn secondary jumpBtn" data-jump="program" style="padding:6px 12px; font-size:12px;">${t('program',locale)}</button>
           <button class="btn secondary jumpBtn" data-jump="messages" style="padding:6px 12px; font-size:12px;">💬</button>
+          <button class="btn secondary archiveBtn" type="button" style="padding:6px 12px; font-size:12px;">${c.archived ? '↩️' : '🗄'}</button>
           <button class="btn danger delClientBtn" type="button" style="padding:6px 12px; font-size:12px;">🗑</button>
         </div>
       </div>
     </div>`);
+    card.querySelector('.cardCheck').addEventListener('click', (e)=>{ e.stopPropagation(); if(e.target.checked) selected.add(c.id); else selected.delete(c.id); updateBulkBar(); });
     card.querySelector('.clientCardMain').addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
     card.querySelectorAll('.jumpBtn').forEach(b=>b.addEventListener('click', ()=>{
       selectedClient = c; renderClientDetail._tab = b.dataset.jump; renderShell();
     }));
+    card.querySelector('.archiveBtn').addEventListener('click', async ()=>{
+      await supabase.from('clients').update({ archived: !c.archived }).eq('id', c.id);
+      renderCoachDashboard(main);
+    });
     card.querySelector('.delClientBtn').addEventListener('click', async ()=>{
       const typed = prompt(locale==='el'
         ? `Αυτή η ενέργεια ΔΕΝ αναιρείται και θα διαγράψει το πρόγραμμα, τα check-ins, τα μηνύματα και τις φωτογραφίες του/της ${c.full_name}.\n\nΓια επιβεβαίωση, γράψε ακριβώς το όνομα: ${c.full_name}`
@@ -1934,11 +2052,41 @@ async function renderCoachDashboard(main){
         if(typed !== null) toast(locale==='el' ? 'Το όνομα δεν ταιριάζει. Δεν έγινε διαγραφή.' : "Name didn't match. Nothing was deleted.");
         return;
       }
-      await supabase.from('clients').delete().eq('id', c.id);
-      renderCoachDashboard(main);
+      if(await deleteClientCompletely(c)) renderCoachDashboard(main);
     });
-    main.appendChild(card);
+    listContainer.appendChild(card);
   });
+  }
+
+  toolbar.querySelector('.searchInput').addEventListener('input', (e)=>{ renderCoachDashboard._search = searchQuery = e.target.value; renderList(); });
+  const sportSel = toolbar.querySelector('.sportFilterSelect');
+  if(sportSel) sportSel.addEventListener('change', (e)=>{ renderCoachDashboard._sportFilter = activeSportFilter = e.target.value; renderList(); });
+  toolbar.querySelector('.statusFilterSelect').addEventListener('change', (e)=>{ renderCoachDashboard._statusFilter = activeStatusFilter = e.target.value; renderList(); });
+  toolbar.querySelector('.sortSelect').addEventListener('change', (e)=>{ renderCoachDashboard._sortBy = sortBy = e.target.value; renderList(); });
+  toolbar.querySelector('.archivedToggle').addEventListener('change', (e)=>{ renderCoachDashboard._showArchived = showArchived = e.target.checked; selected.clear(); renderList(); });
+  toolbar.querySelector('.bulkClearBtn').addEventListener('click', ()=>{ selected.clear(); renderList(); });
+  toolbar.querySelector('.bulkArchiveBtn').addEventListener('click', async ()=>{
+    await supabase.from('clients').update({ archived: true }).in('id', [...selected]);
+    selected.clear();
+    renderCoachDashboard(main);
+  });
+  toolbar.querySelector('.bulkUnarchiveBtn').addEventListener('click', async ()=>{
+    await supabase.from('clients').update({ archived: false }).in('id', [...selected]);
+    selected.clear();
+    renderCoachDashboard(main);
+  });
+  toolbar.querySelector('.bulkMsgBtn').addEventListener('click', async ()=>{
+    const text = prompt(locale==='el' ? `Μήνυμα προς ${selected.size} επιλεγμένους ασκούμενους:` : `Message to ${selected.size} selected clients:`);
+    if(!text || !text.trim()) return;
+    const rows = [...selected].map(id => ({ client_id: id, sender_id: profile.id, sender_role: 'coach', body: text.trim() }));
+    const { error } = await supabase.from('messages').insert(rows);
+    if(error){ toast(locale==='el'?'Σφάλμα αποστολής.':'Send error.'); return; }
+    toast(locale==='el' ? `Στάλθηκε σε ${selected.size} άτομα.` : `Sent to ${selected.size} people.`);
+    selected.clear();
+    renderList();
+  });
+
+  renderList();
 }
 
 async function renderClientDetail(main){
