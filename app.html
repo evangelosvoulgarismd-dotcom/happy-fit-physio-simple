@@ -2164,22 +2164,30 @@ async function renderCoachDashboard(main){
   renderList();
 }
 
-async function renderClientDetail(main){
+async function renderClientDetail(main, forceRefresh){
   const client = selectedClient;
   let tab = renderClientDetail._tab || 'program';
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
-  const [{ data: programs }, { data: exercises }, { data: checkins }, { data: readiness }, { data: intakeRow }] = await Promise.all([
-    supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', client.id).order('created_at',{ascending:false}),
-    supabase.from('exercises').select('*').order('category'),
-    supabase.from('checkins').select('*').eq('client_id', client.id).order('date',{ascending:false}),
-    supabase.from('readiness_logs').select('*').eq('client_id', client.id).order('date',{ascending:false}),
-    supabase.from('client_intake').select('*').eq('client_id', client.id).maybeSingle(),
-  ]);
+  const cache = renderClientDetail._cache;
+  let programs, exercises, checkins, readiness, intakeRow;
+  if(!forceRefresh && cache && cache.clientId === client.id){
+    ({ programs, exercises, checkins, readiness, intakeRow } = cache);
+  } else {
+    main.innerHTML = `<p>${t('loading',locale)}</p>`;
+    const results = await Promise.all([
+      supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', client.id).order('created_at',{ascending:false}),
+      supabase.from('exercises').select('*').order('category'),
+      supabase.from('checkins').select('*').eq('client_id', client.id).order('date',{ascending:false}),
+      supabase.from('readiness_logs').select('*').eq('client_id', client.id).order('date',{ascending:false}),
+      supabase.from('client_intake').select('*').eq('client_id', client.id).maybeSingle(),
+    ]);
+    programs = results[0].data; exercises = results[1].data; checkins = results[2].data; readiness = results[3].data; intakeRow = results[4].data;
+    renderClientDetail._cache = { clientId: client.id, programs, exercises, checkins, readiness, intakeRow };
+  }
   const program = programs?.[0] || null;
 
   main.innerHTML = '';
   const back = el(`<button class="btn secondary">← ${locale==='el'?'Πίσω':'Back'}</button>`);
-  back.addEventListener('click', ()=>{ selectedClient=null; renderShell(); });
+  back.addEventListener('click', ()=>{ selectedClient=null; renderClientDetail._cache=null; renderShell(); });
   main.appendChild(back);
   main.appendChild(el(`<h2 style="margin-top:14px;">${escapeHtml(client.full_name)}</h2>`));
 
@@ -2203,7 +2211,7 @@ async function renderClientDetail(main){
 
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
   else if(tab==='nutrition') await renderNutritionTab(body, client, true);
-  else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main), intakeRow?.data || null);
+  else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null);
   else if(tab==='live'){
     if(program) await renderLiveSessionTab(body, client, program, true);
     else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
@@ -2211,7 +2219,7 @@ async function renderClientDetail(main){
   else if(tab==='messages') await renderMessagesTab(body, client, 'coach');
   else if(tab==='reassess') await renderReassessmentTab(body, client, true);
   else if(tab==='photos') await renderPhotosTab(body, client);
-  else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main));
+  else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main, true));
   else if(tab==='checkins'){
     renderCheckinForm(body, checkins, client.id);
     renderTrendChart(body, locale==='el'?'Adherence % & Ενέργεια ανά check-in':'Adherence % & Energy per check-in', checkins, 'date', [
