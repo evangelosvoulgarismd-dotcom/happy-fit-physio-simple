@@ -1439,6 +1439,60 @@ async function renderProjectionView(main){
   ids.forEach(cls=>wrap.querySelector('.'+cls).addEventListener('input',calc)); calc();
 }
 
+let _exerciseDbCache = null;
+async function fetchExerciseDb(){
+  if(_exerciseDbCache) return _exerciseDbCache;
+  try{
+    const res = await fetch('https://oss.exercisedb.dev/api/v1/exercises?limit=1500');
+    const json = await res.json();
+    _exerciseDbCache = json.data || [];
+  }catch(err){ _exerciseDbCache = []; }
+  return _exerciseDbCache;
+}
+
+function attachGifPicker(container, gifInput){
+  const wrap = el(`<div style="margin-top:6px;">
+    <button class="btn secondary gifSearchToggle" type="button" style="padding:5px 10px; font-size:11px;">🔍 ${locale==='el'?'Βρες GIF (ExerciseDB)':'Find GIF (ExerciseDB)'}</button>
+    ${gifInput.value ? `<img src="${escapeHtml(gifInput.value)}" style="height:60px; border-radius:6px; margin-left:8px; vertical-align:middle;">` : ''}
+    <div class="gifSearchPanel" style="display:none; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px;">
+      <input class="gifSearchInput" placeholder="${locale==='el'?'π.χ. squat, push up...':'e.g. squat, push up...'}" style="width:100%; margin-bottom:8px;">
+      <div class="gifResults" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; max-height:220px; overflow-y:auto;"></div>
+      <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Δεδομένα από ExerciseDB (ανοιχτό, δωρεάν σύνολο ασκήσεων).':'Data from ExerciseDB (open, free exercise dataset).'}</p>
+    </div>
+  </div>`);
+  container.appendChild(wrap);
+  const toggleBtn = wrap.querySelector('.gifSearchToggle');
+  const panel = wrap.querySelector('.gifSearchPanel');
+  const searchInput = wrap.querySelector('.gifSearchInput');
+  const results = wrap.querySelector('.gifResults');
+  toggleBtn.addEventListener('click', async ()=>{
+    const opening = panel.style.display === 'none';
+    panel.style.display = opening ? 'block' : 'none';
+    if(opening && !_exerciseDbCache){
+      results.innerHTML = `<p style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση...':'Loading...'}</p>`;
+      await fetchExerciseDb();
+      results.innerHTML = '';
+    }
+  });
+  searchInput.addEventListener('input', async ()=>{
+    const q = searchInput.value.trim().toLowerCase();
+    if(q.length < 2){ results.innerHTML=''; return; }
+    const db = await fetchExerciseDb();
+    const matches = db.filter(x=>x.name.toLowerCase().includes(q)).slice(0,12);
+    results.innerHTML = matches.map(x=>`<div class="gifPick" data-url="${escapeHtml(x.gifUrl)}" style="cursor:pointer; text-align:center;">
+      <img src="${escapeHtml(x.gifUrl)}" style="width:100%; border-radius:6px; border:1px solid var(--line);">
+      <div style="font-size:9.5px; color:var(--ink-soft); margin-top:2px;">${escapeHtml(x.name)}</div>
+    </div>`).join('') || `<p style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Καμία αντιστοιχία.':'No matches.'}</p>`;
+    results.querySelectorAll('.gifPick').forEach(pick=>{
+      pick.addEventListener('click', ()=>{
+        gifInput.value = pick.dataset.url;
+        panel.style.display = 'none';
+        toast(locale==='el'?'Επιλέχθηκε GIF.':'GIF selected.');
+      });
+    });
+  });
+}
+
 async function renderLibrary(main, isCoach){
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
   const { data: exercises, error } = await supabase.from('exercises').select('*, evidence(*)').order('category');
@@ -1486,7 +1540,7 @@ async function renderLibrary(main, isCoach){
         <div class="viewMode">
         <p>${escapeHtml(desc||'')}</p>
         <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
-        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : '')}
+        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
@@ -1559,11 +1613,14 @@ async function renderLibrary(main, isCoach){
           <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="ef_desc">${escapeHtml(ex.description_el||'')}</textarea></div>
           <div class="field"><label>${t('why',locale)}</label><textarea class="ef_why">${escapeHtml(ex.why_rationale_el||'')}</textarea></div>
           <div class="field"><label>🎥 ${locale==='el'?'Προσωπικό βίντεο εξήγησης (YouTube link, Unlisted)':'Personal explainer video (YouTube link, Unlisted)'}</label><input class="ef_video" value="${escapeHtml(ex.video_url||'')}" placeholder="https://youtube.com/watch?v=..."></div>
+          <div class="field"><label>🖼️ GIF ${locale==='el'?'εκτέλεσης (αν δεν έχεις ακόμα δικό σου βίντεο)':'demonstration (until you have your own video)'}</label><input class="ef_gif" value="${escapeHtml(ex.gif_url||'')}" placeholder="https://..."></div>
+          <div class="gifPickerSlot"></div>
           <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="ef_steps">${escapeHtml(ex.execution_steps||'')}</textarea></div>
           <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="ef_cues">${escapeHtml(ex.technique_cues||'')}</textarea></div>
           <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="ef_mistakes">${escapeHtml(ex.common_mistakes||'')}</textarea></div>
           <button class="btn saveExEditBtn" type="button">${t('save',locale)}</button>
         `;
+        attachGifPicker(editWrap.querySelector('.gifPickerSlot'), editWrap.querySelector('.ef_gif'));
         editWrap.querySelector('.saveExEditBtn').addEventListener('click', async ()=>{
           await supabase.from('exercises').update({
             name_el: editWrap.querySelector('.ef_name_el').value.trim(),
@@ -1572,6 +1629,7 @@ async function renderLibrary(main, isCoach){
             description_el: editWrap.querySelector('.ef_desc').value.trim(),
             why_rationale_el: editWrap.querySelector('.ef_why').value.trim(),
             video_url: editWrap.querySelector('.ef_video').value.trim() || null,
+            gif_url: editWrap.querySelector('.ef_gif').value.trim() || null,
             execution_steps: editWrap.querySelector('.ef_steps').value.trim() || null,
             technique_cues: editWrap.querySelector('.ef_cues').value.trim() || null,
             common_mistakes: editWrap.querySelector('.ef_mistakes').value.trim() || null,
@@ -1630,6 +1688,8 @@ async function renderNewExerciseForm(main, onDone){
       <div class="field"><label>Name (EN)</label><input class="f_name_en" placeholder="${locale==='el'?'Προαιρετικό':'Optional'}"></div>
       <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="f_desc"></textarea></div>
       <div class="field"><label>🎥 ${locale==='el'?'Προσωπικό βίντεο εξήγησης (YouTube link, Unlisted)':'Personal explainer video (YouTube link, Unlisted)'}</label><input class="f_video" placeholder="https://youtube.com/watch?v=..."></div>
+      <div class="field"><label>🖼️ GIF ${locale==='el'?'εκτέλεσης (αν δεν έχεις ακόμα δικό σου βίντεο)':'demonstration (until you have your own video)'}</label><input class="f_gif" placeholder="https://..."></div>
+      <div class="gifPickerSlotNew"></div>
       <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="f_steps" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>
       <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="f_cues"></textarea></div>
       <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="f_mistakes"></textarea></div>
@@ -1642,6 +1702,7 @@ async function renderNewExerciseForm(main, onDone){
     form.querySelector('#toggleMoreBtn').textContent = (showing?'+ ':'− ') + (locale==='el'?'Περισσότερα στοιχεία (προαιρετικά)':'More details (optional)');
   });
   main.insertBefore(form, main.children[1] || null);
+  attachGifPicker(form.querySelector('.gifPickerSlotNew'), form.querySelector('.f_gif'));
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     await supabase.from('exercises').insert({
@@ -1651,6 +1712,7 @@ async function renderNewExerciseForm(main, onDone){
       description_el: form.querySelector('.f_desc').value.trim(),
       why_rationale_el: form.querySelector('.f_why').value.trim(),
       video_url: form.querySelector('.f_video').value.trim() || null,
+      gif_url: form.querySelector('.f_gif').value.trim() || null,
       execution_steps: form.querySelector('.f_steps').value.trim() || null,
       technique_cues: form.querySelector('.f_cues').value.trim() || null,
       common_mistakes: form.querySelector('.f_mistakes').value.trim() || null,
@@ -3361,8 +3423,8 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
       <div class="whyPanel" style="display:none; background:#f6efe4; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
-        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : ''}
-        ${!why && !ex.technique_cues && !ex.video_url ? `<span style="color:var(--ink-soft);">—</span>` : ''}
+        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-top:4px;">` : '')}
+        ${!why && !ex.technique_cues && !ex.video_url && !ex.gif_url ? `<span style="color:var(--ink-soft);">—</span>` : ''}
       </div>
     </div>`);
     card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
