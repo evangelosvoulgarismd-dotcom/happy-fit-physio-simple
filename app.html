@@ -1682,14 +1682,14 @@ async function renderNewExerciseForm(main, onDone){
       </div>
     </div>
     <div class="field"><label>${t('why',locale)}</label><textarea class="f_why" placeholder="${locale==='el'?'Γιατί κάνουμε αυτή την άσκηση; (προαιρετικό, μπορείς να το συμπληρώσεις αργότερα)':'Why this exercise? (optional, can fill in later)'}"></textarea></div>
+    <div class="field"><label>🖼️ GIF ${locale==='el'?'εκτέλεσης (αν δεν έχεις ακόμα δικό σου βίντεο)':'demonstration (until you have your own video)'}</label><input class="f_gif" placeholder="https://..."></div>
+    <div class="gifPickerSlotNew"></div>
     <button class="btn" type="submit">${t('save',locale)}</button>
     <button class="btn secondary" type="button" id="toggleMoreBtn" style="margin-left:8px;">+ ${locale==='el'?'Περισσότερα στοιχεία (προαιρετικά)':'More details (optional)'}</button>
     <div id="moreFields" style="display:none; margin-top:14px;">
       <div class="field"><label>Name (EN)</label><input class="f_name_en" placeholder="${locale==='el'?'Προαιρετικό':'Optional'}"></div>
       <div class="field"><label>${locale==='el'?'Περιγραφή':'Description'}</label><textarea class="f_desc"></textarea></div>
       <div class="field"><label>🎥 ${locale==='el'?'Προσωπικό βίντεο εξήγησης (YouTube link, Unlisted)':'Personal explainer video (YouTube link, Unlisted)'}</label><input class="f_video" placeholder="https://youtube.com/watch?v=..."></div>
-      <div class="field"><label>🖼️ GIF ${locale==='el'?'εκτέλεσης (αν δεν έχεις ακόμα δικό σου βίντεο)':'demonstration (until you have your own video)'}</label><input class="f_gif" placeholder="https://..."></div>
-      <div class="gifPickerSlotNew"></div>
       <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="f_steps" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>
       <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="f_cues"></textarea></div>
       <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="f_mistakes"></textarea></div>
