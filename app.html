@@ -392,6 +392,19 @@ const STR = {
   alertAdherenceDrop:{el:'Το adherence έπεσε απότομα', en:'Adherence dropped sharply'},
   alertLowEnergy:{el:'Χαμηλή ενέργεια/κίνητρο τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
   baselineSection:{el:'Baseline · Αρχικά Δεδομένα', en:'Baseline · Initial Data'},
+  nutrition:{el:'Διατροφή', en:'Nutrition'},
+  nutritionTargets:{el:'Στόχοι Διατροφής', en:'Nutrition Targets'},
+  dailyCalories:{el:'Ημερήσιες Θερμίδες', en:'Daily Calories'},
+  protein:{el:'Πρωτεΐνη (γρ)', en:'Protein (g)'},
+  carbs:{el:'Υδατάνθρακες (γρ)', en:'Carbs (g)'},
+  fat:{el:'Λίπος (γρ)', en:'Fat (g)'},
+  water:{el:'Νερό (ml)', en:'Water (ml)'},
+  addMeal:{el:'Προσθήκη γεύματος', en:'Add meal'},
+  mealLabel:{el:'Γεύμα (π.χ. Πρωινό)', en:'Meal (e.g. Breakfast)'},
+  foodName:{el:'Τρόφιμο', en:'Food'},
+  todayTotal:{el:'Σύνολο ημέρας', en:"Today's total"},
+  noNutritionTargets:{el:'Ο coach δεν έχει ορίσει ακόμα στόχους διατροφής.', en:'Your coach has not set nutrition targets yet.'},
+  nutritionHistory:{el:'Ιστορικό διατροφής', en:'Nutrition history'},
   baselineWeight:{el:'Βάρος (kg)', en:'Weight (kg)'},
   measurements:{el:'Περίμετροι (στήθος/μέση/ισχίο/μηρός κ.λπ.)', en:'Circumferences (chest/waist/hip/thigh etc.)'},
   restingHR:{el:'Καρδιακή συχνότητα ηρεμίας', en:'Resting heart rate'},
@@ -2116,6 +2129,7 @@ async function renderClientDetail(main){
     <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
+    <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
     <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
     <button class="btn ${tab==='business'?'':'secondary'}" data-t="business">${t('business',locale)}</button>
   </div>`);
@@ -2126,6 +2140,7 @@ async function renderClientDetail(main){
   main.appendChild(body);
 
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
+  else if(tab==='nutrition') await renderNutritionTab(body, client, true);
   else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main), intakeRow?.data || null);
   else if(tab==='live'){
     if(program) await renderLiveSessionTab(body, client, program, true);
@@ -2689,6 +2704,165 @@ async function renderPhotosTab(body, client){
     grid.appendChild(card);
   }
   body.appendChild(grid);
+}
+
+async function renderNutritionTab(body, person, isCoach){
+  const clientId = person.id;
+  const [{ data: target }, { data: logs }] = await Promise.all([
+    supabase.from('nutrition_targets').select('*').eq('client_id', clientId).maybeSingle(),
+    supabase.from('nutrition_logs').select('*').eq('client_id', clientId).order('log_date',{ascending:false}).order('created_at',{ascending:true}),
+  ]);
+
+  if(isCoach){
+    const form = el(`<form class="card gold" style="margin-bottom:16px;">
+      <h4 style="margin-bottom:10px; font-size:13px; color:var(--red-deep);">${t('nutritionTargets',locale)}</h4>
+      <div class="grid2">
+        <div class="field"><label>${t('dailyCalories',locale)}</label><input class="nt_cal" type="number" value="${target?.daily_calories ?? ''}"></div>
+        <div class="field"><label>${t('protein',locale)}</label><input class="nt_prot" type="number" value="${target?.protein_g ?? ''}"></div>
+        <div class="field"><label>${t('carbs',locale)}</label><input class="nt_carb" type="number" value="${target?.carbs_g ?? ''}"></div>
+        <div class="field"><label>${t('fat',locale)}</label><input class="nt_fat" type="number" value="${target?.fat_g ?? ''}"></div>
+        <div class="field"><label>${t('water',locale)}</label><input class="nt_water" type="number" value="${target?.water_ml ?? ''}"></div>
+      </div>
+      <div class="field"><label>${locale==='el'?'Σημειώσεις':'Notes'}</label><textarea class="nt_notes">${escapeHtml(target?.notes||'')}</textarea></div>
+      <button class="btn" type="submit">${t('save',locale)}</button>
+    </form>`);
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      await supabase.from('nutrition_targets').upsert({
+        client_id: clientId,
+        daily_calories: Number(form.querySelector('.nt_cal').value)||null,
+        protein_g: Number(form.querySelector('.nt_prot').value)||null,
+        carbs_g: Number(form.querySelector('.nt_carb').value)||null,
+        fat_g: Number(form.querySelector('.nt_fat').value)||null,
+        water_ml: Number(form.querySelector('.nt_water').value)||null,
+        notes: form.querySelector('.nt_notes').value.trim() || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict:'client_id' });
+      toast(t('saved',locale));
+    });
+    body.appendChild(form);
+  } else {
+    if(!target){
+      body.appendChild(el(`<p class="card" style="color:var(--ink-soft);">${t('noNutritionTargets',locale)}</p>`));
+    } else {
+      body.appendChild(el(`<div class="card gold" style="margin-bottom:16px;">
+        <h4 style="margin-bottom:10px; font-size:13px; color:var(--red-deep);">${t('nutritionTargets',locale)}</h4>
+        <div class="statGrid">
+          ${target.daily_calories ? `<div class="statCard"><div class="num mono">${target.daily_calories}</div><div class="lbl">${t('dailyCalories',locale)}</div></div>` : ''}
+          ${target.protein_g ? `<div class="statCard"><div class="num mono">${target.protein_g}g</div><div class="lbl">${t('protein',locale)}</div></div>` : ''}
+          ${target.carbs_g ? `<div class="statCard"><div class="num mono">${target.carbs_g}g</div><div class="lbl">${t('carbs',locale)}</div></div>` : ''}
+          ${target.fat_g ? `<div class="statCard"><div class="num mono">${target.fat_g}g</div><div class="lbl">${t('fat',locale)}</div></div>` : ''}
+        </div>
+        ${target.notes ? `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:10px;">${escapeHtml(target.notes)}</p>` : ''}
+      </div>`));
+    }
+
+    const today = new Date().toISOString().slice(0,10);
+    const todayLogs = (logs||[]).filter(l=>l.log_date===today);
+    const totals = todayLogs.reduce((acc,l)=>({
+      cal: acc.cal + (l.calories||0), prot: acc.prot + (Number(l.protein_g)||0),
+      carb: acc.carb + (Number(l.carbs_g)||0), fat: acc.fat + (Number(l.fat_g)||0),
+    }), {cal:0,prot:0,carb:0,fat:0});
+
+    const totalsCard = el(`<div class="card">
+      <h4 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">${t('todayTotal',locale)}</h4>
+      <div class="mono" style="font-size:15px; font-weight:700;">${totals.cal} kcal${target?.daily_calories ? ` / ${target.daily_calories}` : ''}</div>
+      <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-top:4px;">P: ${totals.prot}g · C: ${totals.carb}g · F: ${totals.fat}g</div>
+    </div>`);
+    body.appendChild(totalsCard);
+
+    const mealsList = el('<div class="card" style="margin-top:12px;"></div>');
+    function renderMeals(){
+      mealsList.innerHTML = `<h4 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">${today}</h4>`;
+      todayLogs.forEach(l=>{
+        mealsList.appendChild(el(`<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px;">
+          <span>${l.meal_label?`<span class="mono" style="color:var(--red-deep); font-size:11px;">${escapeHtml(l.meal_label)}</span> `:''}${escapeHtml(l.food_name)}</span>
+          <span class="mono" style="color:var(--ink-soft);">${l.calories||0} kcal</span>
+        </div>`));
+      });
+      if(!todayLogs.length) mealsList.appendChild(el(`<p style="color:var(--ink-soft); font-size:12.5px;">—</p>`));
+    }
+    renderMeals();
+    body.appendChild(mealsList);
+
+    const addForm = el(`<form class="card gold" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="field" style="width:130px; margin-bottom:0;"><label>${t('mealLabel',locale)}</label><input class="m_label" placeholder="Πρωινό"></div>
+      <div class="field" style="min-width:160px; flex:1; margin-bottom:0;"><label>${t('foodName',locale)}</label><input class="m_food" required></div>
+      <div class="field" style="width:90px; margin-bottom:0;"><label>kcal</label><input class="m_cal" type="number"></div>
+      <div class="field" style="width:70px; margin-bottom:0;"><label>P(g)</label><input class="m_prot" type="number"></div>
+      <div class="field" style="width:70px; margin-bottom:0;"><label>C(g)</label><input class="m_carb" type="number"></div>
+      <div class="field" style="width:70px; margin-bottom:0;"><label>F(g)</label><input class="m_fat" type="number"></div>
+      <button class="btn" type="submit">+ ${t('addMeal',locale)}</button>
+      <label class="btn secondary" style="padding:8px 14px; font-size:13px; cursor:pointer;">
+        📷 ${locale==='el'?'Φωτογραφία φαγητού':'Food photo'}
+        <input type="file" accept="image/*" capture="environment" class="foodPhotoInput" style="display:none;">
+      </label>
+      <span class="photoStatus" style="font-size:11.5px; color:var(--ink-soft);"></span>
+    </form>`);
+    addForm.querySelector('.foodPhotoInput').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const statusEl = addForm.querySelector('.photoStatus');
+      statusEl.textContent = locale==='el' ? '🔍 Ανάλυση...' : '🔍 Analyzing...';
+      try{
+        const base64 = await new Promise((resolve, reject)=>{
+          const reader = new FileReader();
+          reader.onload = ()=>resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const { data, error } = await supabase.functions.invoke('analyze-food-photo', {
+          body: { image_base64: base64, mime_type: file.type },
+        });
+        if(error || data?.error){ statusEl.textContent = locale==='el' ? '⚠️ Η ανάλυση απέτυχε — συμπλήρωσε χειροκίνητα.' : '⚠️ Analysis failed — fill in manually.'; return; }
+        addForm.querySelector('.m_food').value = data.food_name || '';
+        addForm.querySelector('.m_cal').value = data.calories ?? '';
+        addForm.querySelector('.m_prot').value = data.protein_g ?? '';
+        addForm.querySelector('.m_carb').value = data.carbs_g ?? '';
+        addForm.querySelector('.m_fat').value = data.fat_g ?? '';
+        const confMsg = { low: locale==='el'?'χαμηλή σιγουριά — έλεγξε τα νούμερα':'low confidence — check the numbers',
+                           medium: locale==='el'?'μέτρια σιγουριά':'medium confidence',
+                           high: locale==='el'?'καλή εκτίμηση':'good estimate' }[data.confidence] || '';
+        statusEl.textContent = `📷 ${locale==='el'?'Εκτίμηση AI':'AI estimate'} — ${confMsg}. ${locale==='el'?'Έλεγξε πριν αποθηκεύσεις.':'Review before saving.'}`;
+      }catch(err){
+        statusEl.textContent = locale==='el' ? '⚠️ Σφάλμα ανάλυσης.' : '⚠️ Analysis error.';
+      }
+    });
+    addForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const food_name = addForm.querySelector('.m_food').value.trim();
+      if(!food_name) return;
+      const { data: inserted, error } = await supabase.from('nutrition_logs').insert({
+        client_id: clientId, log_date: today,
+        meal_label: addForm.querySelector('.m_label').value.trim() || null,
+        food_name,
+        calories: Number(addForm.querySelector('.m_cal').value)||null,
+        protein_g: Number(addForm.querySelector('.m_prot').value)||null,
+        carbs_g: Number(addForm.querySelector('.m_carb').value)||null,
+        fat_g: Number(addForm.querySelector('.m_fat').value)||null,
+      }).select().single();
+      if(error){ toast(locale==='el'?'Σφάλμα αποθήκευσης.':'Save error.'); return; }
+      todayLogs.push(inserted);
+      totals.cal += inserted.calories||0; totals.prot += Number(inserted.protein_g)||0; totals.carb += Number(inserted.carbs_g)||0; totals.fat += Number(inserted.fat_g)||0;
+      totalsCard.querySelector('.mono').textContent = `${totals.cal} kcal${target?.daily_calories ? ` / ${target.daily_calories}` : ''}`;
+      totalsCard.querySelectorAll('.mono')[1].textContent = `P: ${totals.prot}g · C: ${totals.carb}g · F: ${totals.fat}g`;
+      renderMeals();
+      addForm.reset();
+    });
+    body.appendChild(addForm);
+
+    const pastDates = [...new Set((logs||[]).filter(l=>l.log_date!==today).map(l=>l.log_date))];
+    if(pastDates.length){
+      body.appendChild(el(`<h4 style="margin:18px 0 8px; font-size:12px; color:var(--ink-soft);">${t('nutritionHistory',locale)}</h4>`));
+      pastDates.forEach(d=>{
+        const dayLogs = (logs||[]).filter(l=>l.log_date===d);
+        const dTotal = dayLogs.reduce((s,l)=>s+(l.calories||0),0);
+        body.appendChild(el(`<div class="card" style="padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; font-size:12.5px;">
+          <span class="mono">${d}</span><span>${dayLogs.length} ${locale==='el'?'γεύματα':'meals'} · <strong>${dTotal} kcal</strong></span>
+        </div>`));
+      });
+    }
+  }
 }
 
 async function renderMessagesTab(body, client, viewerRole){
@@ -3273,6 +3447,7 @@ async function renderClientDashboard(main){
     <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">${t('progress',locale)}</button>
+    <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
     <button class="btn ${tab==='calls'?'':'secondary'}" data-t="calls">📹 Zoom</button>
     <button class="btn ${tab==='payment'?'':'secondary'}" data-t="payment">💳 ${t('payment',locale)}</button>
     <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
@@ -3291,6 +3466,8 @@ async function renderClientDashboard(main){
     else body.appendChild(el(`<p>${locale==='el'?'Δεν έχεις ακόμα πρόγραμμα.':'No program yet.'}</p>`));
   } else if(tab==='messages'){
     await renderMessagesTab(body, profile, 'client');
+  } else if(tab==='nutrition'){
+    await renderNutritionTab(body, profile, false);
   } else if(tab==='calls'){
     const card = el('<div class="card gold"></div>');
     if(clientRow?.zoom_link){
