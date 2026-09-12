@@ -3921,6 +3921,8 @@ function renderCheckinForm(body, existing, clientId){
 // BOOT
 // ============================================================
 async function boot(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const deepLinkTab = urlParams.get('tab');
   const { data } = await supabase.auth.getSession();
   session = data.session;
   if(!session){ profile = null; renderAuth(); return; }
@@ -3928,6 +3930,7 @@ async function boot(){
   if(error || !p){ profile = null; renderAuth(); return; }
   profile = p; locale = p.locale || 'el';
   view = 'dashboard'; selectedClient = null;
+  if(deepLinkTab && profile.role==='client'){ renderClientDashboard._tab = deepLinkTab; }
   renderShell();
 }
 
