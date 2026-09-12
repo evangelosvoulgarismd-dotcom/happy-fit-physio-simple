@@ -404,6 +404,15 @@ const STR = {
   foodName:{el:'Τρόφιμο', en:'Food'},
   todayTotal:{el:'Σύνολο ημέρας', en:"Today's total"},
   noNutritionTargets:{el:'Ο coach δεν έχει ορίσει ακόμα στόχους διατροφής.', en:'Your coach has not set nutrition targets yet.'},
+  massage:{el:'Μάλαξη', en:'Massage'},
+  requestMassage:{el:'Ζήτησε ραντεβού μάλαξης', en:'Request massage appointment'},
+  massagePrice:{el:'60€ / 60 λεπτά', en:'€60 / 60 minutes'},
+  preferredDate:{el:'Προτιμώμενη ημερομηνία', en:'Preferred date'},
+  preferredTime:{el:'Προτιμώμενη ώρα', en:'Preferred time'},
+  massageType:{el:'Τύπος μάλαξης', en:'Massage type'},
+  massageLocation:{el:'Τοποθεσία (διεύθυνση)', en:'Location (address)'},
+  massageRequestSent:{el:'Το αίτημά σου στάλθηκε. Θα επικοινωνήσουμε για επιβεβαίωση.', en:'Your request was sent. We will contact you to confirm.'},
+  noMassageRequests:{el:'Κανένα αίτημα ακόμα.', en:'No requests yet.'},
   nutritionHistory:{el:'Ιστορικό διατροφής', en:'Nutrition history'},
   baselineWeight:{el:'Βάρος (kg)', en:'Weight (kg)'},
   measurements:{el:'Περίμετροι (στήθος/μέση/ισχίο/μηρός κ.λπ.)', en:'Circumferences (chest/waist/hip/thigh etc.)'},
@@ -2278,6 +2287,7 @@ async function renderClientDetail(main, forceRefresh){
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
     <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
+    <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
     <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
     <button class="btn ${tab==='business'?'':'secondary'}" data-t="business">${t('business',locale)}</button>
   </div>`);
@@ -2289,6 +2299,7 @@ async function renderClientDetail(main, forceRefresh){
 
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
   else if(tab==='nutrition') await renderNutritionTab(body, client, true);
+  else if(tab==='massage') await renderMassageTab(body, client, true);
   else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null);
   else if(tab==='live'){
     if(program) await renderLiveSessionTab(body, client, program, true);
@@ -3013,6 +3024,84 @@ async function renderNutritionTab(body, person, isCoach){
   }
 }
 
+async function renderMassageTab(body, person, isCoach, clientRow){
+  if(isCoach){
+    const clientId = person.id;
+    const { data: requests } = await supabase.from('massage_requests').select('*').eq('client_id', clientId).order('created_at',{ascending:false});
+    body.appendChild(el(`<div class="card gold" style="margin-bottom:14px;"><strong>${t('massage',locale)}</strong> <span class="badge mono">${t('massagePrice',locale)}</span></div>`));
+    if(!requests?.length){
+      body.appendChild(el(`<p style="color:var(--ink-soft);">${t('noMassageRequests',locale)}</p>`));
+      return;
+    }
+    requests.forEach(r=>{
+      const card = el(`<div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div>
+            <strong class="mono">${r.preferred_date||'—'} ${r.preferred_time||''}</strong>
+            <span class="badge" style="margin-left:6px; color:${r.status==='confirmed'?'#1f6b3a':(r.status==='cancelled'?'var(--danger)':'var(--ink-soft)')};">${escapeHtml(r.status)}</span>
+          </div>
+          <select class="statusSelect" style="padding:5px 8px; font-size:12px; border-radius:6px; border:1px solid var(--line);">
+            <option value="pending" ${r.status==='pending'?'selected':''}>${locale==='el'?'Εκκρεμεί':'Pending'}</option>
+            <option value="confirmed" ${r.status==='confirmed'?'selected':''}>${locale==='el'?'Επιβεβαιώθηκε':'Confirmed'}</option>
+            <option value="cancelled" ${r.status==='cancelled'?'selected':''}>${locale==='el'?'Ακυρώθηκε':'Cancelled'}</option>
+          </select>
+        </div>
+        <p style="font-size:13px; margin-top:8px;">${r.massage_type?escapeHtml(r.massage_type)+' · ':''}${r.duration_min||60}' ${r.location?'· '+escapeHtml(r.location):''}</p>
+        ${r.notes?`<p style="font-size:12.5px; color:var(--ink-soft);">${escapeHtml(r.notes)}</p>`:''}
+      </div>`);
+      card.querySelector('.statusSelect').addEventListener('change', async (e)=>{
+        await supabase.from('massage_requests').update({ status: e.target.value }).eq('id', r.id);
+        toast(t('saved',locale));
+      });
+      body.appendChild(card);
+    });
+    return;
+  }
+
+  // Client view
+  const coachId = clientRow?.coach_id;
+  body.appendChild(el(`<div class="card gold" style="margin-bottom:14px;"><strong>${t('massage',locale)}</strong> <span class="badge mono">${t('massagePrice',locale)}</span><p style="font-size:12.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Κατ\' οίκον θεραπευτική μάλαξη χαλάρωσης & ανάρρωσης.':'In-home relaxation & recovery massage.'}</p></div>`));
+
+  const form = el(`<form class="card" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+    <div class="field" style="width:150px; margin-bottom:0;"><label>${t('preferredDate',locale)}</label><input class="m_date" type="date" required></div>
+    <div class="field" style="width:120px; margin-bottom:0;"><label>${t('preferredTime',locale)}</label><input class="m_time" type="time"></div>
+    <div class="field" style="min-width:160px; margin-bottom:0;"><label>${t('massageType',locale)}</label>
+      <select class="m_type"><option>Relaxation</option><option>Deep Tissue</option><option>Recovery</option><option>Travel Recovery</option><option>Couple</option><option>Compression Therapy</option></select>
+    </div>
+    <div class="field" style="min-width:180px; flex:1; margin-bottom:0;"><label>${t('massageLocation',locale)}</label><input class="m_loc" placeholder="${locale==='el'?'Διεύθυνση':'Address'}"></div>
+    <div class="field" style="min-width:180px; flex:1; margin-bottom:0;"><label>${locale==='el'?'Σημειώσεις':'Notes'}</label><input class="m_notes"></div>
+    <button class="btn" type="submit">${t('requestMassage',locale)}</button>
+  </form>`);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!coachId){ toast(locale==='el'?'Σφάλμα: δεν βρέθηκε coach.':'Error: coach not found.'); return; }
+    const { error } = await supabase.from('massage_requests').insert({
+      client_id: person.id, coach_id: coachId,
+      preferred_date: form.querySelector('.m_date').value,
+      preferred_time: form.querySelector('.m_time').value || null,
+      massage_type: form.querySelector('.m_type').value,
+      location: form.querySelector('.m_loc').value.trim() || null,
+      notes: form.querySelector('.m_notes').value.trim() || null,
+      duration_min: 60,
+    });
+    if(error){ toast(locale==='el'?'Σφάλμα αποστολής.':'Send error.'); return; }
+    toast(t('massageRequestSent',locale));
+    form.reset();
+  });
+  body.appendChild(form);
+
+  const { data: myRequests } = await supabase.from('massage_requests').select('*').eq('client_id', person.id).order('created_at',{ascending:false});
+  if(myRequests?.length){
+    body.appendChild(el(`<h4 style="margin:16px 0 8px; font-size:12px; color:var(--ink-soft);">${locale==='el'?'Τα αιτήματά μου':'My requests'}</h4>`));
+    myRequests.forEach(r=>{
+      body.appendChild(el(`<div class="card" style="padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; font-size:12.5px;">
+        <span class="mono">${r.preferred_date} ${r.preferred_time||''}</span>
+        <span class="badge" style="color:${r.status==='confirmed'?'#1f6b3a':(r.status==='cancelled'?'var(--danger)':'var(--ink-soft)')};">${escapeHtml(r.status)}</span>
+      </div>`));
+    });
+  }
+}
+
 async function renderMessagesTab(body, client, viewerRole){
   const headerRow = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
     <h3 style="font-size:13px; margin:0;">${t('messages',locale)}</h3>
@@ -3596,6 +3685,7 @@ async function renderClientDashboard(main){
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">${t('progress',locale)}</button>
     <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
+    <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
     <button class="btn ${tab==='calls'?'':'secondary'}" data-t="calls">📹 Zoom</button>
     <button class="btn ${tab==='payment'?'':'secondary'}" data-t="payment">💳 ${t('payment',locale)}</button>
     <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
@@ -3616,6 +3706,8 @@ async function renderClientDashboard(main){
     await renderMessagesTab(body, profile, 'client');
   } else if(tab==='nutrition'){
     await renderNutritionTab(body, profile, false);
+  } else if(tab==='massage'){
+    await renderMassageTab(body, profile, false, clientRow);
   } else if(tab==='calls'){
     const card = el('<div class="card gold"></div>');
     if(clientRow?.zoom_link){
