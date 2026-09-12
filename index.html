@@ -470,7 +470,7 @@
         <span class="service-loc">Αθήνα · Σαντορίνη</span>
         <h3>Κατ' Οίκον Μάλαξη Χαλάρωσης & Ανάρρωσης</h3>
         <p>Μάλαξη στον χώρο σου, 60': Relaxation, Deep Tissue, Recovery, Travel Recovery, Couple, Compression Therapy. Ιδανικό για μυϊκή ένταση, ανάρρωση μετά από προπόνηση, ή αποφόρτιση. Δεν αποτελεί ιατρική θεραπεία.</p>
-        <a class="service-cta js-open-chat" style="cursor:pointer;">💬 Ζήτησε ραντεβού →</a>
+        <a class="service-cta js-massage-lead" href="#lead" style="cursor:pointer;">💬 Ζήτησε ραντεβού →</a>
       </div>
       <div class="service-card">
         <div class="service-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><polyline points="8.5 12.5 10.5 14.5 15 10"/></svg></div>
@@ -574,7 +574,7 @@
         <div class="price">60€ <small>/ 60'</small></div>
         <p>Εξατομικευμένη συνεδρία στον χώρο σου: Relaxation, Deep Tissue, Recovery, Travel Recovery, Couple, Compression Therapy.</p>
         <ul><li>Επιλογή τύπου συνεδρίας</li><li>60 λεπτά διάρκεια</li><li>Στον χώρο σου, κατόπιν ραντεβού</li></ul>
-        <a class="price-cta js-open-chat" style="cursor:pointer;">💬 Ζήτησε ραντεβού →</a>
+        <a class="price-cta js-massage-lead" href="#lead" style="cursor:pointer;">💬 Ζήτησε ραντεβού →</a>
       </article>
     </div>
     <div class="pricing-note">Για επαγγελματικές συνεργασίες με προπονητές και φυσικοθεραπευτές, διαμορφώνεται ξεχωριστή μηνιαία πρόταση ανάλογα με τον αριθμό ασκούμενων και το επίπεδο υποστήριξης.</div>
@@ -623,6 +623,7 @@
             <option>Return to Play / Αποκατάσταση</option>
             <option>Πρόληψη τραυματισμού</option>
             <option>Γενική φυσική κατάσταση</option>
+            <option>Μάλαξη</option>
             <option>Άλλο</option>
           </select>
         </div>
@@ -770,6 +771,11 @@
     const WELCOME_MSG = "Γεια σου! Θέλεις να μάθεις περισσότερα για το online coaching ή να ξεκινήσεις κατευθείαν την εγγραφή σου;";
     const FALLBACK_MSG = "Ευχαριστούμε για το μήνυμα! Το chat δεν είναι ακόμα πλήρως συνδεδεμένο. Στείλε μας μήνυμα απευθείας ή πάτα «Ξεκίνα Coaching» για να κάνεις εγγραφή.";
     const SIGNUP_URL = 'app.html'; // link προς το ίδιο το coaching app
+    document.querySelectorAll('.js-massage-lead').forEach(a => a.addEventListener('click', ()=>{
+      const sel = document.getElementById('leadInterest');
+      if(sel) sel.value = 'Μάλαξη';
+      document.getElementById('leadName')?.focus();
+    }));
     // ────────────────────────────────────────────────────────
 
     document.querySelectorAll('.js-signup-link').forEach(a => a.setAttribute('href', SIGNUP_URL));
