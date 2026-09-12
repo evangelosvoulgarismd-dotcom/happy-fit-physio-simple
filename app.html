@@ -1516,8 +1516,46 @@ async function renderLibrary(main, isCoach){
       <option value="">${locale==='el'?'Όλες οι κατηγορίες':'All categories'}</option>
       ${categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
     </select>` : ''}
+    ${isCoach ? `<button class="btn secondary autoFillGifsBtn" type="button" style="padding:7px 12px; font-size:12px;">🪄 ${locale==='el'?'Αυτόματη συμπλήρωση GIF':'Auto-fill GIFs'}</button>` : ''}
   </div>`);
   main.appendChild(toolbar);
+
+  if(isCoach){
+    toolbar.querySelector('.autoFillGifsBtn').addEventListener('click', async ()=>{
+      const btn = toolbar.querySelector('.autoFillGifsBtn');
+      const missing = exercises.filter(e => !e.gif_url && !e.video_url);
+      if(!missing.length){ toast(locale==='el'?'Όλες οι ασκήσεις έχουν ήδη οπτικό υλικό.':'All exercises already have visuals.'); return; }
+      btn.disabled = true;
+      btn.textContent = locale==='el' ? '🪄 Φόρτωση βάσης...' : '🪄 Loading database...';
+      const db = await fetchExerciseDb();
+      let filled = 0, skipped = 0;
+      for(let i=0; i<missing.length; i++){
+        const ex = missing[i];
+        btn.textContent = `🪄 ${i+1}/${missing.length}...`;
+        const queryName = (ex.name_en || ex.name_el || '').toLowerCase().trim();
+        if(!queryName){ skipped++; continue; }
+        let best = null, bestDiff = Infinity;
+        for(const cand of db){
+          const cn = cand.name.toLowerCase();
+          if(cn.includes(queryName) || queryName.includes(cn)){
+            const diff = Math.abs(cn.length - queryName.length);
+            if(diff < bestDiff){ bestDiff = diff; best = cand; }
+          }
+        }
+        if(best){
+          await supabase.from('exercises').update({ gif_url: best.gifUrl }).eq('id', ex.id);
+          ex.gif_url = best.gifUrl;
+          filled++;
+        } else {
+          skipped++;
+        }
+      }
+      btn.disabled = false;
+      btn.textContent = `🪄 ${locale==='el'?'Αυτόματη συμπλήρωση GIF':'Auto-fill GIFs'}`;
+      toast(locale==='el' ? `Συμπληρώθηκαν ${filled} από ${missing.length}. ${skipped ? `${skipped} χωρίς αντιστοιχία.` : ''}` : `Filled ${filled} of ${missing.length}. ${skipped ? `${skipped} unmatched.` : ''}`);
+      renderList();
+    });
+  }
 
   const listBox = el('<div></div>');
   main.appendChild(listBox);
@@ -1572,9 +1610,9 @@ async function renderLibrary(main, isCoach){
         </div>
         <div class="editExForm" style="display:none;"></div>` : ''}
         <div class="viewMode">
+        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
         <p>${escapeHtml(desc||'')}</p>
         <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
-        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
@@ -3469,9 +3507,9 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
       </div>
       <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Στόχος':'Target'}: ${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
       <div class="whyPanel" style="display:none; background:#f6efe4; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
+        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
-        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-top:4px;">` : '')}
         ${!why && !ex.technique_cues && !ex.video_url && !ex.gif_url ? `<span style="color:var(--ink-soft);">—</span>` : ''}
       </div>
     </div>`);
