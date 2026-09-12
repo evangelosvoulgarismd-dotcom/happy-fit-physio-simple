@@ -3680,6 +3680,7 @@ async function renderClientDashboard(main){
   main.innerHTML = '';
   const tabs = el(`<div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
     <button class="btn ${tab==='today'?'':'secondary'}" data-t="today">☀️ ${t('today',locale)}</button>
+    <button class="btn ${tab==='intake'?'':'secondary'}" data-t="intake">📋 ${t('intake',locale)}</button>
     <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
     <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
@@ -3699,6 +3700,9 @@ async function renderClientDashboard(main){
 
   if(tab==='today'){
     renderTodayTab(body, { program, todayReadiness, lastMsg, checkins });
+  } else if(tab==='intake'){
+    const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
+    renderIntakeForm(body, profile, intakeRow?.data || null, false);
   } else if(tab==='program'){
     if(program) await renderLiveSessionTab(body, profile, program, false);
     else body.appendChild(el(`<p>${locale==='el'?'Δεν έχεις ακόμα πρόγραμμα.':'No program yet.'}</p>`));
