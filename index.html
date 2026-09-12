@@ -210,7 +210,7 @@
 
     /* ── PRICING ── */
     .pricing-section{ background:var(--bg); }
-    .pricing-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; max-width:1120px; margin:0 auto; }
+    .pricing-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; max-width:1200px; margin:0 auto; }
     .price-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:28px; box-shadow:0 12px 30px rgba(0,0,0,.3); display:flex; flex-direction:column; }
     .price-card.featured{ border:2px solid var(--red); transform:translateY(-8px); box-shadow:0 18px 40px rgba(229,9,20,.18); }
     .price-kicker{ font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--red); font-weight:800; margin-bottom:8px; }
@@ -525,6 +525,14 @@
     <p class="templates-intro">Οι τιμές είναι ενδεικτικές και η τελική πρόταση προσαρμόζεται στις ανάγκες, στον στόχο και στο επίπεδο παρακολούθησης που απαιτείται.</p>
     <div class="pricing-grid">
       <article class="price-card">
+        <div class="price-kicker">Ξεκίνα μόνος/η σου</div>
+        <h3>Μαθήματα</h3>
+        <div class="price">24€ <small>/ μάθημα</small></div>
+        <p>Εννέα εκπαιδευτικά μαθήματα, ένα ανά περιοχή σώματος. Γενική εκπαίδευση, χωρίς προσωπική παρακολούθηση.</p>
+        <ul><li>Κατανόηση → Αυτοδιαχείριση → Άσκηση → Επανεκτίμηση</li><li>Πρόσβαση όποτε θέλεις</li></ul>
+        <a class="price-cta" href="#courses">Δες τα μαθήματα →</a>
+      </article>
+      <article class="price-card">
         <div class="price-kicker">Αρχή</div>
         <h3>Αξιολόγηση</h3>
         <div class="price">50€</div>
@@ -539,6 +547,14 @@
         <p>Εξατομικευμένο πρόγραμμα άσκησης με συνεχή παρακολούθηση και προσαρμογές.</p>
         <ul><li>Εξατομικευμένο πρόγραμμα</li><li>Οδηγίες και προοδευτική φόρτιση</li><li>Εβδομαδιαία ανατροφοδότηση</li><li>Καταγραφή προόδου</li><li>Επανεκτίμηση και προσαρμογές</li></ul>
         <a class="price-cta js-signup-link" href="app.html">Ξεκίνα καθοδήγηση →</a>
+      </article>
+      <article class="price-card">
+        <div class="price-kicker">Για πιο εντατική παρακολούθηση</div>
+        <h3>Πλήρης Προσωπική Καθοδήγηση</h3>
+        <div class="price">149€ <small>/ μήνα</small></div>
+        <p>Ό,τι περιλαμβάνει η Online καθοδήγηση, με πιο συχνή επικοινωνία και στενότερη παρακολούθηση της πορείας σου.</p>
+        <ul><li>Ό,τι περιλαμβάνει η Online καθοδήγηση</li><li>Πιο συχνή επικοινωνία μαζί μου</li><li>Πιο συχνή επανεκτίμηση προόδου</li><li>Άμεση προσαρμογή προγράμματος</li></ul>
+        <a class="price-cta js-open-chat">Ζήτησε το →</a>
       </article>
       <article class="price-card">
         <div class="price-kicker">Κατ' οίκον · Black Rock Massage</div>
