@@ -1499,7 +1499,7 @@ async function renderLibrary(main, isCoach){
   if(error){ main.innerHTML = `<p class="errorTag">${escapeHtml(error.message)}</p>`; return; }
 
   main.innerHTML = '';
-  const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+  const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
     <h2>${t('exerciseLibrary',locale)}</h2>
     ${isCoach ? `<button class="btn" id="newExBtn">${t('newExercise',locale)}</button>` : ''}
   </div>`);
@@ -1509,7 +1509,38 @@ async function renderLibrary(main, isCoach){
     header.querySelector('#newExBtn').addEventListener('click', ()=>renderNewExerciseForm(main, ()=>renderLibrary(main, isCoach)));
   }
 
-  exercises.forEach(ex=>{
+  const categories = [...new Set(exercises.map(e=>e.category).filter(Boolean))].sort();
+  const toolbar = el(`<div class="card" style="margin-bottom:14px; padding:12px 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <input class="libSearchInput" placeholder="${locale==='el'?'🔍 Αναζήτηση άσκησης...':'🔍 Search exercise...'}" style="flex:1; min-width:160px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
+    ${categories.length ? `<select class="libCatSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
+      <option value="">${locale==='el'?'Όλες οι κατηγορίες':'All categories'}</option>
+      ${categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
+    </select>` : ''}
+  </div>`);
+  main.appendChild(toolbar);
+
+  const listBox = el('<div></div>');
+  main.appendChild(listBox);
+
+  function thumbFor(ex){
+    if(ex.gif_url) return `<img src="${escapeHtml(ex.gif_url)}" style="width:44px; height:44px; border-radius:6px; object-fit:cover; flex-shrink:0;">`;
+    if(ex.video_url) return `<div style="width:44px; height:44px; border-radius:6px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px;">🎥</div>`;
+    return `<div style="width:44px; height:44px; border-radius:6px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; color:var(--ink-soft);">—</div>`;
+  }
+
+  function renderList(){
+    const q = (toolbar.querySelector('.libSearchInput').value||'').trim().toLowerCase();
+    const cat = toolbar.querySelector('.libCatSelect')?.value || '';
+    let visible = exercises;
+    if(cat) visible = visible.filter(e=>e.category===cat);
+    if(q) visible = visible.filter(e=>{
+      const n1=(e.name_el||'').toLowerCase(), n2=(e.name_en||'').toLowerCase();
+      return n1.includes(q) || n2.includes(q);
+    });
+    listBox.innerHTML = '';
+    if(!visible.length){ listBox.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${locale==='el'?'Καμία αντιστοιχία.':'No matches.'}</p>`)); return; }
+
+    visible.forEach(ex=>{
     const name = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
     const desc = locale==='el' ? ex.description_el : (ex.description_en || ex.description_el);
     const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
@@ -1527,8 +1558,11 @@ async function renderLibrary(main, isCoach){
     }
 
     const card = el(`<div class="card">
-      <div class="clickable" style="display:flex; justify-content:space-between;">
-        <div><strong>${escapeHtml(name)}</strong> <span class="badge">${escapeHtml(ex.category||'')}</span> ${reviewBadge}</div>
+      <div class="clickable" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+          ${thumbFor(ex)}
+          <div><strong>${escapeHtml(name)}</strong> <span class="badge">${escapeHtml(ex.category||'')}</span> ${reviewBadge}</div>
+        </div>
         <span class="caret">▸</span>
       </div>
       <div class="detail" style="display:none; margin-top:12px;">
@@ -1638,8 +1672,14 @@ async function renderLibrary(main, isCoach){
         });
       });
     }
-    main.appendChild(card);
-  });
+    listBox.appendChild(card);
+    });
+  }
+
+  toolbar.querySelector('.libSearchInput').addEventListener('input', renderList);
+  const catSel = toolbar.querySelector('.libCatSelect');
+  if(catSel) catSel.addEventListener('change', renderList);
+  renderList();
 }
 
 function renderAutoEvidenceBox(box, ex, fresh){
