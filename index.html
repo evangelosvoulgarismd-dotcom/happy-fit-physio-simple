@@ -219,7 +219,14 @@
 
     /* ── PRICING ── */
     .pricing-section{ background:var(--bg); }
+    .pricing-subhead { text-align:center; font-family:'Poppins',sans-serif; font-size:13px; color:var(--red); text-transform:uppercase; letter-spacing:.08em; margin-bottom:18px; }
     .pricing-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; max-width:1200px; margin:0 auto; }
+    .pricing-mini-row { max-width:900px; margin:36px auto 0; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .pricing-mini { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; font-size:13px; color:var(--ink-soft); }
+    .pricing-mini strong { color:var(--ink); }
+    .pricing-mini-price { margin-top:8px; font-family:'Poppins',sans-serif; font-weight:700; color:var(--red); font-size:15px; }
+    .pricing-mini-price a { margin-left:10px; font-size:12.5px; font-weight:700; color:var(--red); text-decoration:none; }
+    @media (max-width:640px){ .pricing-mini-row{ grid-template-columns:1fr; } }
     .price-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:28px; box-shadow:0 12px 30px rgba(0,0,0,.3); display:flex; flex-direction:column; }
     .price-card.featured{ border:2px solid var(--red); transform:translateY(-8px); box-shadow:0 18px 40px rgba(229,9,20,.18); }
     .price-kicker{ font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:var(--red); font-weight:800; margin-bottom:8px; }
@@ -563,17 +570,8 @@
     <h2 class="section-title"><span data-lang-el>Διάλεξε το επίπεδο υποστήριξης που χρειάζεσαι</span><span data-lang-en>Choose the level of support you need</span></h2>
     <p class="templates-intro" data-lang-el>Οι τιμές είναι ενδεικτικές και η τελική πρόταση προσαρμόζεται στις ανάγκες, στον στόχο και στο επίπεδο παρακολούθησης που απαιτείται.</p>
     <p class="templates-intro" data-lang-en>Prices are indicative and the final offer is adjusted to your needs, your goal, and the level of follow-up required.</p>
+    <h3 class="pricing-subhead"><span data-lang-el>Online Coaching</span><span data-lang-en>Online Coaching</span></h3>
     <div class="pricing-grid">
-      <article class="price-card">
-        <div class="price-kicker"><span data-lang-el>Ξεκίνα μόνος/η σου</span><span data-lang-en>Start on your own</span></div>
-        <h3><span data-lang-el>Μαθήματα</span><span data-lang-en>Courses</span></h3>
-        <div class="price">24€ <small><span data-lang-el>/ μάθημα</span><span data-lang-en>/ course</span></small></div>
-        <p data-lang-el>Εννέα εκπαιδευτικά μαθήματα, ένα ανά περιοχή σώματος. Γενική εκπαίδευση, χωρίς προσωπική παρακολούθηση.</p>
-        <p data-lang-en>Nine educational courses, one per body area. General education, without personal follow-up.</p>
-        <ul data-lang-el><li>Κατανόηση → Αυτοδιαχείριση → Άσκηση → Επανεκτίμηση</li><li>Πρόσβαση όποτε θέλεις</li></ul>
-        <ul data-lang-en><li>Understanding → Self-management → Exercise → Reassessment</li><li>Access whenever you want</li></ul>
-        <a class="price-cta" href="#courses"><span data-lang-el>Δες τα μαθήματα →</span><span data-lang-en>See the courses →</span></a>
-      </article>
       <article class="price-card">
         <div class="price-kicker"><span data-lang-el>Αρχή</span><span data-lang-en>Start</span></div>
         <h3><span data-lang-el>Αξιολόγηση</span><span data-lang-en>Assessment</span></h3>
@@ -584,39 +582,50 @@
         <ul data-lang-en><li>History taking</li><li>Functional check</li><li>Risk screening</li><li>Goals and recommended path</li></ul>
         <a class="price-cta js-signup-link" href="app.html"><span data-lang-el>Ξεκίνα αξιολόγηση →</span><span data-lang-en>Start assessment →</span></a>
       </article>
+      <article class="price-card">
+        <div class="price-kicker"><span data-lang-el>Για ξεκίνημα</span><span data-lang-en>For getting started</span></div>
+        <h3>START</h3>
+        <div class="price">69€ <small><span data-lang-el>/ μήνα</span><span data-lang-en>/ month</span></small></div>
+        <p data-lang-el>Εξατομικευμένο πρόγραμμα άσκησης με βασική παρακολούθηση.</p>
+        <p data-lang-en>Personalized exercise program with basic follow-up.</p>
+        <ul data-lang-el><li>Εξατομικευμένο πρόγραμμα</li><li>Οδηγίες και προοδευτική φόρτιση</li><li>Καταγραφή προόδου</li></ul>
+        <ul data-lang-en><li>Personalized program</li><li>Guidance and progressive loading</li><li>Progress tracking</li></ul>
+        <a class="price-cta js-signup-link" href="app.html"><span data-lang-el>Ξεκίνα →</span><span data-lang-en>Start →</span></a>
+      </article>
       <article class="price-card featured">
-        <div class="price-kicker"><span data-lang-el>Μηνιαία καθοδήγηση</span><span data-lang-en>Monthly coaching</span></div>
-        <h3><span data-lang-el>Online καθοδήγηση</span><span data-lang-en>Online coaching</span></h3>
-        <div class="price">89€ <small><span data-lang-el>/ μήνα</span><span data-lang-en>/ month</span></small></div>
-        <p data-lang-el>Εξατομικευμένο πρόγραμμα άσκησης με συνεχή παρακολούθηση και προσαρμογές.</p>
-        <p data-lang-en>Personalized exercise program with ongoing follow-up and adjustments.</p>
-        <ul data-lang-el><li>Εξατομικευμένο πρόγραμμα</li><li>Οδηγίες και προοδευτική φόρτιση</li><li>Εβδομαδιαία ανατροφοδότηση</li><li>Καταγραφή προόδου</li><li>Επανεκτίμηση και προσαρμογές</li></ul>
-        <ul data-lang-en><li>Personalized program</li><li>Guidance and progressive loading</li><li>Weekly feedback</li><li>Progress tracking</li><li>Reassessment and adjustments</li></ul>
+        <div class="price-kicker"><span data-lang-el>Η πιο δημοφιλής</span><span data-lang-en>Most popular</span></div>
+        <h3>COACH</h3>
+        <div class="price">99€ <small><span data-lang-el>/ μήνα</span><span data-lang-en>/ month</span></small></div>
+        <p data-lang-el>Ό,τι στο START, με εβδομαδιαία ανατροφοδότηση και επανεκτίμηση.</p>
+        <p data-lang-en>Everything in START, with weekly feedback and reassessment.</p>
+        <ul data-lang-el><li>Ό,τι περιλαμβάνει το START</li><li>Εβδομαδιαία ανατροφοδότηση</li><li>Επανεκτίμηση και προσαρμογές</li></ul>
+        <ul data-lang-en><li>Everything in START</li><li>Weekly feedback</li><li>Reassessment and adjustments</li></ul>
         <a class="price-cta js-signup-link" href="app.html"><span data-lang-el>Ξεκίνα καθοδήγηση →</span><span data-lang-en>Start coaching →</span></a>
       </article>
       <article class="price-card">
         <div class="price-kicker"><span data-lang-el>Για πιο εντατική παρακολούθηση</span><span data-lang-en>For more intensive follow-up</span></div>
-        <h3><span data-lang-el>Πλήρης Προσωπική Καθοδήγηση</span><span data-lang-en>Full Personal Coaching</span></h3>
+        <h3>PERFORMANCE</h3>
         <div class="price">149€ <small><span data-lang-el>/ μήνα</span><span data-lang-en>/ month</span></small></div>
-        <p data-lang-el>Ό,τι περιλαμβάνει η Online καθοδήγηση, με πιο συχνή επικοινωνία και στενότερη παρακολούθηση της πορείας σου.</p>
-        <p data-lang-en>Everything Online coaching includes, with more frequent communication and closer follow-up of your progress.</p>
-        <ul data-lang-el><li>Ό,τι περιλαμβάνει η Online καθοδήγηση</li><li>Πιο συχνή επικοινωνία μαζί μου</li><li>Πιο συχνή επανεκτίμηση προόδου</li><li>Άμεση προσαρμογή προγράμματος</li></ul>
-        <ul data-lang-en><li>Everything Online coaching includes</li><li>More frequent communication with me</li><li>More frequent progress reassessment</li><li>Immediate program adjustment</li></ul>
+        <p data-lang-el>Ό,τι στο COACH, με πιο συχνή επικοινωνία και στενότερη παρακολούθηση.</p>
+        <p data-lang-en>Everything in COACH, with more frequent communication and closer follow-up.</p>
+        <ul data-lang-el><li>Ό,τι περιλαμβάνει το COACH</li><li>Πιο συχνή επικοινωνία μαζί μου</li><li>Άμεση προσαρμογή προγράμματος</li></ul>
+        <ul data-lang-en><li>Everything in COACH</li><li>More frequent communication with me</li><li>Immediate program adjustment</li></ul>
         <a class="price-cta js-open-chat"><span data-lang-el>Ζήτησε το →</span><span data-lang-en>Request it →</span></a>
-      </article>
-      <article class="price-card">
-        <div class="price-kicker"><span data-lang-el>Κατ' οίκον</span><span data-lang-en>At your home</span></div>
-        <h3><span data-lang-el>Μάλαξη Χαλάρωσης & Ανάρρωσης</span><span data-lang-en>Relaxation & Recovery Massage</span></h3>
-        <div class="price">60€ <small>/ 60'</small></div>
-        <p data-lang-el>Εξατομικευμένη συνεδρία στον χώρο σου: Relaxation, Deep Tissue, Recovery, Travel Recovery, Couple, Compression Therapy.</p>
-        <p data-lang-en>Personalized session at your place: Relaxation, Deep Tissue, Recovery, Travel Recovery, Couple, Compression Therapy.</p>
-        <ul data-lang-el><li>Επιλογή τύπου συνεδρίας</li><li>60 λεπτά διάρκεια</li><li>Στον χώρο σου, κατόπιν ραντεβού</li></ul>
-        <ul data-lang-en><li>Choice of session type</li><li>60-minute duration</li><li>At your place, by appointment</li></ul>
-        <a class="price-cta js-massage-lead" href="#lead" style="cursor:pointer;"><span data-lang-el>💬 Ζήτησε ραντεβού →</span><span data-lang-en>💬 Request appointment →</span></a>
       </article>
     </div>
     <div class="pricing-note" data-lang-el>Για επαγγελματικές συνεργασίες με προπονητές και φυσικοθεραπευτές, διαμορφώνεται ξεχωριστή μηνιαία πρόταση ανάλογα με τον αριθμό ασκούμενων και το επίπεδο υποστήριξης.</div>
     <div class="pricing-note" data-lang-en>For professional partnerships with coaches and physiotherapists, a separate monthly offer is formed depending on the number of clients and the level of support.</div>
+
+    <div class="pricing-mini-row">
+      <div class="pricing-mini">
+        <div><strong><span data-lang-el>Μαθήματα</span><span data-lang-en>Courses</span></strong> <span data-lang-el>— εκπαιδευτικό περιεχόμενο, χωρίς παρακολούθηση</span><span data-lang-en>— educational content, no follow-up</span></div>
+        <div class="pricing-mini-price">24€ <small><span data-lang-el>/ μάθημα</span><span data-lang-en>/ course</span></small> <a href="#courses"><span data-lang-el>Δες τα μαθήματα →</span><span data-lang-en>See the courses →</span></a></div>
+      </div>
+      <div class="pricing-mini">
+        <div><strong><span data-lang-el>Μάλαξη Χαλάρωσης & Ανάρρωσης</span><span data-lang-en>Relaxation & Recovery Massage</span></strong> <span data-lang-el>— κατ' οίκον, 60'</span><span data-lang-en>— at your home, 60'</span></div>
+        <div class="pricing-mini-price">60€ <a class="js-massage-lead" href="#lead" style="cursor:pointer;"><span data-lang-el>Ζήτησε ραντεβού →</span><span data-lang-en>Request appointment →</span></a></div>
+      </div>
+    </div>
   </section>
 
 
