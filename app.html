@@ -23,6 +23,17 @@
   }
   .social-ico { color:var(--ink-soft); transition:color .2s ease, opacity .2s ease; opacity:.7; display:inline-flex; }
   .social-ico:hover { color:var(--red); opacity:1; }
+  .clientBottomNav { position:fixed; bottom:0; left:0; right:0; z-index:40; display:flex; justify-content:space-around; align-items:center; background:var(--panel); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -2px 10px rgba(0,0,0,0.06); }
+  .cbn-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--ink-soft); font-family:inherit; font-size:10.5px; padding:4px 2px; cursor:pointer; }
+  .cbn-btn .cbn-ico { font-size:19px; line-height:1; }
+  .cbn-btn.active { color:var(--red); font-weight:700; }
+  .cbn-btn.cbn-central .cbn-ico { background:var(--red); color:#fff; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:2px; box-shadow:0 3px 8px rgba(196,32,31,0.35); }
+  .cbn-btn.cbn-central { color:var(--red); }
+  .profileMenu { display:flex; flex-direction:column; gap:8px; }
+  .profileMenuRow { display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; font-family:inherit; font-size:14px; color:var(--ink); cursor:pointer; text-align:left; }
+  .profileMenuRow .cbn-ico { font-size:18px; }
+  .profileMenuRow span:nth-child(2) { flex:1; }
+  .profileMenuArrow { color:var(--ink-soft); font-size:16px; }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; font-size:14px; line-height:1.5;}
   h1,h2,h3{font-family:'Poppins',sans-serif; font-weight:800; margin:0;}
@@ -3687,27 +3698,40 @@ async function renderClientDashboard(main){
   }
 
   main.innerHTML = '';
-  const tabs = el(`<div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
-    <button class="btn ${tab==='today'?'':'secondary'}" data-t="today">☀️ ${t('today',locale)}</button>
-    <button class="btn ${tab==='intake'?'':'secondary'}" data-t="intake">📋 ${t('intake',locale)}</button>
-    <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
-    <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
-    <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
-    <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">${t('progress',locale)}</button>
-    <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
-    <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
-    <button class="btn ${tab==='calls'?'':'secondary'}" data-t="calls">📹 Zoom</button>
-    <button class="btn ${tab==='payment'?'':'secondary'}" data-t="payment">💳 ${t('payment',locale)}</button>
-    <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
-    <button class="btn ${tab==='refer'?'':'secondary'}" data-t="refer">${t('referFriend',locale)}</button>
+  const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer'];
+  const inProfileGroup = profileGroup.includes(tab);
+  const tabs = el(`<div class="clientBottomNav">
+    <button class="cbn-btn ${tab==='today'?'active':''}" data-t="today"><span class="cbn-ico">🏠</span><span>${locale==='el'?'Αρχική':'Home'}</span></button>
+    <button class="cbn-btn ${tab==='program'?'active':''}" data-t="program"><span class="cbn-ico">🏋️</span><span>${t('program',locale)}</span></button>
+    <button class="cbn-btn cbn-central ${tab==='readiness'?'active':''}" data-t="readiness"><span class="cbn-ico">＋</span><span>${locale==='el'?'Σήμερα':'Today'}</span></button>
+    <button class="cbn-btn ${tab==='progress'?'active':''}" data-t="progress"><span class="cbn-ico">📈</span><span>${t('progress',locale)}</span></button>
+    <button class="cbn-btn ${tab==='profile'||inProfileGroup?'active':''}" data-t="profile"><span class="cbn-ico">👤</span><span>${locale==='el'?'Προφίλ':'Profile'}</span></button>
   </div>`);
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.t; renderClientDashboard(main); }));
   main.appendChild(tabs);
 
-  const body = el('<div></div>');
+  const body = el('<div style="padding-bottom:90px;"></div>');
   main.appendChild(body);
 
-  if(tab==='today'){
+  if(tab==='profile'){
+    const profileItems = [
+      { t:'intake', ico:'📋', label:t('intake',locale) },
+      { t:'messages', ico:'💬', label:t('messages',locale) },
+      { t:'nutrition', ico:'🍽️', label:t('nutrition',locale) },
+      { t:'massage', ico:'💆', label:t('massage',locale) },
+      { t:'calls', ico:'📹', label:'Zoom' },
+      { t:'payment', ico:'💳', label:t('payment',locale) },
+      { t:'photos', ico:'📸', label:t('progressPhotos',locale) },
+      { t:'refer', ico:'🎁', label:t('referFriend',locale) },
+    ];
+    const menu = el('<div class="profileMenu"></div>');
+    profileItems.forEach(item=>{
+      const row = el(`<button class="profileMenuRow"><span class="cbn-ico">${item.ico}</span><span>${item.label}</span><span class="profileMenuArrow">›</span></button>`);
+      row.addEventListener('click', ()=>{ renderClientDashboard._tab = item.t; renderClientDashboard(main); });
+      menu.appendChild(row);
+    });
+    body.appendChild(menu);
+  } else if(tab==='today'){
     renderTodayTab(body, { program, todayReadiness, lastMsg, checkins });
   } else if(tab==='intake'){
     const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
