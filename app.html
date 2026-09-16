@@ -3500,8 +3500,11 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
 
 function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
   const wrap = el('<div></div>');
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? (locale==='el'?'Καλημέρα':'Good morning') : (hour < 18 ? (locale==='el'?'Καλησπέρα':'Good afternoon') : (locale==='el'?'Καλησπέρα':'Good evening'));
+  const firstName = (profile.full_name||'').split(' ')[0] || '';
 
-  // Readiness card
+  // Readiness score + sub-metrics
   let readinessScore = null;
   if(todayReadiness){
     const r = todayReadiness;
@@ -3509,34 +3512,45 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
     const negatives = (10-(r.stress||0))+(10-(r.soreness||0))+(10-(r.pain||0));
     readinessScore = Math.round(((positives+negatives)/7)*10);
   }
-  const readinessColor = readinessScore===null ? 'var(--ink-soft)' : (readinessScore>=70 ? 'var(--red-deep)' : (readinessScore>=45 ? 'var(--gold)' : 'var(--danger)'));
-  const readinessCard = el(`<div class="card gold">
+  const readinessColor = readinessScore===null ? 'var(--ink-soft)' : (readinessScore>=70 ? '#1f6b3a' : (readinessScore>=45 ? 'var(--gold)' : 'var(--danger)'));
+  const headerCard = el(`<div class="card gold" style="margin-bottom:12px;">
+    <h2 style="font-size:19px; margin-bottom:2px;">${greeting}${firstName?', '+escapeHtml(firstName):''}</h2>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">${locale==='el'?'Πώς είσαι σήμερα;':'How are you today?'}</p>
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">${t('readinessScore',locale)}</h3>
+        <div style="font-size:11px; color:var(--ink-soft);">${t('readinessScore',locale)}</div>
         ${readinessScore!==null
-          ? `<div style="font-size:32px; font-weight:800; color:${readinessColor};" class="mono">${readinessScore}<span style="font-size:16px; color:var(--ink-soft);">/100</span></div>`
-          : `<p style="font-size:13px; color:var(--ink-soft);">${t('fillReadiness',locale)}</p>`}
+          ? `<div style="font-size:30px; font-weight:800; color:${readinessColor};" class="mono">${readinessScore}<span style="font-size:14px; color:var(--ink-soft);">%</span></div>`
+          : `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:4px;">${t('fillReadiness',locale)}</p>`}
       </div>
-      <button class="btn secondary goReadinessBtn" type="button">${t('goToReadiness',locale)}</button>
+      <button class="btn secondary goReadinessBtn" type="button" style="padding:8px 14px; font-size:12px;">${t('goToReadiness',locale)}</button>
     </div>
+    ${todayReadiness ? `<div style="display:flex; gap:14px; margin-top:12px; font-size:11.5px; color:var(--ink-soft); flex-wrap:wrap;">
+      <span>😴 ${locale==='el'?'Ύπνος':'Sleep'} ${todayReadiness.sleep}/10</span>
+      <span>⚡ ${locale==='el'?'Ενέργεια':'Energy'} ${todayReadiness.energy}/10</span>
+      <span>💪 ${locale==='el'?'Πιάσιμο':'Soreness'} ${todayReadiness.soreness}/10</span>
+      <span>🩹 ${locale==='el'?'Πόνος':'Pain'} ${todayReadiness.pain}/10</span>
+    </div>` : ''}
   </div>`);
-  readinessCard.querySelector('.goReadinessBtn').addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
-  wrap.appendChild(readinessCard);
+  headerCard.querySelector('.goReadinessBtn').addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
+  wrap.appendChild(headerCard);
 
-  // Today's workout card
+  // Hero: Today's workout card
   const firstDayLabel = program ? ([...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}))[0] || 'Ημέρα 1') : null;
   const firstDayExercises = program ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===firstDayLabel) : [];
-  const workoutCard = el(`<div class="card">
-    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🏋️ ${t('todaysWorkout',locale)}</h3>
+  const workoutCard = el(`<div class="card" style="border-left-width:6px;">
+    <h3 style="font-size:12.5px; color:var(--red-deep); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">⭐ ${locale==='el'?'Σήμερα για σένα':'Today for you'}</h3>
     ${program ? `
-      <div style="margin-bottom:4px; font-weight:600;">${escapeHtml(program.title)}</div>
-      <div style="font-size:11px; color:var(--red-deep); margin-bottom:8px;">📅 ${escapeHtml(firstDayLabel)}</div>
-      <div style="font-size:12px; color:var(--ink-soft); margin-bottom:12px;">
+      <div style="margin-bottom:4px; font-weight:700; font-size:16px;">${escapeHtml(program.title)}</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+        <span class="badge mono">📅 ${escapeHtml(firstDayLabel)}</span>
+        ${program.phase ? `<span class="badge">${escapeHtml(program.phase)}</span>` : ''}
+      </div>
+      <div style="font-size:12px; color:var(--ink-soft); margin-bottom:14px;">
         ${firstDayExercises.slice(0,4).map(pe=>escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))).join(' · ')}
         ${firstDayExercises.length>4 ? ` +${firstDayExercises.length-4}` : ''}
       </div>
-      <button class="btn startWorkoutBtn" type="button">${t('startWorkout',locale)}</button>
+      <button class="btn startWorkoutBtn" type="button" style="width:100%;">${t('startWorkout',locale)}</button>
     ` : `<p style="font-size:13px; color:var(--ink-soft);">${t('noWorkoutToday',locale)}</p>`}
   </div>`);
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
@@ -3545,13 +3559,6 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
 
   const grid = el('<div class="grid2"></div>');
 
-  const recoveryCard = el(`<div class="card">
-    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">😴 ${t('recoveryCard',locale)}</h3>
-    <a class="service-cta" style="cursor:pointer; font-size:12px; color:var(--red-deep); font-weight:700;">${t('viewProgress',locale)}</a>
-  </div>`);
-  recoveryCard.querySelector('a').addEventListener('click', ()=>{ renderClientDashboard._tab='progress'; renderClientDashboard(body.closest('#main')); });
-  grid.appendChild(recoveryCard);
-
   const progressCard = el(`<div class="card">
     <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">📈 ${t('progressCard',locale)}</h3>
     <a class="service-cta" style="cursor:pointer; font-size:12px; color:var(--red-deep); font-weight:700;">${t('viewProgress',locale)}</a>
@@ -3559,16 +3566,15 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
   progressCard.querySelector('a').addEventListener('click', ()=>{ renderClientDashboard._tab='progress'; renderClientDashboard(body.closest('#main')); });
   grid.appendChild(progressCard);
 
-  wrap.appendChild(grid);
-
   const chatCard = el(`<div class="card">
     <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">💬 ${t('coachChatCard',locale)}</h3>
-    ${lastMsg ? `<p style="font-size:12px; margin-bottom:8px;">${lastMsg.sender_role==='coach'?'👤 ':'Εσύ: '}${escapeHtml((lastMsg.body||'').slice(0,80))}</p>` : `<p style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${t('noMessagesYet',locale)}</p>`}
+    ${lastMsg ? `<p style="font-size:11.5px; margin-bottom:8px;">${lastMsg.sender_role==='coach'?'👤 ':(locale==='el'?'Εσύ: ':'You: ')}${escapeHtml((lastMsg.body||'').slice(0,60))}</p>` : `<p style="font-size:11.5px; color:var(--ink-soft); margin-bottom:8px;">${t('noMessagesYet',locale)}</p>`}
     <a class="service-cta openChatLink" style="cursor:pointer; font-size:12px; color:var(--red-deep); font-weight:700;">${t('openChat',locale)}</a>
   </div>`);
   chatCard.querySelector('.openChatLink').addEventListener('click', ()=>{ renderClientDashboard._tab='messages'; renderClientDashboard(body.closest('#main')); });
-  wrap.appendChild(chatCard);
+  grid.appendChild(chatCard);
 
+  wrap.appendChild(grid);
   body.appendChild(wrap);
 }
 
