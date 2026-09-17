@@ -1074,14 +1074,14 @@ async function renderTemplatesView(main){
 
   header.querySelector('#newTplBtn').addEventListener('click', ()=>{
     const form = el(`<form class="card gold">
-      <div class="field"><label>${locale==='el'?'Τίτλος προτύπου':'Template title'}</label><input class="tpl_title" required placeholder="π.χ. Return to Play, Ποδόσφαιρο"></div>
+      <div class="field"><label>${locale==='el'?'Τίτλος προτύπου':'Template title'}</label><input class="tpl_title" required placeholder="π.χ. Επιστροφή στη δραστηριότητα, Ποδόσφαιρο"></div>
       <div class="grid2">
         <div class="field"><label>${t('sport',locale)}</label><input class="tpl_sport" placeholder="π.χ. Ποδόσφαιρο"></div>
         <div class="field"><label>${t('pathway',locale)}</label>
           <select class="tpl_pathway">
             <option value="">—</option>
             <option>Πρόληψη τραυματισμού</option><option>Ενδυνάμωση</option>
-            <option>Return to Play</option><option>Αποκατάσταση</option><option>Απόδοση</option>
+            <option>Επιστροφή στη δραστηριότητα</option><option>Αποκατάσταση</option><option>Απόδοση</option>
           </select>
         </div>
       </div>
@@ -2786,7 +2786,7 @@ function renderBusinessTab(body, client, onChanged){
           <option value="">—</option>
           <option value="Πρόληψη τραυματισμού" ${client.pathway==='Πρόληψη τραυματισμού'?'selected':''}>${locale==='el'?'Πρόληψη τραυματισμού':'Injury prevention'}</option>
           <option value="Ενδυνάμωση" ${client.pathway==='Ενδυνάμωση'?'selected':''}>${locale==='el'?'Ενδυνάμωση':'Strengthening'}</option>
-          <option value="Return to Play" ${client.pathway==='Return to Play'?'selected':''}>Return to Play</option>
+          <option value="Επιστροφή στη δραστηριότητα" ${client.pathway==='Επιστροφή στη δραστηριότητα'?'selected':''}>Επιστροφή στη δραστηριότητα</option>
           <option value="Αποκατάσταση" ${client.pathway==='Αποκατάσταση'?'selected':''}>${locale==='el'?'Αποκατάσταση':'Rehabilitation'}</option>
           <option value="Απόδοση" ${client.pathway==='Απόδοση'?'selected':''}>${locale==='el'?'Απόδοση':'Performance'}</option>
         </select>
@@ -3543,6 +3543,17 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
 
 function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson }){
   const wrap = el('<div></div>');
+
+  // Referral flag — shown only when today's own data crosses a clear threshold. Not a diagnosis.
+  if(todayReadiness && Number(todayReadiness.pain) >= 7){
+    wrap.appendChild(el(`<div class="card" style="border-left-color:var(--danger); background:#f6e0da; margin-bottom:12px;">
+      <strong style="color:var(--danger);">⚠️ ${locale==='el'?'Χρειάζεται επαγγελματική αξιολόγηση':'Professional assessment needed'}</strong>
+      <p style="font-size:12.5px; margin-top:6px;">${locale==='el'
+        ? 'Τα σημερινά σου στοιχεία δείχνουν έντονο πόνο. Αυτά τα δεδομένα χρειάζονται αξιολόγηση από κατάλληλο επαγγελματία υγείας πριν συνεχίσεις τη σημερινή δραστηριότητα. Επικοινώνησε με τον coach σου.'
+        : "Today's data shows severe pain. This needs assessment from a qualified healthcare professional before continuing today's activity. Contact your coach."}</p>
+    </div>`));
+  }
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? (locale==='el'?'Καλημέρα':'Good morning') : (hour < 18 ? (locale==='el'?'Καλησπέρα':'Good afternoon') : (locale==='el'?'Καλησπέρα':'Good evening'));
   const firstName = (profile.full_name||'').split(' ')[0] || '';
@@ -4111,7 +4122,10 @@ function renderReadinessForm(body, existing){
     if(score>=70){ dot='🟢'; color='#1f6b3a'; msg = locale==='el' ? 'Η σημερινή σου προπόνηση παραμένει ως έχει.' : "Today's workout stays as planned."; }
     else if(score>=45){ dot='🟡'; color='var(--gold)'; msg = locale==='el' ? 'Σήμερα προτείνεται ελαφρώς μειωμένη επιβάρυνση.' : 'A slightly lighter load is suggested today.'; }
     else { dot='🔴'; color='var(--danger)'; msg = locale==='el' ? 'Σήμερα προτείνεται σημαντικά μειωμένη επιβάρυνση, ή ξεκούραση.' : 'A significantly lighter session, or rest, is suggested today.'; }
-    verdictCard.innerHTML = `<div style="font-size:28px; margin-bottom:6px;">${dot}</div><p style="font-size:13.5px; color:${color}; font-weight:700;">${msg}</p><p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Ενημερωτικό βοήθημα, όχι αυτόματη αλλαγή προγράμματος. Ο coach σου βλέπει την ένδειξη και αποφασίζει.':'An informational aid, not an automatic program change. Your coach sees this and decides.'}</p>`;
+    const referral = Number(state.pain) >= 7
+      ? `<p style="font-size:13px; color:var(--danger); font-weight:700; margin-top:10px; padding-top:10px; border-top:1px solid var(--line);">⚠️ ${locale==='el' ? 'Χρειάζεται επαγγελματική αξιολόγηση — τα σημερινά δεδομένα δείχνουν έντονο πόνο. Επικοινώνησε με τον coach σου πριν συνεχίσεις.' : "Professional assessment needed — today's data shows severe pain. Contact your coach before continuing."}</p>`
+      : '';
+    verdictCard.innerHTML = `<div style="font-size:28px; margin-bottom:6px;">${dot}</div><p style="font-size:13.5px; color:${color}; font-weight:700;">${msg}</p><p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Ενημερωτικό βοήθημα, όχι αυτόματη αλλαγή προγράμματος. Ο coach σου βλέπει την ένδειξη και αποφασίζει.':'An informational aid, not an automatic program change. Your coach sees this and decides.'}</p>${referral}`;
   }
   updateVerdict();
 }
