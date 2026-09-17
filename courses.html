@@ -120,12 +120,25 @@
     Object.entries(modules).forEach(([modTitle, lessons]) => {
       html += `<div class="moduleBlock"><h3>${modTitle}</h3>`;
       lessons.forEach(l => {
-        html += `<div class="lesson"><h4>${l.lesson_title}</h4><p>${(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${l.video_url ? `<a href="${l.video_url}" target="_blank" rel="noopener">🎥 Σου το εξηγώ ο ίδιος →</a>` : ''}</div>`;
+        html += `<div class="lesson" data-lesson="${encodeURIComponent(l.lesson_title)}"><h4>${l.lesson_title}</h4><p>${(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${l.video_url ? `<a href="${l.video_url}" target="_blank" rel="noopener">🎥 Σου το εξηγώ ο ίδιος →</a>` : ''}<div style="margin-top:10px;"><label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--red); cursor:pointer;"><input type="checkbox" class="lessonDoneCheck" data-course="${courseId}" data-title="${l.lesson_title.replace(/"/g,'&quot;')}"> ✓ Ολοκληρώθηκε</label></div></div>`;
       });
       html += `</div>`;
     });
     courseView.innerHTML = html;
     document.getElementById('backLink').addEventListener('click', backToList);
+
+    const { data: doneRows } = await supabase.from('lesson_progress').select('lesson_title').eq('email', currentEmail).eq('course_id', courseId);
+    const doneSet = new Set((doneRows||[]).map(r=>r.lesson_title));
+    courseView.querySelectorAll('.lessonDoneCheck').forEach(cb => {
+      if(doneSet.has(cb.dataset.title)) cb.checked = true;
+      cb.addEventListener('change', async () => {
+        if(cb.checked){
+          await supabase.from('lesson_progress').upsert({ email: currentEmail, course_id: cb.dataset.course, lesson_title: cb.dataset.title }, { onConflict: 'email,course_id,lesson_title' });
+        } else {
+          await supabase.from('lesson_progress').delete().eq('email', currentEmail).eq('course_id', cb.dataset.course).eq('lesson_title', cb.dataset.title);
+        }
+      });
+    });
   }
 
   async function backToList(){

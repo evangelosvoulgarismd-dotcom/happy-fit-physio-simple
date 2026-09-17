@@ -2824,6 +2824,7 @@ function renderBusinessTab(body, client, onChanged){
     <div class="field"><label>${t('paymentLink',locale)}</label><input class="f_paylink" value="${escapeHtml(client.payment_link||'')}" placeholder="https://buy.stripe.com/... ή https://viva.com/..."></div>
     <div class="field"><label>${t('zoomLink',locale)}</label><input class="f_zoom" value="${escapeHtml(client.zoom_link||'')}" placeholder="https://zoom.us/j/..."></div>
     <div class="field"><label>${t('nextCall',locale)}</label><input class="f_nextcall" type="datetime-local" value="${client.next_call_at ? new Date(client.next_call_at).toISOString().slice(0,16) : ''}"></div>
+    <div class="field"><label>📝 ${locale==='el'?'Επόμενη επανεκτίμηση':'Next reassessment'}</label><input class="f_nextreassess" type="date" value="${client.next_reassessment_at || ''}"></div>
     <span class="savedTag statusSpan"></span>
   </div>`);
   const statusEl = card.querySelector('.statusSpan');
@@ -2839,6 +2840,7 @@ function renderBusinessTab(body, client, onChanged){
         payment_link: card.querySelector('.f_paylink').value.trim() || null,
         zoom_link: card.querySelector('.f_zoom').value.trim() || null,
         next_call_at: card.querySelector('.f_nextcall').value ? new Date(card.querySelector('.f_nextcall').value).toISOString() : null,
+        next_reassessment_at: card.querySelector('.f_nextreassess').value || null,
       }).eq('id', client.id);
       statusEl.textContent = t('saved',locale);
       client.monthly_price = card.querySelector('.f_price').value;
@@ -3536,7 +3538,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
 }
 
-function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount }){
+function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson }){
   const wrap = el('<div></div>');
   const hour = new Date().getHours();
   const greeting = hour < 12 ? (locale==='el'?'Καλημέρα':'Good morning') : (hour < 18 ? (locale==='el'?'Καλησπέρα':'Good afternoon') : (locale==='el'?'Καλησπέρα':'Good evening'));
@@ -3606,7 +3608,16 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, inta
   }
   const reassessCard = el(`<div class="card" style="padding:12px 14px;">
     <h3 style="font-size:11px; color:var(--ink-soft); margin-bottom:4px;">📝 ${locale==='el'?'Επανεκτίμηση':'Reassessment'}</h3>
-    ${lastReassess ? `<p style="font-size:13px; font-weight:600;">${locale==='el'?'Τελευταία':'Last'}: ${new Date(lastReassess.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}</p>` : `<p style="font-size:12.5px; color:var(--ink-soft);">${locale==='el'?'Καμία ακόμα':'None yet'}</p>`}
+    ${(()=>{
+      if(nextReassessAt){
+        const daysLeft = Math.ceil((new Date(nextReassessAt) - new Date(new Date().toISOString().slice(0,10))) / 86400000);
+        if(daysLeft > 0) return `<p style="font-size:13px; font-weight:600; color:var(--red-deep);">${locale==='el'?`Σε ${daysLeft} μέρ${daysLeft===1?'α':'ες'}`:`In ${daysLeft} day${daysLeft===1?'':'s'}`}</p>`;
+        if(daysLeft === 0) return `<p style="font-size:13px; font-weight:600; color:var(--red-deep);">${locale==='el'?'Σήμερα':'Today'}</p>`;
+        return `<p style="font-size:13px; font-weight:600; color:var(--danger);">${locale==='el'?'Έχει καθυστερήσει':'Overdue'}</p>`;
+      }
+      if(lastReassess) return `<p style="font-size:13px; font-weight:600;">${locale==='el'?'Τελευταία':'Last'}: ${new Date(lastReassess.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}</p>`;
+      return `<p style="font-size:12.5px; color:var(--ink-soft);">${locale==='el'?'Καμία ακόμα':'None yet'}</p>`;
+    })()}
   </div>`);
   miniGrid.appendChild(reassessCard);
   wrap.appendChild(miniGrid);
@@ -3627,7 +3638,10 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, inta
   if(courseEnrollmentsCount > 0){
     const coursesCard = el(`<div class="card">
       <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🎓 ${locale==='el'?'Μαθήματα':'Courses'}</h3>
-      <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?`Είσαι εγγεγραμμένος/η σε ${courseEnrollmentsCount} μάθημα${courseEnrollmentsCount>1?'τα':''}.`:`You're enrolled in ${courseEnrollmentsCount} course${courseEnrollmentsCount>1?'s':''}.`}</p>
+      ${nextLesson ? `
+        <p style="font-size:11px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(nextLesson.courseTitle||'')}</p>
+        <p style="font-size:13px; font-weight:600; margin-bottom:8px;">${locale==='el'?'Επόμενο':'Next'}: ${escapeHtml(nextLesson.lessonTitle)}</p>
+      ` : `<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?`Όλα ολοκληρωμένα, ή εγγεγραμμένος/η σε ${courseEnrollmentsCount} μάθημα${courseEnrollmentsCount>1?'τα':''}.`:`All completed, or enrolled in ${courseEnrollmentsCount} course${courseEnrollmentsCount>1?'s':''}.`}</p>`}
       <a class="service-cta" href="courses.html" style="font-size:12px; color:var(--red-deep); font-weight:700;">${locale==='el'?'Συνέχισε →':'Continue →'}</a>
     </div>`);
     wrap.appendChild(coursesCard);
@@ -3769,20 +3783,31 @@ async function renderClientDashboard(main){
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
-    supabase.from('clients').select('coach_id,payment_link,monthly_price,zoom_link,next_call_at').eq('id', profile.id).maybeSingle(),
+    supabase.from('clients').select('coach_id,payment_link,monthly_price,zoom_link,next_call_at,next_reassessment_at').eq('id', profile.id).maybeSingle(),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).eq('date', today).maybeSingle(),
     supabase.from('messages').select('body,sender_role,created_at').eq('client_id', profile.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
     supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle(),
     supabase.from('reassessments').select('session_number,created_at').eq('client_id', profile.id).order('session_number',{ascending:false}).limit(1).maybeSingle(),
     supabase.from('nutrition_targets').select('daily_calories').eq('client_id', profile.id).maybeSingle(),
     supabase.from('nutrition_logs').select('calories').eq('client_id', profile.id).eq('log_date', today),
-    supabase.from('course_enrollments').select('id').eq('email', session?.user?.email || ''),
+    supabase.from('course_enrollments').select('id, course_id, courses(id,title)').eq('email', session?.user?.email || ''),
   ]);
   const program = programs?.[0] || null;
   let openSlots = [];
   if(clientRow?.coach_id){
     const { data: slots } = await supabase.from('availability_slots').select('*').eq('coach_id', clientRow.coach_id).is('booked_by', null).gt('start_at', new Date().toISOString()).order('start_at',{ascending:true});
     openSlots = slots || [];
+  }
+  let nextLesson = null;
+  if(courseEnrollments?.length){
+    const firstCourse = courseEnrollments[0];
+    const [{ data: content }, { data: doneRows }] = await Promise.all([
+      supabase.rpc('get_course_content', { p_email: session?.user?.email || '', p_course_id: firstCourse.course_id }),
+      supabase.from('lesson_progress').select('lesson_title').eq('email', session?.user?.email || '').eq('course_id', firstCourse.course_id),
+    ]);
+    const doneSet = new Set((doneRows||[]).map(r=>r.lesson_title));
+    const nextRow = (content||[]).find(r=>!doneSet.has(r.lesson_title));
+    if(nextRow) nextLesson = { courseTitle: firstCourse.courses?.title, lessonTitle: nextRow.lesson_title };
   }
 
   main.innerHTML = '';
@@ -3820,7 +3845,7 @@ async function renderClientDashboard(main){
     });
     body.appendChild(menu);
   } else if(tab==='today'){
-    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length });
+    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson });
   } else if(tab==='intake'){
     const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
     renderIntakeForm(body, profile, intakeRow?.data || null, false);
