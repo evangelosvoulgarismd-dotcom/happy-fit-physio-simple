@@ -3812,6 +3812,56 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   ]);
   const intakeData = intakeRow?.data || {};
 
+  // MIRROR — digital mirror summary widget
+  const readinessAsc = (readiness||[]).slice().reverse();
+  const sessionsAsc = (sessionLogs||[]).slice().reverse();
+  const checkinsAsc = (checkins||[]).slice().reverse();
+  function firstLast(arr, key){
+    const vals = arr.map(x=>x[key]).filter(v=>v!=null && !isNaN(v));
+    if(vals.length < 2) return null;
+    return { first: vals[0], last: vals[vals.length-1] };
+  }
+  const mvCapacity = firstLast(readinessAsc, 'perceived_capacity');
+  const mvLoad = firstLast(sessionsAsc, 'load_kg');
+  const mvAdherence = firstLast(checkinsAsc, 'adherence');
+  const mvReadinessScore = (()=>{
+    const scores = readinessAsc.filter(r=>r.sleep!=null).map(r=>{
+      const positives = (r.sleep||0)+(r.energy||0)+(r.motivation||0)+(r.perceived_capacity||0);
+      const negatives = (10-(r.stress||0))+(10-(r.soreness||0))+(10-(r.pain||0));
+      return Math.round(((positives+negatives)/7)*10);
+    });
+    if(scores.length < 2) return null;
+    return { first: scores[0], last: scores[scores.length-1] };
+  })();
+  const mvPain = firstLast(readinessAsc, 'pain');
+
+  const mirrorRows = [
+    { label: locale==='el'?'Κίνηση':'Movement', data: mvCapacity, unit:'/10', invert:false },
+    { label: locale==='el'?'Δύναμη':'Strength', data: mvLoad, unit:'kg', invert:false },
+    { label: locale==='el'?'Αντοχή':'Endurance', data: mvAdherence, unit:'%', invert:false },
+    { label: locale==='el'?'Ετοιμότητα':'Readiness', data: mvReadinessScore, unit:'%', invert:false },
+    { label: locale==='el'?'Αποκατάσταση':'Recovery', data: mvPain, unit:'/10 πόνος', invert:true },
+  ];
+  const anyMirrorData = mirrorRows.some(r=>r.data);
+  const mirrorCard = el(`<div class="card gold" style="margin-bottom:16px;">
+    <h3 style="font-size:14px; margin-bottom:4px;">🪞 ${locale==='el'?'Ο ψηφιακός καθρέφτης μου':'My digital mirror'}</h3>
+    ${!anyMirrorData ? `<p style="font-size:12.5px; color:var(--ink-soft);">${locale==='el'?'Χρειάζονται τουλάχιστον 2 καταγραφές για σύγκριση πριν/τώρα.':'Needs at least 2 logs for a before/now comparison.'}</p>` : ''}
+  </div>`);
+  if(anyMirrorData){
+    mirrorRows.forEach(r=>{
+      if(!r.data) return;
+      const improved = r.invert ? (r.data.last < r.data.first) : (r.data.last > r.data.first);
+      const same = r.data.last === r.data.first;
+      const arrow = same ? '→' : (improved ? '↑' : '↓');
+      const arrowColor = same ? 'var(--ink-soft)' : (improved ? '#1f6b3a' : 'var(--danger)');
+      mirrorCard.appendChild(el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--line); font-size:13px;">
+        <span>${r.label}</span>
+        <span class="mono">${r.data.first}${r.unit} → ${r.data.last}${r.unit} <strong style="color:${arrowColor};">${arrow}</strong></span>
+      </div>`));
+    });
+  }
+  body.appendChild(mirrorCard);
+
   // BODY
   body.appendChild(el(`<h3 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">📏 ${locale==='el'?'ΣΩΜΑ':'BODY'}</h3>`));
   const bodyCard = el(`<div class="card">
