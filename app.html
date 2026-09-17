@@ -3876,6 +3876,7 @@ function renderReadinessForm(body, existing){
       state[k] = Number(e.target.value);
       row.querySelector('.val').textContent = state[k];
       statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+      updateVerdict();
       clearTimeout(timer);
       timer = setTimeout(async ()=>{
         await supabase.from('readiness_logs').upsert({ ...state, client_id: profile.id }, { onConflict:'client_id,date' });
@@ -3886,6 +3887,23 @@ function renderReadinessForm(body, existing){
   });
   card.appendChild(statusEl);
   body.appendChild(card);
+
+  const verdictCard = el(`<div class="card" style="text-align:center;"></div>`);
+  body.appendChild(verdictCard);
+  function computeScore(){
+    const positives = (state.sleep||0)+(state.energy||0)+(state.motivation||0)+(state.perceived_capacity||0);
+    const negatives = (10-(state.stress||0))+(10-(state.soreness||0))+(10-(state.pain||0));
+    return Math.round(((positives+negatives)/7)*10);
+  }
+  function updateVerdict(){
+    const score = computeScore();
+    let dot, msg, color;
+    if(score>=70){ dot='🟢'; color='#1f6b3a'; msg = locale==='el' ? 'Η σημερινή σου προπόνηση παραμένει ως έχει.' : "Today's workout stays as planned."; }
+    else if(score>=45){ dot='🟡'; color='var(--gold)'; msg = locale==='el' ? 'Σήμερα προτείνεται ελαφρώς μειωμένη επιβάρυνση.' : 'A slightly lighter load is suggested today.'; }
+    else { dot='🔴'; color='var(--danger)'; msg = locale==='el' ? 'Σήμερα προτείνεται σημαντικά μειωμένη επιβάρυνση, ή ξεκούραση.' : 'A significantly lighter session, or rest, is suggested today.'; }
+    verdictCard.innerHTML = `<div style="font-size:28px; margin-bottom:6px;">${dot}</div><p style="font-size:13.5px; color:${color}; font-weight:700;">${msg}</p><p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Ενημερωτικό βοήθημα, όχι αυτόματη αλλαγή προγράμματος. Ο coach σου βλέπει την ένδειξη και αποφασίζει.':'An informational aid, not an automatic program change. Your coach sees this and decides.'}</p>`;
+  }
+  updateVerdict();
 }
 
 function renderCheckinForm(body, existing, clientId){
