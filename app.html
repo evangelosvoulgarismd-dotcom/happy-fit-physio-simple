@@ -1933,7 +1933,7 @@ async function renderCoachDashboard(main){
     const cks = checkinsByClient[client.id] || [];
     const rds = readinessByClient[client.id] || [];
     if(cks.length===0 && rds.length===0) return { dot:'⚪', label: locale==='el'?'Χωρίς δεδομένα ακόμα':'No data yet' };
-    if(alerts.length >= 2) return { dot:'🔴', label: locale==='el'?'Χρειάζεται προσοχή':'Needs attention' };
+    if(alerts.length >= 2) return { dot:'🔴', label: locale==='el'?'Χρειάζεται προσοχή — παρατηρήθηκε αλλαγή στα δεδομένα, συνιστάται επανεκτίμηση':'Needs attention — a change was observed in the data, reassessment recommended' };
     if(alerts.length === 1) return { dot:'🟡', label: locale==='el'?'Παρακολούθησε':'Keep an eye' };
     return { dot:'🟢', label: locale==='el'?'Σταθερή πορεία':'On track' };
   }
@@ -2242,6 +2242,7 @@ async function renderCoachDashboard(main){
             ${lastCk ? `<span class="badge">${locale==='el'?'Συνέπεια':'Adherence'} ${lastCk.adherence}%</span>` : ''}
             ${lastCk ? `<span class="badge mono">${lastCk.date}</span>` : ''}
             ${painFlag ? `<span class="badge" style="background:#f6e0da; color:var(--danger);">⚠ ${locale==='el'?'Πόνος':'Pain'} ${lastCk.pain_level}/10</span>` : ''}
+            ${clinStatus.dot==='🔴' ? `<span class="badge" style="background:#f6e0da; color:var(--danger); font-weight:700;">🔴 ${locale==='el'?'Συνιστάται επανεκτίμηση':'Reassessment recommended'}</span>` : ''}
           </div>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -3770,6 +3771,55 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
   });
   }
   renderExercises();
+
+  if(!loggedByCoach){
+    const today = new Date().toISOString().slice(0,10);
+    const { data: existingFeedback } = await supabase.from('session_feedback').select('*').eq('client_id', client.id).eq('session_date', today).maybeSingle();
+    const fbState = existingFeedback || { difficulty:5, discomfort:0, energy:6, completed:null };
+    const fbCard = el(`<div class="card gold" style="margin-top:16px;">
+      <h3 style="font-size:14px; margin-bottom:10px;">${locale==='el'?'Πώς ήταν η προπόνηση σήμερα;':"How was today's session?"}</h3>
+    </div>`);
+    const fbScales = [
+      ['difficulty', {el:'Δυσκολία', en:'Difficulty'}, 1, 10],
+      ['discomfort', {el:'Ενόχληση', en:'Discomfort'}, 0, 10],
+      ['energy', {el:'Ενέργεια', en:'Energy'}, 1, 10],
+    ];
+    let fbTimer = null;
+    const fbStatus = el(`<span class="savedTag"></span>`);
+    fbScales.forEach(([k,l,min,max])=>{
+      const row = el(`<div class="field"><label>${l[locale]||l.el}: <span class="mono fbVal">${fbState[k]}</span></label><input type="range" min="${min}" max="${max}" value="${fbState[k]}"></div>`);
+      row.querySelector('input').addEventListener('input', (e)=>{
+        fbState[k] = Number(e.target.value);
+        row.querySelector('.fbVal').textContent = fbState[k];
+        fbStatus.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
+        clearTimeout(fbTimer);
+        fbTimer = setTimeout(async ()=>{
+          await supabase.from('session_feedback').upsert({ ...fbState, client_id: client.id, session_date: today }, { onConflict:'client_id,session_date' });
+          fbStatus.textContent = t('saved',locale);
+        }, 600);
+      });
+      fbCard.appendChild(row);
+    });
+    const completedRow = el(`<div class="field">
+      <label>${locale==='el'?'Ολοκλήρωσες το σημερινό πρόγραμμα;':"Did you complete today's program?"}</label>
+      <div style="display:flex; gap:8px;">
+        <button class="btn ${fbState.completed===true?'':'secondary'} fbYesBtn" type="button" style="padding:6px 16px; font-size:12px;">${locale==='el'?'Ναι':'Yes'}</button>
+        <button class="btn ${fbState.completed===false?'':'secondary'} fbNoBtn" type="button" style="padding:6px 16px; font-size:12px;">${locale==='el'?'Όχι':'No'}</button>
+      </div>
+    </div>`);
+    async function saveCompleted(val){
+      fbState.completed = val;
+      completedRow.querySelector('.fbYesBtn').classList.toggle('secondary', val!==true);
+      completedRow.querySelector('.fbNoBtn').classList.toggle('secondary', val!==false);
+      await supabase.from('session_feedback').upsert({ ...fbState, client_id: client.id, session_date: today }, { onConflict:'client_id,session_date' });
+      fbStatus.textContent = t('saved',locale);
+    }
+    completedRow.querySelector('.fbYesBtn').addEventListener('click', ()=>saveCompleted(true));
+    completedRow.querySelector('.fbNoBtn').addEventListener('click', ()=>saveCompleted(false));
+    fbCard.appendChild(completedRow);
+    fbCard.appendChild(fbStatus);
+    body.appendChild(fbCard);
+  }
 }
 
 // ============================================================
