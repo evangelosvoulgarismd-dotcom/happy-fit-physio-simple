@@ -1479,6 +1479,42 @@ async function fetchExerciseDb(){
   return _exerciseDbCache;
 }
 
+function attachAskAssistant(container, contextType, contextData){
+  const wrap = el(`<div style="margin-top:8px;">
+    <button class="btn secondary askAssistantBtn" type="button" style="padding:5px 12px; font-size:11.5px;">🤖 ${locale==='el'?'Ρώτησε τον βοηθό':'Ask the assistant'}</button>
+    <div class="askAssistantPanel" style="display:none; margin-top:8px;">
+      <div style="display:flex; gap:6px;">
+        <input class="askAssistantInput" placeholder="${locale==='el'?'Γράψε την ερώτησή σου...':'Type your question...'}" style="flex:1;">
+        <button class="btn askAssistantSend" type="button" style="padding:6px 14px; font-size:12px;">→</button>
+      </div>
+      <div class="askAssistantAnswer" style="margin-top:8px; font-size:12.5px; color:var(--ink); background:var(--bg); border-radius:6px; padding:10px 12px; display:none;"></div>
+    </div>
+  </div>`);
+  container.appendChild(wrap);
+  const btn = wrap.querySelector('.askAssistantBtn');
+  const panel = wrap.querySelector('.askAssistantPanel');
+  const input = wrap.querySelector('.askAssistantInput');
+  const answerBox = wrap.querySelector('.askAssistantAnswer');
+  btn.addEventListener('click', ()=>{ panel.style.display = panel.style.display==='none' ? 'block' : 'none'; if(panel.style.display==='block') input.focus(); });
+  async function send(){
+    const question = input.value.trim();
+    if(!question) return;
+    answerBox.style.display = 'block';
+    answerBox.textContent = locale==='el' ? '…' : '…';
+    try{
+      const { data, error } = await supabase.functions.invoke('ask-assistant', {
+        body: { context_type: contextType, context_data: contextData, question },
+      });
+      if(error || data?.error){ answerBox.textContent = locale==='el' ? 'Δεν μπόρεσα να απαντήσω τώρα.' : "Couldn't answer right now."; return; }
+      answerBox.textContent = data.answer || (locale==='el'?'Δεν βρήκα απάντηση.':'No answer found.');
+    }catch(err){
+      answerBox.textContent = locale==='el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.';
+    }
+  }
+  wrap.querySelector('.askAssistantSend').addEventListener('click', send);
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
+}
+
 function attachGifPicker(container, gifInput){
   const wrap = el(`<div style="margin-top:6px;">
     <button class="btn secondary gifSearchToggle" type="button" style="padding:5px 10px; font-size:11px;">🔍 ${locale==='el'?'Βρες GIF (ExerciseDB)':'Find GIF (ExerciseDB)'}</button>
@@ -2924,7 +2960,7 @@ async function renderNutritionTab(body, person, isCoach){
     if(!target){
       body.appendChild(el(`<p class="card" style="color:var(--ink-soft);">${t('noNutritionTargets',locale)}</p>`));
     } else {
-      body.appendChild(el(`<div class="card gold" style="margin-bottom:16px;">
+      const targetsCard = el(`<div class="card gold" style="margin-bottom:16px;">
         <h4 style="margin-bottom:10px; font-size:13px; color:var(--red-deep);">${t('nutritionTargets',locale)}</h4>
         <div class="statGrid">
           ${target.daily_calories ? `<div class="statCard"><div class="num mono">${target.daily_calories}</div><div class="lbl">${t('dailyCalories',locale)}</div></div>` : ''}
@@ -2933,7 +2969,9 @@ async function renderNutritionTab(body, person, isCoach){
           ${target.fat_g ? `<div class="statCard"><div class="num mono">${target.fat_g}g</div><div class="lbl">${t('fat',locale)}</div></div>` : ''}
         </div>
         ${target.notes ? `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:10px;">${escapeHtml(target.notes)}</p>` : ''}
-      </div>`));
+      </div>`);
+      body.appendChild(targetsCard);
+      attachAskAssistant(targetsCard, 'nutrition', { daily_calories: target.daily_calories, protein_g: target.protein_g, carbs_g: target.carbs_g, fat_g: target.fat_g, notes: target.notes });
     }
 
     const today = new Date().toISOString().slice(0,10);
@@ -3632,6 +3670,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
       const p = card.querySelector('.whyPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
     });
+    attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, technique_cues: ex.technique_cues, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load });
     const setsCount = pe.target_sets || 3;
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
@@ -3860,6 +3899,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
       </div>`));
     });
   }
+  if(anyMirrorData) attachAskAssistant(mirrorCard, 'progress', { indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })) });
   body.appendChild(mirrorCard);
 
   // BODY
