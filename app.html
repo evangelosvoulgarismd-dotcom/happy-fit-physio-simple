@@ -621,18 +621,20 @@ const LEGAL_CONTENT = {
     }
   },
   disclaimer: {
-    title: {el:'Ιατρική Αποποίηση Ευθύνης', en:'Medical Disclaimer'},
+    title: {el:'Σημαντική Ενημέρωση & Αποποίηση Ευθύνης', en:'Important Notice & Disclaimer'},
     body: {
-      el: `<p><strong>Το περιεχόμενο και τα προγράμματα αυτής της πλατφόρμας δεν αποτελούν ιατρική διάγνωση, θεραπεία ή ιατρική συμβουλή.</strong></p>
+      el: `<p><strong>Το Happy Fit Physio παρέχει εκπαιδευτικό περιεχόμενο και online καθοδήγηση φυσικής κατάστασης. Δεν αποτελεί φυσικοθεραπευτική ή ιατρική πράξη και δεν αντικαθιστά αξιολόγηση από αρμόδιο επαγγελματία υγείας.</strong></p>
+        <p>Το περιεχόμενο και τα προγράμματα αυτής της πλατφόρμας δεν αποτελούν ιατρική διάγνωση, θεραπεία ή ιατρική συμβουλή.</p>
         <p>Συμβουλευτείτε γιατρό πριν ξεκινήσετε οποιοδήποτε πρόγραμμα άσκησης, ιδίως αν έχετε προϋπάρχουσα πάθηση, τραυματισμό, ή είστε έγκυος.</p>
         <p>Η βιβλιογραφία που εμφανίζεται ανά άσκηση είναι υποστηρικτικό, ενημερωτικό υλικό. Δεν αντικαθιστά την κλινική κρίση επαγγελματία υγείας για την περίπτωσή σας.</p>
-        <p>Σε περίπτωση οξέος πόνου, τραυματισμού, ή επείγοντος ιατρικού συμβάντος, διακόψτε αμέσως και αναζητήστε ιατρική βοήθεια.</p>
-        <p>Στο μέτρο που επιτρέπεται από τον νόμο, ο προπονητής/φυσικοθεραπευτής δεν φέρει ευθύνη για τραυματισμό που προκύπτει από μη τήρηση της σωστής τεχνικής, απόκρυψη ιατρικού ιστορικού, ή μη συμμόρφωση με τις οδηγίες.</p>`,
-      en: `<p><strong>The content and programs on this platform do not constitute medical diagnosis, treatment, or medical advice.</strong></p>
+        <p>Σε περίπτωση έντονου ή επιδεινούμενου πόνου, τραυματισμού, νέου σημαντικού συμπτώματος, νευρολογικών συμπτωμάτων, ή επείγοντος ιατρικού συμβάντος, διακόψτε αμέσως τη δραστηριότητα και αναζητήστε αξιολόγηση από κατάλληλο επαγγελματία υγείας.</p>
+        <p>Στο μέτρο που επιτρέπεται από τον νόμο, ο coach δεν φέρει ευθύνη για τραυματισμό που προκύπτει από μη τήρηση της σωστής τεχνικής, απόκρυψη ιατρικού ιστορικού, ή μη συμμόρφωση με τις οδηγίες.</p>`,
+      en: `<p><strong>Happy Fit Physio provides educational content and online fitness coaching. It does not constitute physiotherapy or medical practice and does not replace assessment by a qualified healthcare professional.</strong></p>
+        <p>The content and programs on this platform do not constitute medical diagnosis, treatment, or medical advice.</p>
         <p>Consult a physician before starting any exercise program, especially if you have a pre-existing condition, injury, or are pregnant.</p>
         <p>The bibliography shown per exercise is supportive, informational material. It does not replace the clinical judgment of a healthcare professional for your specific case.</p>
-        <p>In case of acute pain, injury, or a medical emergency, stop immediately and seek medical attention.</p>
-        <p>To the extent permitted by law, the coach/physiotherapist is not liable for injury resulting from improper technique, undisclosed medical history, or non-compliance with instructions.</p>`,
+        <p>In case of severe or worsening pain, injury, a new significant symptom, neurological symptoms, or a medical emergency, stop the activity immediately and seek assessment from a qualified healthcare professional.</p>
+        <p>To the extent permitted by law, the coach is not liable for injury resulting from improper technique, undisclosed medical history, or non-compliance with instructions.</p>`,
     }
   },
   cookies: {
@@ -728,7 +730,7 @@ function renderAuth(){
       <button class="btn" type="submit" style="width:100%; margin-top:6px;">${t('signup',locale)}</button>
     </form>
     <div class="trustBadges" style="margin-top:16px;">
-      <span class="badge">🔒 GDPR</span><span class="badge">🇪🇺 EU hosting</span><span class="badge">🩺 Physiotherapy-led</span>
+      <span class="badge">🔒 GDPR</span><span class="badge">🇪🇺 EU hosting</span><span class="badge">🎓 Physiotherapy student-led</span>
     </div>
   </div></div>`);
   app.appendChild(wrap);
