@@ -3536,7 +3536,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
 }
 
-function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
+function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount }){
   const wrap = el('<div></div>');
   const hour = new Date().getHours();
   const greeting = hour < 12 ? (locale==='el'?'Καλημέρα':'Good morning') : (hour < 18 ? (locale==='el'?'Καλησπέρα':'Good afternoon') : (locale==='el'?'Καλησπέρα':'Good evening'));
@@ -3594,6 +3594,44 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins }){
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
   if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
   wrap.appendChild(workoutCard);
+
+  // Goal + Reassessment mini-row
+  const goal = intakeData?.priorityGoal || intakeData?.mainGoal || '';
+  const miniGrid = el('<div class="grid2"></div>');
+  if(goal){
+    miniGrid.appendChild(el(`<div class="card" style="padding:12px 14px;">
+      <h3 style="font-size:11px; color:var(--ink-soft); margin-bottom:4px;">🎯 ${locale==='el'?'Στόχος':'Goal'}</h3>
+      <p style="font-size:13px; font-weight:600;">${escapeHtml(goal)}</p>
+    </div>`));
+  }
+  const reassessCard = el(`<div class="card" style="padding:12px 14px;">
+    <h3 style="font-size:11px; color:var(--ink-soft); margin-bottom:4px;">📝 ${locale==='el'?'Επανεκτίμηση':'Reassessment'}</h3>
+    ${lastReassess ? `<p style="font-size:13px; font-weight:600;">${locale==='el'?'Τελευταία':'Last'}: ${new Date(lastReassess.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}</p>` : `<p style="font-size:12.5px; color:var(--ink-soft);">${locale==='el'?'Καμία ακόμα':'None yet'}</p>`}
+  </div>`);
+  miniGrid.appendChild(reassessCard);
+  wrap.appendChild(miniGrid);
+
+  // Nutrition (only if targets are set)
+  if(nutritionTarget?.daily_calories){
+    const consumed = (todayNutritionLogs||[]).reduce((s,l)=>s+(l.calories||0),0);
+    const nutriCard = el(`<div class="card">
+      <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🍽️ ${t('nutrition',locale)}</h3>
+      <p style="font-size:13px; margin-bottom:8px;" class="mono">${consumed} / ${nutritionTarget.daily_calories} kcal</p>
+      <a class="service-cta nutritionLink" style="cursor:pointer; font-size:12px; color:var(--red-deep); font-weight:700;">${locale==='el'?'Καταγραφή γεύματος →':'Log a meal →'}</a>
+    </div>`);
+    nutriCard.querySelector('.nutritionLink').addEventListener('click', ()=>{ renderClientDashboard._tab='nutrition'; renderClientDashboard(body.closest('#main')); });
+    wrap.appendChild(nutriCard);
+  }
+
+  // Courses (only if enrolled in at least one)
+  if(courseEnrollmentsCount > 0){
+    const coursesCard = el(`<div class="card">
+      <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🎓 ${locale==='el'?'Μαθήματα':'Courses'}</h3>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?`Είσαι εγγεγραμμένος/η σε ${courseEnrollmentsCount} μάθημα${courseEnrollmentsCount>1?'τα':''}.`:`You're enrolled in ${courseEnrollmentsCount} course${courseEnrollmentsCount>1?'s':''}.`}</p>
+      <a class="service-cta" href="courses.html" style="font-size:12px; color:var(--red-deep); font-weight:700;">${locale==='el'?'Συνέχισε →':'Continue →'}</a>
+    </div>`);
+    wrap.appendChild(coursesCard);
+  }
 
   const grid = el('<div class="grid2"></div>');
 
@@ -3727,13 +3765,18 @@ async function renderClientDashboard(main){
   let tab = renderClientDashboard._tab || 'today';
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
   const today = new Date().toISOString().slice(0,10);
-  const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }, { data: todayReadiness }, { data: lastMsg }] = await Promise.all([
+  const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }, { data: todayReadiness }, { data: lastMsg }, { data: intakeRow }, { data: lastReassess }, { data: nutritionTarget }, { data: todayNutritionLogs }, { data: courseEnrollments }] = await Promise.all([
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('clients').select('coach_id,payment_link,monthly_price,zoom_link,next_call_at').eq('id', profile.id).maybeSingle(),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).eq('date', today).maybeSingle(),
     supabase.from('messages').select('body,sender_role,created_at').eq('client_id', profile.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+    supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle(),
+    supabase.from('reassessments').select('session_number,created_at').eq('client_id', profile.id).order('session_number',{ascending:false}).limit(1).maybeSingle(),
+    supabase.from('nutrition_targets').select('daily_calories').eq('client_id', profile.id).maybeSingle(),
+    supabase.from('nutrition_logs').select('calories').eq('client_id', profile.id).eq('log_date', today),
+    supabase.from('course_enrollments').select('id').eq('email', session?.user?.email || ''),
   ]);
   const program = programs?.[0] || null;
   let openSlots = [];
@@ -3777,7 +3820,7 @@ async function renderClientDashboard(main){
     });
     body.appendChild(menu);
   } else if(tab==='today'){
-    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins });
+    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length });
   } else if(tab==='intake'){
     const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
     renderIntakeForm(body, profile, intakeRow?.data || null, false);
