@@ -657,6 +657,7 @@
             <option>Γενική φυσική κατάσταση</option>
             <option>Μάλαξη</option>
             <option>Συνεργάτης (προπονητής/φυσικοθεραπευτής)</option>
+            <option>Μαθήματα</option>
             <option>Άλλο</option>
           </select>
         </div>
@@ -810,10 +811,14 @@
               ${c.price ? `<strong style="font-size:18px;">${c.price}€</strong>` : ''}
               ${c.payment_link
                 ? `<a class="service-cta" href="${c.payment_link}" target="_blank" rel="noopener">Αγόρασε →</a>`
-                : `<a class="service-cta courseChatBtn" style="cursor:pointer;">Ζήτησε πρόσβαση →</a>`}
+                : `<a class="service-cta js-course-lead" href="#lead" style="cursor:pointer;">Ζήτησε πρόσβαση →</a>`}
             </div>
           </div>`).join('');
-        coursesGrid.querySelectorAll('.courseChatBtn').forEach(b => b.addEventListener('click', openChatFromCourses));
+        coursesGrid.querySelectorAll('.js-course-lead').forEach(b => b.addEventListener('click', ()=>{
+          const sel = document.getElementById('leadInterest');
+          if(sel) sel.value = 'Μαθήματα';
+          document.getElementById('leadName')?.focus();
+        }));
       }
     }catch(err){
       coursesGrid.innerHTML = '<p style="text-align:center; color:var(--ink-soft); grid-column:1/-1;">Έρχονται σύντομα.</p>';
