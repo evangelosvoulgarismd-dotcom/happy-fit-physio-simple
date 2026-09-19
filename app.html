@@ -4017,8 +4017,13 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     { label: locale==='el'?'Παρακολούθηση':'Tracking', done: (checkins||[]).length > 0 || (readiness||[]).length > 0 },
     { label: locale==='el'?'Επανέλεγχος':'Reassessment', done: (reassessRows||[]).length > 0 },
   ];
+  const doneCount = journeySteps.filter(s=>s.done).length;
+  const missionGoal = intakeData.priorityGoal || intakeData.mainGoal || (locale==='el'?'Η πορεία σου':'Your journey');
   const journeyCard = el(`<div class="card" style="margin-bottom:16px;">
-    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">🗺️ ${locale==='el'?'Η πορεία σου':'Your journey'}</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="font-size:13px; color:var(--ink-soft);">🏆 ${escapeHtml(missionGoal)}</h3>
+      <span class="badge mono">${doneCount}/${journeySteps.length} ${locale==='el'?'ολοκληρωμένα':'completed'}</span>
+    </div>
     <div class="journeyRow" style="display:flex; align-items:center; overflow-x:auto;"></div>
   </div>`);
   const journeyRow = journeyCard.querySelector('.journeyRow');
