@@ -2359,7 +2359,7 @@ async function renderClientDetail(main, forceRefresh){
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
   else if(tab==='nutrition') await renderNutritionTab(body, client, true);
   else if(tab==='massage') await renderMassageTab(body, client, true);
-  else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null);
+  else if(tab==='program') { await renderAdjustmentSuggestion(body, client.id); await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null); }
   else if(tab==='live'){
     if(program) await renderLiveSessionTab(body, client, program, true, intakeRow?.data?.priorityGoal || intakeRow?.data?.mainGoal || '');
     else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
@@ -3680,6 +3680,23 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, inta
 
   wrap.appendChild(grid);
   body.appendChild(wrap);
+}
+
+async function renderAdjustmentSuggestion(body, clientId){
+  const { data: fb } = await supabase.from('session_feedback').select('*').eq('client_id', clientId).order('session_date',{ascending:false}).limit(1).maybeSingle();
+  if(!fb) return;
+  let icon, text;
+  if(fb.completed===false){ icon='📉'; text = locale==='el' ? 'Δεν ολοκληρώθηκε η τελευταία προπόνηση. Σκέψου μείωση όγκου ή ημέρα χαμηλότερης επιβάρυνσης.' : 'Last session was not completed. Consider reducing volume or a lighter day.'; }
+  else if(Number(fb.discomfort) >= 7){ icon='⚠️'; text = locale==='el' ? 'Υψηλή ενόχληση στην τελευταία προπόνηση. Χρειάζεται προσοχή, μείωση φορτίου ή έλεγχος τεχνικής.' : 'High discomfort in the last session. Needs attention, reduced load, or a technique check.'; }
+  else if(Number(fb.difficulty) <= 3 && Number(fb.discomfort) <= 3){ icon='📈'; text = locale==='el' ? 'Η τελευταία προπόνηση φάνηκε εύκολη. Σκέψου αύξηση αντίστασης ή επαναλήψεων.' : 'The last session felt easy. Consider increasing resistance or reps.'; }
+  else if(Number(fb.difficulty) >= 8){ icon='⏸️'; text = locale==='el' ? 'Η τελευταία προπόνηση ήταν πολύ δύσκολη. Πρότεινε διατήρηση του τρέχοντος φορτίου.' : 'The last session was very hard. Suggest maintaining the current load.'; }
+  else { icon='✓'; text = locale==='el' ? 'Η απόδοση φαίνεται σταθερή. Το τρέχον φορτίο μπορεί να διατηρηθεί.' : 'Performance looks stable. The current load can be maintained.'; }
+  const card = el(`<div class="card gold" style="margin-bottom:12px;">
+    <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--red-deep); margin-bottom:6px;">${icon} ${locale==='el'?'Προτεινόμενη προσαρμογή':'Suggested adjustment'}</h4>
+    <p style="font-size:13px;">${text}</p>
+    <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Βάσει της τελευταίας φόρμας μετά την προπόνηση ('+fb.session_date+'). Πρόταση, όχι αυτόματη αλλαγή — αποφασίζεις εσύ.':'Based on the last post-workout form ('+fb.session_date+'). A suggestion, not an automatic change — you decide.'}</p>
+  </div>`);
+  body.appendChild(card);
 }
 
 async function renderLiveSessionTab(body, client, program, loggedByCoach, goalText){
