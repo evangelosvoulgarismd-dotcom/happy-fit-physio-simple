@@ -4001,11 +4001,37 @@ async function renderClientDashboard(main){
 }
 
 async function renderProgressTab(body, clientId, checkins, readiness){
-  const [{ data: sessionLogs }, { data: intakeRow }] = await Promise.all([
+  const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }] = await Promise.all([
     supabase.from('session_logs').select('*, program_exercises(exercises(name_el,name_en))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
     supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
+    supabase.from('programs').select('id').eq('client_id', clientId).eq('active', true).maybeSingle(),
+    supabase.from('reassessments').select('id').eq('client_id', clientId),
   ]);
   const intakeData = intakeRow?.data || {};
+
+  // JOURNEY MAP — real completion state, not invented
+  const journeySteps = [
+    { label: locale==='el'?'Αξιολόγηση':'Assessment', done: !!intakeData._completed },
+    { label: locale==='el'?'Πρόγραμμα':'Program', done: !!activeProgram },
+    { label: locale==='el'?'Προπόνηση':'Training', done: (sessionLogs||[]).length > 0 },
+    { label: locale==='el'?'Παρακολούθηση':'Tracking', done: (checkins||[]).length > 0 || (readiness||[]).length > 0 },
+    { label: locale==='el'?'Επανέλεγχος':'Reassessment', done: (reassessRows||[]).length > 0 },
+  ];
+  const journeyCard = el(`<div class="card" style="margin-bottom:16px;">
+    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:12px;">🗺️ ${locale==='el'?'Η πορεία σου':'Your journey'}</h3>
+    <div class="journeyRow" style="display:flex; align-items:center; overflow-x:auto;"></div>
+  </div>`);
+  const journeyRow = journeyCard.querySelector('.journeyRow');
+  journeySteps.forEach((s, i)=>{
+    journeyRow.appendChild(el(`<div style="display:flex; flex-direction:column; align-items:center; flex:1; min-width:70px;">
+      <div style="width:28px; height:28px; border-radius:50%; background:${s.done?'var(--red)':'var(--line)'}; color:${s.done?'#fff':'var(--ink-soft)'}; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">${s.done?'✓':(i+1)}</div>
+      <span style="font-size:10.5px; color:${s.done?'var(--ink)':'var(--ink-soft)'}; margin-top:4px; text-align:center;">${s.label}</span>
+    </div>`));
+    if(i < journeySteps.length-1){
+      journeyRow.appendChild(el(`<div style="flex:0 0 20px; height:2px; background:${s.done?'var(--red)':'var(--line)'}; margin:0 -2px 18px;"></div>`));
+    }
+  });
+  body.appendChild(journeyCard);
 
   // MIRROR — digital mirror summary widget
   const readinessAsc = (readiness||[]).slice().reverse();
