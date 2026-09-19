@@ -1685,10 +1685,17 @@ async function renderLibrary(main, isCoach){
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
         <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('bibliography',locale)}</h4>
         ${(ex.evidence||[]).length===0 ? '<p style="font-size:12px;color:var(--ink-soft);" class="noEvidenceMsg">—</p>' : ''}
-        ${(ex.evidence||[]).map(ev=>`<div class="evidenceItem">${escapeHtml(ev.citation)} ${ev.url?`<a href="${escapeHtml(ev.url)}" target="_blank" rel="noreferrer">↗</a>`:''}</div>`).join('')}
+        ${(ex.evidence||[]).map(ev=>`<div class="evidenceItem">${ev.evidence_type?`<span class="badge mono" style="margin-right:6px;">${escapeHtml(ev.evidence_type)}</span>`:''}${escapeHtml(ev.citation)} ${ev.url?`<a href="${escapeHtml(ev.url)}" target="_blank" rel="noreferrer">↗</a>`:''}</div>`).join('')}
         ${isCoach ? `<div class="autoEvidenceBox" style="margin-top:8px; font-size:12px; color:var(--ink-soft);"></div>
         <div class="addEvidence" style="margin-top:10px;">
-          <div style="display:flex; gap:8px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select class="evType" style="padding:8px;border-radius:4px;border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
+              <option value="">${locale==='el'?'Τύπος (προαιρετικό)':'Type (optional)'}</option>
+              <option>${locale==='el'?'Κατευθυντήρια οδηγία':'Guideline'}</option>
+              <option>${locale==='el'?'Συστηματική ανασκόπηση':'Systematic review'}</option>
+              <option>${locale==='el'?'Μετα-ανάλυση':'Meta-analysis'}</option>
+              <option>${locale==='el'?'Μελέτη':'Study'}</option>
+            </select>
             <input class="evCitation" placeholder="${locale==='el'?'Νέα αναφορά/citation':'New citation'}" style="flex:1;padding:8px;border-radius:4px;border:1px solid var(--line);">
             <input class="evUrl" placeholder="URL (προαιρετικό)" style="flex:1;padding:8px;border-radius:4px;border:1px solid var(--line);">
             <button class="btn secondary addEvBtn" type="button">+ ${t('save',locale)}</button>
@@ -1726,8 +1733,9 @@ async function renderLibrary(main, isCoach){
       if(addBtn) addBtn.addEventListener('click', async ()=>{
         const citation = card.querySelector('.evCitation').value.trim();
         const url = card.querySelector('.evUrl').value.trim();
+        const evidence_type = card.querySelector('.evType').value || null;
         if(!citation) return;
-        await supabase.from('evidence').insert({ exercise_id: ex.id, citation, url: url||null, added_by: profile.id });
+        await supabase.from('evidence').insert({ exercise_id: ex.id, citation, url: url||null, evidence_type, added_by: profile.id });
         delete evidenceAutoCache[ex.id];
         renderLibrary(main, isCoach);
       });
