@@ -2361,7 +2361,7 @@ async function renderClientDetail(main, forceRefresh){
   else if(tab==='massage') await renderMassageTab(body, client, true);
   else if(tab==='program') await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null);
   else if(tab==='live'){
-    if(program) await renderLiveSessionTab(body, client, program, true);
+    if(program) await renderLiveSessionTab(body, client, program, true, intakeRow?.data?.priorityGoal || intakeRow?.data?.mainGoal || '');
     else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
   }
   else if(tab==='messages') await renderMessagesTab(body, client, 'coach');
@@ -3682,7 +3682,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, inta
   body.appendChild(wrap);
 }
 
-async function renderLiveSessionTab(body, client, program, loggedByCoach){
+async function renderLiveSessionTab(body, client, program, loggedByCoach, goalText){
   const today = new Date().toISOString().slice(0,10);
   const { data: todaysLogs } = await supabase.from('session_logs').select('*').eq('client_id', client.id).eq('session_date', today);
   const logMap = {};
@@ -3736,7 +3736,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach){
       const p = card.querySelector('.whyPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
     });
-    attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, technique_cues: ex.technique_cues, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load });
+    attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, technique_cues: ex.technique_cues, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title });
     const setsCount = pe.target_sets || 3;
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
@@ -3913,7 +3913,7 @@ async function renderClientDashboard(main){
     const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
     renderIntakeForm(body, profile, intakeRow?.data || null, false);
   } else if(tab==='program'){
-    if(program) await renderLiveSessionTab(body, profile, program, false);
+    if(program) await renderLiveSessionTab(body, profile, program, false, intakeRow?.data?.priorityGoal || intakeRow?.data?.mainGoal || '');
     else body.appendChild(el(`<p>${locale==='el'?'Δεν έχεις ακόμα πρόγραμμα.':'No program yet.'}</p>`));
   } else if(tab==='messages'){
     await renderMessagesTab(body, profile, 'client');
