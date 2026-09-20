@@ -4072,6 +4072,16 @@ async function renderClientDashboard(main){
   main.appendChild(body);
 
   if(tab==='profile'){
+    const initials = (profile.full_name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const headerCard = el(`<div class="card" style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+      <div style="width:48px; height:48px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; flex-shrink:0;">${escapeHtml(initials)}</div>
+      <div style="min-width:0;">
+        <div style="font-weight:700; font-size:15px;">${escapeHtml(profile.full_name||'')}</div>
+        <div style="font-size:12px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(session?.user?.email||'')}</div>
+      </div>
+    </div>`);
+    body.appendChild(headerCard);
+
     const profileItems = [
       { t:'intake', ico:'📋', label:t('intake',locale) },
       { t:'messages', ico:'💬', label:t('messages',locale) },
@@ -4089,6 +4099,20 @@ async function renderClientDashboard(main){
       menu.appendChild(row);
     });
     body.appendChild(menu);
+
+    // Account-level actions — same functions the sidebar/hamburger menu already uses,
+    // just reachable directly from Profile too since that's where a client looks for them.
+    const accountMenu = el('<div class="profileMenu" style="margin-top:14px;"></div>');
+    const langRow = el(`<button class="profileMenuRow"><span class="cbn-ico">🌐</span><span>${locale==='el'?'Γλώσσα':'Language'}</span><span class="profileMenuArrow mono">${locale==='el'?'ΕΛ':'EN'}</span></button>`);
+    langRow.addEventListener('click', ()=>{ locale = locale==='el' ? 'en' : 'el'; renderClientDashboard._tab='profile'; renderShell(); });
+    accountMenu.appendChild(langRow);
+    const exportRow = el(`<button class="profileMenuRow"><span class="cbn-ico">📤</span><span>${t('exportData',locale)}</span><span class="profileMenuArrow">›</span></button>`);
+    exportRow.addEventListener('click', exportMyData);
+    accountMenu.appendChild(exportRow);
+    const logoutRow = el(`<button class="profileMenuRow"><span class="cbn-ico">🚪</span><span>${t('logout',locale)}</span><span class="profileMenuArrow">›</span></button>`);
+    logoutRow.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
+    accountMenu.appendChild(logoutRow);
+    body.appendChild(accountMenu);
   } else if(tab==='today'){
     renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson });
   } else if(tab==='intake'){
