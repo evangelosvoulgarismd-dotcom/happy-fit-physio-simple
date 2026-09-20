@@ -132,7 +132,11 @@
     .langToggle button{padding:5px 8px;}
     .navBtn{padding:7px 10px; font-size:12px; border-left:none; border-bottom:3px solid transparent;}
     .navBtn.active{border-left:none; border-bottom-color:var(--gold);}
-    #sidebar > div[style*="margin-top:auto"]{order:5; width:100%; flex-direction:row !important; flex-wrap:wrap; gap:6px !important; margin-top:4px !important;}
+    /* Settings/export/logout + legal links + social icons: same weight as the nav links,
+       so they hide behind the hamburger too instead of always sitting above the page
+       content on every mobile screen. */
+    #sidebarBottom{order:5; width:100%; flex-direction:row !important; flex-wrap:wrap; gap:6px !important; margin-top:4px !important; display:none !important;}
+    #sidebarBottom.open{display:flex !important;}
     #sidebarFooter{width:100%; order:6;}
     #main{padding:16px 14px 40px;}
     .grid2{grid-template-columns:1fr;}
@@ -861,7 +865,7 @@ function renderShell(){
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button>` : ''}
       </div>
-      <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
+      <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;" id="sidebarBottom">
         <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
         <button class="navBtn" id="exportBtn">${t('exportData',locale)}</button>
         <button class="navBtn" id="logoutBtn">${t('logout',locale)}</button>
@@ -903,10 +907,12 @@ function renderShell(){
   shell.querySelector('#enablePushBtn').addEventListener('click', enablePushNotifications);
   shell.querySelector('#menuToggleBtn').addEventListener('click', ()=>{
     shell.querySelector('#navBtnsWrap').classList.toggle('open');
+    shell.querySelector('#sidebarBottom').classList.toggle('open');
   });
   const bottomMoreBtn = shell.querySelector('#bottomMoreBtn');
   if(bottomMoreBtn) bottomMoreBtn.addEventListener('click', ()=>{
     shell.querySelector('#navBtnsWrap').classList.toggle('open');
+    shell.querySelector('#sidebarBottom').classList.toggle('open');
     shell.querySelector('#navBtnsWrap').scrollIntoView({ behavior:'smooth', block:'start' });
   });
   shell.querySelector('#notifBell').addEventListener('click', (e)=>{
@@ -3912,7 +3918,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
 
   // Rest timer — shown after each logged set. Purely a client-side countdown (no claim of
   // being personalized/AI); default 90s, adjustable, dismissible.
-  const restBanner = el(`<div class="card gold" style="display:none; position:sticky; bottom:12px; z-index:5; padding:10px 14px; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,0,0,.12);">
+  const restBanner = el(`<div class="card gold" style="display:none; position:sticky; bottom:96px; z-index:5; padding:10px 14px; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,0,0,.12);">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
       <div>
         <div style="font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Διάλειμμα':'Rest'}</div>
