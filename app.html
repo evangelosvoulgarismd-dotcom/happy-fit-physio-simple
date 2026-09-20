@@ -116,6 +116,11 @@
   .setRow input{width:70px; padding:6px;}
   .clickable{cursor:pointer;}
   .tableScroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  /* Desktop default: hidden. Must come BEFORE the mobile media query below —
+     an unconditional rule placed after a media query wins the tie on source
+     order regardless of which one matched, so this used to silently cancel
+     the mobile display:flex and leave mobile with no bottom bar at all. */
+  #bottomTabBar{ display:none; }
 
   /* ---------- Mobile ---------- */
   @media (max-width: 760px){
@@ -166,7 +171,6 @@
     .bottomTab .lbl{ font-size:10px; font-weight:600; white-space:nowrap; }
     .bottomTab.active{ color:var(--red); }
   }
-  #bottomTabBar{ display:none; }
   #menuToggleBtn{display:none; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell .dot{position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:var(--gold); display:none;}
@@ -892,12 +896,12 @@ function renderShell(){
       </div>
     </div>
     <div id="main"></div>
-    <nav id="bottomTabBar">
-      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${isCoach ? t('clients',locale) : t('dashboard',locale)}</span></button>
+    ${isCoach ? `<nav id="bottomTabBar">
+      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${t('clients',locale)}</span></button>
       <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
-      ${isCoach ? `<button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>` : ''}
+      <button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>
       <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
-    </nav>
+    </nav>` : ''}
   </div>`);
   app.appendChild(shell);
   shell.querySelectorAll('#langToggle button').forEach(b=>b.addEventListener('click', ()=>{ locale=b.dataset.l; renderShell(); }));
