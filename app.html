@@ -970,7 +970,10 @@ async function fetchEuropePMC(query){
 
 async function renderLeadsView(main){
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
-  const { data: leads } = await supabase.from('leads').select('*').order('created_at',{ascending:false});
+  const { data: leadsRaw } = await supabase.from('leads').select('*').order('created_at',{ascending:false});
+  // Unconverted (actionable) leads first, converted ones after — so the leads that still
+  // need a follow-up aren't buried under old ones you've already handled.
+  const leads = (leadsRaw||[]).slice().sort((a,b)=>(a.converted===b.converted) ? 0 : (a.converted ? 1 : -1));
   main.innerHTML = '';
 
   const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -2076,51 +2079,7 @@ async function renderCoachDashboard(main){
     ]);
   }
 
-  const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
-    <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Όνομα νέου ασκούμενου':'New client name'}</label><input class="newClientName" required></div>
-    <button class="btn" type="submit">${t('newClient',locale)}</button>
-  </form>`);
-  main.appendChild(form);
-  const codeMsg = el(`<p class="savedTag" style="display:none;"></p>`);
-  main.appendChild(codeMsg);
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const name = form.querySelector('.newClientName').value.trim();
-    if(!name) return;
-    const code = uidCode();
-    await supabase.from('invite_codes').insert({ code, coach_id: profile.id, client_name: name });
-    try{ await navigator.clipboard.writeText(code); }catch(err){}
-    codeMsg.style.display = '';
-    codeMsg.innerHTML = `${locale==='el'?'Κωδικός πρόσκλησης (αντιγράφηκε ήδη)':'Invite code (already copied)'}: <span class="mono badge">${code}</span>`;
-    form.querySelector('.newClientName').value = '';
-    renderCoachDashboard(main);
-  });
-
-  if(invites?.length){
-    const box = el(`<div class="card"><h3 style="font-size:13px; margin-bottom:8px;">${locale==='el'?'Εκκρεμείς προσκλήσεις':'Pending invites'}</h3></div>`);
-    invites.forEach(i=>{
-      const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:6px;">
-        <span>${escapeHtml(i.client_name)}: <span class="mono badge">${i.code}</span></span>
-        <span style="display:flex; gap:6px;">
-          <button class="btn secondary copyInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Αντιγραφή':'Copy'}</button>
-          <button class="btn danger cancelInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Ακύρωση':'Cancel'}</button>
-        </span>
-      </div>`);
-      row.querySelector('.copyInviteBtn').addEventListener('click', async ()=>{
-        try{ await navigator.clipboard.writeText(i.code); toast(locale==='el'?'Αντιγράφηκε':'Copied'); }catch(err){}
-      });
-      row.querySelector('.cancelInviteBtn').addEventListener('click', async ()=>{
-        await supabase.from('invite_codes').delete().eq('code', i.code);
-        renderCoachDashboard(main);
-      });
-      box.appendChild(row);
-    });
-    main.appendChild(box);
-  }
-
-  if(!clients?.length){ main.appendChild(el(`<p>${t('noClients',locale)}</p>`)); return; }
-
-  const sports = [...new Set(clients.map(c=>c.sport).filter(Boolean))];
+  const sports = [...new Set((clients||[]).map(c=>c.sport).filter(Boolean))];
   let activeSportFilter = renderCoachDashboard._sportFilter || '';
   let activeStatusFilter = renderCoachDashboard._statusFilter || '';
   let searchQuery = renderCoachDashboard._search || '';
@@ -2177,6 +2136,53 @@ async function renderCoachDashboard(main){
 
   const listContainer = el('<div></div>');
   main.appendChild(listContainer);
+
+  // New-client creation + pending invites — administrative, occasional actions, so they sit
+  // below the client list (what the coach actually opens this screen to see every day)
+  // rather than above it.
+  const newClientSection = el('<div style="margin-top:20px;"></div>');
+  const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end;">
+    <div class="field" style="flex:1; margin-bottom:0;"><label>${locale==='el'?'Όνομα νέου ασκούμενου':'New client name'}</label><input class="newClientName" required></div>
+    <button class="btn" type="submit">${t('newClient',locale)}</button>
+  </form>`);
+  newClientSection.appendChild(form);
+  const codeMsg = el(`<p class="savedTag" style="display:none;"></p>`);
+  newClientSection.appendChild(codeMsg);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name = form.querySelector('.newClientName').value.trim();
+    if(!name) return;
+    const code = uidCode();
+    await supabase.from('invite_codes').insert({ code, coach_id: profile.id, client_name: name });
+    try{ await navigator.clipboard.writeText(code); }catch(err){}
+    codeMsg.style.display = '';
+    codeMsg.innerHTML = `${locale==='el'?'Κωδικός πρόσκλησης (αντιγράφηκε ήδη)':'Invite code (already copied)'}: <span class="mono badge">${code}</span>`;
+    form.querySelector('.newClientName').value = '';
+    renderCoachDashboard(main);
+  });
+
+  if(invites?.length){
+    const box = el(`<div class="card" style="margin-top:12px;"><h3 style="font-size:13px; margin-bottom:8px;">${locale==='el'?'Εκκρεμείς προσκλήσεις':'Pending invites'}</h3></div>`);
+    invites.forEach(i=>{
+      const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:6px;">
+        <span>${escapeHtml(i.client_name)}: <span class="mono badge">${i.code}</span></span>
+        <span style="display:flex; gap:6px;">
+          <button class="btn secondary copyInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Αντιγραφή':'Copy'}</button>
+          <button class="btn danger cancelInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Ακύρωση':'Cancel'}</button>
+        </span>
+      </div>`);
+      row.querySelector('.copyInviteBtn').addEventListener('click', async ()=>{
+        try{ await navigator.clipboard.writeText(i.code); toast(locale==='el'?'Αντιγράφηκε':'Copied'); }catch(err){}
+      });
+      row.querySelector('.cancelInviteBtn').addEventListener('click', async ()=>{
+        await supabase.from('invite_codes').delete().eq('code', i.code);
+        renderCoachDashboard(main);
+      });
+      box.appendChild(row);
+    });
+    newClientSection.appendChild(box);
+  }
+  main.appendChild(newClientSection);
 
   function updateBulkBar(){
     const bar = toolbar.querySelector('.bulkBar');
@@ -2414,10 +2420,29 @@ async function renderClientDetail(main, forceRefresh){
   const back = el(`<button class="btn secondary">← ${locale==='el'?'Πίσω':'Back'}</button>`);
   back.addEventListener('click', ()=>{ selectedClient=null; renderClientDetail._cache=null; renderShell(); });
   main.appendChild(back);
-  main.appendChild(el(`<h2 style="margin-top:14px;">${escapeHtml(client.full_name)}</h2>`));
+  main.appendChild(el(`<h2 style="margin-top:14px; margin-bottom:6px;">${escapeHtml(client.full_name)}</h2>`));
 
+  // Quick status strip — same readiness-score formula used everywhere else in the app —
+  // so a coach gets an at-a-glance read before picking a tab, instead of digging for it.
+  const latestReadinessRow = readiness?.[0] || null;
+  const latestCheckinRow = checkins?.[0] || null;
+  let quickScore = null;
+  if(latestReadinessRow){
+    const positives = (latestReadinessRow.sleep||0)+(latestReadinessRow.energy||0)+(latestReadinessRow.motivation||0)+(latestReadinessRow.perceived_capacity||0);
+    const negatives = (10-(latestReadinessRow.stress||0))+(10-(latestReadinessRow.soreness||0))+(10-(latestReadinessRow.pain||0));
+    quickScore = Math.round(((positives+negatives)/7)*10);
+  }
+  main.appendChild(el(`<div style="display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-bottom:8px;">
+    <span>${locale==='el'?'Ετοιμότητα':'Readiness'}: <strong class="mono" style="color:var(--ink);">${quickScore!==null?quickScore+'%':'—'}</strong></span>
+    <span>${t('pain',locale)}: <strong class="mono" style="color:${latestCheckinRow?.pain_level>3?'var(--danger)':'var(--ink)'};">${latestCheckinRow?.pain_level ?? '—'}</strong></span>
+    <span>${locale==='el'?'Συνέπεια':'Adherence'}: <strong class="mono" style="color:var(--ink);">${latestCheckinRow?.adherence!=null?latestCheckinRow.adherence+'%':'—'}</strong></span>
+    ${program ? `<span>${locale==='el'?'Πρόγραμμα':'Program'}: <strong style="color:var(--ink);">${escapeHtml(program.title)}</strong></span>` : `<span style="color:var(--danger); font-weight:600;">${locale==='el'?'Χωρίς πρόγραμμα':'No program'}</span>`}
+  </div>`));
+
+  // Order follows how often a coach actually uses each tab during a normal session:
+  // daily work (program/live/messages) first, then monitoring data, then occasional
+  // service extras, then one-time/admin setup (business, intake) last.
   const tabs = el(`<div style="display:flex; gap:8px; margin:16px 0; flex-wrap:wrap;">
-    <button class="btn ${tab==='intake'?'':'secondary'}" data-t="intake">${t('intake',locale)}</button>
     <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
     <button class="btn ${tab==='live'?'':'secondary'}" data-t="live">${t('liveSession',locale)}</button>
     <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
@@ -2428,6 +2453,7 @@ async function renderClientDetail(main, forceRefresh){
     <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
     <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
     <button class="btn ${tab==='business'?'':'secondary'}" data-t="business">${t('business',locale)}</button>
+    <button class="btn ${tab==='intake'?'':'secondary'}" data-t="intake">${t('intake',locale)}</button>
   </div>`);
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDetail._tab = b.dataset.t; renderClientDetail(main); }));
   main.appendChild(tabs);
