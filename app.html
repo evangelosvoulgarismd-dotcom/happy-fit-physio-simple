@@ -2827,6 +2827,61 @@ async function renderReassessmentTab(body, client, isCoach){
 
 
 
+function renderSafetyCenterTab(body, todayReadiness){
+  // Consolidates the same rule (pain >= 7 → flag) already used on the Today tab and the
+  // readiness form, plus the already-reviewed disclaimer text, into one dedicated place —
+  // no new medical claims, no new logic, just one destination instead of three inline spots.
+  const pain = todayReadiness ? Number(todayReadiness.pain) : null;
+  let statusDot, statusColor, statusText;
+  if(pain===null){
+    statusDot='⚪'; statusColor='var(--ink-soft)';
+    statusText = locale==='el' ? 'Δεν έχεις συμπληρώσει ακόμα τη σημερινή σου ετοιμότητα.' : "You haven't filled in today's readiness yet.";
+  } else if(pain>=7){
+    statusDot='🔴'; statusColor='var(--danger)';
+    statusText = locale==='el' ? 'Τα σημερινά σου στοιχεία δείχνουν έντονο πόνο. Χρειάζεται αξιολόγηση από κατάλληλο επαγγελματία υγείας πριν συνεχίσεις τη δραστηριότητα.' : "Today's data shows severe pain. This needs assessment from a qualified healthcare professional before continuing activity.";
+  } else {
+    statusDot='🟢'; statusColor='#1f6b3a';
+    statusText = locale==='el' ? 'Καμία ένδειξη έντονου πόνου στα σημερινά σου στοιχεία.' : "No sign of severe pain in today's data.";
+  }
+
+  const statusCard = el(`<div class="card" style="border-left-color:${statusColor}; margin-bottom:14px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:22px;">${statusDot}</span>
+      <p style="font-size:13px; font-weight:600; color:${statusColor};">${statusText}</p>
+    </div>
+  </div>`);
+  body.appendChild(statusCard);
+
+  if(pain!==null && pain>=7){
+    const contactBtn = el(`<button class="btn" type="button" style="width:100%; margin-bottom:14px;">${locale==='el'?'Επικοινώνησε με τον coach σου':'Contact your coach'}</button>`);
+    contactBtn.addEventListener('click', ()=>{ renderClientDashboard._tab='messages'; renderClientDashboard(body.closest('#main')); });
+    body.appendChild(contactBtn);
+  }
+
+  body.appendChild(el(`<h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πότε να σταματήσεις και να ζητήσεις αξιολόγηση':'When to stop and seek assessment'}</h3>`));
+  const flags = locale==='el' ? [
+    'Έντονος ή επιδεινούμενος πόνος',
+    'Νέος τραυματισμός',
+    'Νέο σημαντικό σύμπτωμα',
+    'Νευρολογικά συμπτώματα (π.χ. μούδιασμα, αδυναμία)',
+    'Οποιοδήποτε επείγον ιατρικό συμβάν',
+  ] : [
+    'Severe or worsening pain',
+    'A new injury',
+    'A new significant symptom',
+    'Neurological symptoms (e.g. numbness, weakness)',
+    'Any medical emergency',
+  ];
+  const flagList = el(`<div class="card" style="margin-bottom:14px;"><ul style="margin:0; padding-left:18px; font-size:13px; line-height:1.9;">${flags.map(f=>`<li>${escapeHtml(f)}</li>`).join('')}</ul></div>`);
+  body.appendChild(flagList);
+
+  const disclaimerCard = el(`<div class="card gold">
+    <h3 style="font-size:13px; margin-bottom:8px;">${escapeHtml(LEGAL_CONTENT.disclaimer.title[locale])}</h3>
+    <div style="font-size:12.5px; line-height:1.7;">${LEGAL_CONTENT.disclaimer.body[locale]}</div>
+  </div>`);
+  body.appendChild(disclaimerCard);
+}
+
 function renderReferFriendTab(body){
   const card = el(`<div class="card gold">
     <p style="font-size:13px; margin-bottom:12px;">${t('referFriendHint',locale)}</p>
@@ -4059,7 +4114,7 @@ async function renderClientDashboard(main){
   }
 
   main.innerHTML = '';
-  const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer'];
+  const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer','safety'];
   const inProfileGroup = profileGroup.includes(tab);
   const tabs = el(`<div class="clientBottomNav">
     <button class="cbn-btn ${tab==='today'?'active':''}" data-t="today"><span class="cbn-ico">🏠</span><span>${locale==='el'?'Αρχική':'Home'}</span></button>
@@ -4086,6 +4141,7 @@ async function renderClientDashboard(main){
     body.appendChild(headerCard);
 
     const profileItems = [
+      { t:'safety', ico:'🛡️', label: locale==='el'?'Ασφάλεια':'Safety' },
       { t:'intake', ico:'📋', label:t('intake',locale) },
       { t:'messages', ico:'💬', label:t('messages',locale) },
       { t:'nutrition', ico:'🍽️', label:t('nutrition',locale) },
@@ -4173,6 +4229,8 @@ async function renderClientDashboard(main){
       card.innerHTML = `<p style="color:var(--ink-soft);">${t('noPaymentLink',locale)}</p>`;
     }
     body.appendChild(card);
+  } else if(tab==='safety'){
+    renderSafetyCenterTab(body, todayReadiness);
   } else if(tab==='photos'){
     await renderPhotosTab(body, profile);
   } else if(tab==='refer'){
