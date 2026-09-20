@@ -3743,6 +3743,51 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   }
   body.appendChild(el(`<p class="badge">${today}</p>`));
 
+  // Session progress — how many of today's sets are logged so far, across the selected day.
+  const progressCard = el(`<div class="card" style="padding:10px 14px; margin-bottom:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <span style="font-size:11px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Πρόοδος προπόνησης':'Workout progress'}</span>
+      <span class="mono sessionProgressCount" style="font-size:12px; font-weight:700;">0/0</span>
+    </div>
+    <div style="height:6px; background:var(--line); border-radius:3px; overflow:hidden;">
+      <div class="sessionProgressFill" style="height:100%; width:0%; background:var(--red-deep); transition:width .25s;"></div>
+    </div>
+  </div>`);
+  body.appendChild(progressCard);
+
+  // Rest timer — shown after each logged set. Purely a client-side countdown (no claim of
+  // being personalized/AI); default 90s, adjustable, dismissible.
+  const restBanner = el(`<div class="card gold" style="display:none; position:sticky; bottom:12px; z-index:5; padding:10px 14px; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,0,0,.12);">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <div>
+        <div style="font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Διάλειμμα':'Rest'}</div>
+        <div class="restTimerDisplay mono" style="font-size:22px; font-weight:800;">90s</div>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+        <button class="btn secondary restMinus" type="button" style="padding:6px 10px; font-size:11.5px;">−15s</button>
+        <button class="btn secondary restPlus" type="button" style="padding:6px 10px; font-size:11.5px;">+15s</button>
+        <button class="btn secondary restSkip" type="button" style="padding:6px 10px; font-size:11.5px;">${locale==='el'?'Παράλειψη':'Skip'}</button>
+      </div>
+    </div>
+  </div>`);
+  body.appendChild(restBanner);
+  let restTimer = null, restSecondsLeft = 90;
+  function updateRestDisplay(){ restBanner.querySelector('.restTimerDisplay').textContent = restSecondsLeft+'s'; }
+  function startRestTimer(){
+    clearInterval(restTimer);
+    restSecondsLeft = 90;
+    restBanner.style.display = 'block';
+    updateRestDisplay();
+    restTimer = setInterval(()=>{
+      restSecondsLeft--;
+      if(restSecondsLeft<=0){ clearInterval(restTimer); restBanner.style.display='none'; return; }
+      updateRestDisplay();
+    }, 1000);
+  }
+  restBanner.querySelector('.restMinus').addEventListener('click', ()=>{ restSecondsLeft = Math.max(0, restSecondsLeft-15); updateRestDisplay(); });
+  restBanner.querySelector('.restPlus').addEventListener('click', ()=>{ restSecondsLeft += 15; updateRestDisplay(); });
+  restBanner.querySelector('.restSkip').addEventListener('click', ()=>{ clearInterval(restTimer); restBanner.style.display='none'; });
+
   const dayLabels = [...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
   let selectedDay = dayLabels[0] || 'Ημέρα 1';
   const exercisesWrap = el('<div></div>');
@@ -3760,9 +3805,24 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   }
   body.appendChild(exercisesWrap);
 
+  function currentDayExercises(){
+    return dayLabels.length > 1 ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===selectedDay) : (program.program_exercises||[]);
+  }
+  function updateSessionProgress(){
+    let total=0, done=0;
+    currentDayExercises().forEach(pe=>{
+      const setsCount = pe.target_sets||3;
+      total += setsCount;
+      for(let s=1; s<=setsCount; s++){ if(logMap[`${pe.id}_${s}`]) done++; }
+    });
+    progressCard.querySelector('.sessionProgressCount').textContent = `${done}/${total}`;
+    progressCard.querySelector('.sessionProgressFill').style.width = (total ? Math.round(done/total*100) : 0)+'%';
+  }
+
   function renderExercises(){
     exercisesWrap.innerHTML = '';
-    const dayExercises = dayLabels.length > 1 ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===selectedDay) : (program.program_exercises||[]);
+    const dayExercises = currentDayExercises();
+    updateSessionProgress();
     dayExercises.forEach(pe=>{
     const ex = pe.exercises;
     const exName = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
@@ -3821,6 +3881,9 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           btn.textContent = '✓ '+t('saved',locale).replace('✓ ','');
           btn.classList.remove('secondary');
           toast(t('saved',locale));
+          logMap[`${pe.id}_${s}`] = { id: logId, ...payload };
+          updateSessionProgress();
+          startRestTimer();
         }catch(err){
           btn.textContent = t('logSet',locale);
           toast(locale==='el' ? 'Σφάλμα αποθήκευσης' : 'Save error');
