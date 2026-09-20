@@ -3600,6 +3600,26 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, inta
   // Hero: Today's workout card
   const firstDayLabel = program ? ([...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}))[0] || 'Ημέρα 1') : null;
   const firstDayExercises = program ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===firstDayLabel) : [];
+
+  // Same rule-based verdict used in the readiness form — surfaced here so today's
+  // check-in immediately says something about today's workout, not just a % score.
+  let verdictHtml = '';
+  if(program && todayReadiness && readinessScore!==null){
+    let dot, msg, vColor;
+    if(readinessScore>=70){ dot='🟢'; vColor='#1f6b3a'; msg = locale==='el' ? 'Η προπόνηση παραμένει ως έχει.' : 'Workout stays as planned.'; }
+    else if(readinessScore>=45){ dot='🟡'; vColor='var(--gold)'; msg = locale==='el' ? 'Προτείνεται ελαφρώς μειωμένη επιβάρυνση.' : 'A slightly lighter load is suggested.'; }
+    else { dot='🔴'; vColor='var(--danger)'; msg = locale==='el' ? 'Προτείνεται σημαντικά μειωμένη επιβάρυνση, ή ξεκούραση.' : 'A significantly lighter session, or rest, is suggested.'; }
+    verdictHtml = `<div style="display:flex; align-items:center; gap:8px; background:#f6efe4; border-radius:6px; padding:8px 10px; margin-bottom:12px;">
+      <span style="font-size:16px;">${dot}</span>
+      <span style="font-size:12.5px; font-weight:700; color:${vColor};">${msg}</span>
+    </div>`;
+  } else if(program && !todayReadiness){
+    verdictHtml = `<div class="fillReadinessNudge" style="cursor:pointer; display:flex; align-items:center; gap:8px; background:#f6efe4; border-radius:6px; padding:8px 10px; margin-bottom:12px;">
+      <span style="font-size:16px;">💡</span>
+      <span style="font-size:12px; color:var(--ink-soft);">${locale==='el' ? 'Συμπλήρωσε πώς είσαι σήμερα για εξατομικευμένη πρόταση.' : 'Fill in how you feel today for a tailored suggestion.'}</span>
+    </div>`;
+  }
+
   const workoutCard = el(`<div class="card" style="border-left-width:6px;">
     <h3 style="font-size:12.5px; color:var(--red-deep); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">⭐ ${locale==='el'?'Σήμερα για σένα':'Today for you'}</h3>
     ${program ? `
@@ -3608,6 +3628,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, inta
         <span class="badge mono">📅 ${escapeHtml(firstDayLabel)}</span>
         ${program.phase ? `<span class="badge">${escapeHtml(program.phase)}</span>` : ''}
       </div>
+      ${verdictHtml}
       <div style="font-size:12px; color:var(--ink-soft); margin-bottom:14px;">
         ${firstDayExercises.slice(0,4).map(pe=>escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))).join(' · ')}
         ${firstDayExercises.length>4 ? ` +${firstDayExercises.length-4}` : ''}
@@ -3615,6 +3636,8 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, inta
       <button class="btn startWorkoutBtn" type="button" style="width:100%;">${t('startWorkout',locale)}</button>
     ` : `<p style="font-size:13px; color:var(--ink-soft);">${t('noWorkoutToday',locale)}</p>`}
   </div>`);
+  const nudge = workoutCard.querySelector('.fillReadinessNudge');
+  if(nudge) nudge.addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
   if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
   wrap.appendChild(workoutCard);
