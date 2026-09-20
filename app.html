@@ -4175,19 +4175,37 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   if(anyMirrorData) attachAskAssistant(mirrorCard, 'progress', { indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })) });
   body.appendChild(mirrorCard);
 
+  // Detail sections — tabbed instead of one long scroll, so the headline Journey/Mirror
+  // cards above stay the focus and the raw history is one tap away rather than a wall of scroll.
+  const detailTabs = [
+    { key:'body', ico:'📏', label: locale==='el'?'Σώμα':'Body' },
+    { key:'performance', ico:'🏋️', label: locale==='el'?'Απόδοση':'Performance' },
+    { key:'recovery', ico:'😴', label: locale==='el'?'Ανάρρωση':'Recovery' },
+    { key:'pain', ico:'⚠️', label: locale==='el'?'Πόνος':'Pain' },
+    { key:'adherence', ico:'✅', label: 'Adherence' },
+  ];
+  const detailTabBar = el(`<div style="display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; padding-bottom:2px;">${detailTabs.map((dt,i)=>`<button class="btn ${i===0?'':'secondary'} detailTabBtn" type="button" data-k="${dt.key}" style="padding:6px 12px; font-size:11.5px; white-space:nowrap; flex-shrink:0;">${dt.ico} ${dt.label}</button>`).join('')}</div>`);
+  body.appendChild(detailTabBar);
+  const detailPanels = {};
+  detailTabs.forEach((dt,i)=>{ detailPanels[dt.key] = el(`<div style="display:${i===0?'block':'none'};"></div>`); body.appendChild(detailPanels[dt.key]); });
+  detailTabBar.querySelectorAll('.detailTabBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      detailTabBar.querySelectorAll('.detailTabBtn').forEach(b=>b.classList.toggle('secondary', b!==btn));
+      detailTabs.forEach(dt=>{ detailPanels[dt.key].style.display = (dt.key===btn.dataset.k) ? 'block' : 'none'; });
+    });
+  });
+
   // BODY
-  body.appendChild(el(`<h3 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">📏 ${locale==='el'?'ΣΩΜΑ':'BODY'}</h3>`));
   const bodyCard = el(`<div class="card">
     ${intakeData.baselineWeight ? `<div style="margin-bottom:6px;"><span style="font-size:12px; color:var(--ink-soft);">${t('baselineWeight',locale)}:</span> <strong>${escapeHtml(intakeData.baselineWeight)}</strong></div>` : ''}
     ${intakeData.measurements ? `<div><span style="font-size:12px; color:var(--ink-soft);">${t('measurements',locale)}:</span> <strong>${escapeHtml(intakeData.measurements)}</strong></div>` : ''}
     ${!intakeData.baselineWeight && !intakeData.measurements ? `<p style="font-size:12px; color:var(--ink-soft);">${t('notFilled',locale)}</p>` : ''}
   </div>`);
-  body.appendChild(bodyCard);
+  detailPanels.body.appendChild(bodyCard);
 
   // PERFORMANCE
-  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">🏋️ ${locale==='el'?'ΑΠΟΔΟΣΗ':'PERFORMANCE'}</h3>`));
   if(sessionLogs?.length){
-    renderHistTable(body,
+    renderHistTable(detailPanels.performance,
       sessionLogs.map(s=>({
         date: s.session_date,
         exercise: locale==='el' ? s.program_exercises?.exercises?.name_el : (s.program_exercises?.exercises?.name_en || s.program_exercises?.exercises?.name_el),
@@ -4196,29 +4214,26 @@ async function renderProgressTab(body, clientId, checkins, readiness){
       ['date','exercise','load_kg','reps','rpe']
     );
   } else {
-    body.appendChild(el(`<p>${t('notFilled',locale)}</p>`));
+    detailPanels.performance.appendChild(el(`<p>${t('notFilled',locale)}</p>`));
   }
 
   // RECOVERY
-  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">😴 ${locale==='el'?'ΑΝΑΡΡΩΣΗ':'RECOVERY'}</h3>`));
-  renderTrendChart(body, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
+  renderTrendChart(detailPanels.recovery, locale==='el'?'Readiness τάσεις':'Readiness trends', readiness, 'date', [
     {key:'sleep', label:locale==='el'?'Ύπνος':'Sleep'}, {key:'energy', label:locale==='el'?'Ενέργεια':'Energy'},
     {key:'stress', label:locale==='el'?'Στρες':'Stress'},
   ]);
-  renderHistTable(body, readiness, ['date','sleep','energy','stress','perceived_capacity']);
+  renderHistTable(detailPanels.recovery, readiness, ['date','sleep','energy','stress','perceived_capacity']);
 
   // PAIN
-  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">⚠️ ${locale==='el'?'ΠΟΝΟΣ (0-10)':'PAIN (0-10)'}</h3>`));
-  renderTrendChart(body, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [
+  renderTrendChart(detailPanels.pain, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [
     {key:'pain', label:locale==='el'?'Πόνος':'Pain'},
   ]);
 
   // ADHERENCE
-  body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">✅ ${locale==='el'?'ADHERENCE':'ADHERENCE'}</h3>`));
-  renderTrendChart(body, 'Adherence %', checkins, 'date', [
+  renderTrendChart(detailPanels.adherence, 'Adherence %', checkins, 'date', [
     {key:'adherence', label:'Adherence %'},
   ]);
-  renderHistTable(body, checkins, ['date','sessions_completed','adherence']);
+  renderHistTable(detailPanels.adherence, checkins, ['date','sessions_completed','adherence']);
 }
 
 function renderReadinessForm(body, existing){
