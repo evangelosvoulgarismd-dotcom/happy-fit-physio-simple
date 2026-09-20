@@ -856,6 +856,7 @@ function renderShell(){
       <div class="navBtnsWrap" id="navBtnsWrap">
       <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
       <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
+      ${isCoach ? `<button class="navBtn ${view==='business'?'active':''}" data-v="business">📊 ${locale==='el'?'Επιχείρηση':'Business'}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button>` : ''}
@@ -918,6 +919,7 @@ function renderShell(){
 
   const main = shell.querySelector('#main');
   if(view==='library') renderLibrary(main, isCoach);
+  else if(view==='business' && isCoach) renderBusinessOverview(main);
   else if(view==='leads' && isCoach) renderLeadsView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
@@ -1468,6 +1470,75 @@ async function renderProjectionView(main){
     wrap.querySelector('.pBreakdown').innerHTML=`<div style="display:grid;gap:8px;font-size:12px;"><div style="display:flex;justify-content:space-between"><span>Online καθοδήγηση</span><strong>${euro(online)}</strong></div><div style="display:flex;justify-content:space-between"><span>Κατ' οίκον θεραπευτική μάλαξη</span><strong>${euro(massage)}</strong></div><div style="display:flex;justify-content:space-between"><span>Αξιολογήσεις</span><strong>${euro(assess)}</strong></div><div style="display:flex;justify-content:space-between"><span>Επαγγελματικές συνεργασίες</span><strong>${euro(partners)}</strong></div><hr style="border:0;border-top:1px solid var(--line);width:100%"><div style="display:flex;justify-content:space-between"><strong>Σύνολο</strong><strong>${euro(monthly)}</strong></div></div>`;
   }
   ids.forEach(cls=>wrap.querySelector('.'+cls).addEventListener('input',calc)); calc();
+}
+
+async function renderBusinessOverview(main){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: clients }, { data: leads }, { data: courses }, { data: enrollments }, { data: massageRequests }] = await Promise.all([
+    supabase.from('clients').select('status,monthly_price').eq('coach_id', profile.id),
+    supabase.from('leads').select('id,converted'),
+    supabase.from('courses').select('id,title,price'),
+    supabase.from('course_enrollments').select('course_id'),
+    supabase.from('massage_requests').select('status').eq('coach_id', profile.id),
+  ]);
+
+  const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+
+  // ΣΥΝΔΡΟΜΗ — real MRR from active clients (same calculation used on the client list).
+  const activeClients = (clients||[]).filter(c=>(c.status||'trial')==='active');
+  const trialClients = (clients||[]).filter(c=>(c.status||'trial')==='trial');
+  const mrr = activeClients.reduce((sum,c)=>sum+(Number(c.monthly_price)||0),0);
+
+  // ΜΑΘΗΜΑΤΑ — enrollments × the course's CURRENT price. If a price changed after some
+  // purchases, this is an approximation of revenue, not an exact ledger — labelled as such.
+  const enrollCountByCourse = {};
+  (enrollments||[]).forEach(e=>{ enrollCountByCourse[e.course_id] = (enrollCountByCourse[e.course_id]||0)+1; });
+  let courseRevenueApprox = 0, totalEnrollments = 0;
+  (courses||[]).forEach(c=>{
+    const n = enrollCountByCourse[c.id]||0;
+    totalEnrollments += n;
+    courseRevenueApprox += n * (Number(c.price)||0);
+  });
+
+  // ΕΠΑΓΓΕΛΜΑΤΙΕΣ (κατ' οίκον μάλαξη) — volume only; no per-request price is stored, so
+  // this shows confirmed sessions, not revenue, to avoid inventing a figure.
+  const confirmedMassage = (massageRequests||[]).filter(r=>r.status==='confirmed').length;
+  const pendingMassage = (massageRequests||[]).filter(r=>r.status==='pending').length;
+
+  // Λήψεις (leads)
+  const totalLeads = (leads||[]).length;
+  const convertedLeads = (leads||[]).filter(l=>l.converted).length;
+  const conversionRate = totalLeads ? Math.round((convertedLeads/totalLeads)*100) : null;
+
+  main.innerHTML = '';
+  main.appendChild(el(`<div style="margin-bottom:16px;"><h2 style="margin:0 0 4px;">📊 ${locale==='el'?'Επιχείρηση — πραγματικά στοιχεία':'Business — real figures'}</h2><p style="margin:0; color:var(--ink-soft); font-size:12px;">${locale==='el'?'Ενοποιημένη εικόνα των 3 ενεργών πυλώνων, από πραγματικά δεδομένα (όχι πρόβλεψη). Για σενάρια/what-if, δες την Πρόβλεψη.':'A consolidated view of the 3 active pillars, from real data (not a projection). For what-if scenarios, see Projection.'}</p></div>`));
+
+  main.appendChild(el(`<div class="statGrid" style="margin-bottom:16px;">
+    <div class="statCard"><div class="num mono">${euro(mrr)}</div><div class="lbl">${locale==='el'?'MRR (Online coaching)':'MRR (Online coaching)'}</div></div>
+    <div class="statCard"><div class="num mono">${activeClients.length}</div><div class="lbl">${locale==='el'?'Ενεργοί πελάτες':'Active clients'}</div></div>
+    <div class="statCard"><div class="num mono">${trialClients.length}</div><div class="lbl">${locale==='el'?'Σε δοκιμή':'On trial'}</div></div>
+    <div class="statCard"><div class="num mono">${totalLeads}</div><div class="lbl">${locale==='el'?'Λήψεις (leads)':'Leads'}</div></div>
+    <div class="statCard"><div class="num mono">${conversionRate!==null ? conversionRate+'%' : '—'}</div><div class="lbl">${locale==='el'?'Ποσοστό μετατροπής':'Conversion rate'}</div></div>
+  </div>`));
+
+  main.appendChild(el(`<div class="grid2">
+    <div class="card">
+      <h3 style="margin-bottom:10px; font-size:14px;">📚 ${locale==='el'?'Μαθήματα':'Courses'}</h3>
+      <p style="font-size:13px; margin-bottom:4px;">${locale==='el'?'Συνολικές εγγραφές':'Total enrollments'}: <strong class="mono">${totalEnrollments}</strong></p>
+      <p style="font-size:13px;">${locale==='el'?'Έσοδα (κατά προσέγγιση)':'Revenue (approx.)'}: <strong class="mono">${euro(courseRevenueApprox)}</strong></p>
+      <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Υπολογισμός με τη σημερινή τιμή κάθε μαθήματος. Αν η τιμή άλλαξε στο παρελθόν, δεν αντανακλά ακριβή ταμειακή ροή.':"Calculated using each course's current price. If a price changed over time, this is not an exact cash figure."}</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px; font-size:14px;">💆 ${locale==='el'?'Κατ\' οίκον μάλαξη':'In-home massage'}</h3>
+      <p style="font-size:13px; margin-bottom:4px;">${locale==='el'?'Επιβεβαιωμένες συνεδρίες':'Confirmed sessions'}: <strong class="mono">${confirmedMassage}</strong></p>
+      <p style="font-size:13px;">${locale==='el'?'Εκκρεμείς':'Pending'}: <strong class="mono">${pendingMassage}</strong></p>
+      <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Δεν καταγράφεται τιμή ανά αίτημα ακόμα, άρα δεν εμφανίζεται έσοδο εδώ.':'No price is stored per request yet, so no revenue figure is shown here.'}</p>
+    </div>
+  </div>`));
+
+  const projLink = el(`<a class="service-cta" style="cursor:pointer; display:inline-block; margin-top:16px; font-size:12.5px; font-weight:700; color:var(--red-deep);">${locale==='el'?'→ Δες σενάρια πρόβλεψης':'→ See projection scenarios'}</a>`);
+  projLink.addEventListener('click', ()=>{ view='projection'; renderShell(); });
+  main.appendChild(projLink);
 }
 
 let _exerciseDbCache = null;
