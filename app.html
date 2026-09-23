@@ -325,6 +325,20 @@ const STR = {
   email:{el:'Email', en:'Email'}, password:{el:'Κωδικός', en:'Password'}, fullName:{el:'Ονοματεπώνυμο', en:'Full name'},
   iAmCoach:{el:'Είμαι προπονητής/φυσικοθεραπευτής', en:"I'm a coach"}, iAmClient:{el:'Είμαι ασκούμενος', en:"I'm a client"},
   inviteCode:{el:'Κωδικός πρόσκλησης', en:'Invite code'}, consent:{el:'Συναινώ στην επεξεργασία των δεδομένων μου.', en:'I consent to data processing.'},
+  coachInviteCode:{el:'Κωδικός πρόσκλησης συνεργάτη', en:'Partner invite code'},
+  coachInviteCodeHint:{el:'Η εγγραφή νέου συνεργάτη γίνεται μόνο με κωδικό πρόσκλησης από τον ιδιοκτήτη.', en:'New partner sign-up requires an invite code from the owner.'},
+  invalidCoachCode:{el:'Μη έγκυρος ή ήδη χρησιμοποιημένος κωδικός συνεργάτη.', en:'Invalid or already-used partner invite code.'},
+  partners:{el:'Συνεργάτες', en:'Partners'},
+  partnersIntro:{el:'Οι συνεργάτες σου (coaches/φυσικοθεραπευτές) που χρησιμοποιούν την πλατφόρμα, οι ενεργοί πελάτες τους, και η μηνιαία χρέωσή τους.', en:'Your partners (coaches/physios) using the platform, their active clients, and their monthly charge.'},
+  newPartnerCode:{el:'+ Νέος κωδικός πρόσκλησης συνεργάτη', en:'+ New partner invite code'},
+  unusedPartnerCodes:{el:'Ανεξόφλητοι κωδικοί πρόσκλησης', en:'Unused invite codes'},
+  suspend:{el:'Αναστολή', en:'Suspend'}, reactivate:{el:'Επανενεργοποίηση', en:'Reactivate'},
+  suspended:{el:'Ανεσταλμένος', en:'Suspended'}, active_:{el:'Ενεργός', en:'Active'},
+  monthlyCharge:{el:'Μηνιαία χρέωση', en:'Monthly charge'},
+  perClientRate:{el:'ανά ενεργό πελάτη', en:'per active client'},
+  viewClients:{el:'Δες πελάτες (μόνο ανάγνωση)', en:'View clients (read-only)'},
+  accountSuspended:{el:'Ο λογαριασμός συνεργάτη σου έχει ανασταλεί προσωρινά. Επικοινώνησε με τον ιδιοκτήτη της πλατφόρμας.', en:'Your partner account has been temporarily suspended. Please contact the platform owner.'},
+  noPartners:{el:'Δεν υπάρχουν ακόμα συνεργάτες.', en:'No partners yet.'},
   clients:{el:'Ασκούμενοι', en:'Clients'}, dashboard:{el:'Πίνακας', en:'Dashboard'}, exerciseLibrary:{el:'Βιβλιοθήκη ασκήσεων', en:'Exercise library'},
   newClient:{el:'+ Νέος ασκούμενος', en:'+ New client'}, newExercise:{el:'+ Νέα άσκηση', en:'+ New exercise'},
   program:{el:'Πρόγραμμα', en:'Program'}, liveSession:{el:'Ζωντανή προπόνηση', en:'Live session'},
@@ -728,6 +742,7 @@ function renderAuth(){
       <div class="field"><label>${t('email',locale)}</label><input id="authEmail" name="email" type="email" autocomplete="username" required></div>
       <div class="field"><label>${t('password',locale)}</label><input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="6"></div>
       <div class="field" id="codeField" style="display:none;"><label>${t('inviteCode',locale)}</label><input id="inviteCode" placeholder="π.χ. A1B2C3D4"></div>
+      <div class="field" id="coachCodeField" style="display:none;"><label>${t('coachInviteCode',locale)}</label><input id="coachInviteCode" placeholder="π.χ. A1B2C3D4"><p style="font-size:11px; color:var(--ink-soft); margin:4px 0 0;">${t('coachInviteCodeHint',locale)}</p></div>
       <div class="field" id="consentField" style="display:none; flex-direction:row; align-items:flex-start; gap:8px;">
         <input type="checkbox" id="consentBox" style="width:auto; margin-top:3px;">
         <label style="margin:0; font-size:12px; line-height:1.5;">${locale==='el'
@@ -749,6 +764,7 @@ function renderAuth(){
     wrap.querySelector('#consentField').style.display = mode==='signup' ? '' : 'none';
     wrap.querySelector('#roleToggle').style.display = mode==='signup' ? 'flex' : 'none';
     wrap.querySelector('#codeField').style.display = (mode==='signup' && role==='client') ? '' : 'none';
+    wrap.querySelector('#coachCodeField').style.display = (mode==='signup' && role==='coach') ? '' : 'none';
     wrap.querySelector('button[type=submit]').textContent = mode==='login' ? t('login',locale) : t('signup',locale);
     wrap.querySelector('#authPassword').autocomplete = mode==='signup' ? 'new-password' : 'current-password';
   }
@@ -791,10 +807,14 @@ function renderAuth(){
           await supabase.from('invite_codes').update({ used:true, used_by:userId }).eq('code', code);
           await supabase.from('consents').insert({ profile_id:userId, granted:true });
         } else {
+          const coachCode = wrap.querySelector('#coachInviteCode').value.trim().toUpperCase();
+          const { data: coachCodeRow, error: coachCodeErr } = await supabase.from('coach_invite_codes').select('*').eq('code', coachCode).eq('used', false).single();
+          if(coachCodeErr || !coachCodeRow) throw new Error(t('invalidCoachCode',locale));
           const { data, error } = await supabase.auth.signUp({ email, password });
           if(error) throw error;
           const userId = data.user.id;
           await supabase.from('profiles').insert({ id:userId, role:'coach', full_name:fullName, locale });
+          await supabase.from('coach_invite_codes').update({ used:true, used_by:userId }).eq('code', coachCode);
           await supabase.from('consents').insert({ profile_id:userId, granted:true });
         }
       }
@@ -846,7 +866,8 @@ async function renderNotifPanel(anchorEl, isCoach){
 }
 
 function renderShell(){
-  const isCoach = profile.role === 'coach';
+  const isOwner = profile.role === 'owner';
+  const isCoach = profile.role === 'coach' || isOwner;
   const app = document.getElementById('app');
   app.innerHTML = '';
   const shell = el(`<div id="shell">
@@ -868,6 +889,7 @@ function renderShell(){
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button>` : ''}
+      ${isOwner ? `<button class="navBtn ${view==='partners'?'active':''}" data-v="partners">👥 ${t('partners',locale)}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;" id="sidebarBottom">
         <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
@@ -935,6 +957,7 @@ function renderShell(){
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(view==='projection' && isCoach) renderProjectionView(main);
   else if(view==='courses' && isCoach) renderCoursesAdminView(main);
+  else if(view==='partners' && isOwner) renderPartnersView(main);
   else if(isCoach) renderCoachDashboard(main);
   else renderClientDashboard(main);
 }
@@ -1552,6 +1575,91 @@ async function renderBusinessOverview(main){
   const projLink = el(`<a class="service-cta" style="cursor:pointer; display:inline-block; margin-top:16px; font-size:12.5px; font-weight:700; color:var(--red-deep);">${locale==='el'?'→ Δες σενάρια πρόβλεψης':'→ See projection scenarios'}</a>`);
   projLink.addEventListener('click', ()=>{ view='projection'; renderShell(); });
   main.appendChild(projLink);
+}
+
+// ============================================================
+// PARTNERS (owner-only) — other coaches using the platform,
+// their active-client count, computed per-client charge, and
+// suspend/reactivate control. Charging rate is a constant here
+// (PARTNER_RATE_PER_CLIENT) so it is one place to change, and is
+// clearly labelled wherever it appears rather than hidden in a maths.
+// ============================================================
+const PARTNER_RATE_PER_CLIENT = 5; // €/active client/month — see business-model discussion with Evangelos
+
+async function renderPartnersView(main){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+
+  const [{ data: coachProfiles, error: coachErr }, { data: allClients }, { data: unusedCodes }] = await Promise.all([
+    supabase.from('profiles').select('id,full_name,suspended,created_at').eq('role','coach').order('created_at',{ascending:true}),
+    supabase.from('clients').select('coach_id,status'),
+    supabase.from('coach_invite_codes').select('*').eq('used', false).order('created_at',{ascending:false}),
+  ]);
+
+  main.innerHTML = '';
+  main.appendChild(el(`<div style="margin-bottom:16px;"><h2 style="margin:0 0 4px;">👥 ${t('partners',locale)}</h2><p style="margin:0; color:var(--ink-soft); font-size:12px;">${t('partnersIntro',locale)} (${euro(PARTNER_RATE_PER_CLIENT)} ${t('perClientRate',locale)}).</p></div>`));
+
+  if(coachErr){
+    main.appendChild(el(`<p class="errorTag">${escapeHtml(coachErr.message)}</p>`));
+    return;
+  }
+
+  const clientsByCoach = {};
+  (allClients||[]).forEach(c=>{
+    if(!clientsByCoach[c.coach_id]) clientsByCoach[c.coach_id] = { trial:0, active:0, paused:0, cancelled:0 };
+    const s = c.status || 'trial';
+    if(clientsByCoach[c.coach_id][s]!==undefined) clientsByCoach[c.coach_id][s]++;
+  });
+
+  const topBar = el(`<div style="display:flex; justify-content:flex-end; margin-bottom:12px;"><button class="btn" id="newPartnerCodeBtn">${t('newPartnerCode',locale)}</button></div>`);
+  main.appendChild(topBar);
+  topBar.querySelector('#newPartnerCodeBtn').addEventListener('click', async ()=>{
+    const code = Math.random().toString(36).slice(2,10).toUpperCase();
+    await supabase.from('coach_invite_codes').insert({ code, created_by: profile.id });
+    renderPartnersView(main);
+  });
+
+  if(!coachProfiles || !coachProfiles.length){
+    main.appendChild(el(`<p style="color:var(--ink-soft);">${t('noPartners',locale)}</p>`));
+  } else {
+    const table = el(`<table class="hist" style="width:100%;"><thead><tr>
+      <th>${locale==='el'?'Συνεργάτης':'Partner'}</th>
+      <th>${locale==='el'?'Ενεργοί':'Active'}</th>
+      <th>${locale==='el'?'Δοκιμή':'Trial'}</th>
+      <th>${locale==='el'?'Παύση':'Paused'}</th>
+      <th>${t('monthlyCharge',locale)}</th>
+      <th>${locale==='el'?'Κατάσταση':'Status'}</th>
+      <th></th>
+    </tr></thead><tbody></tbody></table>`);
+    const tbody = table.querySelector('tbody');
+    coachProfiles.forEach(cp=>{
+      const counts = clientsByCoach[cp.id] || { trial:0, active:0, paused:0, cancelled:0 };
+      const charge = counts.active * PARTNER_RATE_PER_CLIENT;
+      const tr = el(`<tr>
+        <td>${escapeHtml(cp.full_name||'—')}</td>
+        <td class="mono">${counts.active}</td>
+        <td class="mono">${counts.trial}</td>
+        <td class="mono">${counts.paused}</td>
+        <td class="mono">${euro(charge)}</td>
+        <td>${cp.suspended ? `<span class="badge" style="color:var(--danger);">${t('suspended',locale)}</span>` : `<span class="badge" style="color:#1f6b3a;">${t('active_',locale)}</span>`}</td>
+        <td><button class="btn secondary partnerToggleBtn" style="padding:6px 12px; font-size:11.5px;">${cp.suspended ? t('reactivate',locale) : t('suspend',locale)}</button></td>
+      </tr>`);
+      tr.querySelector('.partnerToggleBtn').addEventListener('click', async ()=>{
+        await supabase.from('profiles').update({ suspended: !cp.suspended }).eq('id', cp.id);
+        renderPartnersView(main);
+      });
+      tbody.appendChild(tr);
+    });
+    main.appendChild(table);
+  }
+
+  if(unusedCodes && unusedCodes.length){
+    const codesBox = el(`<div class="card" style="margin-top:20px;"><h3 style="margin-bottom:10px; font-size:14px;">${t('unusedPartnerCodes',locale)}</h3></div>`);
+    unusedCodes.forEach(c=>{
+      codesBox.appendChild(el(`<p style="font-family:monospace; font-size:13px; margin:4px 0;">${escapeHtml(c.code)}</p>`));
+    });
+    main.appendChild(codesBox);
+  }
 }
 
 let _exerciseDbCache = null;
@@ -4559,9 +4667,22 @@ async function boot(){
   const { data: p, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
   if(error || !p){ profile = null; renderAuth(); return; }
   profile = p; locale = p.locale || 'el';
+  if(profile.role==='coach' && profile.suspended){ renderSuspendedScreen(); return; }
   view = 'dashboard'; selectedClient = null;
   if(deepLinkTab && profile.role==='client'){ renderClientDashboard._tab = deepLinkTab; }
   renderShell();
+}
+
+function renderSuspendedScreen(){
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  const wrap = el(`<div class="authWrap"><div class="card" style="text-align:center;">
+    <h2 style="margin-bottom:10px;">⏸️ ${t('suspended',locale)}</h2>
+    <p style="color:var(--ink-soft); margin-bottom:18px;">${t('accountSuspended',locale)}</p>
+    <button class="btn" id="suspendedLogoutBtn">${t('logout',locale)}</button>
+  </div></div>`);
+  app.appendChild(wrap);
+  wrap.querySelector('#suspendedLogoutBtn').addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
 }
 
 supabase.auth.onAuthStateChange((_evt, s)=>{ session = s; });
