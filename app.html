@@ -348,6 +348,18 @@ const STR = {
   partnerWelcomeCta:{el:'Πάμε →', en:"Let's go →"},
   myPartnershipFee:{el:'💶 Χρέωση συνεργασίας αυτόν τον μήνα', en:'💶 This month\'s partnership fee'},
   myPartnershipFeeNote:{el:'Υπολογισμός: ενεργοί πελάτες × {rate}. Η πληρωμή γίνεται απευθείας με τον ιδιοκτήτη, εκτός πλατφόρμας.', en:'Calculation: active clients × {rate}. Payment is settled directly with the owner, outside the platform.'},
+  recordCharge:{el:'Καταχώρηση χρέωσης μήνα', en:'Record this month\'s charge'},
+  alreadyRecorded:{el:'✓ Καταχωρήθηκε', en:'✓ Recorded'},
+  chargeHistory:{el:'Ιστορικό χρεώσεων', en:'Charge history'},
+  noChargeHistory:{el:'Δεν έχει καταχωρηθεί ακόμα καμία χρέωση.', en:'No charges recorded yet.'},
+  markPaid:{el:'Σήμανση ως πληρωμένη', en:'Mark as paid'},
+  markUnpaid:{el:'Σήμανση ως εκκρεμής', en:'Mark as unpaid'},
+  paidStatus:{el:'Πληρωμένη', en:'Paid'}, pendingStatus:{el:'Εκκρεμεί', en:'Pending'},
+  period:{el:'Μήνας', en:'Period'}, backToPartners:{el:'← Πίσω στους συνεργάτες', en:'← Back to partners'},
+  qcTitle:{el:'Πελάτες (μόνο ανάγνωση — ποιοτικός έλεγχος)', en:"Clients (read-only — quality control)"},
+  qcNote:{el:'Αυτή η προβολή είναι μόνο για ανάγνωση. Δεν μπορείς να επεξεργαστείς προγράμματα, μηνύματα ή δεδομένα πελατών του συνεργάτη από εδώ — μόνο να δεις αν κάτι χρειάζεται προσοχή.', en:"This view is read-only. You can't edit a partner's programs, messages or client data from here — only see if something needs attention."},
+  qcNoClients:{el:'Αυτός ο συνεργάτης δεν έχει ακόμα πελάτες.', en:'This partner has no clients yet.'},
+  lastCheckin:{el:'Τελευταίο check-in', en:'Last check-in'}, never_:{el:'Ποτέ', en:'Never'},
   clients:{el:'Ασκούμενοι', en:'Clients'}, dashboard:{el:'Πίνακας', en:'Dashboard'}, exerciseLibrary:{el:'Βιβλιοθήκη ασκήσεων', en:'Exercise library'},
   newClient:{el:'+ Νέος ασκούμενος', en:'+ New client'}, newExercise:{el:'+ Νέα άσκηση', en:'+ New exercise'},
   program:{el:'Πρόγραμμα', en:'Program'}, liveSession:{el:'Ζωντανή προπόνηση', en:'Live session'},
@@ -1529,12 +1541,15 @@ async function renderProjectionView(main){
 
 async function renderBusinessOverview(main){
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
-  const [{ data: clients }, { data: leads }, { data: courses }, { data: enrollments }, { data: massageRequests }] = await Promise.all([
+  const [{ data: clients }, { data: leads }, { data: courses }, { data: enrollments }, { data: massageRequests }, { data: myCharges }] = await Promise.all([
     supabase.from('clients').select('status,monthly_price').eq('coach_id', profile.id),
     supabase.from('leads').select('id,converted'),
     supabase.from('courses').select('id,title,price'),
     supabase.from('course_enrollments').select('course_id'),
     supabase.from('massage_requests').select('status').eq('coach_id', profile.id),
+    profile.role !== 'owner'
+      ? supabase.from('partner_charges').select('*').eq('coach_id', profile.id).order('period',{ascending:false}).limit(6)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
@@ -1575,6 +1590,23 @@ async function renderBusinessOverview(main){
       <p class="mono" style="font-size:20px; color:var(--red-deep); margin-bottom:4px;">${euro(feeOwed)}</p>
       <p style="font-size:11px; color:var(--ink-soft);">${t('myPartnershipFeeNote',locale).replace('{rate}', euro(PARTNER_RATE_PER_CLIENT))}</p>
     </div>`));
+
+    if(myCharges && myCharges.length){
+      const histCard = el(`<div class="card" style="margin-bottom:16px;"><h3 style="margin-bottom:8px; font-size:13px;">${t('chargeHistory',locale)}</h3></div>`);
+      const table = el(`<table class="hist" style="width:100%;"><thead><tr>
+        <th>${t('period',locale)}</th><th>${locale==='el'?'Ποσό':'Amount'}</th><th>${locale==='el'?'Κατάσταση':'Status'}</th>
+      </tr></thead><tbody></tbody></table>`);
+      const tbody = table.querySelector('tbody');
+      myCharges.forEach(row=>{
+        tbody.appendChild(el(`<tr>
+          <td class="mono">${escapeHtml(row.period)}</td>
+          <td class="mono">${euro(row.amount)}</td>
+          <td>${row.paid ? `<span class="badge" style="color:#1f6b3a;">${t('paidStatus',locale)}</span>` : `<span class="badge" style="color:var(--gold);">${t('pendingStatus',locale)}</span>`}</td>
+        </tr>`));
+      });
+      histCard.appendChild(table);
+      main.appendChild(histCard);
+    }
   }
 
   main.appendChild(el(`<div class="statGrid" style="margin-bottom:16px;">
@@ -1614,14 +1646,18 @@ async function renderBusinessOverview(main){
 // ============================================================
 const PARTNER_RATE_PER_CLIENT = 5; // €/active client/month — see business-model discussion with Evangelos
 
+function currentPeriod(){ return new Date().toISOString().slice(0,7); } // 'YYYY-MM'
+
 async function renderPartnersView(main){
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
   const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+  const period = currentPeriod();
 
-  const [{ data: coachProfiles, error: coachErr }, { data: allClients }, { data: unusedCodes }] = await Promise.all([
+  const [{ data: coachProfiles, error: coachErr }, { data: allClients }, { data: unusedCodes }, { data: allCharges }] = await Promise.all([
     supabase.from('profiles').select('id,full_name,suspended,created_at').eq('role','coach').order('created_at',{ascending:true}),
     supabase.from('clients').select('coach_id,status'),
     supabase.from('coach_invite_codes').select('*').eq('used', false).order('created_at',{ascending:false}),
+    supabase.from('partner_charges').select('coach_id,period').eq('period', period),
   ]);
 
   main.innerHTML = '';
@@ -1638,6 +1674,8 @@ async function renderPartnersView(main){
     const s = c.status || 'trial';
     if(clientsByCoach[c.coach_id][s]!==undefined) clientsByCoach[c.coach_id][s]++;
   });
+
+  const recordedThisPeriod = new Set((allCharges||[]).map(c=>c.coach_id));
 
   const topBar = el(`<div style="display:flex; justify-content:flex-end; margin-bottom:12px;"><button class="btn" id="newPartnerCodeBtn">${t('newPartnerCode',locale)}</button></div>`);
   main.appendChild(topBar);
@@ -1663,6 +1701,7 @@ async function renderPartnersView(main){
     coachProfiles.forEach(cp=>{
       const counts = clientsByCoach[cp.id] || { trial:0, active:0, paused:0, cancelled:0 };
       const charge = counts.active * PARTNER_RATE_PER_CLIENT;
+      const isRecorded = recordedThisPeriod.has(cp.id);
       const tr = el(`<tr>
         <td>${escapeHtml(cp.full_name||'—')}</td>
         <td class="mono">${counts.active}</td>
@@ -1670,10 +1709,27 @@ async function renderPartnersView(main){
         <td class="mono">${counts.paused}</td>
         <td class="mono">${euro(charge)}</td>
         <td>${cp.suspended ? `<span class="badge" style="color:var(--danger);">${t('suspended',locale)}</span>` : `<span class="badge" style="color:#1f6b3a;">${t('active_',locale)}</span>`}</td>
-        <td><button class="btn secondary partnerToggleBtn" style="padding:6px 12px; font-size:11.5px;">${cp.suspended ? t('reactivate',locale) : t('suspend',locale)}</button></td>
+        <td>
+          <div style="display:flex; flex-direction:column; gap:5px; align-items:stretch;">
+            <button class="btn secondary partnerToggleBtn" style="padding:5px 10px; font-size:11px;">${cp.suspended ? t('reactivate',locale) : t('suspend',locale)}</button>
+            <button class="btn secondary partnerViewClientsBtn" style="padding:5px 10px; font-size:11px;">${t('viewClients',locale)}</button>
+            <button class="btn secondary partnerHistoryBtn" style="padding:5px 10px; font-size:11px;">${t('chargeHistory',locale)}</button>
+            <button class="btn secondary partnerRecordChargeBtn" style="padding:5px 10px; font-size:11px;" ${isRecorded ? 'disabled' : ''}>${isRecorded ? t('alreadyRecorded',locale) : t('recordCharge',locale)}</button>
+          </div>
+        </td>
       </tr>`);
       tr.querySelector('.partnerToggleBtn').addEventListener('click', async ()=>{
         await supabase.from('profiles').update({ suspended: !cp.suspended }).eq('id', cp.id);
+        renderPartnersView(main);
+      });
+      tr.querySelector('.partnerViewClientsBtn').addEventListener('click', ()=> renderPartnerClientsView(main, cp));
+      tr.querySelector('.partnerHistoryBtn').addEventListener('click', ()=> renderPartnerHistoryView(main, cp));
+      tr.querySelector('.partnerRecordChargeBtn').addEventListener('click', async ()=>{
+        if(isRecorded) return;
+        await supabase.from('partner_charges').insert({
+          coach_id: cp.id, period, active_clients: counts.active,
+          rate: PARTNER_RATE_PER_CLIENT, amount: charge, paid: false, created_by: profile.id,
+        });
         renderPartnersView(main);
       });
       tbody.appendChild(tr);
@@ -1688,6 +1744,106 @@ async function renderPartnersView(main){
     });
     main.appendChild(codesBox);
   }
+}
+
+// Read-only QC view: lets the owner see whether a partner's clients are
+// being looked after (last check-in, active program, pain flags) without
+// exposing chat/edit access — for oversight, not day-to-day management.
+async function renderPartnerClientsView(main, coachProfile){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: clients }] = await Promise.all([
+    supabase.from('clients').select('id,full_name,status,created_at').eq('coach_id', coachProfile.id).order('created_at',{ascending:false}),
+  ]);
+  const clientIds = (clients||[]).map(c=>c.id);
+  let latestCheckinByClient = {}, programByClient = {};
+  if(clientIds.length){
+    const [{ data: allCheckins }, { data: allPrograms }] = await Promise.all([
+      supabase.from('checkins').select('client_id,date,pain_level').in('client_id', clientIds).order('date',{ascending:false}),
+      supabase.from('programs').select('client_id,title').in('client_id', clientIds).eq('active', true),
+    ]);
+    (allCheckins||[]).forEach(c=>{ if(!latestCheckinByClient[c.client_id]) latestCheckinByClient[c.client_id] = c; });
+    (allPrograms||[]).forEach(p=>{ if(!programByClient[p.client_id]) programByClient[p.client_id] = p; });
+  }
+
+  main.innerHTML = '';
+  const back = el(`<a class="service-cta" style="cursor:pointer; display:inline-block; margin-bottom:12px; font-size:12.5px; font-weight:700; color:var(--red-deep);">${t('backToPartners',locale)}</a>`);
+  back.addEventListener('click', ()=> renderPartnersView(main));
+  main.appendChild(back);
+
+  main.appendChild(el(`<div style="margin-bottom:14px;"><h2 style="margin:0 0 4px;">${escapeHtml(coachProfile.full_name||'—')} — ${t('qcTitle',locale)}</h2><p style="margin:0; color:var(--ink-soft); font-size:12px;">${t('qcNote',locale)}</p></div>`));
+
+  if(!clients || !clients.length){
+    main.appendChild(el(`<p style="color:var(--ink-soft);">${t('qcNoClients',locale)}</p>`));
+    return;
+  }
+
+  const table = el(`<table class="hist" style="width:100%;"><thead><tr>
+    <th>${locale==='el'?'Ασκούμενος':'Client'}</th>
+    <th>${locale==='el'?'Κατάσταση':'Status'}</th>
+    <th>${locale==='el'?'Πρόγραμμα':'Program'}</th>
+    <th>${t('lastCheckin',locale)}</th>
+    <th>${locale==='el'?'Πόνος':'Pain'}</th>
+  </tr></thead><tbody></tbody></table>`);
+  const tbody = table.querySelector('tbody');
+  clients.forEach(c=>{
+    const lastCk = latestCheckinByClient[c.id];
+    const hasProgram = !!programByClient[c.id];
+    const painFlag = lastCk && lastCk.pain_level > 3;
+    tbody.appendChild(el(`<tr>
+      <td>${escapeHtml(c.full_name)}</td>
+      <td>${escapeHtml(c.status||'trial')}</td>
+      <td>${hasProgram ? '✓' : `<span style="color:var(--danger);">—</span>`}</td>
+      <td>${lastCk ? new Date(lastCk.date).toLocaleDateString(locale==='el'?'el-GR':'en-GB') : t('never_',locale)}</td>
+      <td>${painFlag ? `<span style="color:var(--danger);">⚠ ${lastCk.pain_level}/10</span>` : '—'}</td>
+    </tr>`));
+  });
+  main.appendChild(table);
+}
+
+// Billing history for one partner — a durable ledger of what was recorded
+// each month, separate from the live "current month" number shown in the
+// partners table, plus a manual paid/pending flag (there is no automated
+// payment collection anywhere in this app, so this is a record, not a charge).
+async function renderPartnerHistoryView(main, coachProfile){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+  const { data: charges } = await supabase.from('partner_charges').select('*').eq('coach_id', coachProfile.id).order('period',{ascending:false});
+
+  main.innerHTML = '';
+  const back = el(`<a class="service-cta" style="cursor:pointer; display:inline-block; margin-bottom:12px; font-size:12.5px; font-weight:700; color:var(--red-deep);">${t('backToPartners',locale)}</a>`);
+  back.addEventListener('click', ()=> renderPartnersView(main));
+  main.appendChild(back);
+
+  main.appendChild(el(`<h2 style="margin:0 0 14px;">${escapeHtml(coachProfile.full_name||'—')} — ${t('chargeHistory',locale)}</h2>`));
+
+  if(!charges || !charges.length){
+    main.appendChild(el(`<p style="color:var(--ink-soft);">${t('noChargeHistory',locale)}</p>`));
+    return;
+  }
+
+  const table = el(`<table class="hist" style="width:100%;"><thead><tr>
+    <th>${t('period',locale)}</th>
+    <th>${locale==='el'?'Ενεργοί πελάτες':'Active clients'}</th>
+    <th>${locale==='el'?'Ποσό':'Amount'}</th>
+    <th>${locale==='el'?'Κατάσταση':'Status'}</th>
+    <th></th>
+  </tr></thead><tbody></tbody></table>`);
+  const tbody = table.querySelector('tbody');
+  charges.forEach(row=>{
+    const tr = el(`<tr>
+      <td class="mono">${escapeHtml(row.period)}</td>
+      <td class="mono">${row.active_clients}</td>
+      <td class="mono">${euro(row.amount)}</td>
+      <td>${row.paid ? `<span class="badge" style="color:#1f6b3a;">${t('paidStatus',locale)}</span>` : `<span class="badge" style="color:var(--gold);">${t('pendingStatus',locale)}</span>`}</td>
+      <td><button class="btn secondary paidToggleBtn" style="padding:5px 10px; font-size:11px;">${row.paid ? t('markUnpaid',locale) : t('markPaid',locale)}</button></td>
+    </tr>`);
+    tr.querySelector('.paidToggleBtn').addEventListener('click', async ()=>{
+      await supabase.from('partner_charges').update({ paid: !row.paid }).eq('id', row.id);
+      renderPartnerHistoryView(main, coachProfile);
+    });
+    tbody.appendChild(tr);
+  });
+  main.appendChild(table);
 }
 
 let _exerciseDbCache = null;
