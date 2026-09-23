@@ -339,6 +339,15 @@ const STR = {
   viewClients:{el:'Δες πελάτες (μόνο ανάγνωση)', en:'View clients (read-only)'},
   accountSuspended:{el:'Ο λογαριασμός συνεργάτη σου έχει ανασταλεί προσωρινά. Επικοινώνησε με τον ιδιοκτήτη της πλατφόρμας.', en:'Your partner account has been temporarily suspended. Please contact the platform owner.'},
   noPartners:{el:'Δεν υπάρχουν ακόμα συνεργάτες.', en:'No partners yet.'},
+  partnerWelcomeTitle:{el:'👋 Καλωσόρισες ως συνεργάτης', en:'👋 Welcome as a partner'},
+  partnerWelcomeBody:{el:'Έχεις πρόσβαση στο δικό σου, ξεχωριστό dashboard — οι πελάτες σου δεν είναι ορατοί σε κανέναν άλλον συνεργάτη. Μόνο ο ιδιοκτήτης της πλατφόρμας βλέπει συγκεντρωτικά στοιχεία, για λόγους ποιοτικού ελέγχου.', en:"You have your own, separate dashboard — your clients aren't visible to any other partner. Only the platform owner sees aggregate figures, for quality-control purposes."},
+  partnerWelcomeBilling:{el:'Χρέωση συνεργασίας: {rate} ανά ενεργό πελάτη / μήνα. Υπολογίζεται αυτόματα εδώ· η πληρωμή διευθετείται απευθείας με τον ιδιοκτήτη (δεν υπάρχει αυτόματη χρέωση κάρτας μέσω της πλατφόρμας).', en:'Partnership fee: {rate} per active client / month. It is calculated automatically here; payment is arranged directly with the owner (there is no automatic card charge through the platform).'},
+  partnerWelcomeStep1:{el:'Το προφίλ σου είναι έτοιμο ✓', en:'Your profile is ready ✓'},
+  partnerWelcomeStep2:{el:'Πρόσθεσε τον πρώτο σου ασκούμενο παρακάτω για να πάρεις κωδικό πρόσκλησης', en:'Add your first client below to get an invite code'},
+  partnerWelcomeStep3:{el:'Ένας πελάτης μετράει στη χρέωση μόνο όταν γίνει "Ενεργός" (όχι στη δοκιμή)', en:'A client only counts toward the fee once they become "Active" (not while on trial)'},
+  partnerWelcomeCta:{el:'Πάμε →', en:"Let's go →"},
+  myPartnershipFee:{el:'💶 Χρέωση συνεργασίας αυτόν τον μήνα', en:'💶 This month\'s partnership fee'},
+  myPartnershipFeeNote:{el:'Υπολογισμός: ενεργοί πελάτες × {rate}. Η πληρωμή γίνεται απευθείας με τον ιδιοκτήτη, εκτός πλατφόρμας.', en:'Calculation: active clients × {rate}. Payment is settled directly with the owner, outside the platform.'},
   clients:{el:'Ασκούμενοι', en:'Clients'}, dashboard:{el:'Πίνακας', en:'Dashboard'}, exerciseLibrary:{el:'Βιβλιοθήκη ασκήσεων', en:'Exercise library'},
   newClient:{el:'+ Νέος ασκούμενος', en:'+ New client'}, newExercise:{el:'+ Νέα άσκηση', en:'+ New exercise'},
   program:{el:'Πρόγραμμα', en:'Program'}, liveSession:{el:'Ζωντανή προπόνηση', en:'Live session'},
@@ -853,6 +862,15 @@ async function renderNotifPanel(anchorEl, isCoach){
     (leads||[]).forEach(l=>items.push({ t: l.created_at, text: `📥 ${l.full_name} (${locale==='el'?'νέο ενδιαφέρον':'new lead'})` }));
     (msgs||[]).forEach(m=>items.push({ t: m.created_at, text: `💬 ${m.clients?.full_name||''}: ${(m.body||'').slice(0,40)}` }));
     (slots||[]).forEach(s=>items.push({ t: s.created_at, text: `🗓️ ${s.clients?.full_name||''} · ${new Date(s.start_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}` }));
+    if(profile.role === 'coach'){
+      const { data: ownClients } = await supabase.from('clients').select('status').eq('coach_id', profile.id);
+      const activeCount = (ownClients||[]).filter(c=>(c.status||'trial')==='active').length;
+      const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+      const feeText = locale==='el'
+        ? `💶 Τρέχουσα εκτίμηση χρέωσης συνεργασίας: ${activeCount} × ${euro(PARTNER_RATE_PER_CLIENT)} = ${euro(activeCount*PARTNER_RATE_PER_CLIENT)}`
+        : `💶 Current partnership fee estimate: ${activeCount} × ${euro(PARTNER_RATE_PER_CLIENT)} = ${euro(activeCount*PARTNER_RATE_PER_CLIENT)}`;
+      items.push({ t: new Date().toISOString(), text: feeText });
+    }
   } else {
     const { data: msgs } = await supabase.from('messages').select('body,created_at').eq('sender_role','coach').order('created_at',{ascending:false}).limit(8);
     (msgs||[]).forEach(m=>items.push({ t: m.created_at, text: `💬 ${(m.body||'').slice(0,60)}` }));
@@ -1550,6 +1568,15 @@ async function renderBusinessOverview(main){
   main.innerHTML = '';
   main.appendChild(el(`<div style="margin-bottom:16px;"><h2 style="margin:0 0 4px;">📊 ${locale==='el'?'Επιχείρηση — πραγματικά στοιχεία':'Business — real figures'}</h2><p style="margin:0; color:var(--ink-soft); font-size:12px;">${locale==='el'?'Ενοποιημένη εικόνα των 3 ενεργών πυλώνων, από πραγματικά δεδομένα (όχι πρόβλεψη). Για σενάρια/what-if, δες την Πρόβλεψη.':'A consolidated view of the 3 active pillars, from real data (not a projection). For what-if scenarios, see Projection.'}</p></div>`));
 
+  if(profile.role !== 'owner'){
+    const feeOwed = activeClients.length * PARTNER_RATE_PER_CLIENT;
+    main.appendChild(el(`<div class="card" style="margin-bottom:16px; border-left-color:var(--gold);">
+      <h3 style="margin-bottom:6px; font-size:14px;">${t('myPartnershipFee',locale)}</h3>
+      <p class="mono" style="font-size:20px; color:var(--red-deep); margin-bottom:4px;">${euro(feeOwed)}</p>
+      <p style="font-size:11px; color:var(--ink-soft);">${t('myPartnershipFeeNote',locale).replace('{rate}', euro(PARTNER_RATE_PER_CLIENT))}</p>
+    </div>`));
+  }
+
   main.appendChild(el(`<div class="statGrid" style="margin-bottom:16px;">
     <div class="statCard"><div class="num mono">${euro(mrr)}</div><div class="lbl">${locale==='el'?'MRR (Online coaching)':'MRR (Online coaching)'}</div></div>
     <div class="statCard"><div class="num mono">${activeClients.length}</div><div class="lbl">${locale==='el'?'Ενεργοί πελάτες':'Active clients'}</div></div>
@@ -2143,6 +2170,29 @@ async function renderCoachDashboard(main){
 
   main.innerHTML = '';
   main.appendChild(el(`<h2 style="margin-bottom:14px;">${t('clients',locale)}</h2>`));
+
+  // First-ever visit for a partner coach (no clients, no invite codes issued yet):
+  // orient them before the empty list below, rather than dropping them on a blank screen.
+  if(profile.role !== 'owner' && !clients?.length && !invites?.length){
+    const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+    const rateStr = `${euro(PARTNER_RATE_PER_CLIENT)}`;
+    const welcome = el(`<div class="card gold" style="margin-bottom:16px;">
+      <h3 style="margin-bottom:8px; font-size:15px;">${t('partnerWelcomeTitle',locale)}</h3>
+      <p style="font-size:12.5px; margin-bottom:10px;">${t('partnerWelcomeBody',locale)}</p>
+      <p style="font-size:12.5px; margin-bottom:12px; padding:8px 10px; background:rgba(0,0,0,0.04); border-radius:6px;">💶 ${t('partnerWelcomeBilling',locale).replace('{rate}', rateStr)}</p>
+      <ol style="font-size:12.5px; padding-left:18px; margin-bottom:12px; line-height:1.7;">
+        <li>${t('partnerWelcomeStep1',locale)}</li>
+        <li>${t('partnerWelcomeStep2',locale)}</li>
+        <li>${t('partnerWelcomeStep3',locale)}</li>
+      </ol>
+      <button class="btn" id="partnerWelcomeCtaBtn">${t('partnerWelcomeCta',locale)}</button>
+    </div>`);
+    welcome.querySelector('#partnerWelcomeCtaBtn').addEventListener('click', ()=>{
+      const input = document.querySelector('.newClientName');
+      if(input){ input.scrollIntoView({behavior:'smooth', block:'center'}); input.focus(); }
+    });
+    main.appendChild(welcome);
+  }
 
   const alertsByClient = {};
   (clients||[]).forEach(c=>{ alertsByClient[c.id] = computeAlerts(c); });
