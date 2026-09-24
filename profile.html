@@ -94,8 +94,16 @@
         const lang = btn.dataset.lang;
         document.body.classList.toggle('lang-en', lang==='en');
         document.querySelectorAll('.langBtn').forEach(b=>b.classList.toggle('active', b.dataset.lang===lang));
+        try{ localStorage.setItem('hfp_lang', lang); }catch(e){}
       });
     });
+    try{
+      const savedLang = localStorage.getItem('hfp_lang');
+      if(savedLang==='en'){
+        document.body.classList.add('lang-en');
+        document.querySelectorAll('.langBtn').forEach(b=>b.classList.toggle('active', b.dataset.lang==='en'));
+      }
+    }catch(e){}
   </script>
 </body>
 </html>
