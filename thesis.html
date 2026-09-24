@@ -299,7 +299,7 @@ I confirm that this is my original work and that no substantial part of this ass
     </div>
 
     <div data-lang="gr">
-      <h1>Integrating Physiotherapy in the Rehabilitation of Wellness and Tourism Professionals</h1>
+      <h1>Ενσωμάτωση της Φυσικοθεραπείας στην Αποκατάσταση Επαγγελματιών Ευεξίας και Τουρισμού</h1>
       <div class="subtitle">Ακαδημαϊκή εργασία · Ευάγγελος Βούλγαρης</div>
       <div class="copyright-banner">© 2026 Ευάγγελος Βούλγαρης. Όλα τα δικαιώματα διατηρούνται. Το παρόν κείμενο αποτελεί πρωτότυπη ακαδημαϊκή εργασία του συγγραφέα (ελληνική μετάφραση του πρωτότυπου αγγλικού κειμένου). Απαγορεύεται η αναπαραγωγή, αναδημοσίευση, ή χρήση, εν όλω ή εν μέρει, χωρίς γραπτή άδεια του συγγραφέα.</div>
       <div class="cover"><p><strong>Όνομα Φοιτητή:</strong> Ευάγγελος Βούλγαρης</p>
@@ -436,8 +436,8 @@ I confirm that this is my original work and that no substantial part of this ass
     });
     const btnEn = document.getElementById('btnEn');
     const btnGr = document.getElementById('btnGr');
-    btnEn.addEventListener('click', () => { document.body.classList.remove('lang-gr'); btnEn.classList.add('active'); btnGr.classList.remove('active'); });
-    btnGr.addEventListener('click', () => { document.body.classList.add('lang-gr'); btnGr.classList.add('active'); btnEn.classList.remove('active'); });
+    btnEn.addEventListener('click', () => { document.body.classList.remove('lang-gr'); btnEn.classList.add('active'); btnGr.classList.remove('active'); document.title = 'Integrating Physiotherapy in Wellness & Tourism · Evangelos Voulgaris'; });
+    btnGr.addEventListener('click', () => { document.body.classList.add('lang-gr'); btnGr.classList.add('active'); btnEn.classList.remove('active'); document.title = 'Ενσωμάτωση Φυσικοθεραπείας στην Ευεξία & Τουρισμό · Ευάγγελος Βούλγαρης'; });
   </script>
 </body>
 </html>
