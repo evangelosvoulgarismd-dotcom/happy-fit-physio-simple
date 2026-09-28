@@ -4026,8 +4026,93 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
 }
 
-function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson }){
+// Gamified progress widget — Level/XP/streak/badges, computed live from real logged
+// activity (sets logged, check-ins submitted, daily readiness filled in). No separate
+// gamification table: nothing here can say more than the client actually did.
+function computeGamification({ sessionLogDates, checkins, readiness }){
+  const setsLogged = (sessionLogDates||[]).length;
+  const checkinsCount = (checkins||[]).length;
+  const readinessCount = (readiness||[]).length;
+
+  // XP: small, steady rewards for the actions that already drive real coaching outcomes
+  // (logging sets, checking in weekly, reporting daily readiness) — nothing invented.
+  const totalXP = setsLogged*10 + checkinsCount*30 + readinessCount*5;
+
+  // Level thresholds grow each level (triangular numbers), so leveling up takes a little
+  // longer each time — cumulative XP to reach level L is 100*(L-1)*L/2.
+  let level = 1;
+  while(totalXP >= 100*level*(level+1)/2) level++;
+  const xpAtLevelStart = 100*(level-1)*level/2;
+  const xpForThisLevel = 100*level;
+  const xpIntoLevel = totalXP - xpAtLevelStart;
+  const pct = Math.min(100, Math.round((xpIntoLevel/xpForThisLevel)*100));
+
+  const ranks = locale==='el'
+    ? [[1,'Αρχάριος'],[3,'Μαθητευόμενος'],[6,'Ικανός'],[10,'Προχωρημένος'],[15,'Elite'],[21,'Πρωταθλητής']]
+    : [[1,'Rookie'],[3,'Apprentice'],[6,'Skilled'],[10,'Advanced'],[15,'Elite'],[21,'Champion']];
+  let rankLabel = ranks[0][1];
+  ranks.forEach(([minLevel,label])=>{ if(level>=minLevel) rankLabel = label; });
+
+  // Streak: consecutive calendar days (ending today or yesterday, so today not being
+  // logged yet doesn't zero out an ongoing streak) with a session log or a readiness log.
+  const activeDates = new Set([
+    ...(sessionLogDates||[]).map(r=>r.session_date),
+    ...(readiness||[]).map(r=>r.date),
+  ]);
+  let streak = 0;
+  let cursor = new Date();
+  const todayStr = cursor.toISOString().slice(0,10);
+  if(!activeDates.has(todayStr)) cursor.setDate(cursor.getDate()-1);
+  while(activeDates.has(cursor.toISOString().slice(0,10))){
+    streak++;
+    cursor.setDate(cursor.getDate()-1);
+  }
+
+  const badgeDefs = [
+    { id:'first_set', ico:'🥇', label: locale==='el'?'Πρώτο σετ':'First set', earned: setsLogged>=1 },
+    { id:'first_checkin', ico:'📝', label: locale==='el'?'Πρώτο check-in':'First check-in', earned: checkinsCount>=1 },
+    { id:'streak7', ico:'🔥', label: locale==='el'?'7 μέρες σερί':'7-day streak', earned: streak>=7 },
+    { id:'sets50', ico:'💯', label: locale==='el'?'50 σετ':'50 sets', earned: setsLogged>=50 },
+    { id:'active30', ico:'📅', label: locale==='el'?'30 ενεργές μέρες':'30 active days', earned: activeDates.size>=30 },
+  ];
+
+  return { level, rankLabel, xpIntoLevel, xpForThisLevel, pct, streak, badgeDefs };
+}
+
+function renderLevelCard({ sessionLogDates, checkins, readiness }){
+  const g = computeGamification({ sessionLogDates, checkins, readiness });
+  const card = el(`<div class="card" style="margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+        <span style="font-size:24px; flex-shrink:0;">🏅</span>
+        <div style="min-width:0;">
+          <div style="font-weight:800; font-size:14px;">${escapeHtml(g.rankLabel)} · ${locale==='el'?'Επίπεδο':'Level'} ${g.level}</div>
+          <div style="font-size:11px; color:var(--ink-soft);" class="mono">${g.xpIntoLevel} / ${g.xpForThisLevel} XP</div>
+        </div>
+      </div>
+      ${g.streak>0 ? `<div style="text-align:center; flex-shrink:0;">
+        <div style="font-size:20px; line-height:1;">🔥</div>
+        <div style="font-size:11px; font-weight:700; white-space:nowrap;">${g.streak} ${locale==='el'?(g.streak===1?'μέρα':'μέρες'):(g.streak===1?'day':'days')}</div>
+      </div>` : ''}
+    </div>
+    <div style="height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:10px;">
+      <div style="height:100%; width:${g.pct}%; background:var(--red); border-radius:4px;"></div>
+    </div>
+    <div class="badgeRow" style="display:flex; gap:10px; margin-top:12px; overflow-x:auto; padding-bottom:2px;"></div>
+  </div>`);
+  const badgeRow = card.querySelector('.badgeRow');
+  g.badgeDefs.forEach(b=>{
+    badgeRow.appendChild(el(`<div title="${escapeHtml(b.label)}" style="display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:56px;">
+      <div style="width:36px; height:36px; border-radius:50%; background:${b.earned?'var(--gold)':'var(--line)'}; display:flex; align-items:center; justify-content:center; font-size:17px; opacity:${b.earned?'1':'.4'};">${b.ico}</div>
+      <span style="font-size:9px; color:${b.earned?'var(--ink)':'var(--ink-soft)'}; text-align:center; margin-top:3px; line-height:1.2; opacity:${b.earned?'1':'.6'};">${escapeHtml(b.label)}</span>
+    </div>`));
+  });
+  return card;
+}
+
+function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson }){
   const wrap = el('<div></div>');
+  wrap.appendChild(renderLevelCard({ sessionLogDates, checkins, readiness }));
 
   // Referral flag — shown only when today's own data crosses a clear threshold. Not a diagnosis.
   if(todayReadiness && Number(todayReadiness.pain) >= 7){
@@ -4433,7 +4518,7 @@ async function renderClientDashboard(main){
   let tab = renderClientDashboard._tab || 'today';
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
   const today = new Date().toISOString().slice(0,10);
-  const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }, { data: todayReadiness }, { data: lastMsg }, { data: intakeRow }, { data: lastReassess }, { data: nutritionTarget }, { data: todayNutritionLogs }, { data: courseEnrollments }] = await Promise.all([
+  const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }, { data: todayReadiness }, { data: lastMsg }, { data: intakeRow }, { data: lastReassess }, { data: nutritionTarget }, { data: todayNutritionLogs }, { data: courseEnrollments }, { data: sessionLogDates }] = await Promise.all([
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
@@ -4445,6 +4530,9 @@ async function renderClientDashboard(main){
     supabase.from('nutrition_targets').select('daily_calories').eq('client_id', profile.id).maybeSingle(),
     supabase.from('nutrition_logs').select('calories').eq('client_id', profile.id).eq('log_date', today),
     supabase.from('course_enrollments').select('id, course_id, courses(id,title)').eq('email', session?.user?.email || ''),
+    // Lightweight (session_date only) — feeds the Level/Streak widget on the Today tab.
+    // Real logged sets, not a separate gamification table: no schema change needed.
+    supabase.from('session_logs').select('session_date').eq('client_id', profile.id),
   ]);
   const program = programs?.[0] || null;
   let openSlots = [];
@@ -4524,7 +4612,7 @@ async function renderClientDashboard(main){
     accountMenu.appendChild(logoutRow);
     body.appendChild(accountMenu);
   } else if(tab==='today'){
-    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson });
+    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson });
   } else if(tab==='intake'){
     const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
     renderIntakeForm(body, profile, intakeRow?.data || null, false);
