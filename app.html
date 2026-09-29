@@ -4621,7 +4621,9 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       <div class="whyPanel" style="display:none; background:#f6efe4; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
+        ${ex.execution_steps ? `<p style="margin-bottom:6px; white-space:pre-line;"><strong>${t('executionSteps',locale)}:</strong> ${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
+        ${ex.common_mistakes ? `<p style="margin-bottom:6px; color:var(--danger);"><strong>${t('commonMistakes',locale)}:</strong> ${escapeHtml(ex.common_mistakes)}</p>` : ''}
         ${(ex.body_region || ex.primary_muscles || ex.goal_tags) ? `<div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:6px;">
           ${ex.body_region ? `<span class="badge">📍 ${escapeHtml(exLabel(EX_BODY_REGIONS, ex.body_region))}</span>` : ''}
           ${ex.primary_muscles ? `<span class="badge">💪 ${escapeHtml(ex.primary_muscles)}</span>` : ''}
@@ -4629,14 +4631,14 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         </div>` : ''}
         ${ex.regression_text ? `<p style="margin-bottom:4px;">⬇ <strong>${locale==='el'?'Πιο εύκολα':'Easier'}:</strong> ${escapeHtml(ex.regression_text)}</p>` : ''}
         ${ex.progression_text ? `<p style="margin-bottom:6px;">⬆ <strong>${locale==='el'?'Πιο δύσκολα':'Harder'}:</strong> ${escapeHtml(ex.progression_text)}</p>` : ''}
-        ${!why && !ex.technique_cues && !ex.video_url && !ex.gif_url && !ex.body_region && !ex.primary_muscles && !ex.goal_tags && !ex.regression_text && !ex.progression_text ? `<span style="color:var(--ink-soft);">—</span>` : ''}
+        ${!why && !ex.execution_steps && !ex.technique_cues && !ex.common_mistakes && !ex.video_url && !ex.gif_url && !ex.body_region && !ex.primary_muscles && !ex.goal_tags && !ex.regression_text && !ex.progression_text ? `<span style="color:var(--ink-soft);">—</span>` : ''}
       </div>
     </div>`);
     card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
       const p = card.querySelector('.whyPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
     });
-    attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, technique_cues: ex.technique_cues, body_region: ex.body_region, primary_muscles: ex.primary_muscles, goal_tags: ex.goal_tags, regression_text: ex.regression_text, progression_text: ex.progression_text, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title });
+    attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, execution_steps: ex.execution_steps, technique_cues: ex.technique_cues, common_mistakes: ex.common_mistakes, body_region: ex.body_region, primary_muscles: ex.primary_muscles, goal_tags: ex.goal_tags, regression_text: ex.regression_text, progression_text: ex.progression_text, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title });
     const setsCount = pe.target_sets || 3;
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
