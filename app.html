@@ -1893,6 +1893,37 @@ function attachAskAssistant(container, contextType, contextData){
   input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
 }
 
+// Proactive AI Coach summary — same ask-assistant edge function as attachAskAssistant, but
+// called automatically with a fixed question instead of waiting for the client to type one,
+// so opening Progress actually reads like a coach's comment rather than a Q&A box. Uses only
+// the aggregate numbers already shown elsewhere on the tab (mirror trends, level, streak) —
+// nothing new is sent, and the edge function's system prompt already refuses diagnosis and
+// redirects anything concerning back to the coach.
+function renderAiCoachSummaryCard(contextData){
+  const card = el(`<div class="card" style="margin-bottom:16px;">
+    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🤖 ${locale==='el'?'Σύνοψη από τον βοηθό':'Assistant summary'}</h3>
+    <p class="aiSummaryText" style="font-size:12.5px; color:var(--ink);">${locale==='el'?'Φορτώνει…':'Loading…'}</p>
+  </div>`);
+  (async ()=>{
+    try{
+      const { data, error } = await supabase.functions.invoke('ask-assistant', {
+        body: {
+          context_type: 'progress_summary',
+          context_data: contextData,
+          question: locale==='el'
+            ? 'Δώσε μια σύντομη σύνοψη της προόδου μου σε 2-3 προτάσεις, με βάση αυτά τα δεδομένα.'
+            : 'Give a short 2-3 sentence summary of my progress based on this data.',
+        },
+      });
+      const text = (!error && data?.answer) ? data.answer : (locale==='el' ? 'Δεν μπόρεσα να ετοιμάσω σύνοψη τώρα.' : "Couldn't prepare a summary right now.");
+      card.querySelector('.aiSummaryText').textContent = text;
+    }catch(err){
+      card.querySelector('.aiSummaryText').textContent = locale==='el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.';
+    }
+  })();
+  return card;
+}
+
 function attachGifPicker(container, gifInput){
   const wrap = el(`<div style="margin-top:6px;">
     <button class="btn secondary gifSearchToggle" type="button" style="padding:5px 10px; font-size:11px;">🔍 ${locale==='el'?'Βρες GIF (ExerciseDB)':'Find GIF (ExerciseDB)'}</button>
@@ -4993,6 +5024,13 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   }
   if(anyMirrorData) attachAskAssistant(mirrorCard, 'progress', { indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })) });
   body.appendChild(mirrorCard);
+
+  if(anyMirrorData){
+    body.appendChild(renderAiCoachSummaryCard({
+      indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })),
+      level: gamification.level, rank: gamification.rankLabel, streak: gamification.streak,
+    }));
+  }
 
   // PERSONAL RECORDS — every exercise's all-time best (load × reps), from the uncapped
   // history query above, so nothing older than the last 30 logged sets gets missed. Same
