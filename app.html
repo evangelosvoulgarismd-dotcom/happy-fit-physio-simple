@@ -1893,19 +1893,41 @@ function attachAskAssistant(container, contextType, contextData){
   input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
 }
 
+// Tiny deterministic string hash (djb2), used only to detect "did the summary's
+// input data change since last time" — not for security, just cache invalidation.
+function _hashStr(s){
+  let h = 5381;
+  for(let i=0;i<s.length;i++){ h = ((h*33) ^ s.charCodeAt(i)) >>> 0; }
+  return h.toString(36);
+}
+
 // Proactive AI Coach summary — same ask-assistant edge function as attachAskAssistant, but
 // called automatically with a fixed question instead of waiting for the client to type one,
 // so opening Progress actually reads like a coach's comment rather than a Q&A box. Uses only
 // the aggregate numbers already shown elsewhere on the tab (mirror trends, level, streak) —
 // nothing new is sent, and the edge function's system prompt already refuses diagnosis and
 // redirects anything concerning back to the coach.
-function renderAiCoachSummaryCard(contextData){
+//
+// Cached in ai_coach_summaries, keyed by a hash of contextData: opening this tab repeatedly
+// with unchanged data (the common case — a client checking in daily) reads the cached text
+// instantly with no Gemini call. A summary is only regenerated when the underlying numbers
+// (mirror indicators, level, streak) actually changed since the last time it was computed.
+function renderAiCoachSummaryCard(contextData, clientId){
   const card = el(`<div class="card" style="margin-bottom:16px;">
     <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🤖 ${locale==='el'?'Σύνοψη από τον βοηθό':'Assistant summary'}</h3>
     <p class="aiSummaryText" style="font-size:12.5px; color:var(--ink);">${locale==='el'?'Φορτώνει…':'Loading…'}</p>
   </div>`);
+  const dataHash = _hashStr(JSON.stringify(contextData));
   (async ()=>{
     try{
+      if(clientId){
+        const { data: cached } = await supabase.from('ai_coach_summaries')
+          .select('data_hash, summary_text').eq('client_id', clientId).eq('context_type', 'progress_summary').maybeSingle();
+        if(cached && cached.data_hash === dataHash){
+          card.querySelector('.aiSummaryText').textContent = cached.summary_text;
+          return;
+        }
+      }
       const { data, error } = await supabase.functions.invoke('ask-assistant', {
         body: {
           context_type: 'progress_summary',
@@ -1917,6 +1939,11 @@ function renderAiCoachSummaryCard(contextData){
       });
       const text = (!error && data?.answer) ? data.answer : (locale==='el' ? 'Δεν μπόρεσα να ετοιμάσω σύνοψη τώρα.' : "Couldn't prepare a summary right now.");
       card.querySelector('.aiSummaryText').textContent = text;
+      if(!error && data?.answer && clientId){
+        supabase.from('ai_coach_summaries').upsert({
+          client_id: clientId, context_type: 'progress_summary', data_hash: dataHash, summary_text: text, created_at: new Date().toISOString(),
+        }, { onConflict: 'client_id,context_type' }).then(()=>{});
+      }
     }catch(err){
       card.querySelector('.aiSummaryText').textContent = locale==='el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.';
     }
@@ -5033,7 +5060,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     body.appendChild(renderAiCoachSummaryCard({
       indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })),
       level: gamification.level, rank: gamification.rankLabel, streak: gamification.streak,
-    }));
+    }, clientId));
   }
 
   // PERSONAL RECORDS — every exercise's all-time best (load × reps), from the uncapped
