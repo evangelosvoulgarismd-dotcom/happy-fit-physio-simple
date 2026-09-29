@@ -2915,6 +2915,7 @@ async function renderClientDetail(main, forceRefresh){
     <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
     <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
+    <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">📈 ${locale==='el'?'Πρόοδος':'Progress'}</button>
     <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
     <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
     <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
@@ -2937,6 +2938,7 @@ async function renderClientDetail(main, forceRefresh){
     else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
   }
   else if(tab==='messages') await renderMessagesTab(body, client, 'coach');
+  else if(tab==='progress') await renderProgressTab(body, client.id, checkins, readiness);
   else if(tab==='reassess') await renderReassessmentTab(body, client, true);
   else if(tab==='photos') await renderPhotosTab(body, client);
   else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main, true));
