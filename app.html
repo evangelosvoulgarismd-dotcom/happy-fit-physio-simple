@@ -4160,10 +4160,12 @@ function computeGamification({ sessionLogDates, checkins, readiness }){
 
   // Rank tiers use the brand's own palette (grey → gold → red → deep red) rather than
   // generic bronze/silver/platinum, so the bodygraph stays visually part of the same brand.
+  // Tier names and framing follow the standing product blueprint: an achievement/progress
+  // ladder, not a competitive ranking — no "Champion"/"beat everyone else" language anywhere.
   const RANK_THRESHOLDS = [1,3,6,10,15,21];
   const RANK_LABELS = locale==='el'
-    ? ['Αρχάριος','Μαθητευόμενος','Ικανός','Προχωρημένος','Elite','Πρωταθλητής']
-    : ['Rookie','Apprentice','Skilled','Advanced','Elite','Champion'];
+    ? ['Βάση','Ανάπτυξη','Προπονημένος','Προχωρημένος','Απόδοση','Elite']
+    : ['Foundation','Developing','Trained','Advanced','Performance','Elite'];
   const RANK_COLORS = ['var(--line)', '#d9b878', 'var(--gold)', 'var(--red)', 'var(--red-deep)', 'var(--red-deep)'];
   let rankIndex = 0;
   RANK_THRESHOLDS.forEach((minLevel,i)=>{ if(level>=minLevel) rankIndex = i; });
@@ -4244,7 +4246,8 @@ function renderLevelCard({ sessionLogDates, checkins, readiness }){
     <div style="height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:10px;">
       <div style="height:100%; width:${g.pct}%; background:var(--red); border-radius:4px;"></div>
     </div>
-    <div class="badgeRow" style="display:flex; gap:10px; margin-top:12px; overflow-x:auto; padding-bottom:2px;"></div>
+    <p style="font-size:10.5px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Ο στόχος είναι να ξεπερνάς τον εαυτό σου, όχι τους άλλους.':'The goal is to beat your own previous self, not anyone else.'}</p>
+    <div class="badgeRow" style="display:flex; gap:10px; margin-top:8px; overflow-x:auto; padding-bottom:2px;"></div>
   </div>`);
   const badgeRow = card.querySelector('.badgeRow');
   g.badgeDefs.forEach(b=>{
