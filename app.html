@@ -5153,14 +5153,19 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     const exerciseOptions = [];
     byExercise.forEach((v, exId)=>{
       const byDate = new Map();
+      const volByDate = new Map();
       v.rows.forEach(r=>{
         const existing = byDate.get(r.date);
         if(!existing || r.load_kg > existing.load_kg || (r.load_kg===existing.load_kg && (r.reps||0)>(existing.reps||0))){
           byDate.set(r.date, r);
         }
+        // Volume = load × reps, summed across every set logged that day (not just the best
+        // set) — the standard "total work done" metric, separate from the peak-load line.
+        if(r.reps!=null) volByDate.set(r.date, (volByDate.get(r.date)||0) + r.load_kg*r.reps);
       });
       const trend = [...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
-      if(trend.length >= 2) exerciseOptions.push({ id: exId, name: v.name, trend });
+      const volumeTrend = [...volByDate.entries()].map(([date,volume_kg])=>({date, volume_kg})).sort((a,b)=>a.date.localeCompare(b.date));
+      if(trend.length >= 2) exerciseOptions.push({ id: exId, name: v.name, trend, volumeTrend });
     });
     exerciseOptions.sort((a,b)=> b.trend.length - a.trend.length);
 
@@ -5170,18 +5175,40 @@ async function renderProgressTab(body, clientId, checkins, readiness){
         <select class="perfExerciseSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px; margin-bottom:8px; width:100%;">
           ${exerciseOptions.map(o=>`<option value="${escapeHtml(String(o.id))}">${escapeHtml(o.name)} (${o.trend.length} ${locale==='el'?'ημέρες':'days'})</option>`).join('')}
         </select>
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <button class="btn perfMetricBtn" type="button" data-m="load" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Φορτίο':'Load'}</button>
+          <button class="btn secondary perfMetricBtn" type="button" data-m="volume" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Όγκος':'Volume'}</button>
+        </div>
         <div class="perfChartHolder"></div>
       </div>`);
       detailPanels.performance.appendChild(chartCard);
       const holder = chartCard.querySelector('.perfChartHolder');
+      let currentMetric = 'load';
       function drawExerciseChart(exId){
         holder.innerHTML = '';
         const opt = exerciseOptions.find(o=>String(o.id)===String(exId));
         if(!opt) return;
-        renderTrendChart(holder, `${opt.name} — ${locale==='el'?'φορτίο (kg)':'load (kg)'}`, opt.trend, 'date', [
-          { key:'load_kg', label: locale==='el'?'Φορτίο (kg)':'Load (kg)' },
-        ]);
+        if(currentMetric==='volume'){
+          if(opt.volumeTrend.length < 2){
+            holder.appendChild(el(`<p style="font-size:11.5px; color:var(--ink-soft);">${locale==='el'?'Χρειάζονται τουλάχιστον 2 ημέρες δεδομένων όγκου.':'Needs at least 2 days of volume data.'}</p>`));
+            return;
+          }
+          renderTrendChart(holder, `${opt.name} — ${locale==='el'?'όγκος (kg × επαναλήψεις)':'volume (kg × reps)'}`, opt.volumeTrend, 'date', [
+            { key:'volume_kg', label: locale==='el'?'Όγκος':'Volume' },
+          ]);
+        } else {
+          renderTrendChart(holder, `${opt.name} — ${locale==='el'?'φορτίο (kg)':'load (kg)'}`, opt.trend, 'date', [
+            { key:'load_kg', label: locale==='el'?'Φορτίο (kg)':'Load (kg)' },
+          ]);
+        }
       }
+      chartCard.querySelectorAll('.perfMetricBtn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          currentMetric = btn.dataset.m;
+          chartCard.querySelectorAll('.perfMetricBtn').forEach(b=>b.classList.toggle('secondary', b!==btn));
+          drawExerciseChart(chartCard.querySelector('.perfExerciseSelect').value);
+        });
+      });
       chartCard.querySelector('.perfExerciseSelect').addEventListener('change', (e)=>drawExerciseChart(e.target.value));
       drawExerciseChart(exerciseOptions[0].id);
     }
