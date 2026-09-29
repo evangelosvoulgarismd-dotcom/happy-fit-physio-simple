@@ -3242,6 +3242,9 @@ async function renderReassessmentTab(body, client, isCoach){
       <div class="field" style="min-width:140px; margin-bottom:0;"><label>${t('otherSymptoms',locale)}</label><input class="f_other"></div>
       <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('passiveRom',locale)}</label><input class="f_prom"></div>
       <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('activeRom',locale)}</label><input class="f_arom"></div>
+      <div class="field" style="min-width:150px; margin-bottom:0;"><label>${locale==='el'?'Κίνηση ROM (προαιρετικό)':'ROM movement (optional)'}</label><input class="f_romMovement" placeholder="${locale==='el'?'π.χ. Κάμψη γόνατος':'e.g. Knee flexion'}"></div>
+      <div class="field" style="width:110px; margin-bottom:0;"><label>${locale==='el'?'Ενεργητική ROM (°)':'Active ROM (°)'}</label><input class="f_aromDeg" type="number" step="0.5" min="0" max="360"></div>
+      <div class="field" style="width:110px; margin-bottom:0;"><label>${locale==='el'?'Παθητική ROM (°)':'Passive ROM (°)'}</label><input class="f_promDeg" type="number" step="0.5" min="0" max="360"></div>
       <div class="field" style="min-width:120px; margin-bottom:0;"><label>${t('strength',locale)}</label><input class="f_str"></div>
       <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Απόφαση':'Decision'}</label>
         <select class="f_decision"><option value="">—</option>${DECISION_OPTIONS.map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}</select>
@@ -3258,6 +3261,9 @@ async function renderReassessmentTab(body, client, isCoach){
         other_symptoms: form.querySelector('.f_other').value.trim(),
         passive_rom: form.querySelector('.f_prom').value.trim(),
         active_rom: form.querySelector('.f_arom').value.trim(),
+        rom_movement: form.querySelector('.f_romMovement').value.trim() || null,
+        active_rom_deg: form.querySelector('.f_aromDeg').value ? Number(form.querySelector('.f_aromDeg').value) : null,
+        passive_rom_deg: form.querySelector('.f_promDeg').value ? Number(form.querySelector('.f_promDeg').value) : null,
         strength: form.querySelector('.f_str').value.trim(),
         decision: form.querySelector('.f_decision').value || null,
         decision_notes: form.querySelector('.f_decisionNotes').value.trim() || null,
@@ -3275,14 +3281,20 @@ async function renderReassessmentTab(body, client, isCoach){
   }
   const table = el(`<table class="reassessTable"><thead><tr>
     <th>${t('sessionNumber',locale)}</th><th>${t('pain',locale)}</th><th>${t('otherSymptoms',locale)}</th>
-    <th>${t('passiveRom',locale)}</th><th>${t('activeRom',locale)}</th><th>${t('strength',locale)}</th>
+    <th>${t('passiveRom',locale)}</th><th>${t('activeRom',locale)}</th><th>ROM (°)</th><th>${t('strength',locale)}</th>
     <th>${locale==='el'?'Απόφαση':'Decision'}</th>
   </tr></thead><tbody>
-    ${rows.map(r=>`<tr>
+    ${rows.map(r=>{
+      const romDegParts = [];
+      if(r.active_rom_deg!=null) romDegParts.push(`${locale==='el'?'Ε':'A'}: ${r.active_rom_deg}°`);
+      if(r.passive_rom_deg!=null) romDegParts.push(`${locale==='el'?'Π':'P'}: ${r.passive_rom_deg}°`);
+      const romDegCell = romDegParts.length ? `${r.rom_movement?escapeHtml(r.rom_movement)+': ':''}${romDegParts.join(' / ')}` : '';
+      return `<tr>
       <td class="mono">${r.session_number??''}</td><td class="mono">${r.pain??''}</td><td>${escapeHtml(r.other_symptoms||'')}</td>
-      <td>${escapeHtml(r.passive_rom||'')}</td><td>${escapeHtml(r.active_rom||'')}</td><td>${escapeHtml(r.strength||'')}</td>
+      <td>${escapeHtml(r.passive_rom||'')}</td><td>${escapeHtml(r.active_rom||'')}</td><td class="mono">${romDegCell}</td><td>${escapeHtml(r.strength||'')}</td>
       <td>${r.decision?`<strong>${escapeHtml(r.decision)}</strong>${r.decision_notes?`<div style="color:var(--ink-soft);font-size:11px;margin-top:2px;">${escapeHtml(r.decision_notes)}</div>`:''}`:''}</td>
-    </tr>`).join('')}
+    </tr>`;
+    }).join('')}
   </tbody></table>`);
   body.appendChild(el('<div class="card tableScroll"></div>')).appendChild(table);
 }
@@ -4861,7 +4873,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     supabase.from('session_logs').select('*, program_exercises(exercise_id, exercises(name_el,name_en,body_region))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
     supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
     supabase.from('programs').select('id').eq('client_id', clientId).eq('active', true).maybeSingle(),
-    supabase.from('reassessments').select('id').eq('client_id', clientId),
+    supabase.from('reassessments').select('*').eq('client_id', clientId).order('session_number',{ascending:true}),
     // Full (unpaginated) list, same shape the Today-tab Level card uses — keeps the
     // bodygraph's rank consistent with the level shown elsewhere, not just the last 30.
     supabase.from('session_logs').select('session_date').eq('client_id', clientId),
@@ -4981,6 +4993,46 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     ${!intakeData.baselineWeight && !intakeData.measurements ? `<p style="font-size:12px; color:var(--ink-soft);">${t('notFilled',locale)}</p>` : ''}
   </div>`);
   detailPanels.body.appendChild(bodyCard);
+
+  // MOBILITY (ROM) — only ever built from numeric degree measurements a coach actually
+  // recorded at a re-assessment (active_rom_deg/passive_rom_deg), grouped by which movement
+  // was measured (rom_movement), since a bare degree number only means something next to
+  // that. Nothing is estimated from the free-text ROM fields.
+  const romByMovement = new Map();
+  (reassessRows||[]).forEach(r=>{
+    if(!r.rom_movement || (r.active_rom_deg==null && r.passive_rom_deg==null)) return;
+    if(!romByMovement.has(r.rom_movement)) romByMovement.set(r.rom_movement, []);
+    romByMovement.get(r.rom_movement).push({
+      date: r.created_at ? r.created_at.slice(0,10) : String(r.session_number),
+      active_rom_deg: r.active_rom_deg, passive_rom_deg: r.passive_rom_deg,
+    });
+  });
+  if(romByMovement.size){
+    const movements = [...romByMovement.entries()].filter(([,rows])=>rows.length>=1);
+    const romCard = el(`<div class="card">
+      <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'📐 Εύρος κίνησης (ROM)':'📐 Range of motion (ROM)'}</h4>
+      <select class="romMovementSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px; margin-bottom:8px; width:100%;">
+        ${movements.map(([m,rws])=>`<option value="${escapeHtml(m)}">${escapeHtml(m)} (${rws.length} ${locale==='el'?(rws.length===1?'μέτρηση':'μετρήσεις'):(rws.length===1?'measurement':'measurements')})</option>`).join('')}
+      </select>
+      <div class="romChartHolder"></div>
+    </div>`);
+    detailPanels.body.appendChild(romCard);
+    const romHolder = romCard.querySelector('.romChartHolder');
+    function drawRomChart(movement){
+      romHolder.innerHTML = '';
+      const rws = romByMovement.get(movement);
+      if(!rws || rws.length < 2){
+        romHolder.appendChild(el(`<p style="font-size:11.5px; color:var(--ink-soft);">${locale==='el'?'Χρειάζονται τουλάχιστον 2 μετρήσεις για γράφημα. Τελευταία μέτρηση:':'Needs at least 2 measurements for a chart. Latest measurement:'} ${rws && rws[0] ? [rws[0].active_rom_deg!=null?`${locale==='el'?'Ενεργητική':'Active'} ${rws[0].active_rom_deg}°`:'', rws[0].passive_rom_deg!=null?`${locale==='el'?'Παθητική':'Passive'} ${rws[0].passive_rom_deg}°`:''].filter(Boolean).join(', ') : '—'}</p>`));
+        return;
+      }
+      renderTrendChart(romHolder, movement, rws, 'date', [
+        { key:'active_rom_deg', label: locale==='el'?'Ενεργητική ROM (°)':'Active ROM (°)' },
+        { key:'passive_rom_deg', label: locale==='el'?'Παθητική ROM (°)':'Passive ROM (°)' },
+      ]);
+    }
+    romCard.querySelector('.romMovementSelect').addEventListener('change', (e)=>drawRomChart(e.target.value));
+    drawRomChart(movements[0][0]);
+  }
 
   // PERFORMANCE
   if(sessionLogs?.length){
