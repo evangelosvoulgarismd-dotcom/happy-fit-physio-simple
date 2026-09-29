@@ -4855,7 +4855,7 @@ async function renderClientDashboard(main){
 
 async function renderProgressTab(body, clientId, checkins, readiness){
   const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }, { data: sessionLogDates }] = await Promise.all([
-    supabase.from('session_logs').select('*, program_exercises(exercise_id, exercises(name_el,name_en))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
+    supabase.from('session_logs').select('*, program_exercises(exercise_id, exercises(name_el,name_en,body_region))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
     supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
     supabase.from('programs').select('id').eq('client_id', clientId).eq('active', true).maybeSingle(),
     supabase.from('reassessments').select('id').eq('client_id', clientId),
@@ -4955,6 +4955,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   const detailTabs = [
     { key:'body', ico:'📏', label: locale==='el'?'Σώμα':'Body' },
     { key:'performance', ico:'🏋️', label: locale==='el'?'Απόδοση':'Performance' },
+    { key:'muscles', ico:'🗺️', label: locale==='el'?'Μύες':'Muscles' },
     { key:'recovery', ico:'😴', label: locale==='el'?'Ανάρρωση':'Recovery' },
     { key:'pain', ico:'⚠️', label: locale==='el'?'Πόνος':'Pain' },
     { key:'adherence', ico:'✅', label: 'Adherence' },
@@ -5039,6 +5040,46 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     );
   } else {
     detailPanels.performance.appendChild(el(`<p>${t('notFilled',locale)}</p>`));
+  }
+
+  // MUSCLES — training-balance breakdown by body region, built from the same logged sets
+  // above. Uses the exercise's own structured body_region field (a fixed vocabulary set by
+  // the coach in the Exercise Library) rather than the free-text "category" field, so a set
+  // only counts toward a region the coach actually assigned — nothing guessed from exercise
+  // names. Exercises with no body_region set yet simply aren't counted, rather than mislabeled.
+  const regionCounts = new Map();
+  (sessionLogs||[]).forEach(s=>{
+    const region = s.program_exercises?.exercises?.body_region;
+    if(!region) return;
+    regionCounts.set(region, (regionCounts.get(region)||0) + 1);
+  });
+  const taggedSetCount = [...regionCounts.values()].reduce((a,b)=>a+b, 0);
+  const untaggedSetCount = (sessionLogs||[]).length - taggedSetCount;
+  if(taggedSetCount > 0){
+    const maxCount = Math.max(...regionCounts.values());
+    const rows = [...regionCounts.entries()].sort((a,b)=>b[1]-a[1]);
+    const muscleCard = el(`<div class="card">
+      <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">${locale==='el'?'🗺️ Κατανομή προπόνησης ανά περιοχή σώματος':'🗺️ Training balance by body region'}</h4>
+      <p style="font-size:11px; color:var(--ink-soft); margin-bottom:14px;">${locale==='el'?`Βάσει των τελευταίων ${taggedSetCount} καταγεγραμμένων σετ με ορισμένη περιοχή σώματος.`:`Based on the last ${taggedSetCount} logged sets with a body region set.`}</p>
+      <div class="regionRows"></div>
+      ${untaggedSetCount > 0 ? `<p style="font-size:10.5px; color:var(--ink-soft); margin-top:12px;">${locale==='el'?`+ ${untaggedSetCount} σετ χωρίς ορισμένη περιοχή σώματος στην άσκηση (ο coach μπορεί να τη συμπληρώσει στη Βιβλιοθήκη Ασκήσεων).`:`+ ${untaggedSetCount} sets whose exercise has no body region set yet (your coach can add it in the Exercise Library).`}</p>` : ''}
+    </div>`);
+    const regionRowsEl = muscleCard.querySelector('.regionRows');
+    rows.forEach(([region, count])=>{
+      const pct = Math.round((count/maxCount)*100);
+      regionRowsEl.appendChild(el(`<div style="margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;">
+          <span>${escapeHtml(exLabel(EX_BODY_REGIONS, region))}</span>
+          <span class="mono" style="color:var(--ink-soft);">${count} ${locale==='el'?'σετ':'sets'}</span>
+        </div>
+        <div style="height:8px; background:var(--line); border-radius:4px; overflow:hidden;">
+          <div style="height:100%; width:${pct}%; background:var(--red); border-radius:4px;"></div>
+        </div>
+      </div>`));
+    });
+    detailPanels.muscles.appendChild(muscleCard);
+  } else {
+    detailPanels.muscles.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft);">${locale==='el'?'Δεν υπάρχουν ακόμα καταγεγραμμένα σετ με ορισμένη περιοχή σώματος. Ο coach μπορεί να συμπληρώσει την περιοχή σώματος για κάθε άσκηση στη Βιβλιοθήκη Ασκήσεων.':'No logged sets with a body region set yet. Your coach can add a body region to each exercise in the Exercise Library.'}</p>`));
   }
 
   // RECOVERY
