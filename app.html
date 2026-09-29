@@ -1936,6 +1936,38 @@ function attachGifPicker(container, gifInput){
   });
 }
 
+// Controlled vocabularies for the Exercise Profile fields (body region, goal, difficulty,
+// equipment). Kept as simple bilingual label lists — filtering is done client-side against
+// the exercises already loaded, so no DB-side enum/array type is needed.
+const EX_BODY_REGIONS = [
+  {el:'Στήθος', en:'Chest'}, {el:'Πλάτη', en:'Back'}, {el:'Ώμος', en:'Shoulder'}, {el:'Χέρι', en:'Arm'},
+  {el:'Κορμός', en:'Core'}, {el:'Ισχίο', en:'Hip'}, {el:'Γόνατο', en:'Knee'}, {el:'Ποδοκνημική', en:'Ankle'},
+  {el:'Πόδι', en:'Leg'}, {el:'Ολόκληρο σώμα', en:'Full body'},
+];
+const EX_GOALS = [
+  {el:'Μυϊκή ανάπτυξη', en:'Hypertrophy'}, {el:'Δύναμη', en:'Strength'}, {el:'Αντοχή', en:'Endurance'},
+  {el:'Ισχύς', en:'Power'}, {el:'Κινητικότητα', en:'Mobility'}, {el:'Σταθερότητα', en:'Stability'},
+  {el:'Φυσική κατάσταση', en:'Conditioning'}, {el:'Πρόληψη', en:'Prevention'},
+  {el:'Αποκατάσταση', en:'Rehabilitation'}, {el:'Αθλητική απόδοση', en:'Sports performance'},
+];
+const EX_DIFFICULTIES = [
+  {el:'Βασικό', en:'Basic'}, {el:'Ενδιάμεσο', en:'Intermediate'}, {el:'Προχωρημένο', en:'Advanced'}, {el:'Εξειδικευμένο', en:'Specialized'},
+];
+const EX_EQUIPMENT = [
+  {el:'Βάρος σώματος', en:'Bodyweight'}, {el:'Αλτήρες', en:'Dumbbells'}, {el:'Μπάρα', en:'Barbell'},
+  {el:'Μηχάνημα', en:'Machine'}, {el:'Τροχαλία', en:'Cable'}, {el:'Λάστιχα', en:'Bands'},
+  {el:'Kettlebell', en:'Kettlebell'}, {el:'Cardio', en:'Cardio'},
+];
+function exLabel(list, elValue){
+  if(!elValue) return '';
+  const hit = list.find(o=>o.el===elValue);
+  return hit ? (locale==='el'?hit.el:hit.en) : elValue;
+}
+function exSelectOptions(list, selectedEl){
+  return `<option value="">${locale==='el'?'— Επιλογή —':'— Select —'}</option>` +
+    list.map(o=>`<option value="${escapeHtml(o.el)}" ${o.el===selectedEl?'selected':''}>${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('');
+}
+
 async function renderLibrary(main, isCoach){
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
   const { data: exercises, error } = await supabase.from('exercises').select('*, evidence(*)').order('category');
@@ -1953,12 +1985,17 @@ async function renderLibrary(main, isCoach){
   }
 
   const categories = [...new Set(exercises.map(e=>e.category).filter(Boolean))].sort();
+  const selStyle = 'padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;';
   const toolbar = el(`<div class="card" style="margin-bottom:14px; padding:12px 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
     <input class="libSearchInput" placeholder="${locale==='el'?'🔍 Αναζήτηση άσκησης...':'🔍 Search exercise...'}" style="flex:1; min-width:160px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
-    ${categories.length ? `<select class="libCatSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
+    ${categories.length ? `<select class="libCatSelect" style="${selStyle}">
       <option value="">${locale==='el'?'Όλες οι κατηγορίες':'All categories'}</option>
       ${categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
     </select>` : ''}
+    <select class="libRegionSelect" style="${selStyle}"><option value="">${locale==='el'?'Περιοχή σώματος':'Body region'}</option>${EX_BODY_REGIONS.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
+    <select class="libGoalSelect" style="${selStyle}"><option value="">${locale==='el'?'Στόχος':'Goal'}</option>${EX_GOALS.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
+    <select class="libDiffSelect" style="${selStyle}"><option value="">${locale==='el'?'Επίπεδο':'Level'}</option>${EX_DIFFICULTIES.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
+    <select class="libEquipSelect" style="${selStyle}"><option value="">${locale==='el'?'Εξοπλισμός':'Equipment'}</option>${EX_EQUIPMENT.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
     ${isCoach ? `<button class="btn secondary autoFillGifsBtn" type="button" style="padding:7px 12px; font-size:12px;">🪄 ${locale==='el'?'Αυτόματη συμπλήρωση GIF':'Auto-fill GIFs'}</button>` : ''}
   </div>`);
   main.appendChild(toolbar);
@@ -2012,8 +2049,16 @@ async function renderLibrary(main, isCoach){
   function renderList(){
     const q = (toolbar.querySelector('.libSearchInput').value||'').trim().toLowerCase();
     const cat = toolbar.querySelector('.libCatSelect')?.value || '';
+    const region = toolbar.querySelector('.libRegionSelect')?.value || '';
+    const goal = toolbar.querySelector('.libGoalSelect')?.value || '';
+    const diff = toolbar.querySelector('.libDiffSelect')?.value || '';
+    const equip = toolbar.querySelector('.libEquipSelect')?.value || '';
     let visible = exercises;
     if(cat) visible = visible.filter(e=>e.category===cat);
+    if(region) visible = visible.filter(e=>e.body_region===region);
+    if(goal) visible = visible.filter(e=>(e.goal_tags||'').split(',').map(s=>s.trim()).includes(goal));
+    if(diff) visible = visible.filter(e=>e.difficulty_level===diff);
+    if(equip) visible = visible.filter(e=>e.equipment===equip);
     if(q) visible = visible.filter(e=>{
       const n1=(e.name_el||'').toLowerCase(), n2=(e.name_en||'').toLowerCase();
       return n1.includes(q) || n2.includes(q);
@@ -2059,6 +2104,19 @@ async function renderLibrary(main, isCoach){
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
+        ${(ex.body_region || ex.primary_muscles || ex.movement_pattern || ex.goal_tags || ex.difficulty_level || ex.equipment) ? `
+        <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${locale==='el'?'Προφίλ άσκησης':'Exercise profile'}</h4>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+          ${ex.body_region ? `<span class="badge">📍 ${escapeHtml(exLabel(EX_BODY_REGIONS, ex.body_region))}</span>` : ''}
+          ${ex.difficulty_level ? `<span class="badge">📶 ${escapeHtml(exLabel(EX_DIFFICULTIES, ex.difficulty_level))}</span>` : ''}
+          ${ex.equipment ? `<span class="badge">🏋️ ${escapeHtml(exLabel(EX_EQUIPMENT, ex.equipment))}</span>` : ''}
+          ${ex.movement_pattern ? `<span class="badge">🔁 ${escapeHtml(ex.movement_pattern)}</span>` : ''}
+          ${(ex.goal_tags||'').split(',').map(g=>g.trim()).filter(Boolean).map(g=>`<span class="badge">🎯 ${escapeHtml(exLabel(EX_GOALS,g))}</span>`).join('')}
+        </div>` : ''}
+        ${ex.primary_muscles ? `<p style="font-size:12.5px; margin-bottom:4px;"><strong>${locale==='el'?'Κύριοι μύες':'Primary muscles'}:</strong> ${escapeHtml(ex.primary_muscles)}</p>` : ''}
+        ${ex.secondary_muscles ? `<p style="font-size:12.5px; margin-bottom:10px;"><strong>${locale==='el'?'Δευτερεύοντες μύες':'Secondary muscles'}:</strong> ${escapeHtml(ex.secondary_muscles)}</p>` : ''}
+        ${ex.regression_text ? `<p style="font-size:12.5px; margin-bottom:4px;"><strong>⬇ ${locale==='el'?'Ευκολότερη εναλλακτική':'Easier alternative'}:</strong> ${escapeHtml(ex.regression_text)}</p>` : ''}
+        ${ex.progression_text ? `<p style="font-size:12.5px; margin-bottom:10px;"><strong>⬆ ${locale==='el'?'Δυσκολότερη εναλλακτική':'Harder alternative'}:</strong> ${escapeHtml(ex.progression_text)}</p>` : ''}
         <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('bibliography',locale)}</h4>
         ${(ex.evidence||[]).length===0 ? '<p style="font-size:12px;color:var(--ink-soft);" class="noEvidenceMsg">—</p>' : ''}
         ${(ex.evidence||[]).map(ev=>`<div class="evidenceItem">${ev.evidence_type?`<span class="badge mono" style="margin-right:6px;">${escapeHtml(ev.evidence_type)}</span>`:''}${escapeHtml(ev.citation)} ${ev.url?`<a href="${escapeHtml(ev.url)}" target="_blank" rel="noreferrer">↗</a>`:''}</div>`).join('')}
@@ -2141,6 +2199,22 @@ async function renderLibrary(main, isCoach){
           <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="ef_steps">${escapeHtml(ex.execution_steps||'')}</textarea></div>
           <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="ef_cues">${escapeHtml(ex.technique_cues||'')}</textarea></div>
           <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="ef_mistakes">${escapeHtml(ex.common_mistakes||'')}</textarea></div>
+          <h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">${locale==='el'?'Προφίλ άσκησης (προαιρετικό)':'Exercise profile (optional)'}</h4>
+          <div class="grid2">
+            <div class="field"><label>${locale==='el'?'Περιοχή σώματος':'Body region'}</label><select class="ef_region">${exSelectOptions(EX_BODY_REGIONS, ex.body_region)}</select></div>
+            <div class="field"><label>${locale==='el'?'Επίπεδο δυσκολίας':'Difficulty level'}</label><select class="ef_diff">${exSelectOptions(EX_DIFFICULTIES, ex.difficulty_level)}</select></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>${locale==='el'?'Κύριος εξοπλισμός':'Primary equipment'}</label><select class="ef_equip">${exSelectOptions(EX_EQUIPMENT, ex.equipment)}</select></div>
+            <div class="field"><label>${locale==='el'?'Μοτίβο κίνησης':'Movement pattern'}</label><input class="ef_pattern" value="${escapeHtml(ex.movement_pattern||'')}" placeholder="${locale==='el'?'π.χ. Σπρώξιμο, Τράβηγμα, Κάθισμα':'e.g. Push, Pull, Squat'}"></div>
+          </div>
+          <div class="field"><label>${locale==='el'?'Στόχοι (χωρισμένοι με κόμμα)':'Goals (comma-separated)'}</label><input class="ef_goals" list="goalList" value="${escapeHtml(ex.goal_tags||'')}" placeholder="${locale==='el'?'π.χ. Δύναμη, Μυϊκή ανάπτυξη':'e.g. Strength, Hypertrophy'}"><datalist id="goalList">${EX_GOALS.map(o=>`<option value="${escapeHtml(locale==='el'?o.el:o.en)}">`).join('')}</datalist></div>
+          <div class="grid2">
+            <div class="field"><label>${locale==='el'?'Κύριοι μύες':'Primary muscles'}</label><input class="ef_pmuscles" value="${escapeHtml(ex.primary_muscles||'')}"></div>
+            <div class="field"><label>${locale==='el'?'Δευτερεύοντες μύες':'Secondary muscles'}</label><input class="ef_smuscles" value="${escapeHtml(ex.secondary_muscles||'')}"></div>
+          </div>
+          <div class="field"><label>⬇ ${locale==='el'?'Ευκολότερη εναλλακτική':'Easier alternative'}</label><input class="ef_regr" value="${escapeHtml(ex.regression_text||'')}"></div>
+          <div class="field"><label>⬆ ${locale==='el'?'Δυσκολότερη εναλλακτική':'Harder alternative'}</label><input class="ef_progr" value="${escapeHtml(ex.progression_text||'')}"></div>
           <button class="btn saveExEditBtn" type="button">${t('save',locale)}</button>
         `;
         attachGifPicker(editWrap.querySelector('.gifPickerSlot'), editWrap.querySelector('.ef_gif'));
@@ -2156,6 +2230,15 @@ async function renderLibrary(main, isCoach){
             execution_steps: editWrap.querySelector('.ef_steps').value.trim() || null,
             technique_cues: editWrap.querySelector('.ef_cues').value.trim() || null,
             common_mistakes: editWrap.querySelector('.ef_mistakes').value.trim() || null,
+            body_region: editWrap.querySelector('.ef_region').value || null,
+            difficulty_level: editWrap.querySelector('.ef_diff').value || null,
+            equipment: editWrap.querySelector('.ef_equip').value || null,
+            movement_pattern: editWrap.querySelector('.ef_pattern').value.trim() || null,
+            goal_tags: editWrap.querySelector('.ef_goals').value.trim() || null,
+            primary_muscles: editWrap.querySelector('.ef_pmuscles').value.trim() || null,
+            secondary_muscles: editWrap.querySelector('.ef_smuscles').value.trim() || null,
+            regression_text: editWrap.querySelector('.ef_regr').value.trim() || null,
+            progression_text: editWrap.querySelector('.ef_progr').value.trim() || null,
           }).eq('id', ex.id);
           renderLibrary(main, isCoach);
         });
@@ -2168,6 +2251,9 @@ async function renderLibrary(main, isCoach){
   toolbar.querySelector('.libSearchInput').addEventListener('input', renderList);
   const catSel = toolbar.querySelector('.libCatSelect');
   if(catSel) catSel.addEventListener('change', renderList);
+  ['.libRegionSelect','.libGoalSelect','.libDiffSelect','.libEquipSelect'].forEach(sel=>{
+    toolbar.querySelector(sel).addEventListener('change', renderList);
+  });
   renderList();
 }
 
@@ -2222,6 +2308,22 @@ async function renderNewExerciseForm(main, onDone){
       <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="f_steps" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>
       <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="f_cues"></textarea></div>
       <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="f_mistakes"></textarea></div>
+      <h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">${locale==='el'?'Προφίλ άσκησης':'Exercise profile'}</h4>
+      <div class="grid2">
+        <div class="field"><label>${locale==='el'?'Περιοχή σώματος':'Body region'}</label><select class="f_region">${exSelectOptions(EX_BODY_REGIONS, '')}</select></div>
+        <div class="field"><label>${locale==='el'?'Επίπεδο δυσκολίας':'Difficulty level'}</label><select class="f_diff">${exSelectOptions(EX_DIFFICULTIES, '')}</select></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>${locale==='el'?'Κύριος εξοπλισμός':'Primary equipment'}</label><select class="f_equip">${exSelectOptions(EX_EQUIPMENT, '')}</select></div>
+        <div class="field"><label>${locale==='el'?'Μοτίβο κίνησης':'Movement pattern'}</label><input class="f_pattern" placeholder="${locale==='el'?'π.χ. Σπρώξιμο, Τράβηγμα, Κάθισμα':'e.g. Push, Pull, Squat'}"></div>
+      </div>
+      <div class="field"><label>${locale==='el'?'Στόχοι (χωρισμένοι με κόμμα)':'Goals (comma-separated)'}</label><input class="f_goals" list="goalListNew" placeholder="${locale==='el'?'π.χ. Δύναμη, Μυϊκή ανάπτυξη':'e.g. Strength, Hypertrophy'}"><datalist id="goalListNew">${EX_GOALS.map(o=>`<option value="${escapeHtml(locale==='el'?o.el:o.en)}">`).join('')}</datalist></div>
+      <div class="grid2">
+        <div class="field"><label>${locale==='el'?'Κύριοι μύες':'Primary muscles'}</label><input class="f_pmuscles"></div>
+        <div class="field"><label>${locale==='el'?'Δευτερεύοντες μύες':'Secondary muscles'}</label><input class="f_smuscles"></div>
+      </div>
+      <div class="field"><label>⬇ ${locale==='el'?'Ευκολότερη εναλλακτική':'Easier alternative'}</label><input class="f_regr"></div>
+      <div class="field"><label>⬆ ${locale==='el'?'Δυσκολότερη εναλλακτική':'Harder alternative'}</label><input class="f_progr"></div>
     </div>
   </form>`);
   form.querySelector('#toggleMoreBtn').addEventListener('click', ()=>{
@@ -2245,6 +2347,15 @@ async function renderNewExerciseForm(main, onDone){
       execution_steps: form.querySelector('.f_steps').value.trim() || null,
       technique_cues: form.querySelector('.f_cues').value.trim() || null,
       common_mistakes: form.querySelector('.f_mistakes').value.trim() || null,
+      body_region: form.querySelector('.f_region').value || null,
+      difficulty_level: form.querySelector('.f_diff').value || null,
+      equipment: form.querySelector('.f_equip').value || null,
+      movement_pattern: form.querySelector('.f_pattern').value.trim() || null,
+      goal_tags: form.querySelector('.f_goals').value.trim() || null,
+      primary_muscles: form.querySelector('.f_pmuscles').value.trim() || null,
+      secondary_muscles: form.querySelector('.f_smuscles').value.trim() || null,
+      regression_text: form.querySelector('.f_regr').value.trim() || null,
+      progression_text: form.querySelector('.f_progr').value.trim() || null,
       created_by: profile.id,
     });
     onDone();
@@ -4047,11 +4158,18 @@ function computeGamification({ sessionLogDates, checkins, readiness }){
   const xpIntoLevel = totalXP - xpAtLevelStart;
   const pct = Math.min(100, Math.round((xpIntoLevel/xpForThisLevel)*100));
 
-  const ranks = locale==='el'
-    ? [[1,'Αρχάριος'],[3,'Μαθητευόμενος'],[6,'Ικανός'],[10,'Προχωρημένος'],[15,'Elite'],[21,'Πρωταθλητής']]
-    : [[1,'Rookie'],[3,'Apprentice'],[6,'Skilled'],[10,'Advanced'],[15,'Elite'],[21,'Champion']];
-  let rankLabel = ranks[0][1];
-  ranks.forEach(([minLevel,label])=>{ if(level>=minLevel) rankLabel = label; });
+  // Rank tiers use the brand's own palette (grey → gold → red → deep red) rather than
+  // generic bronze/silver/platinum, so the bodygraph stays visually part of the same brand.
+  const RANK_THRESHOLDS = [1,3,6,10,15,21];
+  const RANK_LABELS = locale==='el'
+    ? ['Αρχάριος','Μαθητευόμενος','Ικανός','Προχωρημένος','Elite','Πρωταθλητής']
+    : ['Rookie','Apprentice','Skilled','Advanced','Elite','Champion'];
+  const RANK_COLORS = ['var(--line)', '#d9b878', 'var(--gold)', 'var(--red)', 'var(--red-deep)', 'var(--red-deep)'];
+  let rankIndex = 0;
+  RANK_THRESHOLDS.forEach((minLevel,i)=>{ if(level>=minLevel) rankIndex = i; });
+  const rankLabel = RANK_LABELS[rankIndex];
+  const rankColor = RANK_COLORS[rankIndex];
+  const isTopRank = rankIndex === RANK_THRESHOLDS.length-1;
 
   // Streak: consecutive calendar days (ending today or yesterday, so today not being
   // logged yet doesn't zero out an ongoing streak) with a session log or a readiness log.
@@ -4076,7 +4194,35 @@ function computeGamification({ sessionLogDates, checkins, readiness }){
     { id:'active30', ico:'📅', label: locale==='el'?'30 ενεργές μέρες':'30 active days', earned: activeDates.size>=30 },
   ];
 
-  return { level, rankLabel, xpIntoLevel, xpForThisLevel, pct, streak, badgeDefs };
+  return { level, rankLabel, rankIndex, rankColor, isTopRank, xpIntoLevel, xpForThisLevel, pct, streak, badgeDefs };
+}
+
+// Ranked Bodygraph — reuses the app's own front/back body outline (the same SVG already
+// used for pain-point marking on the intake form) tinted by the client's current rank.
+// Deliberately whole-body, not per-muscle-group: exercise categories are coach-typed free
+// text today with no shared list, so a per-region breakdown could easily mislabel what was
+// actually trained. This shows real, verified data only — overall rank, honestly.
+function renderBodygraphCard(g){
+  const glowPx = g.rankIndex * 3;
+  const card = el(`<div class="card gold" style="margin-bottom:16px; text-align:center;">
+    <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:2px;">🧬 ${locale==='el'?'Βαθμολογημένο σώμα':'Ranked Bodygraph'}</h3>
+    <p style="font-weight:800; font-size:15px; margin-bottom:10px;">${escapeHtml(g.rankLabel)} · ${locale==='el'?'Επίπεδο':'Level'} ${g.level}</p>
+    <div class="bodyDiagram" style="justify-content:center;"></div>
+    <p style="font-size:10.5px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Ο χρωματισμός δείχνει τη συνολική σου βαθμίδα, βάσει πραγματικών καταγραφών σου.':'The color reflects your overall rank, based on your actual logged activity.'}</p>
+  </div>`);
+  const wrap = card.querySelector('.bodyDiagram');
+  ['front','back'].forEach(view=>{
+    const col = el(`<div class="bodyCol"><div class="lbl">${t(view==='front'?'frontView':'backView',locale)}</div><div class="svgHolder"></div></div>`);
+    const svgEl = el(bodyOutlineSvg(view));
+    svgEl.style.fill = g.rankColor;
+    svgEl.style.stroke = g.isTopRank ? 'var(--gold)' : 'var(--ink-soft)';
+    svgEl.style.strokeWidth = g.isTopRank ? '2' : '1';
+    svgEl.style.cursor = 'default';
+    if(glowPx>0) svgEl.style.filter = `drop-shadow(0 0 ${glowPx}px ${g.rankColor})`;
+    col.querySelector('.svgHolder').appendChild(svgEl);
+    wrap.appendChild(col);
+  });
+  return card;
 }
 
 function renderLevelCard({ sessionLogDates, checkins, readiness }){
@@ -4682,11 +4828,14 @@ async function renderClientDashboard(main){
 }
 
 async function renderProgressTab(body, clientId, checkins, readiness){
-  const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }] = await Promise.all([
+  const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }, { data: sessionLogDates }] = await Promise.all([
     supabase.from('session_logs').select('*, program_exercises(exercises(name_el,name_en))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
     supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
     supabase.from('programs').select('id').eq('client_id', clientId).eq('active', true).maybeSingle(),
     supabase.from('reassessments').select('id').eq('client_id', clientId),
+    // Full (unpaginated) list, same shape the Today-tab Level card uses — keeps the
+    // bodygraph's rank consistent with the level shown elsewhere, not just the last 30.
+    supabase.from('session_logs').select('session_date').eq('client_id', clientId),
   ]);
   const intakeData = intakeRow?.data || {};
 
@@ -4718,6 +4867,11 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     }
   });
   body.appendChild(journeyCard);
+
+  // RANKED BODYGRAPH — same Level/XP/rank the Today tab shows, visualized on the app's
+  // own body silhouette instead of just a number.
+  const gamification = computeGamification({ sessionLogDates, checkins, readiness });
+  body.appendChild(renderBodygraphCard(gamification));
 
   // MIRROR — digital mirror summary widget
   const readinessAsc = (readiness||[]).slice().reverse();
