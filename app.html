@@ -4855,7 +4855,7 @@ async function renderClientDashboard(main){
 
 async function renderProgressTab(body, clientId, checkins, readiness){
   const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }, { data: sessionLogDates }] = await Promise.all([
-    supabase.from('session_logs').select('*, program_exercises(exercises(name_el,name_en))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
+    supabase.from('session_logs').select('*, program_exercises(exercise_id, exercises(name_el,name_en))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
     supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
     supabase.from('programs').select('id').eq('client_id', clientId).eq('active', true).maybeSingle(),
     supabase.from('reassessments').select('id').eq('client_id', clientId),
@@ -4980,6 +4980,55 @@ async function renderProgressTab(body, clientId, checkins, readiness){
 
   // PERFORMANCE
   if(sessionLogs?.length){
+    // Progress graph — per-exercise strength trend, built entirely from the session_logs
+    // already fetched above (no extra query, no new table). For each exercise, keep the
+    // best set per calendar day (highest load, ties broken by more reps) so the line reads
+    // as "best effort that day" rather than a noisy zig-zag across warm-up/working sets.
+    const byExercise = new Map(); // exercise_id -> { name, rows: [{date, load_kg, reps}] }
+    sessionLogs.forEach(s=>{
+      const exId = s.program_exercises?.exercise_id;
+      const exObj = s.program_exercises?.exercises;
+      if(!exId || !exObj || s.load_kg==null) return;
+      const name = locale==='el' ? exObj.name_el : (exObj.name_en || exObj.name_el);
+      if(!byExercise.has(exId)) byExercise.set(exId, { name, rows: [] });
+      byExercise.get(exId).rows.push({ date: s.session_date, load_kg: s.load_kg, reps: s.reps });
+    });
+    const exerciseOptions = [];
+    byExercise.forEach((v, exId)=>{
+      const byDate = new Map();
+      v.rows.forEach(r=>{
+        const existing = byDate.get(r.date);
+        if(!existing || r.load_kg > existing.load_kg || (r.load_kg===existing.load_kg && (r.reps||0)>(existing.reps||0))){
+          byDate.set(r.date, r);
+        }
+      });
+      const trend = [...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
+      if(trend.length >= 2) exerciseOptions.push({ id: exId, name: v.name, trend });
+    });
+    exerciseOptions.sort((a,b)=> b.trend.length - a.trend.length);
+
+    if(exerciseOptions.length){
+      const chartCard = el(`<div class="card" style="margin-bottom:16px;">
+        <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'📈 Πρόοδος ανά άσκηση':'📈 Progress by exercise'}</h4>
+        <select class="perfExerciseSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px; margin-bottom:8px; width:100%;">
+          ${exerciseOptions.map(o=>`<option value="${escapeHtml(String(o.id))}">${escapeHtml(o.name)} (${o.trend.length} ${locale==='el'?'ημέρες':'days'})</option>`).join('')}
+        </select>
+        <div class="perfChartHolder"></div>
+      </div>`);
+      detailPanels.performance.appendChild(chartCard);
+      const holder = chartCard.querySelector('.perfChartHolder');
+      function drawExerciseChart(exId){
+        holder.innerHTML = '';
+        const opt = exerciseOptions.find(o=>String(o.id)===String(exId));
+        if(!opt) return;
+        renderTrendChart(holder, `${opt.name} — ${locale==='el'?'φορτίο (kg)':'load (kg)'}`, opt.trend, 'date', [
+          { key:'load_kg', label: locale==='el'?'Φορτίο (kg)':'Load (kg)' },
+        ]);
+      }
+      chartCard.querySelector('.perfExerciseSelect').addEventListener('change', (e)=>drawExerciseChart(e.target.value));
+      drawExerciseChart(exerciseOptions[0].id);
+    }
+
     renderHistTable(detailPanels.performance,
       sessionLogs.map(s=>({
         date: s.session_date,
