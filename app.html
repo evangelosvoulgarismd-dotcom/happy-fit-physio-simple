@@ -4948,10 +4948,27 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     return { first: scores[0], last: scores[scores.length-1] };
   })();
   const mvPain = firstLast(readinessAsc, 'pain');
+  // Mobility — first-vs-last active ROM (degrees) for whichever movement the coach has
+  // measured most often at re-assessments. Only a real, coach-recorded degree, never
+  // estimated from the free-text ROM fields; picks one consistent movement rather than
+  // averaging across different joints, which wouldn't mean anything.
+  const mvMobility = (()=>{
+    const byMovement = new Map();
+    (reassessRows||[]).forEach(r=>{
+      if(!r.rom_movement || r.active_rom_deg==null) return;
+      if(!byMovement.has(r.rom_movement)) byMovement.set(r.rom_movement, []);
+      byMovement.get(r.rom_movement).push(r.active_rom_deg);
+    });
+    let best = null;
+    byMovement.forEach(vals=>{ if(vals.length>=2 && (!best || vals.length>best.length)) best = vals; });
+    if(!best) return null;
+    return { first: best[0], last: best[best.length-1] };
+  })();
 
   const mirrorRows = [
     { label: locale==='el'?'Κίνηση':'Movement', data: mvCapacity, unit:'/10', invert:false },
     { label: locale==='el'?'Δύναμη':'Strength', data: mvLoad, unit:'kg', invert:false },
+    { label: locale==='el'?'Κινητικότητα':'Mobility', data: mvMobility, unit:'°', invert:false },
     { label: locale==='el'?'Αντοχή':'Endurance', data: mvAdherence, unit:'%', invert:false },
     { label: locale==='el'?'Ετοιμότητα':'Readiness', data: mvReadinessScore, unit:'%', invert:false },
     { label: locale==='el'?'Αποκατάσταση':'Recovery', data: mvPain, unit:'/10 πόνος', invert:true },
