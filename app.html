@@ -4876,7 +4876,7 @@ async function renderClientDashboard(main){
 }
 
 async function renderProgressTab(body, clientId, checkins, readiness){
-  const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }, { data: sessionLogDates }] = await Promise.all([
+  const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }, { data: sessionLogDates }, { data: allTimeLogs }] = await Promise.all([
     supabase.from('session_logs').select('*, program_exercises(exercise_id, exercises(name_el,name_en,body_region))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
     supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
     supabase.from('programs').select('id').eq('client_id', clientId).eq('active', true).maybeSingle(),
@@ -4884,6 +4884,11 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     // Full (unpaginated) list, same shape the Today-tab Level card uses — keeps the
     // bodygraph's rank consistent with the level shown elsewhere, not just the last 30.
     supabase.from('session_logs').select('session_date').eq('client_id', clientId),
+    // Full (unpaginated) history for genuine all-time Personal Records — the load_kg/reps
+    // history above is capped to the last 30 rows for the recent table/chart, which could
+    // miss an older PR entirely, so PRs need their own uncapped query (same approach as the
+    // live-session Exercise Tracker).
+    supabase.from('session_logs').select('load_kg, reps, session_date, program_exercises(exercise_id, exercises(name_el,name_en))').eq('client_id', clientId),
   ]);
   const intakeData = intakeRow?.data || {};
 
@@ -4971,6 +4976,36 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   }
   if(anyMirrorData) attachAskAssistant(mirrorCard, 'progress', { indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })) });
   body.appendChild(mirrorCard);
+
+  // PERSONAL RECORDS — every exercise's all-time best (load × reps), from the uncapped
+  // history query above, so nothing older than the last 30 logged sets gets missed. Same
+  // "best set wins, ties broken by more reps" rule used by the live-session Exercise Tracker.
+  const prByExercise = new Map();
+  (allTimeLogs||[]).forEach(l=>{
+    const exId = l.program_exercises?.exercise_id;
+    const exObj = l.program_exercises?.exercises;
+    if(!exId || !exObj || l.load_kg==null || l.reps==null) return;
+    const name = locale==='el' ? exObj.name_el : (exObj.name_en || exObj.name_el);
+    const current = prByExercise.get(exId);
+    if(!current || l.load_kg>current.load_kg || (l.load_kg===current.load_kg && l.reps>current.reps)){
+      prByExercise.set(exId, { name, load_kg:l.load_kg, reps:l.reps, date:l.session_date });
+    }
+  });
+  if(prByExercise.size){
+    const prRows = [...prByExercise.values()].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+    const prCard = el(`<div class="card gold" style="margin-bottom:16px;">
+      <h3 style="font-size:14px; margin-bottom:10px;">🏆 ${locale==='el'?'Προσωπικά ρεκόρ':'Personal records'}</h3>
+      <div class="prRows"></div>
+    </div>`);
+    const prRowsEl = prCard.querySelector('.prRows');
+    prRows.forEach(pr=>{
+      prRowsEl.appendChild(el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-top:1px solid var(--line); font-size:12.5px;">
+        <span>${escapeHtml(pr.name)}</span>
+        <span class="mono"><strong>${pr.load_kg}kg × ${pr.reps}</strong> <span style="color:var(--ink-soft); font-size:11px;">(${pr.date})</span></span>
+      </div>`));
+    });
+    body.appendChild(prCard);
+  }
 
   // Detail sections — tabbed instead of one long scroll, so the headline Journey/Mirror
   // cards above stay the focus and the raw history is one tap away rather than a wall of scroll.
