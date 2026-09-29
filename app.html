@@ -4447,6 +4447,27 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   const logMap = {};
   (todaysLogs||[]).forEach(l=>{ logMap[`${l.program_exercise_id}_${l.set_number}`] = l; });
 
+  // Exercise Tracker data — "previous performance" and personal records, per exercise.
+  // One query for the client's whole logged history (joined to the exercise it belongs to),
+  // grouped client-side, so the same real numbers used to display "last time" and "PR" match
+  // exactly what's in session_logs — nothing estimated or invented.
+  const { data: allLogs } = await supabase.from('session_logs').select('*, program_exercises(exercise_id)').eq('client_id', client.id).order('session_date',{ascending:false}).order('set_number',{ascending:true});
+  const logsByExerciseId = {};
+  (allLogs||[]).forEach(l=>{
+    const exId = l.program_exercises?.exercise_id;
+    if(!exId) return;
+    (logsByExerciseId[exId] = logsByExerciseId[exId] || []).push(l);
+  });
+  function trackerStatsFor(exerciseId){
+    const history = (logsByExerciseId[exerciseId] || []).filter(l=>l.load_kg!=null && l.reps!=null);
+    if(!history.length) return null;
+    const pastDates = [...new Set(history.filter(l=>l.session_date!==today).map(l=>l.session_date))];
+    const lastDate = pastDates[0]; // already sorted desc by session_date
+    const lastSession = lastDate ? history.filter(l=>l.session_date===lastDate).sort((a,b)=>a.set_number-b.set_number)[0] : null;
+    const pr = history.reduce((best,l)=> (!best || l.load_kg>best.load_kg || (l.load_kg===best.load_kg && l.reps>best.reps)) ? l : best, null);
+    return { lastSession, pr };
+  }
+
   if(loggedByCoach){
     body.appendChild(el(`<div class="card gold" style="padding:12px 16px; display:flex; align-items:center; gap:8px;">
       <span style="font-size:16px;">🏋️</span><strong>${locale==='el'?'Καταγράφεις τη ζωντανή προπόνηση του/της':'You are logging the live session for'} ${escapeHtml(client.full_name)}</strong>
@@ -4538,12 +4559,17 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     const ex = pe.exercises;
     const exName = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
     const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
+    const tracker = trackerStatsFor(ex.id);
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <strong>${escapeHtml(exName)}</strong>
         <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:11px; flex-shrink:0;">ℹ️ ${t('why',locale)}</button>
       </div>
       <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Στόχος':'Target'}: ${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+      ${tracker ? `<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; margin-bottom:10px;">
+        ${tracker.lastSession ? `<span>📊 ${locale==='el'?'Προηγούμενη':'Previous'}: <strong class="mono">${tracker.lastSession.load_kg}kg × ${tracker.lastSession.reps}</strong> <span style="color:var(--ink-soft);">(${tracker.lastSession.session_date})</span></span>` : ''}
+        ${tracker.pr ? `<span>🏆 PR: <strong class="mono">${tracker.pr.load_kg}kg × ${tracker.pr.reps}</strong></span>` : ''}
+      </div>` : ''}
       <div class="whyPanel" style="display:none; background:#f6efe4; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
