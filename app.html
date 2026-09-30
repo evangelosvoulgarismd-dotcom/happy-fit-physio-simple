@@ -447,6 +447,7 @@ const STR = {
   alertPainRising:{el:'Ο πόνος αυξάνεται στα τελευταία check-ins', en:'Pain is rising over recent check-ins'},
   alertAdherenceDrop:{el:'Η συνέπεια έπεσε απότομα', en:'Adherence dropped sharply'},
   alertLowEnergy:{el:'Χαμηλή ενέργεια/κίνητρο τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
+  alertAiFlagged:{el:'🚩 Ο βοηθός παρέπεμψε τον πελάτη σε σένα πρόσφατα', en:'🚩 The assistant recently redirected the client to you'},
   baselineSection:{el:'Baseline · Αρχικά Δεδομένα', en:'Baseline · Initial Data'},
   nutrition:{el:'Διατροφή', en:'Nutrition'},
   nutritionTargets:{el:'Στόχοι Διατροφής', en:'Nutrition Targets'},
@@ -2477,13 +2478,20 @@ async function renderCoachDashboard(main){
   ]);
 
   const clientIds = (clients||[]).map(c=>c.id);
-  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {};
+  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set();
   if(clientIds.length){
-    const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }, { data: allIntake }] = await Promise.all([
+    // Recent AI-flagged interactions (see attachAskAssistant / ask-assistant.ts) feed the
+    // same "needs attention" alert mechanism below, rather than a separate card — a client
+    // the assistant told to contact the coach for pain/injury/emergency reasons should show
+    // up exactly where the coach already looks first, not only buried in that one client's
+    // Messages tab. 7-day window: recent enough to matter, not a permanent stain on a client.
+    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }, { data: allIntake }, { data: allFlags }] = await Promise.all([
       supabase.from('checkins').select('client_id,date,adherence,pain_level,avg_energy').in('client_id', clientIds).order('date',{ascending:false}),
       supabase.from('programs').select('client_id,title').in('client_id', clientIds).eq('active', true),
       supabase.from('readiness_logs').select('client_id,date,sleep,energy,motivation,stress,soreness,pain,perceived_capacity').in('client_id', clientIds).order('date',{ascending:false}),
       supabase.from('client_intake').select('client_id,data').in('client_id', clientIds),
+      supabase.from('ai_coach_interactions').select('client_id').in('client_id', clientIds).eq('flagged', true).gte('created_at', sevenDaysAgo),
     ]);
     (allCheckins||[]).forEach(c=>{
       if(!latestCheckinByClient[c.client_id]) latestCheckinByClient[c.client_id] = c;
@@ -2495,6 +2503,7 @@ async function renderCoachDashboard(main){
       if(!latestReadinessByClient[r.client_id]) latestReadinessByClient[r.client_id] = r;
     });
     (allIntake||[]).forEach(i=>{ intakeByClient[i.client_id] = i.data || {}; });
+    (allFlags||[]).forEach(f=>{ aiFlaggedClientIds.add(f.client_id); });
   }
   function readinessScoreFor(id){
     const r = latestReadinessByClient[id];
@@ -2525,6 +2534,7 @@ async function renderCoachDashboard(main){
       const avgMotivation = recent.reduce((s,r)=>s+(r.motivation||0),0)/recent.length;
       if(avgEnergy < 4 || avgMotivation < 4) alerts.push(t('alertLowEnergy',locale));
     }
+    if(aiFlaggedClientIds.has(client.id)) alerts.push(t('alertAiFlagged',locale));
     return alerts;
   }
 
