@@ -1857,6 +1857,24 @@ async function fetchExerciseDb(){
   return _exerciseDbCache;
 }
 
+// Daily cap on manual "Ask the assistant" questions per client. Each question is a paid
+// Gemini call, and nothing previously stopped a client from asking dozens of times in a
+// row — fine for one real client today, but a real cost/abuse gap once there are more.
+// Enforced client-side (checked against ai_coach_interactions, which the client can
+// already read/insert its own rows in per the RLS policy) rather than in the edge
+// function, since that needs no redeploy and this app has no adversarial-client threat
+// model to defend against, just an accidental-runaway-usage one. Easy to raise/lower —
+// just this one constant.
+const AI_ASSISTANT_DAILY_LIMIT = 20;
+
+async function _aiAssistantQuestionsToday(clientId){
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  const { count } = await supabase.from('ai_coach_interactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', clientId).gte('created_at', startOfDay.toISOString());
+  return count || 0;
+}
+
 // clientId identifies whose record this Q&A belongs to (for logging into
 // ai_coach_interactions) — the client themselves when they're asking about their own
 // data, or the client being viewed when a coach asks from the client-detail screen.
@@ -1890,6 +1908,13 @@ function attachAskAssistant(container, contextType, contextData, clientId){
     answerBox.style.display = 'block';
     answerBox.textContent = locale==='el' ? '…' : '…';
     try{
+      const askedToday = await _aiAssistantQuestionsToday(forId);
+      if(askedToday >= AI_ASSISTANT_DAILY_LIMIT){
+        answerBox.textContent = locale==='el'
+          ? `Έφτασες το όριο ερωτήσεων για σήμερα (${AI_ASSISTANT_DAILY_LIMIT}). Ρώτησε ξανά αύριο ή γράψε στον coach σου.`
+          : `You've reached today's question limit (${AI_ASSISTANT_DAILY_LIMIT}). Try again tomorrow or message your coach.`;
+        return;
+      }
       const { data, error } = await supabase.functions.invoke('ask-assistant', {
         body: { context_type: contextType, context_data: contextData, question },
       });
