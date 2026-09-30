@@ -450,6 +450,7 @@ const STR = {
   alertAiFlagged:{el:'🚩 Ο βοηθός παρέπεμψε τον πελάτη σε σένα πρόσφατα', en:'🚩 The assistant recently redirected the client to you'},
   alertAiEmergency:{el:'🚨 Ο βοηθός έδωσε επείγουσα παραπομπή πρόσφατα', en:'🚨 The assistant gave an emergency referral recently'},
   alertAiMedical:{el:'🩺 Ο βοηθός παρέπεμψε για ιατρικό έλεγχο πρόσφατα', en:'🩺 The assistant referred for a medical review recently'},
+  alertSeverePain:{el:'🔴 Καταγράφηκε πόνος ≥5/10 σε άσκηση πρόσφατα', en:'🔴 Pain ≥5/10 was logged on an exercise recently'},
   baselineSection:{el:'Baseline · Αρχικά Δεδομένα', en:'Baseline · Initial Data'},
   nutrition:{el:'Διατροφή', en:'Nutrition'},
   nutritionTargets:{el:'Στόχοι Διατροφής', en:'Nutrition Targets'},
@@ -2488,7 +2489,7 @@ async function renderCoachDashboard(main){
   ]);
 
   const clientIds = (clients||[]).map(c=>c.id);
-  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set(), aiEscalationByClient = {};
+  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set(), aiEscalationByClient = {}, severePainClientIds = new Set();
   if(clientIds.length){
     // Recent AI-flagged interactions (see attachAskAssistant / ask-assistant.ts) feed the
     // same "needs attention" alert mechanism below, rather than a separate card — a client
@@ -2499,12 +2500,18 @@ async function renderCoachDashboard(main){
     // dashboard alert text and status dot can reflect how urgent it actually is.
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
     const severityRank = { emergency: 0, medical: 1, physio: 2 };
-    const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }, { data: allIntake }, { data: allFlags }] = await Promise.all([
+    const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }, { data: allIntake }, { data: allFlags }, { data: allSeverePain }] = await Promise.all([
       supabase.from('checkins').select('client_id,date,adherence,pain_level,avg_energy').in('client_id', clientIds).order('date',{ascending:false}),
       supabase.from('programs').select('client_id,title').in('client_id', clientIds).eq('active', true),
       supabase.from('readiness_logs').select('client_id,date,sleep,energy,motivation,stress,soreness,pain,perceived_capacity').in('client_id', clientIds).order('date',{ascending:false}),
       supabase.from('client_intake').select('client_id,data').in('client_id', clientIds),
       supabase.from('ai_coach_interactions').select('client_id, escalation').in('client_id', clientIds).eq('flagged', true).gte('created_at', sevenDaysAgo),
+      // Per-set pain logged live during training (session_logs.pain, 0-10) — this is the same
+      // app-safety rule shown live to the client in renderLiveSessionTab (pain>=5 = stop this
+      // exercise), but until now that signal never reached the coach at all: a client could
+      // log severe pain on a set and nothing outside that one session screen would ever show
+      // it, possibly for days until the next check-in reflects it, if at all.
+      supabase.from('session_logs').select('client_id, pain, session_date').in('client_id', clientIds).gte('pain', 5).gte('session_date', sevenDaysAgo.slice(0,10)),
     ]);
     (allCheckins||[]).forEach(c=>{
       if(!latestCheckinByClient[c.client_id]) latestCheckinByClient[c.client_id] = c;
@@ -2521,6 +2528,7 @@ async function renderCoachDashboard(main){
       const current = aiEscalationByClient[f.client_id];
       if(!current || (severityRank[f.escalation] ?? 3) < (severityRank[current] ?? 3)) aiEscalationByClient[f.client_id] = f.escalation;
     });
+    (allSeverePain||[]).forEach(p=>{ severePainClientIds.add(p.client_id); });
   }
   function readinessScoreFor(id){
     const r = latestReadinessByClient[id];
@@ -2557,6 +2565,7 @@ async function renderCoachDashboard(main){
       else if(esc === 'medical') alerts.push(t('alertAiMedical',locale));
       else alerts.push(t('alertAiFlagged',locale));
     }
+    if(severePainClientIds.has(client.id)) alerts.push(t('alertSeverePain',locale));
     return alerts;
   }
 
@@ -2564,9 +2573,11 @@ async function renderCoachDashboard(main){
     const alerts = computeAlerts(client);
     const cks = checkinsByClient[client.id] || [];
     const rds = readinessByClient[client.id] || [];
-    // An AI emergency-level escalation always shows red on its own, regardless of the usual
-    // 2-alerts-for-red threshold — this one signal outweighs the general heuristic.
+    // An AI emergency-level escalation, or a live-logged pain of 5+/10, always shows red on
+    // its own, regardless of the usual 2-alerts-for-red threshold — these are direct
+    // actionable safety signals, not soft trend heuristics, so they outweigh the general rule.
     if(aiEscalationByClient[client.id] === 'emergency') return { dot:'🔴', label: locale==='el'?'🚨 Επείγουσα παραπομπή από τον βοηθό — δες το άμεσα':'🚨 Emergency referral from the assistant — check this now' };
+    if(severePainClientIds.has(client.id)) return { dot:'🔴', label: locale==='el'?'🔴 Πόνος ≥5/10 σε άσκηση πρόσφατα — χρειάζεται επανεξέταση':'🔴 Pain ≥5/10 on an exercise recently — needs review' };
     if(cks.length===0 && rds.length===0) return { dot:'⚪', label: locale==='el'?'Χωρίς δεδομένα ακόμα':'No data yet' };
     if(alerts.length >= 2) return { dot:'🔴', label: locale==='el'?'Χρειάζεται προσοχή — παρατηρήθηκε αλλαγή στα δεδομένα, συνιστάται επανεκτίμηση':'Needs attention — a change was observed in the data, reassessment recommended' };
     if(alerts.length === 1) return { dot:'🟡', label: locale==='el'?'Παρακολούθησε':'Keep an eye' };
@@ -4787,23 +4798,48 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
       let logId = existing?.id || null;
-      const row = el(`<div class="setRow">
-        <span class="mono" style="width:24px;">#${s}</span>
-        <input class="f_reps" placeholder="${t('reps',locale)}" value="${existing?.reps ?? ''}">
-        <input class="f_load" placeholder="${t('load',locale)}" value="${existing?.load_kg ?? ''}">
-        <input class="f_rpe" placeholder="${t('rpe',locale)}" value="${existing?.rpe ?? ''}">
-        <input class="f_rir" placeholder="RIR" value="${existing?.rir ?? ''}">
-        <input class="f_pain" placeholder="${t('pain',locale)}" value="${existing?.pain ?? ''}">
-        <button class="btn ${existing?'':'secondary'}" type="button" style="padding:6px 12px; font-size:12px;">${existing ? '✓ '+t('saved',locale).replace('✓ ','') : t('logSet',locale)}</button>
+      const row = el(`<div>
+        <div class="setRow">
+          <span class="mono" style="width:24px;">#${s}</span>
+          <input class="f_reps" placeholder="${t('reps',locale)}" value="${existing?.reps ?? ''}">
+          <input class="f_load" placeholder="${t('load',locale)}" value="${existing?.load_kg ?? ''}">
+          <input class="f_rpe" placeholder="${t('rpe',locale)}" value="${existing?.rpe ?? ''}">
+          <input class="f_rir" placeholder="RIR" value="${existing?.rir ?? ''}">
+          <input class="f_pain" placeholder="${t('pain',locale)}" value="${existing?.pain ?? ''}">
+          <button class="btn ${existing?'':'secondary'}" type="button" style="padding:6px 12px; font-size:12px;">${existing ? '✓ '+t('saved',locale).replace('✓ ','') : t('logSet',locale)}</button>
+        </div>
+        <div class="painNote" style="display:none; margin:4px 0 6px; font-size:11px; font-weight:600; border-radius:6px; padding:5px 8px;"></div>
       </div>`);
+      // Immediate in-session feedback on the pain value just logged for this set — the
+      // app-safety pain rule (not a medical rule): 0-2 no note, 3-4 modify/reduce and
+      // monitor, 5+ stop this exercise and it's surfaced to the coach. Previously this pain
+      // field was recorded but nothing ever looked at it — a client could log an 8/10 and
+      // just keep going with no feedback at all until their next check-in, days later.
+      const painNote = row.querySelector('.painNote');
+      function showPainNote(painVal){
+        if(painVal == null || painVal === '' || isNaN(painVal)){ painNote.style.display = 'none'; return; }
+        const p = Number(painVal);
+        painNote.style.display = 'block';
+        if(p <= 2){
+          painNote.style.display = 'none';
+        } else if(p <= 4){
+          painNote.style.background = 'rgba(226,162,51,0.15)'; painNote.style.color = 'var(--red-deep)';
+          painNote.textContent = locale==='el' ? `🟡 Πόνος ${p}/10 — μείωσε φορτίο/επαναλήψεις σε αυτή την άσκηση και παρακολούθησε.` : `🟡 Pain ${p}/10 — reduce load/reps on this exercise and monitor.`;
+        } else {
+          painNote.style.background = 'var(--danger)'; painNote.style.color = '#fff';
+          painNote.textContent = locale==='el' ? `🔴 Πόνος ${p}/10 — σταμάτα αυτή την άσκηση. Σημειώθηκε για τον coach σου.` : `🔴 Pain ${p}/10 — stop this exercise. Flagged for your coach.`;
+        }
+      }
+      showPainNote(existing?.pain);
       row.querySelector('button').addEventListener('click', async ()=>{
+        const painVal = row.querySelector('.f_pain').value;
         const payload = {
           program_exercise_id: pe.id, client_id: client.id, logged_by: profile.id, session_date: today, set_number: s,
           reps: Number(row.querySelector('.f_reps').value)||null,
           load_kg: Number(row.querySelector('.f_load').value)||null,
           rpe: Number(row.querySelector('.f_rpe').value)||null,
           rir: Number(row.querySelector('.f_rir').value)||null,
-          pain: Number(row.querySelector('.f_pain').value)||0,
+          pain: Number(painVal)||0,
         };
         const btn = row.querySelector('button');
         btn.textContent = '…';
@@ -4820,6 +4856,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           btn.classList.remove('secondary');
           toast(t('saved',locale));
           logMap[`${pe.id}_${s}`] = { id: logId, ...payload };
+          showPainNote(painVal);
           updateSessionProgress();
           startRestTimer();
         }catch(err){
