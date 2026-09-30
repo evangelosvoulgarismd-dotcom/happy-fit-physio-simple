@@ -1857,7 +1857,14 @@ async function fetchExerciseDb(){
   return _exerciseDbCache;
 }
 
-function attachAskAssistant(container, contextType, contextData){
+// clientId identifies whose record this Q&A belongs to (for logging into
+// ai_coach_interactions) — the client themselves when they're asking about their own
+// data, or the client being viewed when a coach asks from the client-detail screen.
+// Defaults to profile.id, which is correct for every existing call site except the one
+// inside the coach's client-detail Progress tab, which passes the viewed client's id
+// explicitly.
+function attachAskAssistant(container, contextType, contextData, clientId){
+  const forId = clientId || profile.id;
   const wrap = el(`<div style="margin-top:8px;">
     <button class="btn secondary askAssistantBtn" type="button" style="padding:5px 12px; font-size:11.5px;">🤖 ${locale==='el'?'Ρώτησε τον βοηθό':'Ask the assistant'}</button>
     <div class="askAssistantPanel" style="display:none; margin-top:8px;">
@@ -1865,6 +1872,9 @@ function attachAskAssistant(container, contextType, contextData){
         <input class="askAssistantInput" placeholder="${locale==='el'?'Γράψε την ερώτησή σου...':'Type your question...'}" style="flex:1;">
         <button class="btn askAssistantSend" type="button" style="padding:6px 14px; font-size:12px;">→</button>
       </div>
+      <p style="margin-top:6px; font-size:10.5px; color:var(--ink-soft);">${locale==='el'
+        ? 'Ο βοηθός είναι AI, όχι φυσικοθεραπευτής, και δεν αντικαθιστά επαγγελματική αξιολόγηση. Για πόνο ή τραυματισμό, μίλα με τον coach σου.'
+        : 'This assistant is AI, not a physiotherapist, and doesn’t replace professional evaluation. For pain or injury, talk to your coach.'}</p>
       <div class="askAssistantAnswer" style="margin-top:8px; font-size:12.5px; color:var(--ink); background:var(--bg); border-radius:6px; padding:10px 12px; display:none;"></div>
     </div>
   </div>`);
@@ -1884,7 +1894,16 @@ function attachAskAssistant(container, contextType, contextData){
         body: { context_type: contextType, context_data: contextData, question },
       });
       if(error || data?.error){ answerBox.textContent = locale==='el' ? 'Δεν μπόρεσα να απαντήσω τώρα.' : "Couldn't answer right now."; return; }
-      answerBox.textContent = data.answer || (locale==='el'?'Δεν βρήκα απάντηση.':'No answer found.');
+      const answer = data.answer || (locale==='el'?'Δεν βρήκα απάντηση.':'No answer found.');
+      answerBox.textContent = answer;
+      if(data.flagged){
+        answerBox.appendChild(el(`<div style="margin-top:6px; font-size:11.5px; color:var(--danger); font-weight:600;">⚠️ ${locale==='el'?'Αυτή η ερώτηση σημειώθηκε για να τη δει ο coach σου.':'This question has been marked for your coach to review.'}</div>`));
+      }
+      if(data.answer){
+        supabase.from('ai_coach_interactions').insert({
+          client_id: forId, context_type: contextType, question, answer: data.answer, flagged: !!data.flagged,
+        }).then(()=>{});
+      }
     }catch(err){
       answerBox.textContent = locale==='el' ? 'Σφάλμα σύνδεσης.' : 'Connection error.';
     }
@@ -1916,6 +1935,7 @@ function renderAiCoachSummaryCard(contextData, clientId){
   const card = el(`<div class="card" style="margin-bottom:16px;">
     <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🤖 ${locale==='el'?'Σύνοψη από τον βοηθό':'Assistant summary'}</h3>
     <p class="aiSummaryText" style="font-size:12.5px; color:var(--ink);">${locale==='el'?'Φορτώνει…':'Loading…'}</p>
+    <p style="margin-top:6px; font-size:10px; color:var(--ink-soft);">${locale==='el' ? 'Αυτόματη σύνοψη από AI, όχι από τον coach σου.' : 'Automatic AI summary, not from your coach.'}</p>
   </div>`);
   const dataHash = _hashStr(JSON.stringify(contextData));
   (async ()=>{
@@ -3644,7 +3664,7 @@ async function renderNutritionTab(body, person, isCoach){
         ${target.notes ? `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:10px;">${escapeHtml(target.notes)}</p>` : ''}
       </div>`);
       body.appendChild(targetsCard);
-      attachAskAssistant(targetsCard, 'nutrition', { daily_calories: target.daily_calories, protein_g: target.protein_g, carbs_g: target.carbs_g, fat_g: target.fat_g, notes: target.notes });
+      attachAskAssistant(targetsCard, 'nutrition', { daily_calories: target.daily_calories, protein_g: target.protein_g, carbs_g: target.carbs_g, fat_g: target.fat_g, notes: target.notes }, clientId);
     }
 
     const today = new Date().toISOString().slice(0,10);
@@ -3843,6 +3863,29 @@ async function renderMessagesTab(body, client, viewerRole){
     body.innerHTML = '';
     await renderMessagesTab(body, client, viewerRole);
   });
+
+  // Coach-only: surface any Ask-the-assistant question the AI flagged for follow-up
+  // (pain/injury/emergency redirect — see ask-assistant.ts). This is the one place a
+  // coach can actually see that a client was told to contact them, since the client
+  // only sees it inline in their own Ask-the-assistant panel at the moment it happens.
+  if(viewerRole === 'coach'){
+    const { data: flaggedQs } = await supabase.from('ai_coach_interactions')
+      .select('question, answer, context_type, created_at').eq('client_id', client.id).eq('flagged', true)
+      .order('created_at', {ascending:false}).limit(5);
+    if(flaggedQs?.length){
+      const flagCard = el(`<div class="card" style="margin-bottom:12px; border-color:var(--danger);">
+        <h4 style="font-size:12.5px; color:var(--danger); margin-bottom:8px;">🚩 ${locale==='el'?'Ο βοηθός παρέπεμψε αυτόν τον πελάτη σε εσένα':'The assistant redirected this client to you'}</h4>
+      </div>`);
+      flaggedQs.forEach(f=>{
+        flagCard.appendChild(el(`<div style="padding:8px 0; border-top:1px solid var(--line); font-size:12px;">
+          <div class="mono" style="color:var(--ink-soft); font-size:10.5px;">${new Date(f.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div>
+          <div style="margin-top:3px;"><strong>${locale==='el'?'Ρώτησε':'Asked'}:</strong> ${escapeHtml(f.question)}</div>
+          <div style="margin-top:2px; color:var(--ink-soft);"><strong>${locale==='el'?'Απάντηση':'Answer'}:</strong> ${escapeHtml(f.answer)}</div>
+        </div>`));
+      });
+      body.appendChild(flagCard);
+    }
+  }
 
   const { data: msgs } = await supabase.from('messages').select('*').eq('client_id', client.id).order('created_at',{ascending:true});
   const listWrap = el('<div class="card" style="max-height:400px; overflow-y:auto;"></div>');
@@ -4665,7 +4708,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       const p = card.querySelector('.whyPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
     });
-    attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, execution_steps: ex.execution_steps, technique_cues: ex.technique_cues, common_mistakes: ex.common_mistakes, body_region: ex.body_region, primary_muscles: ex.primary_muscles, goal_tags: ex.goal_tags, regression_text: ex.regression_text, progression_text: ex.progression_text, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title });
+    attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, execution_steps: ex.execution_steps, technique_cues: ex.technique_cues, common_mistakes: ex.common_mistakes, body_region: ex.body_region, primary_muscles: ex.primary_muscles, goal_tags: ex.goal_tags, regression_text: ex.regression_text, progression_text: ex.progression_text, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title }, client.id);
     const setsCount = pe.target_sets || 3;
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
@@ -5053,7 +5096,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
       </div>`));
     });
   }
-  if(anyMirrorData) attachAskAssistant(mirrorCard, 'progress', { indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })) });
+  if(anyMirrorData) attachAskAssistant(mirrorCard, 'progress', { indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })) }, clientId);
   body.appendChild(mirrorCard);
 
   if(anyMirrorData){
