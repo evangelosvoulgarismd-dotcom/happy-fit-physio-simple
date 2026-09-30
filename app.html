@@ -448,6 +448,8 @@ const STR = {
   alertAdherenceDrop:{el:'Η συνέπεια έπεσε απότομα', en:'Adherence dropped sharply'},
   alertLowEnergy:{el:'Χαμηλή ενέργεια/κίνητρο τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
   alertAiFlagged:{el:'🚩 Ο βοηθός παρέπεμψε τον πελάτη σε σένα πρόσφατα', en:'🚩 The assistant recently redirected the client to you'},
+  alertAiEmergency:{el:'🚨 Ο βοηθός έδωσε επείγουσα παραπομπή πρόσφατα', en:'🚨 The assistant gave an emergency referral recently'},
+  alertAiMedical:{el:'🩺 Ο βοηθός παρέπεμψε για ιατρικό έλεγχο πρόσφατα', en:'🩺 The assistant referred for a medical review recently'},
   baselineSection:{el:'Baseline · Αρχικά Δεδομένα', en:'Baseline · Initial Data'},
   nutrition:{el:'Διατροφή', en:'Nutrition'},
   nutritionTargets:{el:'Στόχοι Διατροφής', en:'Nutrition Targets'},
@@ -1922,12 +1924,20 @@ function attachAskAssistant(container, contextType, contextData, clientId){
       if(error || data?.error){ answerBox.textContent = locale==='el' ? 'Δεν μπόρεσα να απαντήσω τώρα.' : "Couldn't answer right now."; return; }
       const answer = data.answer || (locale==='el'?'Δεν βρήκα απάντηση.':'No answer found.');
       answerBox.textContent = answer;
-      if(data.flagged){
+      // Three escalation severities from the Safety & Referral Engine in ask-assistant.ts —
+      // each gets its own visible banner, since "call an ambulance" and "mention this to
+      // your coach" are very different asks and collapsing them into one warning would bury
+      // the urgent one.
+      if(data.escalation === 'emergency'){
+        answerBox.appendChild(el(`<div style="margin-top:8px; font-size:12.5px; color:#fff; font-weight:700; background:var(--danger); border-radius:6px; padding:8px 10px;">🚨 ${locale==='el'?'Χρειάζεσαι ΑΜΕΣΗ επείγουσα ιατρική αξιολόγηση. Σταμάτα κάθε δραστηριότητα τώρα.':'You need URGENT emergency medical care. Stop all activity now.'}</div>`));
+      } else if(data.escalation === 'medical'){
+        answerBox.appendChild(el(`<div style="margin-top:6px; font-size:11.5px; color:var(--danger); font-weight:600;">🩺 ${locale==='el'?'Αυτό χρειάζεται έλεγχο από γιατρό πριν συνεχίσεις.':'This needs a doctor’s review before you continue.'}</div>`));
+      } else if(data.escalation === 'physio'){
         answerBox.appendChild(el(`<div style="margin-top:6px; font-size:11.5px; color:var(--danger); font-weight:600;">⚠️ ${locale==='el'?'Αυτή η ερώτηση σημειώθηκε για να τη δει ο coach σου.':'This question has been marked for your coach to review.'}</div>`));
       }
       if(data.answer){
         supabase.from('ai_coach_interactions').insert({
-          client_id: forId, context_type: contextType, question, answer: data.answer, flagged: !!data.flagged,
+          client_id: forId, context_type: contextType, question, answer: data.answer, flagged: !!data.flagged, escalation: data.escalation || null,
         }).then(()=>{});
       }
     }catch(err){
@@ -2478,20 +2488,23 @@ async function renderCoachDashboard(main){
   ]);
 
   const clientIds = (clients||[]).map(c=>c.id);
-  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set();
+  let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set(), aiEscalationByClient = {};
   if(clientIds.length){
     // Recent AI-flagged interactions (see attachAskAssistant / ask-assistant.ts) feed the
     // same "needs attention" alert mechanism below, rather than a separate card — a client
     // the assistant told to contact the coach for pain/injury/emergency reasons should show
     // up exactly where the coach already looks first, not only buried in that one client's
     // Messages tab. 7-day window: recent enough to matter, not a permanent stain on a client.
+    // Keeps the highest-severity escalation per client (emergency > medical > physio) so the
+    // dashboard alert text and status dot can reflect how urgent it actually is.
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    const severityRank = { emergency: 0, medical: 1, physio: 2 };
     const [{ data: allCheckins }, { data: allPrograms }, { data: allReadiness }, { data: allIntake }, { data: allFlags }] = await Promise.all([
       supabase.from('checkins').select('client_id,date,adherence,pain_level,avg_energy').in('client_id', clientIds).order('date',{ascending:false}),
       supabase.from('programs').select('client_id,title').in('client_id', clientIds).eq('active', true),
       supabase.from('readiness_logs').select('client_id,date,sleep,energy,motivation,stress,soreness,pain,perceived_capacity').in('client_id', clientIds).order('date',{ascending:false}),
       supabase.from('client_intake').select('client_id,data').in('client_id', clientIds),
-      supabase.from('ai_coach_interactions').select('client_id').in('client_id', clientIds).eq('flagged', true).gte('created_at', sevenDaysAgo),
+      supabase.from('ai_coach_interactions').select('client_id, escalation').in('client_id', clientIds).eq('flagged', true).gte('created_at', sevenDaysAgo),
     ]);
     (allCheckins||[]).forEach(c=>{
       if(!latestCheckinByClient[c.client_id]) latestCheckinByClient[c.client_id] = c;
@@ -2503,7 +2516,11 @@ async function renderCoachDashboard(main){
       if(!latestReadinessByClient[r.client_id]) latestReadinessByClient[r.client_id] = r;
     });
     (allIntake||[]).forEach(i=>{ intakeByClient[i.client_id] = i.data || {}; });
-    (allFlags||[]).forEach(f=>{ aiFlaggedClientIds.add(f.client_id); });
+    (allFlags||[]).forEach(f=>{
+      aiFlaggedClientIds.add(f.client_id);
+      const current = aiEscalationByClient[f.client_id];
+      if(!current || (severityRank[f.escalation] ?? 3) < (severityRank[current] ?? 3)) aiEscalationByClient[f.client_id] = f.escalation;
+    });
   }
   function readinessScoreFor(id){
     const r = latestReadinessByClient[id];
@@ -2534,7 +2551,12 @@ async function renderCoachDashboard(main){
       const avgMotivation = recent.reduce((s,r)=>s+(r.motivation||0),0)/recent.length;
       if(avgEnergy < 4 || avgMotivation < 4) alerts.push(t('alertLowEnergy',locale));
     }
-    if(aiFlaggedClientIds.has(client.id)) alerts.push(t('alertAiFlagged',locale));
+    if(aiFlaggedClientIds.has(client.id)){
+      const esc = aiEscalationByClient[client.id];
+      if(esc === 'emergency') alerts.push(t('alertAiEmergency',locale));
+      else if(esc === 'medical') alerts.push(t('alertAiMedical',locale));
+      else alerts.push(t('alertAiFlagged',locale));
+    }
     return alerts;
   }
 
@@ -2542,6 +2564,9 @@ async function renderCoachDashboard(main){
     const alerts = computeAlerts(client);
     const cks = checkinsByClient[client.id] || [];
     const rds = readinessByClient[client.id] || [];
+    // An AI emergency-level escalation always shows red on its own, regardless of the usual
+    // 2-alerts-for-red threshold — this one signal outweighs the general heuristic.
+    if(aiEscalationByClient[client.id] === 'emergency') return { dot:'🔴', label: locale==='el'?'🚨 Επείγουσα παραπομπή από τον βοηθό — δες το άμεσα':'🚨 Emergency referral from the assistant — check this now' };
     if(cks.length===0 && rds.length===0) return { dot:'⚪', label: locale==='el'?'Χωρίς δεδομένα ακόμα':'No data yet' };
     if(alerts.length >= 2) return { dot:'🔴', label: locale==='el'?'Χρειάζεται προσοχή — παρατηρήθηκε αλλαγή στα δεδομένα, συνιστάται επανεκτίμηση':'Needs attention — a change was observed in the data, reassessment recommended' };
     if(alerts.length === 1) return { dot:'🟡', label: locale==='el'?'Παρακολούθησε':'Keep an eye' };
@@ -3905,15 +3930,29 @@ async function renderMessagesTab(body, client, viewerRole){
   // only sees it inline in their own Ask-the-assistant panel at the moment it happens.
   if(viewerRole === 'coach'){
     const { data: flaggedQs } = await supabase.from('ai_coach_interactions')
-      .select('question, answer, context_type, created_at').eq('client_id', client.id).eq('flagged', true)
+      .select('question, answer, context_type, created_at, escalation').eq('client_id', client.id).eq('flagged', true)
       .order('created_at', {ascending:false}).limit(5);
     if(flaggedQs?.length){
+      // Sort emergency-severity items to the top regardless of recency — a coach scanning
+      // this list should see the most urgent thing first, not just the most recent.
+      const severityRank = { emergency: 0, medical: 1, physio: 2 };
+      const sorted = [...flaggedQs].sort((a,b)=> (severityRank[a.escalation] ?? 3) - (severityRank[b.escalation] ?? 3));
+      const anyEmergency = sorted.some(f=>f.escalation === 'emergency');
+      const escalationLabel = (esc)=>{
+        if(esc === 'emergency') return { icon:'🚨', text: locale==='el'?'ΕΠΕΙΓΟΝ':'EMERGENCY' };
+        if(esc === 'medical') return { icon:'🩺', text: locale==='el'?'Ιατρικός έλεγχος':'Medical review' };
+        return { icon:'🚩', text: locale==='el'?'Παραπομπή':'Referral' };
+      };
       const flagCard = el(`<div class="card" style="margin-bottom:12px; border-color:var(--danger);">
-        <h4 style="font-size:12.5px; color:var(--danger); margin-bottom:8px;">🚩 ${locale==='el'?'Ο βοηθός παρέπεμψε αυτόν τον πελάτη σε εσένα':'The assistant redirected this client to you'}</h4>
+        <h4 style="font-size:12.5px; color:var(--danger); margin-bottom:8px;">${anyEmergency?'🚨':'🚩'} ${locale==='el'?'Ο βοηθός παρέπεμψε αυτόν τον πελάτη σε εσένα':'The assistant redirected this client to you'}</h4>
       </div>`);
-      flaggedQs.forEach(f=>{
+      sorted.forEach(f=>{
+        const lbl = escalationLabel(f.escalation);
         flagCard.appendChild(el(`<div style="padding:8px 0; border-top:1px solid var(--line); font-size:12px;">
-          <div class="mono" style="color:var(--ink-soft); font-size:10.5px;">${new Date(f.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="mono" style="color:var(--ink-soft); font-size:10.5px;">${new Date(f.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</span>
+            <span style="font-size:10.5px; font-weight:700; color:var(--danger);">${lbl.icon} ${lbl.text}</span>
+          </div>
           <div style="margin-top:3px;"><strong>${locale==='el'?'Ρώτησε':'Asked'}:</strong> ${escapeHtml(f.question)}</div>
           <div style="margin-top:2px; color:var(--ink-soft);"><strong>${locale==='el'?'Απάντηση':'Answer'}:</strong> ${escapeHtml(f.answer)}</div>
         </div>`));
