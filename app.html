@@ -451,6 +451,7 @@ const STR = {
   alertAiEmergency:{el:'🚨 Ο βοηθός έδωσε επείγουσα παραπομπή πρόσφατα', en:'🚨 The assistant gave an emergency referral recently'},
   alertAiMedical:{el:'🩺 Ο βοηθός παρέπεμψε για ιατρικό έλεγχο πρόσφατα', en:'🩺 The assistant referred for a medical review recently'},
   alertSeverePain:{el:'🔴 Καταγράφηκε πόνος ≥5/10 σε άσκηση πρόσφατα', en:'🔴 Pain ≥5/10 was logged on an exercise recently'},
+  alertReadinessPain:{el:'🔴 Η τελευταία ετοιμότητα δείχνει πόνο ≥7/10', en:'🔴 The latest readiness log shows pain ≥7/10'},
   baselineSection:{el:'Baseline · Αρχικά Δεδομένα', en:'Baseline · Initial Data'},
   nutrition:{el:'Διατροφή', en:'Nutrition'},
   nutritionTargets:{el:'Στόχοι Διατροφής', en:'Nutrition Targets'},
@@ -513,6 +514,28 @@ const STR = {
   bookThisSlot:{el:'Κράτηση', en:'Book'},
   slotBooked:{el:'✓ Κρατήθηκε', en:'✓ Booked'},
   noSlots:{el:'Δεν υπάρχουν ακόμα διαθέσιμες ώρες.', en:'No available slots yet.'},
+  groupClasses:{el:'Ομαδικά Μαθήματα', en:'Group Sessions'},
+  groupClassesHint:{el:'Σταθερό εβδομαδιαίο πρόγραμμα ομαδικών μαθημάτων, δια ζώσης. Κάθε συμμετοχή χρεώνεται ξεχωριστά.', en:'A fixed weekly schedule of in-person group sessions. Each attendance is billed separately.'},
+  addGroupClass:{el:'+ Νέο εβδομαδιαίο μάθημα', en:'+ New weekly class'},
+  noGroupClasses:{el:'Δεν έχεις ακόμα ομαδικά μαθήματα.', en:'No group classes yet.'},
+  groupClassTitle:{el:'Τίτλος', en:'Title'},
+  groupClassDay:{el:'Ημέρα', en:'Day'},
+  groupClassTime:{el:'Ώρα έναρξης', en:'Start time'},
+  groupClassDuration:{el:'Διάρκεια (λεπτά)', en:'Duration (min)'},
+  groupClassCapacity:{el:'Χωρητικότητα', en:'Capacity'},
+  groupClassPrice:{el:'Τιμή ανά συμμετοχή (€)', en:'Price per session (€)'},
+  groupClassLocation:{el:'Τοποθεσία', en:'Location'},
+  groupClassNextOccurrence:{el:'Επόμενη συνεδρία', en:'Next session'},
+  groupClassAttendees:{el:'Συμμετέχοντες', en:'Attendees'},
+  groupClassBook:{el:'Κράτηση θέσης', en:'Book a spot'},
+  groupClassCancel:{el:'Ακύρωση', en:'Cancel'},
+  groupClassCheckIn:{el:'Check-in', en:'Check in'},
+  groupClassCheckedIn:{el:'✓ Παρών/ούσα', en:'✓ Checked in'},
+  groupClassFull:{el:'Πλήρες', en:'Full'},
+  groupClassPaid:{el:'Πληρωμένο', en:'Paid'},
+  groupClassLive:{el:'LIVE', en:'LIVE'},
+  groupClassNoneScheduled:{el:'Ο coach σου δεν έχει ακόμα ομαδικά μαθήματα.', en:'Your coach has no group classes yet.'},
+  groupClassInactive:{el:'Ανενεργό', en:'Inactive'},
   yourBookedCall:{el:'Η κλήση σου', en:'Your call'},
   painInjuryHistory:{el:'Πόνος, Τραυματισμός & Αποκατάσταση', en:'Pain, Injury & Rehabilitation'},
   sleepRecovery:{el:'Ύπνος & Ανάρρωση', en:'Sleep & Recovery'},
@@ -923,7 +946,7 @@ function renderShell(){
       ${isCoach ? `<button class="navBtn ${view==='business'?'active':''}" data-v="business">📊 ${locale==='el'?'Επιχείρηση':'Business'}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='groupclasses'?'active':''}" data-v="groupclasses">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button>` : ''}
       ${isOwner ? `<button class="navBtn ${view==='partners'?'active':''}" data-v="partners">👥 ${t('partners',locale)}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;" id="sidebarBottom">
@@ -990,6 +1013,7 @@ function renderShell(){
   else if(view==='leads' && isCoach) renderLeadsView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
+  else if(view==='groupclasses' && isCoach) renderGroupClassesView(main);
   else if(view==='projection' && isCoach) renderProjectionView(main);
   else if(view==='courses' && isCoach) renderCoursesAdminView(main);
   else if(view==='partners' && isOwner) renderPartnersView(main);
@@ -1496,6 +1520,117 @@ async function renderCourseAccess(area, course){
     await renderCourseAccess(area, course);
   });
   area.appendChild(form);
+}
+
+// Group Sessions (in-person, fixed weekly schedule) — shared helpers used by both
+// the coach's management view and the client's Today-tab booking card below.
+function nextOccurrenceDate(dayOfWeek, fromDate){
+  const now = fromDate || new Date();
+  const todayDow = now.getDay();
+  const diff = (Number(dayOfWeek) - todayDow + 7) % 7;
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+  // Build the date string from local Y/M/D directly — going through toISOString()
+  // here would convert local midnight to UTC and can shift the date by a day
+  // (e.g. in Athens, UTC+2/+3 ahead of UTC).
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function dowLabel(n){
+  const labels = locale==='el'
+    ? ['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο']
+    : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return labels[n] || '';
+}
+
+async function renderGroupClassesView(main){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const { data: classes } = await supabase.from('group_classes').select('*').eq('coach_id', profile.id).order('day_of_week',{ascending:true}).order('start_time',{ascending:true});
+  main.innerHTML = '';
+  main.appendChild(el(`<h2 style="margin-bottom:4px;">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</h2>`));
+  main.appendChild(el(`<p style="color:var(--ink-soft); font-size:12px; margin-bottom:16px;">${t('groupClassesHint',locale)}</p>`));
+
+  const form = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+    <div class="field" style="min-width:160px; margin-bottom:0;"><label>${t('groupClassTitle',locale)}</label><input class="gcTitle" required placeholder="${locale==='el'?'π.χ. Ομαδική Κινητικότητα':'e.g. Group Mobility'}"></div>
+    <div class="field" style="margin-bottom:0;"><label>${t('groupClassDay',locale)}</label>
+      <select class="gcDay">
+        ${[1,2,3,4,5,6,0].map(d=>`<option value="${d}">${dowLabel(d)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" style="width:110px; margin-bottom:0;"><label>${t('groupClassTime',locale)}</label><input class="gcTime" type="time" required value="18:00"></div>
+    <div class="field" style="width:90px; margin-bottom:0;"><label>${t('groupClassDuration',locale)}</label><input class="gcDuration" type="number" value="60"></div>
+    <div class="field" style="width:90px; margin-bottom:0;"><label>${t('groupClassCapacity',locale)}</label><input class="gcCapacity" type="number" value="8"></div>
+    <div class="field" style="width:120px; margin-bottom:0;"><label>${t('groupClassPrice',locale)}</label><input class="gcPrice" type="number" min="0" step="0.5"></div>
+    <div class="field" style="min-width:140px; margin-bottom:0;"><label>${t('groupClassLocation',locale)}</label><input class="gcLocation" placeholder="${locale==='el'?'π.χ. Στούντιο Α':'e.g. Studio A'}"></div>
+    <button class="btn" type="submit">${t('addGroupClass',locale)}</button>
+  </form>`);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const title = form.querySelector('.gcTitle').value.trim();
+    if(!title) return;
+    await supabase.from('group_classes').insert({
+      coach_id: profile.id,
+      title,
+      day_of_week: Number(form.querySelector('.gcDay').value),
+      start_time: form.querySelector('.gcTime').value,
+      duration_minutes: Number(form.querySelector('.gcDuration').value)||60,
+      capacity: Number(form.querySelector('.gcCapacity').value)||8,
+      price: form.querySelector('.gcPrice').value ? Number(form.querySelector('.gcPrice').value) : null,
+      location: form.querySelector('.gcLocation').value.trim()||null,
+    });
+    renderGroupClassesView(main);
+  });
+  main.appendChild(form);
+
+  if(!classes?.length){ main.appendChild(el(`<p>${t('noGroupClasses',locale)}</p>`)); return; }
+
+  for(const c of classes){
+    const nextDate = nextOccurrenceDate(c.day_of_week);
+    const { data: bookings } = await supabase.from('group_class_bookings').select('*, clients(full_name)').eq('class_id', c.id).eq('session_date', nextDate).neq('status','cancelled');
+    const liveCount = (bookings||[]).filter(b=>b.status==='checked_in').length;
+    const card = el(`<div class="card" style="margin-bottom:14px; ${c.active?'':'opacity:.55;'}">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+        <div>
+          <strong>${escapeHtml(c.title)}</strong>
+          <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;" class="mono">${dowLabel(c.day_of_week)} ${(c.start_time||'').slice(0,5)} · ${c.duration_minutes}′ ${c.location?`· ${escapeHtml(c.location)}`:''}</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          ${!c.active?`<span class="badge">${t('groupClassInactive',locale)}</span>`:''}
+          <label style="display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer;"><input type="checkbox" class="activeChk" ${c.active?'checked':''}> ${locale==='el'?'Ενεργό':'Active'}</label>
+          <button class="btn danger delClassBtn" type="button" style="padding:5px 10px; font-size:12px;">🗑</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-bottom:10px;">
+        <span>👥 ${t('groupClassCapacity',locale)}: ${(bookings||[]).length}/${c.capacity}</span>
+        ${c.price!=null?`<span>💶 €${Number(c.price).toFixed(2)}</span>`:''}
+        <span>📅 ${t('groupClassNextOccurrence',locale)}: <span class="mono">${new Date(nextDate).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}</span></span>
+        ${liveCount>0?`<span style="color:var(--danger); font-weight:700;">🔴 ${t('groupClassLive',locale)} · ${liveCount}</span>`:''}
+      </div>
+      <div class="attendeesArea"></div>
+    </div>`);
+    card.querySelector('.activeChk').addEventListener('change', async (e)=>{
+      await supabase.from('group_classes').update({ active: e.target.checked }).eq('id', c.id);
+    });
+    card.querySelector('.delClassBtn').addEventListener('click', async ()=>{
+      await supabase.from('group_classes').delete().eq('id', c.id);
+      renderGroupClassesView(main);
+    });
+    const attendeesArea = card.querySelector('.attendeesArea');
+    if(!bookings?.length){
+      attendeesArea.appendChild(el(`<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Καμία κράτηση ακόμα για την επόμενη συνεδρία.':'No bookings yet for the next session.'}</p>`));
+    } else {
+      bookings.forEach(b=>{
+        const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px; gap:8px; flex-wrap:wrap;">
+          <span>${escapeHtml(b.clients?.full_name||'')} ${b.status==='checked_in'?`<span class="badge" style="margin-left:6px;">${t('groupClassCheckedIn',locale)}</span>`:''}</span>
+          <label style="display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer;"><input type="checkbox" class="paidChk" ${b.paid?'checked':''}> ${t('groupClassPaid',locale)}</label>
+        </div>`);
+        row.querySelector('.paidChk').addEventListener('change', async (e)=>{
+          await supabase.from('group_class_bookings').update({ paid: e.target.checked }).eq('id', b.id);
+        });
+        attendeesArea.appendChild(row);
+      });
+    }
+    main.appendChild(card);
+  }
 }
 
 async function renderProjectionView(main){
@@ -2566,6 +2701,15 @@ async function renderCoachDashboard(main){
       else alerts.push(t('alertAiFlagged',locale));
     }
     if(severePainClientIds.has(client.id)) alerts.push(t('alertSeverePain',locale));
+    // The client's own Safety Center tab already treats readiness pain>=7 as a red flag and
+    // offers a "Contact your coach" button — but that button only navigates to Messages, it
+    // doesn't send anything, so a client who sees that red screen and doesn't click through
+    // was, until now, invisible to the coach. Same fix as the AI escalations and live-set
+    // pain above: this signal now reaches the dashboard whether or not the client acts on it.
+    // 3-day window since this readiness data is meant to describe "today", not a permanent mark.
+    if(rds.length && rds[0].pain!=null && Number(rds[0].pain)>=7 && daysSince(rds[0].date)<=3){
+      alerts.push(t('alertReadinessPain',locale));
+    }
     return alerts;
   }
 
@@ -2578,6 +2722,9 @@ async function renderCoachDashboard(main){
     // actionable safety signals, not soft trend heuristics, so they outweigh the general rule.
     if(aiEscalationByClient[client.id] === 'emergency') return { dot:'🔴', label: locale==='el'?'🚨 Επείγουσα παραπομπή από τον βοηθό — δες το άμεσα':'🚨 Emergency referral from the assistant — check this now' };
     if(severePainClientIds.has(client.id)) return { dot:'🔴', label: locale==='el'?'🔴 Πόνος ≥5/10 σε άσκηση πρόσφατα — χρειάζεται επανεξέταση':'🔴 Pain ≥5/10 on an exercise recently — needs review' };
+    if(rds.length && rds[0].pain!=null && Number(rds[0].pain)>=7 && ((Date.now() - new Date(rds[0].date).getTime())/(1000*60*60*24))<=3){
+      return { dot:'🔴', label: locale==='el'?'🔴 Η τελευταία ετοιμότητα δείχνει πόνο ≥7/10':'🔴 The latest readiness log shows pain ≥7/10' };
+    }
     if(cks.length===0 && rds.length===0) return { dot:'⚪', label: locale==='el'?'Χωρίς δεδομένα ακόμα':'No data yet' };
     if(alerts.length >= 2) return { dot:'🔴', label: locale==='el'?'Χρειάζεται προσοχή — παρατηρήθηκε αλλαγή στα δεδομένα, συνιστάται επανεκτίμηση':'Needs attention — a change was observed in the data, reassessment recommended' };
     if(alerts.length === 1) return { dot:'🟡', label: locale==='el'?'Παρακολούθησε':'Keep an eye' };
@@ -4459,7 +4606,7 @@ function renderLevelCard({ sessionLogDates, checkins, readiness }){
   return card;
 }
 
-function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson }){
+function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings }){
   const wrap = el('<div></div>');
   wrap.appendChild(renderLevelCard({ sessionLogDates, checkins, readiness }));
 
@@ -4622,6 +4769,69 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
       <a class="service-cta" href="courses.html" style="font-size:12px; color:var(--red-deep); font-weight:700;">${locale==='el'?'Συνέχισε →':'Continue →'}</a>
     </div>`);
     wrap.appendChild(coursesCard);
+  }
+
+  // Group sessions (in-person, fixed weekly schedule) — only shown when the client's
+  // coach has at least one active weekly class configured.
+  if(groupClasses?.length){
+    const gcCard = el(`<div class="card">
+      <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:4px;">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</h3>
+    </div>`);
+    groupClasses.forEach(c=>{
+      const nextDate = nextOccurrenceDate(c.day_of_week);
+      const occ = (groupClassOccupancy||[]).filter(b=>b.class_id===c.id && b.session_date===nextDate);
+      const liveCount = occ.filter(b=>b.status==='checked_in').length;
+      const myBooking = (myGroupBookings||[]).find(b=>b.class_id===c.id && b.session_date===nextDate);
+      const isFull = occ.length >= c.capacity && !myBooking;
+      const startDt = new Date(`${nextDate}T${(c.start_time||'00:00:00').length===5?c.start_time+':00':c.start_time}`);
+      const endDt = new Date(startDt.getTime() + (c.duration_minutes||60)*60000);
+      const now = new Date();
+      const checkInWindowOpen = now >= new Date(startDt.getTime() - 30*60000) && now <= endDt;
+
+      const row = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+          <div>
+            <strong style="font-size:13px;">${escapeHtml(c.title)}</strong>
+            <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;" class="mono">${dowLabel(c.day_of_week)} ${(c.start_time||'').slice(0,5)} · ${new Date(nextDate).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}${c.location?` · ${escapeHtml(c.location)}`:''}</div>
+          </div>
+          ${liveCount>0?`<span style="color:var(--danger); font-weight:700; font-size:11.5px; white-space:nowrap;">🔴 ${t('groupClassLive',locale)} · ${liveCount}</span>`:''}
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:11.5px; color:var(--ink-soft);">👥 ${occ.length}/${c.capacity}${c.price!=null?` · €${Number(c.price).toFixed(2)}`:''}</span>
+          <div class="gcActions" style="display:flex; gap:6px;"></div>
+        </div>
+      </div>`);
+      const actions = row.querySelector('.gcActions');
+      if(!myBooking){
+        const btn = el(`<button class="btn secondary" type="button" style="padding:6px 12px; font-size:11.5px;" ${isFull?'disabled':''}>${isFull?t('groupClassFull',locale):t('groupClassBook',locale)}</button>`);
+        if(!isFull) btn.addEventListener('click', async ()=>{
+          const { error } = await supabase.from('group_class_bookings').insert({ class_id: c.id, client_id: profile.id, session_date: nextDate });
+          if(error){ toast(locale==='el'?'Δεν ήταν δυνατή η κράτηση.':'Could not book.'); return; }
+          toast(locale==='el'?'Κρατήθηκε!':'Booked!');
+          renderClientDashboard(body.closest('#main'));
+        });
+        actions.appendChild(btn);
+      } else if(myBooking.status==='checked_in'){
+        actions.appendChild(el(`<span class="badge">${t('groupClassCheckedIn',locale)}</span>`));
+      } else {
+        if(checkInWindowOpen){
+          const inBtn = el(`<button class="btn" type="button" style="padding:6px 12px; font-size:11.5px;">${t('groupClassCheckIn',locale)}</button>`);
+          inBtn.addEventListener('click', async ()=>{
+            await supabase.from('group_class_bookings').update({ status:'checked_in' }).eq('id', myBooking.id);
+            renderClientDashboard(body.closest('#main'));
+          });
+          actions.appendChild(inBtn);
+        }
+        const cancelBtn = el(`<button class="btn secondary" type="button" style="padding:6px 12px; font-size:11.5px;">${t('groupClassCancel',locale)}</button>`);
+        cancelBtn.addEventListener('click', async ()=>{
+          await supabase.from('group_class_bookings').update({ status:'cancelled' }).eq('id', myBooking.id);
+          renderClientDashboard(body.closest('#main'));
+        });
+        actions.appendChild(cancelBtn);
+      }
+      gcCard.appendChild(row);
+    });
+    wrap.appendChild(gcCard);
   }
 
   body.appendChild(wrap);
@@ -4946,9 +5156,25 @@ async function renderClientDashboard(main){
   ]);
   const program = programs?.[0] || null;
   let openSlots = [];
+  let groupClasses = [];
+  let groupClassOccupancy = [];
+  let myGroupBookings = [];
   if(clientRow?.coach_id){
-    const { data: slots } = await supabase.from('availability_slots').select('*').eq('coach_id', clientRow.coach_id).is('booked_by', null).gt('start_at', new Date().toISOString()).order('start_at',{ascending:true});
+    const [{ data: slots }, { data: gc }] = await Promise.all([
+      supabase.from('availability_slots').select('*').eq('coach_id', clientRow.coach_id).is('booked_by', null).gt('start_at', new Date().toISOString()).order('start_at',{ascending:true}),
+      supabase.from('group_classes').select('*').eq('coach_id', clientRow.coach_id).eq('active', true).order('day_of_week',{ascending:true}).order('start_time',{ascending:true}),
+    ]);
     openSlots = slots || [];
+    groupClasses = gc || [];
+    if(groupClasses.length){
+      const classIds = groupClasses.map(c=>c.id);
+      const [{ data: allBookings }, { data: myBookings }] = await Promise.all([
+        supabase.from('group_class_bookings').select('class_id,session_date,status').in('class_id', classIds).neq('status','cancelled'),
+        supabase.from('group_class_bookings').select('*').eq('client_id', profile.id).in('class_id', classIds).neq('status','cancelled'),
+      ]);
+      groupClassOccupancy = allBookings || [];
+      myGroupBookings = myBookings || [];
+    }
   }
   let nextLesson = null;
   if(courseEnrollments?.length){
@@ -5022,7 +5248,7 @@ async function renderClientDashboard(main){
     accountMenu.appendChild(logoutRow);
     body.appendChild(accountMenu);
   } else if(tab==='today'){
-    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson });
+    renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings });
   } else if(tab==='intake'){
     const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
     renderIntakeForm(body, profile, intakeRow?.data || null, false);
