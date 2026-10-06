@@ -47,6 +47,10 @@
   #sidebarFooter{margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,0.12); font-size:11px; color:#d99a92; text-align:center; line-height:1.6;}
   #sidebarFooter a{color:#f0d9d4; cursor:pointer; text-decoration:underline;}
   .modalOverlay{position:fixed; inset:0; background:rgba(36,20,19,0.55); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}
+  .modalOverlay{animation:modalFade .2s ease;}
+  .modalBox{animation:modalPop .22s ease;}
+  @keyframes modalFade{from{opacity:0;}to{opacity:1;}}
+  @keyframes modalPop{from{opacity:0; transform:translateY(12px) scale(.97);}to{opacity:1; transform:none;}}
   .modalBox{background:var(--panel); border-radius:10px; max-width:560px; width:100%; max-height:80vh; overflow-y:auto; padding:28px; box-shadow:0 20px 50px rgba(36,20,19,0.3);}
   .modalBox h2{margin-bottom:14px;}
   .modalBox p{font-size:13px; margin:0 0 10px; line-height:1.6;}
@@ -88,7 +92,7 @@
   .statCard .lbl{font-size:11px; color:var(--ink-soft); margin-top:4px;}
   .chartWrap{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px 8px; margin-bottom:14px; height:220px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
   .chartTitle{font-size:12px; color:var(--ink-soft); margin-bottom:6px; font-weight:600;}
-  .btn{font-family:inherit; font-weight:600; font-size:13px; padding:9px 16px; border-radius:var(--radius); border:1px solid var(--red); background:var(--red); color:#fff; cursor:pointer;}
+  .btn{font-family:inherit; font-weight:600; font-size:13px; padding:9px 16px; border-radius:var(--radius); border:1px solid var(--red); background:var(--red); color:#fff; cursor:pointer; transition:transform .1s ease-out, background-color .2s ease, border-color .2s ease, color .2s ease;}
   .btn:hover{background:var(--red-deep); border-color:var(--red-deep);}
   .btn.secondary{background:transparent; color:var(--red); border-color:var(--red);}
   .btn.secondary:hover{background:#fbeae6;}
@@ -256,6 +260,19 @@
 
   /* Reduce accidental selection/zoom while keeping form usability */
   button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell { user-select:none; }
+
+  /* ── Press feedback + accessibility preferences ── */
+  .btn:active{transform:scale(.97);}
+  .navBtn{transition:background-color .15s ease, transform .1s ease-out;}
+  .navBtn:active{transform:scale(.98);}
+  .btn:focus-visible, .navBtn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .modalOverlay{animation:modalFade .12s ease;}
+    .modalBox{animation:none;}
+    .btn:active, .navBtn:active, .clientCard:active{transform:none;}
+    .btn, .navBtn{transition:background-color .15s ease, border-color .15s ease, color .15s ease;}
+  }
 </style>
 </head>
 <body>
@@ -263,6 +280,7 @@
 
 <!-- Supabase client via CDN, no npm/build step needed -->
 <script type="module">
+const SCROLL_BEHAVIOR = () => (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ============================================================
@@ -538,6 +556,7 @@ const STR = {
   groupClassInactive:{el:'Ανενεργό', en:'Inactive'},
   yourBookedCall:{el:'Η κλήση σου', en:'Your call'},
   painInjuryHistory:{el:'Πόνος, Τραυματισμός & Αποκατάσταση', en:'Pain, Injury & Rehabilitation'},
+  psfsSectionTitle:{el:'Λειτουργικοί Στόχοι (PSFS)', en:'Functional Goals (PSFS)'},
   sleepRecovery:{el:'Ύπνος & Ανάρρωση', en:'Sleep & Recovery'},
   nutritionSection:{el:'Διατροφή', en:'Nutrition'},
   trainingPreferences:{el:'Προτιμήσεις Προπόνησης', en:'Training Preferences'},
@@ -850,10 +869,18 @@ function renderAuth(){
           const { data, error } = await supabase.auth.signUp({ email, password });
           if(error) throw error;
           const userId = data.user.id;
-          await supabase.from('profiles').insert({ id:userId, role:'client', full_name:fullName, locale });
-          await supabase.from('clients').insert({ id:userId, coach_id:codeRow.coach_id, full_name:fullName });
-          await supabase.from('invite_codes').update({ used:true, used_by:userId }).eq('code', code);
-          await supabase.from('consents').insert({ profile_id:userId, granted:true });
+          // Each step is checked before the next, and the invite code is only marked "used"
+          // once the profile+client rows actually exist — otherwise a failed profile insert
+          // used to still burn the invite code while silently kicking the user back to login
+          // with no explanation, leaving the coach to issue a brand-new code without knowing why.
+          const { error: profErr } = await supabase.from('profiles').insert({ id:userId, role:'client', full_name:fullName, locale });
+          if(profErr) throw new Error((locale==='el'?'Αποτυχία δημιουργίας προφίλ: ':'Failed to create profile: ') + profErr.message);
+          const { error: clientErr } = await supabase.from('clients').insert({ id:userId, coach_id:codeRow.coach_id, full_name:fullName });
+          if(clientErr) throw new Error((locale==='el'?'Αποτυχία σύνδεσης με τον coach: ':'Failed to link to coach: ') + clientErr.message);
+          const { error: codeUpdErr } = await supabase.from('invite_codes').update({ used:true, used_by:userId }).eq('code', code);
+          if(codeUpdErr) throw new Error((locale==='el'?'Αποτυχία ενημέρωσης κωδικού πρόσκλησης: ':'Failed to update invite code: ') + codeUpdErr.message);
+          const { error: consentErr } = await supabase.from('consents').insert({ profile_id:userId, granted:true });
+          if(consentErr) throw new Error((locale==='el'?'Αποτυχία καταγραφής συναίνεσης: ':'Failed to record consent: ') + consentErr.message);
         } else {
           const coachCode = wrap.querySelector('#coachInviteCode').value.trim().toUpperCase();
           const { data: coachCodeRow, error: coachCodeErr } = await supabase.from('coach_invite_codes').select('*').eq('code', coachCode).eq('used', false).single();
@@ -861,9 +888,12 @@ function renderAuth(){
           const { data, error } = await supabase.auth.signUp({ email, password });
           if(error) throw error;
           const userId = data.user.id;
-          await supabase.from('profiles').insert({ id:userId, role:'coach', full_name:fullName, locale });
-          await supabase.from('coach_invite_codes').update({ used:true, used_by:userId }).eq('code', coachCode);
-          await supabase.from('consents').insert({ profile_id:userId, granted:true });
+          const { error: profErr } = await supabase.from('profiles').insert({ id:userId, role:'coach', full_name:fullName, locale });
+          if(profErr) throw new Error((locale==='el'?'Αποτυχία δημιουργίας προφίλ: ':'Failed to create profile: ') + profErr.message);
+          const { error: coachCodeUpdErr } = await supabase.from('coach_invite_codes').update({ used:true, used_by:userId }).eq('code', coachCode);
+          if(coachCodeUpdErr) throw new Error((locale==='el'?'Αποτυχία ενημέρωσης κωδικού: ':'Failed to update invite code: ') + coachCodeUpdErr.message);
+          const { error: consentErr } = await supabase.from('consents').insert({ profile_id:userId, granted:true });
+          if(consentErr) throw new Error((locale==='el'?'Αποτυχία καταγραφής συναίνεσης: ':'Failed to record consent: ') + consentErr.message);
         }
       }
       await boot();
@@ -997,7 +1027,7 @@ function renderShell(){
   if(bottomMoreBtn) bottomMoreBtn.addEventListener('click', ()=>{
     shell.querySelector('#navBtnsWrap').classList.toggle('open');
     shell.querySelector('#sidebarBottom').classList.toggle('open');
-    shell.querySelector('#navBtnsWrap').scrollIntoView({ behavior:'smooth', block:'start' });
+    shell.querySelector('#navBtnsWrap').scrollIntoView({ behavior: SCROLL_BEHAVIOR(), block:'start' });
   });
   shell.querySelector('#notifBell').addEventListener('click', (e)=>{
     e.stopPropagation();
@@ -1522,6 +1552,19 @@ async function renderCourseAccess(area, course){
   area.appendChild(form);
 }
 
+// Local-timezone date string (YYYY-MM-DD), used everywhere the app means "today" as the
+// user actually experiences it. `new Date().toISOString().slice(0,10)` — used throughout
+// this file before this fix — returns the UTC calendar day instead, which in Athens
+// (UTC+2/+3) is shifted by up to a few hours from local midnight: a readiness/check-in/
+// session log saved between local midnight and ~3am could land under the wrong date, and
+// streaks/reassessment countdowns could flip a few hours early or late. All "today" call
+// sites below now go through this one function so read side and write side stay consistent.
+function localDateStr(d){
+  d = d || new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
 // Group Sessions (in-person, fixed weekly schedule) — shared helpers used by both
 // the coach's management view and the client's Today-tab booking card below.
 function nextOccurrenceDate(dayOfWeek, fromDate){
@@ -1529,11 +1572,7 @@ function nextOccurrenceDate(dayOfWeek, fromDate){
   const todayDow = now.getDay();
   const diff = (Number(dayOfWeek) - todayDow + 7) % 7;
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
-  // Build the date string from local Y/M/D directly — going through toISOString()
-  // here would convert local midnight to UTC and can shift the date by a day
-  // (e.g. in Athens, UTC+2/+3 ahead of UTC).
-  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
+  return localDateStr(d);
 }
 function dowLabel(n){
   const labels = locale==='el'
@@ -1583,9 +1622,14 @@ async function renderGroupClassesView(main){
 
   if(!classes?.length){ main.appendChild(el(`<p>${t('noGroupClasses',locale)}</p>`)); return; }
 
+  // One batched query for every class's bookings (any date) instead of one round-trip per
+  // class — filtered client-side to each class's own next-occurrence date below.
+  const classIds = classes.map(c=>c.id);
+  const { data: allBookings } = await supabase.from('group_class_bookings').select('*, clients(full_name)').in('class_id', classIds).neq('status','cancelled');
+
   for(const c of classes){
     const nextDate = nextOccurrenceDate(c.day_of_week);
-    const { data: bookings } = await supabase.from('group_class_bookings').select('*, clients(full_name)').eq('class_id', c.id).eq('session_date', nextDate).neq('status','cancelled');
+    const bookings = (allBookings||[]).filter(b=>b.class_id===c.id && b.session_date===nextDate);
     const liveCount = (bookings||[]).filter(b=>b.status==='checked_in').length;
     const card = el(`<div class="card" style="margin-bottom:14px; ${c.active?'':'opacity:.55;'}">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
@@ -1785,7 +1829,7 @@ async function renderBusinessOverview(main){
 // ============================================================
 const PARTNER_RATE_PER_CLIENT = 5; // €/active client/month — see business-model discussion with Evangelos
 
-function currentPeriod(){ return new Date().toISOString().slice(0,7); } // 'YYYY-MM'
+function currentPeriod(){ return localDateStr(new Date()).slice(0,7); } // 'YYYY-MM', local calendar month
 
 async function renderPartnersView(main){
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
@@ -2404,8 +2448,8 @@ async function renderLibrary(main, isCoach){
             const fresh = results.filter(r=> r.title && !known.some(k=>k.includes((r.title||'').toLowerCase().slice(0,25))));
             evidenceAutoCache[ex.id] = fresh;
             renderAutoEvidenceBox(box, ex, fresh);
-            await supabase.from('exercises').update({ last_reviewed: new Date().toISOString().slice(0,10) }).eq('id', ex.id);
-            ex.last_reviewed = new Date().toISOString().slice(0,10);
+            await supabase.from('exercises').update({ last_reviewed: localDateStr(new Date()) }).eq('id', ex.id);
+            ex.last_reviewed = localDateStr(new Date());
           }catch(err){
             box.innerHTML = `<a href="https://europepmc.org/search?query=${encodeURIComponent(ex.name_en||ex.name_el)}" target="_blank" rel="noreferrer">${locale==='el'?'Αναζήτηση χειροκίνητα στο Europe PMC ↗':'Search manually on Europe PMC ↗'}</a>`;
           }
@@ -2752,7 +2796,7 @@ async function renderCoachDashboard(main){
     </div>`);
     welcome.querySelector('#partnerWelcomeCtaBtn').addEventListener('click', ()=>{
       const input = document.querySelector('.newClientName');
-      if(input){ input.scrollIntoView({behavior:'smooth', block:'center'}); input.focus(); }
+      if(input){ input.scrollIntoView({behavior: SCROLL_BEHAVIOR(), block:'center'}); input.focus(); }
     });
     main.appendChild(welcome);
   }
@@ -3149,6 +3193,7 @@ async function renderClientDetail(main, forceRefresh){
   const program = programs?.[0] || null;
 
   main.innerHTML = '';
+  destroyCharts(); // clear any chart from the previously-shown tab/client before this one builds its own
   const back = el(`<button class="btn secondary">← ${locale==='el'?'Πίσω':'Back'}</button>`);
   back.addEventListener('click', ()=>{ selectedClient=null; renderClientDetail._cache=null; renderShell(); });
   main.appendChild(back);
@@ -3243,6 +3288,7 @@ const INTAKE_SECTIONS = [
     ['management','area'], ['tests','area'], ['medications','area'], ['contraindications','area'],
     ['conditions','area'], ['medicalClearance','area'], ['currentPain','area'], ['injuryHistory','area'], ['fearedMovement','area'],
   ]},
+  { key:'psfs', title:'psfsSectionTitle', fields:[] },
   { key:'sleep', title:'sleepRecovery', fields:[
     ['typicalSleepHours','text'], ['sleepQuality','select',['Πολύ καλή','Καλή','Μέτρια','Κακή','Πολύ κακή']],
     ['recoveryHabits','area'], ['stressLevel','select',['Χαμηλό','Μέτριο','Υψηλό','Πολύ υψηλό']],
@@ -3371,6 +3417,49 @@ function renderClinicalRecommendation(container, state){
   container.appendChild(card);
 }
 
+// PSFS (Patient-Specific Functional Scale) — a validated, client-nominated functional outcome
+// measure: the client picks up to 3 activities limited by their issue and rates ability 0-10
+// (0 = unable, 10 = no problem). The SAME activities get re-rated each time (at intake, and at
+// each reassessment) so progress on what actually matters to the client shows over time — this
+// is pure self-report, no clinical interpretation required, which fits the standing rule that
+// Evangelos (not yet a licensed physiotherapist) collects data and supports exercise adherence
+// rather than diagnosing. Shared by both the intake wizard and the reassessment flow below.
+async function renderPsfsCard(container, client, headingText){
+  const { data: latest } = await supabase.from('psfs_entries').select('items').eq('client_id', client.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  const existingItems = latest?.items || [];
+  const wrap = el(`<div class="card gold" style="margin-bottom:14px;">
+    <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">🎯 PSFS${headingText ? ' — '+escapeHtml(headingText) : ''}</h4>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'
+      ? 'Γράψε έως 3 δραστηριότητες που σου είναι δύσκολες ή περιορισμένες εξαιτίας του θέματός σου (π.χ. "να σηκώνω το παιδί μου", "να τρέχω 5χλμ"). Βαθμολόγησε πόσο εύκολα τις κάνεις ΣΗΜΕΡΑ: 0 = αδύνατο, 10 = χωρίς κανένα πρόβλημα. Οι ίδιες δραστηριότητες θα ξαναμετρηθούν σε κάθε επανεκτίμηση, για να φαίνεται η πρόοδος.'
+      : 'List up to 3 activities that are difficult or limited because of your issue (e.g. "picking up my kid", "running 5km"). Rate how easily you do each one TODAY: 0 = unable, 10 = no problem at all. The same activities get re-rated at every reassessment, so progress shows over time.'}</p>
+  </div>`);
+  const rows = [];
+  for(let i=0;i<3;i++){
+    const existing = existingItems[i] || { activity:'', score:5 };
+    const row = el(`<div style="margin-bottom:10px;">
+      <input class="psfsActivity" placeholder="${locale==='el'?`Δραστηριότητα ${i+1}`:`Activity ${i+1}`}" value="${escapeHtml(existing.activity||'')}" style="width:100%; margin-bottom:6px; padding:7px; border:1px solid var(--line); border-radius:6px; font-family:inherit; font-size:12.5px; box-sizing:border-box;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="range" class="psfsScore" min="0" max="10" value="${existing.score ?? 5}" style="flex:1;">
+        <span class="mono psfsScoreVal" style="width:22px; text-align:right; font-size:12px;">${existing.score ?? 5}</span>
+      </div>
+    </div>`);
+    row.querySelector('.psfsScore').addEventListener('input', (e)=>{ row.querySelector('.psfsScoreVal').textContent = e.target.value; });
+    rows.push(row);
+    wrap.appendChild(row);
+  }
+  const statusSpan = el(`<span class="savedTag" style="margin-left:10px; font-size:11px;"></span>`);
+  const saveBtn = el(`<button class="btn secondary" type="button">💾 ${locale==='el'?'Αποθήκευση PSFS':'Save PSFS'}</button>`);
+  saveBtn.addEventListener('click', async ()=>{
+    const items = rows.map(r=>({ activity: r.querySelector('.psfsActivity').value.trim(), score: Number(r.querySelector('.psfsScore').value) })).filter(it=>it.activity);
+    if(!items.length){ statusSpan.textContent = locale==='el'?'Γράψε τουλάχιστον μία δραστηριότητα.':'Enter at least one activity.'; return; }
+    const { error } = await supabase.from('psfs_entries').insert({ client_id: client.id, items, created_by: profile.id });
+    statusSpan.textContent = error ? (locale==='el'?'Σφάλμα αποθήκευσης.':'Save failed.') : (locale==='el'?'✓ Αποθηκεύτηκε':'✓ Saved');
+  });
+  wrap.appendChild(saveBtn);
+  wrap.appendChild(statusSpan);
+  container.appendChild(wrap);
+}
+
 function renderIntakeForm(body, client, existingData, isCoach){
   const state = { ...(existingData||{}) };
   let timer = null;
@@ -3430,6 +3519,9 @@ function renderIntakeForm(body, client, existingData, isCoach){
     if(section.key==='pain'){
       renderBodyDiagram(secEl, state, scheduleSave);
     }
+    if(section.key==='psfs'){
+      renderPsfsCard(secEl, client, null);
+    }
 
     section.fields.forEach(([key, type, opts])=>{
       let input;
@@ -3467,7 +3559,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
       state._step = stepIndex;
       scheduleSave();
       renderStep();
-      sectionsWrap.scrollIntoView({ behavior:'smooth', block:'start' });
+      sectionsWrap.scrollIntoView({ behavior: SCROLL_BEHAVIOR(), block:'start' });
     } else {
       state._completed = true;
       scheduleSave();
@@ -3476,7 +3568,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
       const recommendation = el('<div class="clinicalRecommendation"></div>');
       renderClinicalRecommendation(recommendation, state);
       sectionsWrap.appendChild(recommendation);
-      recommendation.scrollIntoView({ behavior:'smooth', block:'center' });
+      recommendation.scrollIntoView({ behavior: SCROLL_BEHAVIOR(), block:'center' });
     }
   });
 
@@ -3529,6 +3621,13 @@ async function renderReassessmentTab(body, client, isCoach){
     body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Δες τις τάσεις πριν αποφασίσεις':'Review trends before deciding'}</p>`));
     if(readiness?.length) renderTrendChart(body, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [{key:'pain', label:locale==='el'?'Πόνος':'Pain', color:'#c4201f'}]);
     if(checkins?.length) renderTrendChart(body, locale==='el'?'Συνέπεια %':'Adherence %', checkins, 'date', [{key:'adherence', label:'Adherence %', color:'#8f1615'}]);
+  }
+
+  // Re-rate the client's own PSFS activities as part of this reassessment (same up to
+  // 3 activities from intake/last time, pre-filled) — coach-administered, since this tab
+  // is the reassessment checkpoint, but it's still the client's own self-report scale.
+  if(isCoach){
+    await renderPsfsCard(body, client, locale==='el'?'επανεκτίμηση':'reassessment');
   }
 
   const DECISION_OPTIONS = ['Συνέχεια ίδιου προγράμματος','Πρόοδος φόρτισης','Μείωση φόρτισης','Αλλαγή ασκήσεων','Παραπομπή για ιατρικό έλεγχο','Ολοκλήρωση αποκατάστασης'];
@@ -3770,7 +3869,7 @@ async function renderPhotosTab(body, client){
 
   const uploadForm = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
     <div class="field" style="margin-bottom:0;"><label>${t('uploadPhoto',locale)}</label><input type="file" class="photoFile" accept="image/*" required></div>
-    <div class="field" style="width:160px; margin-bottom:0;"><label>${locale==='el'?'Ημερομηνία':'Date'}</label><input type="date" class="photoDate" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field" style="width:160px; margin-bottom:0;"><label>${locale==='el'?'Ημερομηνία':'Date'}</label><input type="date" class="photoDate" value="${localDateStr(new Date())}"></div>
     <div class="field" style="min-width:160px; margin-bottom:0;"><label>${locale==='el'?'Σημείωση (προαιρετικό)':'Note (optional)'}</label><input class="photoNote"></div>
     <button class="btn" type="submit">${t('save',locale)}</button>
   </form>`);
@@ -3811,8 +3910,10 @@ async function renderPhotosTab(body, client){
   }
 
   const grid = el('<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;"></div>');
-  for(const p of photos){
-    const { data: signed, error: signErr } = await supabase.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600);
+  // One batched round-trip for every photo's signed URL instead of one request per photo.
+  const signedResults = await Promise.all(photos.map(p=>supabase.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600)));
+  photos.forEach((p, i)=>{
+    const { data: signed, error: signErr } = signedResults[i];
     const card = el(`<div class="card" style="padding:8px;">
       ${signed?.signedUrl
         ? `<img src="${signed.signedUrl}" style="width:100%; height:140px; object-fit:cover; border-radius:6px; display:block;">`
@@ -3828,7 +3929,7 @@ async function renderPhotosTab(body, client){
       await renderPhotosTab(body, client);
     });
     grid.appendChild(card);
-  }
+  });
   body.appendChild(grid);
 }
 
@@ -3885,7 +3986,7 @@ async function renderNutritionTab(body, person, isCoach){
       attachAskAssistant(targetsCard, 'nutrition', { daily_calories: target.daily_calories, protein_g: target.protein_g, carbs_g: target.carbs_g, fat_g: target.fat_g, notes: target.notes }, clientId);
     }
 
-    const today = new Date().toISOString().slice(0,10);
+    const today = localDateStr(new Date());
     const todayLogs = (logs||[]).filter(l=>l.log_date===today);
     const totals = todayLogs.reduce((acc,l)=>({
       cal: acc.cal + (l.calories||0), prot: acc.prot + (Number(l.protein_g)||0),
@@ -4161,11 +4262,20 @@ function renderHistTable(body, rows, cols){
 }
 
 let _chartInstances = [];
-function destroyCharts(){ _chartInstances.forEach(c=>c.destroy()); _chartInstances = []; }
+// Tracks the live Chart.js instance per container element, so re-rendering a chart into
+// the same container (a tab switch, or a dropdown/metric toggle that redraws in place via
+// `holder.innerHTML=''` + a fresh renderTrendChart call) destroys the old instance first
+// instead of leaking it — this was previously unhandled: destroyCharts() existed but was
+// never called anywhere, so every chart ever created stayed alive in memory for the whole
+// session even after its canvas was removed from the DOM.
+let _chartByContainer = new WeakMap();
+function destroyCharts(){ _chartInstances.forEach(c=>c.destroy()); _chartInstances = []; _chartByContainer = new WeakMap(); }
 
 function renderTrendChart(container, title, rows, dateKey, series){
   // rows: array of objects sorted desc by date, we reverse for chronological display
   if(!rows?.length){ return; }
+  const prevChart = _chartByContainer.get(container);
+  if(prevChart){ prevChart.destroy(); _chartInstances = _chartInstances.filter(c=>c!==prevChart); _chartByContainer.delete(container); }
   const sorted = [...rows].sort((a,b)=> (a[dateKey]||'').localeCompare(b[dateKey]||''));
   const wrap = el(`<div class="chartWrap"><div class="chartTitle">${escapeHtml(title)}</div><canvas></canvas></div>`);
   container.appendChild(wrap);
@@ -4191,6 +4301,7 @@ function renderTrendChart(container, title, rows, dateKey, series){
     }
   });
   _chartInstances.push(chart);
+  _chartByContainer.set(container, chart);
 }
 
 function renderStatCards(container, stats){
@@ -4528,9 +4639,9 @@ function computeGamification({ sessionLogDates, checkins, readiness }){
   ]);
   let streak = 0;
   let cursor = new Date();
-  const todayStr = cursor.toISOString().slice(0,10);
+  const todayStr = localDateStr(cursor);
   if(!activeDates.has(todayStr)) cursor.setDate(cursor.getDate()-1);
-  while(activeDates.has(cursor.toISOString().slice(0,10))){
+  while(activeDates.has(localDateStr(cursor))){
     streak++;
     cursor.setDate(cursor.getDate()-1);
   }
@@ -4713,7 +4824,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
     <h3 style="font-size:11px; color:var(--ink-soft); margin-bottom:4px;">📝 ${locale==='el'?'Επανεκτίμηση':'Reassessment'}</h3>
     ${(()=>{
       if(nextReassessAt){
-        const daysLeft = Math.ceil((new Date(nextReassessAt) - new Date(new Date().toISOString().slice(0,10))) / 86400000);
+        const daysLeft = Math.ceil((new Date(nextReassessAt) - new Date(localDateStr(new Date()))) / 86400000);
         if(daysLeft > 0) return `<p style="font-size:13px; font-weight:600; color:var(--red-deep);">${locale==='el'?`Σε ${daysLeft} μέρ${daysLeft===1?'α':'ες'}`:`In ${daysLeft} day${daysLeft===1?'':'s'}`}</p>`;
         if(daysLeft === 0) return `<p style="font-size:13px; font-weight:600; color:var(--red-deep);">${locale==='el'?'Σήμερα':'Today'}</p>`;
         return `<p style="font-size:13px; font-weight:600; color:var(--danger);">${locale==='el'?'Έχει καθυστερήσει':'Overdue'}</p>`;
@@ -4855,7 +4966,7 @@ async function renderAdjustmentSuggestion(body, clientId){
 }
 
 async function renderLiveSessionTab(body, client, program, loggedByCoach, goalText){
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr(new Date());
   const { data: todaysLogs } = await supabase.from('session_logs').select('*').eq('client_id', client.id).eq('session_date', today);
   const logMap = {};
   (todaysLogs||[]).forEach(l=>{ logMap[`${l.program_exercise_id}_${l.set_number}`] = l; });
@@ -5034,10 +5145,17 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           painNote.style.display = 'none';
         } else if(p <= 4){
           painNote.style.background = 'rgba(226,162,51,0.15)'; painNote.style.color = 'var(--red-deep)';
-          painNote.textContent = locale==='el' ? `🟡 Πόνος ${p}/10 — μείωσε φορτίο/επαναλήψεις σε αυτή την άσκηση και παρακολούθησε.` : `🟡 Pain ${p}/10 — reduce load/reps on this exercise and monitor.`;
+          // Short reframing line alongside the instruction (pain neuroscience education,
+          // current best-practice pairing per NICE NG59 — education alongside the action,
+          // not a replacement for the existing app-safety rule or triage logic below).
+          painNote.innerHTML = locale==='el'
+            ? `🟡 Πόνος ${p}/10 — μείωσε φορτίο/επαναλήψεις σε αυτή την άσκηση και παρακολούθησε.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.85;">Ο πόνος κατά την άσκηση δεν σημαίνει πάντα βλάβη στον ιστό — συχνά είναι ένα προστατευτικό σήμα του σώματος.</div>`
+            : `🟡 Pain ${p}/10 — reduce load/reps on this exercise and monitor.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.85;">Pain during exercise doesn't always mean tissue damage — it's often the body's protective signal.</div>`;
         } else {
           painNote.style.background = 'var(--danger)'; painNote.style.color = '#fff';
-          painNote.textContent = locale==='el' ? `🔴 Πόνος ${p}/10 — σταμάτα αυτή την άσκηση. Σημειώθηκε για τον coach σου.` : `🔴 Pain ${p}/10 — stop this exercise. Flagged for your coach.`;
+          painNote.innerHTML = locale==='el'
+            ? `🔴 Πόνος ${p}/10 — σταμάτα αυτή την άσκηση. Σημειώθηκε για τον coach σου.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.9;">Η διακοπή τώρα είναι σωστή φροντίδα, όχι αποτυχία — ο coach σου θα το δει και θα προσαρμόσει.</div>`
+            : `🔴 Pain ${p}/10 — stop this exercise. Flagged for your coach.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.9;">Stopping now is the right call, not a setback — your coach will see this and adjust.</div>`;
         }
       }
       showPainNote(existing?.pain);
@@ -5082,7 +5200,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   renderExercises();
 
   if(!loggedByCoach){
-    const today = new Date().toISOString().slice(0,10);
+    const today = localDateStr(new Date());
     const { data: existingFeedback } = await supabase.from('session_feedback').select('*').eq('client_id', client.id).eq('session_date', today).maybeSingle();
     const fbState = existingFeedback || { difficulty:5, discomfort:0, energy:6, completed:null };
     const fbCard = el(`<div class="card gold" style="margin-top:16px;">
@@ -5137,7 +5255,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
 async function renderClientDashboard(main){
   let tab = renderClientDashboard._tab || 'today';
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr(new Date());
   const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }, { data: todayReadiness }, { data: lastMsg }, { data: intakeRow }, { data: lastReassess }, { data: nutritionTarget }, { data: todayNutritionLogs }, { data: courseEnrollments }, { data: sessionLogDates }] = await Promise.all([
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
@@ -5189,6 +5307,7 @@ async function renderClientDashboard(main){
   }
 
   main.innerHTML = '';
+  destroyCharts(); // clear any chart from the previously-shown tab before this one builds its own
   const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer','safety'];
   const inProfileGroup = profileGroup.includes(tab);
   const tabs = el(`<div class="clientBottomNav">
@@ -5318,7 +5437,7 @@ async function renderClientDashboard(main){
 }
 
 async function renderProgressTab(body, clientId, checkins, readiness){
-  const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }, { data: sessionLogDates }, { data: allTimeLogs }] = await Promise.all([
+  const [{ data: sessionLogs }, { data: intakeRow }, { data: activeProgram }, { data: reassessRows }, { data: sessionLogDates }, { data: allTimeLogs }, { data: psfsEntries }] = await Promise.all([
     supabase.from('session_logs').select('*, program_exercises(exercise_id, exercises(name_el,name_en,body_region))').eq('client_id', clientId).order('session_date',{ascending:false}).limit(30),
     supabase.from('client_intake').select('data').eq('client_id', clientId).maybeSingle(),
     supabase.from('programs').select('id').eq('client_id', clientId).eq('active', true).maybeSingle(),
@@ -5331,6 +5450,10 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     // miss an older PR entirely, so PRs need their own uncapped query (same approach as the
     // live-session Exercise Tracker).
     supabase.from('session_logs').select('load_kg, reps, session_date, program_exercises(exercise_id, exercises(name_el,name_en))').eq('client_id', clientId),
+    // PSFS (Patient-Specific Functional Scale) entries, oldest first — patient-nominated
+    // activities re-rated at intake and each reassessment, feeds the mirror row + the
+    // per-activity breakdown card below.
+    supabase.from('psfs_entries').select('*').eq('client_id', clientId).order('created_at',{ascending:true}),
   ]);
   const intakeData = intakeRow?.data || {};
 
@@ -5407,6 +5530,19 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     return { first: best[0], last: best[best.length-1] };
   })();
 
+  // PSFS (Patient-Specific Functional Scale) — client-nominated activities, re-rated at
+  // each reassessment. First-vs-latest here is the average across whatever activities were
+  // rated each time (a simple overall trend for the mirror row); the per-activity breakdown
+  // card below the mirror matches activities by name between the first and latest entry.
+  const mvPsfs = (()=>{
+    const avgs = (psfsEntries||[]).map(r=>{
+      const scores = (r.items||[]).map(it=>Number(it.score)).filter(n=>!isNaN(n));
+      return scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : null;
+    }).filter(v=>v!=null);
+    if(avgs.length < 2) return null;
+    return { first: Math.round(avgs[0]*10)/10, last: Math.round(avgs[avgs.length-1]*10)/10 };
+  })();
+
   const mirrorRows = [
     { label: locale==='el'?'Κίνηση':'Movement', data: mvCapacity, unit:'/10', invert:false },
     { label: locale==='el'?'Δύναμη':'Strength', data: mvLoad, unit:'kg', invert:false },
@@ -5414,6 +5550,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     { label: locale==='el'?'Αντοχή':'Endurance', data: mvAdherence, unit:'%', invert:false },
     { label: locale==='el'?'Ετοιμότητα':'Readiness', data: mvReadinessScore, unit:'%', invert:false },
     { label: locale==='el'?'Αποκατάσταση':'Recovery', data: mvPain, unit:'/10 πόνος', invert:true },
+    { label: locale==='el'?'Λειτουργικοί στόχοι (PSFS)':'Functional goals (PSFS)', data: mvPsfs, unit:'/10', invert:false },
   ];
   const anyMirrorData = mirrorRows.some(r=>r.data);
   const mirrorCard = el(`<div class="card gold" style="margin-bottom:16px;">
@@ -5435,6 +5572,34 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   }
   if(anyMirrorData) attachAskAssistant(mirrorCard, 'progress', { indicators: mirrorRows.filter(r=>r.data).map(r=>({ label:r.label, first:r.data.first, last:r.data.last, unit:r.unit })) }, clientId);
   body.appendChild(mirrorCard);
+
+  // PSFS per-activity breakdown — matches the latest entry's activities back to the first
+  // entry's by name (trimmed/lowercased), so each personally-chosen activity shows its own
+  // first-vs-latest, not just the averaged mirror row above.
+  if(psfsEntries && psfsEntries.length){
+    const firstPsfsEntry = psfsEntries[0];
+    const latestPsfsEntry = psfsEntries[psfsEntries.length-1];
+    const normName = s => (s||'').trim().toLowerCase();
+    const firstScoreByName = new Map((firstPsfsEntry.items||[]).map(it=>[normName(it.activity), it.score]));
+    const psfsRows = (latestPsfsEntry.items||[]).filter(it=>it.activity).map(it=>({
+      activity: it.activity,
+      first: firstScoreByName.get(normName(it.activity)),
+      last: it.score,
+    }));
+    if(psfsRows.length){
+      const psfsCard = el(`<div class="card" style="margin-bottom:16px;">
+        <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">🎯 PSFS — ${locale==='el'?'ανά δραστηριότητα':'by activity'}</h4>
+      </div>`);
+      psfsRows.forEach(r=>{
+        const hasFirst = r.first!=null && r.first!==r.last;
+        psfsCard.appendChild(el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-top:1px solid var(--line); font-size:12.5px;">
+          <span>${escapeHtml(r.activity)}</span>
+          <span class="mono">${hasFirst ? `${r.first}/10 → ` : ''}${r.last}/10</span>
+        </div>`));
+      });
+      body.appendChild(psfsCard);
+    }
+  }
 
   if(anyMirrorData){
     body.appendChild(renderAiCoachSummaryCard({
@@ -5692,7 +5857,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
 }
 
 function renderReadinessForm(body, existing){
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr(new Date());
   const todays = existing.find(r=>r.date===today) || { sleep:6, energy:6, stress:5, soreness:5, motivation:6, pain:0, perceived_capacity:6 };
   const scales = [
     ['sleep', {el:'Ύπνος', en:'Sleep'}], ['energy', {el:'Ενέργεια', en:'Energy'}], ['stress', {el:'Στρες', en:'Stress'}],
@@ -5743,7 +5908,7 @@ function renderReadinessForm(body, existing){
 }
 
 function renderCheckinForm(body, existing, clientId){
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr(new Date());
   let currentDate = today;
   const scales = [
     ['sessions_completed', {el:'Προπονήσεις', en:'Sessions'}, 0,14], ['avg_sleep', {el:'Ύπνος', en:'Sleep'}, 0,10],
@@ -5840,7 +6005,14 @@ function renderSuspendedScreen(){
   wrap.querySelector('#suspendedLogoutBtn').addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
 }
 
-supabase.auth.onAuthStateChange((_evt, s)=>{ session = s; });
+supabase.auth.onAuthStateChange((evt, s)=>{
+  session = s;
+  // If Supabase signs us out from under the app (a revoked session, a failed token refresh —
+  // not just our own logout button, which already calls boot() itself), the UI previously kept
+  // showing the last-rendered screen as if still logged in: every write would then fail under
+  // RLS with no visible error. Force back to the login screen so this is never silent.
+  if(evt === 'SIGNED_OUT' && profile){ profile = null; renderAuth(); }
+});
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
