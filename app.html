@@ -3242,7 +3242,7 @@ async function renderClientDetail(main, forceRefresh){
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
   else if(tab==='nutrition') await renderNutritionTab(body, client, true);
   else if(tab==='massage') await renderMassageTab(body, client, true);
-  else if(tab==='program') { await renderAdjustmentSuggestion(body, client.id); await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null); }
+  else if(tab==='program') { await renderAdjustmentSuggestion(body, client.id); if(program) await renderExercisePainFlags(body, client.id, program); await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null); }
   else if(tab==='live'){
     if(program) await renderLiveSessionTab(body, client, program, true, intakeRow?.data?.priorityGoal || intakeRow?.data?.mainGoal || '');
     else body.appendChild(el(`<p>${locale==='el'?'Δημιούργησε πρώτα πρόγραμμα.':'Create a program first.'}</p>`));
@@ -4249,6 +4249,18 @@ async function renderMessagesTab(body, client, viewerRole){
     body.innerHTML = '';
     await renderMessagesTab(body, client, viewerRole);
   });
+  if(viewerRole === 'coach'){
+    const quick = locale==='el'
+      ? ['Μπράβο για την προπόνηση σήμερα!', 'Πώς ένιωσε το σώμα σου μετά την προπόνηση;', 'Δεν σε είδα αυτή την εβδομάδα. Όλα καλά; Θες να προσαρμόσουμε το πρόγραμμα;', 'Είδα ότι ανέφερες πόνο. Θέλω να μιλήσουμε πριν την επόμενη προπόνηση.']
+      : ['Great work today!', 'How did your body feel after the session?', "I haven't seen you this week. All good? Want to adjust the program?", 'I saw you reported pain. I want us to talk before your next session.'];
+    const chips = el(`<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;"></div>`);
+    quick.forEach(q=>{
+      const b = el(`<button type="button" class="btn secondary" style="padding:4px 10px; font-size:11px; font-weight:500;">${escapeHtml(q.length>34 ? q.slice(0,32)+'…' : q)}</button>`);
+      b.addEventListener('click', ()=>{ const inp = form.querySelector('.msgInput'); inp.value = q; inp.focus(); });
+      chips.appendChild(b);
+    });
+    body.appendChild(chips);
+  }
   body.appendChild(form);
   listWrap.scrollTop = listWrap.scrollHeight;
 }
@@ -4518,23 +4530,60 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="exSets" type="number" value="3"></div>
     <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="exReps" value="8-10"></div>
     <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="exLoad"></div>
+    <div class="field" style="width:80px; margin-bottom:0;"><label title="${locale==='el'?'Ίδιο γράμμα = εναλλάξ (superset)':'Same letter = alternating (superset)'}">Superset</label><input class="exSuper" maxlength="1" placeholder="A"></div>
     <button class="btn" type="submit">+ ${locale==='el'?'Προσθήκη':'Add'}</button>
   </form>`);
   addForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const exercise_id = addForm.querySelector('.exSelect').value;
     if(!exercise_id) return;
-    await supabase.from('program_exercises').insert({
+    const superVal = addForm.querySelector('.exSuper').value.trim().toUpperCase();
+    const { error: insErr } = await supabase.from('program_exercises').insert({
       program_id: program.id, exercise_id,
       day_label: addForm.querySelector('.exDay').value.trim() || 'Ημέρα 1',
       target_sets: Number(addForm.querySelector('.exSets').value)||3,
       target_reps: addForm.querySelector('.exReps').value,
       target_load: addForm.querySelector('.exLoad').value,
       sort_order: (program.program_exercises||[]).length,
+      ...(superVal ? { superset_group: superVal } : {}),
     });
+    if(insErr){ toast(insErr.message); return; }
     onChanged();
   });
   body.appendChild(addForm);
+
+  // Quick text builder (one exercise per line): "Squat 3x8-10 @40kg ss:A". Matches against the
+  // coach's own library, previews first, and only adds lines that matched exactly one exercise.
+  const quickBox = el(`<details class="card" style="margin-bottom:12px;">
+    <summary style="cursor:pointer; font-weight:700; font-size:12.5px;">⚡ ${locale==='el'?'Γρήγορη προσθήκη με κείμενο':'Quick add by text'}</summary>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin:8px 0;">${locale==='el'?'Μία άσκηση ανά γραμμή: όνομα, σετ×επαναλήψεις, @φορτίο, προαιρετικά ss:A για superset. Γραμμή «Ημέρα 2:» αλλάζει ημέρα.':'One exercise per line: name, sets×reps, @load, optional ss:A for a superset. A line like "Day 2:" switches day.'}</p>
+    <textarea class="qtText" rows="5" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:12px;" placeholder="Ημέρα 1:&#10;Squat 3x8-10 @40kg ss:A&#10;Γέφυρα γλουτών 3x12 ss:A&#10;Πλάκα 3x30"></textarea>
+    <div class="qtPreview" style="margin:8px 0; font-size:12px;"></div>
+    <div style="display:flex; gap:8px;"><button class="btn secondary qtCheck" type="button">${locale==='el'?'Έλεγχος':'Check'}</button><button class="btn qtAdd" type="button" disabled>${locale==='el'?'Προσθήκη':'Add'}</button></div>
+  </details>`);
+  let qtValid = [];
+  quickBox.querySelector('.qtCheck').addEventListener('click', ()=>{
+    const rows = parseProgramText(quickBox.querySelector('.qtText').value, exercises, nextDayLabel);
+    qtValid = rows.filter(r=>r.exercise);
+    const prev = quickBox.querySelector('.qtPreview');
+    prev.innerHTML = rows.length ? rows.map(r=> r.exercise
+      ? `<div>✓ ${risky.get(r.exercise.id)?'⚠ ':''}<strong>${escapeHtml(locale==='el'?r.exercise.name_el:(r.exercise.name_en||r.exercise.name_el))}</strong> <span class="mono">· ${escapeHtml(r.day)} · ${r.sets} × ${escapeHtml(r.reps)}${r.load?' @ '+escapeHtml(r.load):''}${r.superset?' · 🔗'+escapeHtml(r.superset):''}</span></div>`
+      : `<div style="color:var(--danger);">✗ ${escapeHtml(r.raw)} <span style="font-size:11px;">(${escapeHtml(r.error)})</span></div>`).join('') : '—';
+    quickBox.querySelector('.qtAdd').disabled = !qtValid.length;
+  });
+  quickBox.querySelector('.qtAdd').addEventListener('click', async ()=>{
+    if(!qtValid.length) return;
+    const base = Math.max(-1, ...(program.program_exercises||[]).map(pe=>pe.sort_order ?? -1)) + 1;
+    const payload = qtValid.map((r, i)=>({
+      program_id: program.id, exercise_id: r.exercise.id, day_label: r.day, target_sets: r.sets, target_reps: r.reps, target_load: r.load, sort_order: base + i,
+      ...(r.superset ? { superset_group: r.superset } : {}),
+    }));
+    const { error: qErr } = await supabase.from('program_exercises').insert(payload);
+    if(qErr){ toast(qErr.message); return; }
+    toast(locale==='el' ? `Προστέθηκαν ${payload.length} ασκήσεις` : `${payload.length} exercises added`);
+    onChanged();
+  });
+  body.appendChild(quickBox);
 
   const grouped = {};
   (program.program_exercises||[]).forEach(pe=>{
@@ -4544,15 +4593,17 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
   Object.keys(grouped).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true})).forEach(day=>{
     body.appendChild(el(`<h4 style="margin:18px 0 8px; font-size:13px; color:var(--red-deep); text-transform:uppercase; letter-spacing:.04em;">📅 ${escapeHtml(day)}</h4>`));
-    grouped[day].forEach(pe=>{
+    grouped[day].slice().sort(byProgramOrder).forEach((pe, idxInDay, dayArr)=>{
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
         <div style="flex:1;">
-          <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>
+          <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>${pe.superset_group ? ` <span class="badge">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}
           <div class="mono peView" style="font-size:12px; color:var(--ink-soft);">${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
           ${pe.change_reason ? `<div style="font-size:11px; color:var(--red-deep); margin-top:4px;">💡 ${escapeHtml(pe.change_reason)}</div>` : ''}
         </div>
         <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="btn secondary movePeUp" type="button" aria-label="↑" title="↑" style="padding:4px 9px; font-size:11px;" ${idxInDay===0?'disabled':''}>↑</button>
+          <button class="btn secondary movePeDown" type="button" aria-label="↓" title="↓" style="padding:4px 9px; font-size:11px;" ${idxInDay===dayArr.length-1?'disabled':''}>↓</button>
           <button class="btn secondary editPeBtn" type="button" style="padding:4px 10px; font-size:11px;">✏️</button>
           <button class="btn danger delPeBtn" type="button" style="padding:4px 10px; font-size:11px;">🗑</button>
         </div>
@@ -4563,10 +4614,16 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
         <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="peReps" value="${escapeHtml(pe.target_reps||'')}"></div>
         <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="peLoad" value="${escapeHtml(pe.target_load||'')}"></div>
         <div class="field" style="min-width:200px; flex:1; margin-bottom:0;"><label>${t('changeReason',locale)}</label><input class="peReason" placeholder="${t('changeReasonPlaceholder',locale)}" value="${escapeHtml(pe.change_reason||'')}"></div>
+        <div class="field" style="width:80px; margin-bottom:0;"><label>Superset</label><input class="peSuper" maxlength="1" value="${escapeHtml(pe.superset_group||'')}"></div>
         <button class="btn savePeBtn" type="button" style="padding:6px 14px; font-size:12px;">${t('save',locale)}</button>
       </div>
     </div>`);
     const editForm = card.querySelector('.peEditForm');
+    [['.movePeUp',-1],['.movePeDown',1]].forEach(([sel, dir])=>{
+      card.querySelector(sel).addEventListener('click', async ()=>{
+        if(await moveProgramExercise(program, pe.id, dir)) onChanged();
+      });
+    });
     editForm.style.display = 'none';
     card.querySelector('.editPeBtn').addEventListener('click', ()=>{
       editForm.style.display = editForm.style.display==='none' ? 'flex' : 'none';
@@ -4577,10 +4634,12 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       const newLoad = card.querySelector('.peLoad').value.trim();
       const newReason = card.querySelector('.peReason').value.trim();
       const newDay = card.querySelector('.peDay').value.trim() || 'Ημέρα 1';
+      const newSuper = card.querySelector('.peSuper').value.trim().toUpperCase();
       const changed = newSets!==pe.target_sets || newReps!==(pe.target_reps||'') || newLoad!==(pe.target_load||'');
       await supabase.from('program_exercises').update({
         target_sets:newSets, target_reps:newReps, target_load:newLoad, day_label:newDay,
         change_reason: newReason || null,
+        ...((newSuper || pe.superset_group) ? { superset_group: newSuper || null } : {}),
         change_reason_at: (newReason && changed) ? new Date().toISOString() : pe.change_reason_at,
       }).eq('id', pe.id);
       onChanged();
@@ -4720,6 +4779,21 @@ function renderLevelCard({ sessionLogDates, checkins, readiness }){
 function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings }){
   const wrap = el('<div></div>');
   wrap.appendChild(renderLevelCard({ sessionLogDates, checkins, readiness }));
+
+  // Gentle re-engagement: shown only when there is an active program and 3+ days since the last logged
+  // set (or since the program started). In-app only, based on the client's own data; no push is sent.
+  if(program){
+    const lastLogDate = (sessionLogDates||[]).map(r=>r.session_date).filter(Boolean).sort().pop() || null;
+    const gap = daysSinceLocal(lastLogDate || program.created_at, localDateStr(new Date()));
+    if(gap != null && gap >= 3){
+      wrap.appendChild(el(`<div class="card gold" style="margin-bottom:12px;">
+        <strong style="font-size:13px;">💬 ${locale==='el'?'Είμαστε εδώ για σένα':'We are here for you'}</strong>
+        <p style="font-size:12.5px; margin-top:6px;">${locale==='el'
+          ? `Έχουν περάσει ${gap} μέρες ${lastLogDate ? 'από την τελευταία σου προπόνηση' : 'από τότε που ξεκίνησε το πρόγραμμά σου'}. Και μια σύντομη συνεδρία μετράει. Αν κάτι σε ενοχλεί ή δεν ξέρεις από πού να ξεκινήσεις, γράψε στον coach σου.`
+          : `It has been ${gap} days ${lastLogDate ? 'since your last workout' : 'since your program started'}. Even a short session counts. If something hurts or you are unsure where to start, message your coach.`}</p>
+      </div>`));
+    }
+  }
 
   // Referral flag — shown only when today's own data crosses a clear threshold. Not a diagnosis.
   if(todayReadiness && Number(todayReadiness.pain) >= 7){
@@ -4965,6 +5039,143 @@ async function renderAdjustmentSuggestion(body, clientId){
   body.appendChild(card);
 }
 
+// ── Load helpers: plain calculations from the client's own logged sets (not AI) ──
+function epley1RM(load, reps){
+  const l = Number(load), r = Number(reps);
+  if(!(l > 0) || !(r >= 1) || r > 10) return null; // Epley is unreliable above ~10 reps
+  return Math.round(l * (1 + r/30) * 2) / 2;
+}
+function targetRepsUpper(str){
+  const m = String(str||'').match(/(\d+)(?:\s*[-–]\s*(\d+))?/);
+  return m ? Number(m[2] || m[1]) : null;
+}
+function parseLoadKg(str){
+  const m = String(str||'').replace(',', '.').match(/(\d+(?:\.\d+)?)\s*(?:kg|κιλ)/i);
+  return m ? Number(m[1]) : null;
+}
+// lastSets = the sets logged on the most recent previous session for this exercise.
+// Never a prescription: the coach's program stays the plan; this only reads back what happened.
+function suggestNextLoad(lastSets, targetReps){
+  const sets = (lastSets||[]).filter(s=>s.load_kg>0 && s.reps>0);
+  if(!sets.length) return null;
+  const topLoad = Math.max(...sets.map(s=>Number(s.load_kg)));
+  const atTop = sets.filter(s=>Number(s.load_kg) === topLoad);
+  if(sets.some(s=>Number(s.pain) >= 3)) return { kind:'pain', topLoad };
+  const upper = targetRepsUpper(targetReps);
+  const rirs = atTop.map(s=>s.rir).filter(v=>v!=null);
+  const effortOk = !rirs.length || Math.min(...rirs) >= 2;
+  if(upper && atTop.every(s=>Number(s.reps) >= upper) && effortOk){
+    const inc = Math.max(0.5, Math.round(topLoad * 0.025 * 2) / 2);
+    return { kind:'increase', topLoad, load: topLoad + inc, reps: atTop[0].reps, rir: rirs.length ? Math.min(...rirs) : null };
+  }
+  return { kind:'hold', topLoad, upper };
+}
+function warmupSets(workLoad){
+  const w = Number(workLoad);
+  if(!(w > 0)) return [];
+  const r = x => Math.round(x * 2) / 2;
+  const plan = w >= 20 ? [[50,8],[70,5],[85,3]] : [[50,8]];
+  return plan.map(([pct, reps]) => ({ pct, reps, load: r(w * pct / 100) }));
+}
+const byProgramOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0);
+
+// ── Quick text builder: "Squat 3x8-10 @40kg ss:A" per line, "Ημέρα 2:" lines switch day ──
+function normText(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function parseProgramText(text, exercises, defaultDay){
+  let day = defaultDay || 'Ημέρα 1';
+  const out = [];
+  String(text||'').split(/\r?\n/).forEach((raw, i)=>{
+    const line = raw.trim();
+    if(!line) return;
+    const dm = line.match(/^(?:ημέρα|ημερα|day)\s*(\d+)\s*:?\s*$/i);
+    if(dm){ day = `Ημέρα ${dm[1]}`; return; }
+    const ss = line.match(/\bss:\s*([A-Za-z0-9])\b/i);
+    const sr = line.match(/(\d+)\s*[x×*]\s*(\d+(?:\s*[-–]\s*\d+)?)/i);
+    const ld = line.match(/@\s*(.+?)(?=\s+ss:|$)/i);
+    const row = { lineNo: i+1, raw: line, day, sets: sr ? Number(sr[1]) : 3, reps: sr ? sr[2].replace(/\s+/g,'') : '8-10', load: ld ? ld[1].trim() : '', superset: ss ? ss[1].toUpperCase() : null, exercise: null, error: null };
+    let namePart = line;
+    if(sr) namePart = line.slice(0, sr.index);
+    else if(ld) namePart = line.slice(0, ld.index);
+    namePart = namePart.replace(/\bss:\s*[A-Za-z0-9]\b/i,'').trim();
+    const q = normText(namePart);
+    if(!q){ row.error = 'Λείπει το όνομα της άσκησης'; out.push(row); return; }
+    const names = ex => [normText(ex.name_el), normText(ex.name_en)].filter(Boolean);
+    let hits = exercises.filter(ex => names(ex).includes(q));
+    if(!hits.length) hits = exercises.filter(ex => names(ex).some(n => n.includes(q)));
+    if(hits.length === 1) row.exercise = hits[0];
+    else if(hits.length > 1) row.error = 'Πολλές ασκήσεις ταιριάζουν: ' + hits.slice(0,3).map(h=>h.name_el).join(', ');
+    else row.error = 'Δεν βρέθηκε στη βιβλιοθήκη';
+    out.push(row);
+  });
+  return out;
+}
+// Exercises where the client logged pain >= 3 on 2+ different days. Flags a pattern for the coach to
+// review; it does not diagnose anything.
+function exercisePainPatterns(painLogs, peById){
+  const by = {};
+  (painLogs||[]).forEach(l=>{
+    if(!(Number(l.pain) >= 3)) return;
+    const k = l.program_exercise_id;
+    const o = by[k] = by[k] || { dates:new Set(), max:0, last:'' };
+    o.dates.add(l.session_date);
+    o.max = Math.max(o.max, Number(l.pain));
+    if(l.session_date > o.last) o.last = l.session_date;
+  });
+  return Object.entries(by).filter(([, o])=>o.dates.size >= 2)
+    .map(([k, o])=>({ peId:k, name: peById[k] || '—', days:o.dates.size, max:o.max, last:o.last }))
+    .sort((a,b)=>b.max-a.max || b.days-a.days);
+}
+function daysSinceLocal(dateStr, today){
+  if(!dateStr) return null;
+  const [y1,m1,d1] = dateStr.slice(0,10).split('-').map(Number);
+  const [y2,m2,d2] = today.split('-').map(Number);
+  return Math.round((Date.UTC(y2,m2-1,d2) - Date.UTC(y1,m1-1,d1)) / 86400000);
+}
+
+
+async function moveProgramExercise(program, peId, dir){
+  const dayOf = pe => pe.day_label || 'Ημέρα 1';
+  const all = (program.program_exercises||[]).slice().sort((a,b)=> dayOf(a).localeCompare(dayOf(b), undefined, {numeric:true}) || byProgramOrder(a,b));
+  const target = all.find(p=>p.id===peId);
+  if(!target) return false;
+  const sameDay = all.filter(p=>dayOf(p)===dayOf(target));
+  const i = sameDay.findIndex(p=>p.id===peId), j = i + dir;
+  if(j < 0 || j >= sameDay.length) return false;
+  [sameDay[i], sameDay[j]] = [sameDay[j], sameDay[i]];
+  const days = [...new Set(all.map(dayOf))];
+  const ordered = [];
+  days.forEach(d => ordered.push(...(d===dayOf(target) ? sameDay : all.filter(p=>dayOf(p)===d))));
+  const changes = ordered.map((p, idx)=>({p, idx})).filter(({p, idx})=>p.sort_order !== idx);
+  const results = await Promise.all(changes.map(({p, idx})=>supabase.from('program_exercises').update({ sort_order: idx }).eq('id', p.id)));
+  const failed = results.find(r=>r.error);
+  if(failed){ toast(failed.error.message); return false; }
+  return true;
+}
+
+// Coach-only: exercises where the client logged pain >= 3 on 2+ separate days in the last 30 days,
+// plus program exercises that still have no video/gif (video demonstration is the one adherence
+// factor with the clearest support, so the gap is worth showing). Pattern flag only, not a diagnosis.
+async function renderExercisePainFlags(body, clientId, program){
+  const since = new Date(); since.setDate(since.getDate() - 30);
+  const { data: painLogs, error } = await supabase.from('session_logs')
+    .select('program_exercise_id, pain, session_date').eq('client_id', clientId).gte('pain', 3).gte('session_date', localDateStr(since));
+  if(error) return;
+  const pes = program.program_exercises || [];
+  const peById = {};
+  pes.forEach(pe=>{ peById[pe.id] = locale==='el' ? pe.exercises?.name_el : (pe.exercises?.name_en || pe.exercises?.name_el); });
+  const flags = exercisePainPatterns(painLogs, peById);
+  const noVideoMap = new Map();
+  pes.forEach(pe=>{ if(pe.exercises && !pe.exercises.video_url && !pe.exercises.gif_url) noVideoMap.set(pe.exercises.id, locale==='el' ? pe.exercises.name_el : (pe.exercises.name_en || pe.exercises.name_el)); });
+  if(!flags.length && !noVideoMap.size) return;
+  const card = el(`<div class="card ${flags.length?'':'gold'}" style="margin-bottom:12px; ${flags.length?'border-left-color:var(--danger);':''}">
+    ${flags.length ? `<h4 style="font-size:12.5px; color:var(--danger); margin-bottom:6px;">🩺 ${locale==='el'?'Ασκήσεις με επαναλαμβανόμενο πόνο':'Exercises with repeated pain'}</h4>
+      <p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πόνος 3 και πάνω σε 2 ή περισσότερες διαφορετικές μέρες, τελευταίες 30 μέρες. Σκέψου πιο εύκολη εναλλακτική ή αλλαγή φορτίου.':'Pain of 3 or more on 2+ different days in the last 30 days. Consider an easier alternative or load change.'}</p>
+      ${flags.map(f=>`<div style="display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-top:1px solid var(--line); font-size:12.5px;"><span>${escapeHtml(f.name)}</span><span class="mono" style="white-space:nowrap;">${f.days} ${locale==='el'?'μέρες':'days'} · max ${f.max}/10</span></div>`).join('')}` : ''}
+    ${noVideoMap.size ? `<div style="${flags.length?'margin-top:10px; padding-top:8px; border-top:1px solid var(--line);':''} font-size:11.5px; color:var(--ink-soft);">🎥 ${locale==='el'?'Χωρίς βίντεο ή gif στο πρόγραμμα':'No video or gif in this program'}: ${[...noVideoMap.values()].map(escapeHtml).join(', ')}</div>` : ''}
+  </div>`);
+  body.appendChild(card);
+}
+
 async function renderLiveSessionTab(body, client, program, loggedByCoach, goalText){
   const today = localDateStr(new Date());
   const { data: todaysLogs } = await supabase.from('session_logs').select('*').eq('client_id', client.id).eq('session_date', today);
@@ -4989,7 +5200,10 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     const lastDate = pastDates[0]; // already sorted desc by session_date
     const lastSession = lastDate ? history.filter(l=>l.session_date===lastDate).sort((a,b)=>a.set_number-b.set_number)[0] : null;
     const pr = history.reduce((best,l)=> (!best || l.load_kg>best.load_kg || (l.load_kg===best.load_kg && l.reps>best.reps)) ? l : best, null);
-    return { lastSession, pr };
+    const lastSets = lastDate ? history.filter(l=>l.session_date===lastDate) : [];
+    let e1rm = null;
+    history.forEach(l=>{ const e = epley1RM(l.load_kg, l.reps); if(e && (e1rm==null || e>e1rm)) e1rm = e; });
+    return { lastSession, pr, lastSets, e1rm };
   }
 
   if(loggedByCoach){
@@ -5062,7 +5276,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   body.appendChild(exercisesWrap);
 
   function currentDayExercises(){
-    return dayLabels.length > 1 ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===selectedDay) : (program.program_exercises||[]);
+    return (dayLabels.length > 1 ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===selectedDay) : (program.program_exercises||[])).slice().sort(byProgramOrder);
   }
   function updateSessionProgress(){
     let total=0, done=0;
@@ -5084,16 +5298,28 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     const exName = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
     const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
     const tracker = trackerStatsFor(ex.id);
+    const sugg = tracker ? suggestNextLoad(tracker.lastSets, pe.target_reps) : null;
+    const warmRef = parseLoadKg(pe.target_load) || (sugg ? (sugg.kind==='increase' ? sugg.load : sugg.topLoad) : null);
+    const warm = warmupSets(warmRef);
+    const suggHtml = sugg ? (sugg.kind==='increase'
+      ? (locale==='el' ? `Προηγούμενη φορά ${sugg.topLoad}kg × ${sugg.reps}${sugg.rir!=null?` (RIR ${sugg.rir})`:''} στο ανώτερο εύρος. Δοκίμασε <strong>${sugg.load}kg</strong> αν νιώθεις καλά.` : `Last time ${sugg.topLoad}kg × ${sugg.reps}${sugg.rir!=null?` (RIR ${sugg.rir})`:''} at the top of the range. Try <strong>${sugg.load}kg</strong> if you feel good.`)
+      : sugg.kind==='pain'
+      ? (locale==='el' ? 'Την προηγούμενη φορά σημείωσες πόνο 3 ή παραπάνω σε αυτή την άσκηση. Κράτα ή μείωσε το φορτίο και πες το στον coach σου.' : 'Last time you logged pain of 3 or more on this exercise. Keep or lower the load and tell your coach.')
+      : (locale==='el' ? `Κράτα τα <strong>${sugg.topLoad}kg</strong>${sugg.upper?` και στόχευσε ${sugg.upper} επαναλήψεις σε όλα τα sets`:''} πριν ανεβάσεις.` : `Stay at <strong>${sugg.topLoad}kg</strong>${sugg.upper?` and aim for ${sugg.upper} reps on every set`:''} before going up.`)) : '';
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <strong>${escapeHtml(exName)}</strong>
+        <span><strong>${escapeHtml(exName)}</strong>${pe.superset_group ? ` <span class="badge" title="${locale==='el'?'Εναλλάξ με τις άλλες ασκήσεις του ίδιου superset':'Alternate with the other exercises in this superset'}">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}</span>
         <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:11px; flex-shrink:0;">ℹ️ ${t('why',locale)}</button>
       </div>
       <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Στόχος':'Target'}: ${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
       ${tracker ? `<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; margin-bottom:10px;">
         ${tracker.lastSession ? `<span>📊 ${locale==='el'?'Προηγούμενη':'Previous'}: <strong class="mono">${tracker.lastSession.load_kg}kg × ${tracker.lastSession.reps}</strong> <span style="color:var(--ink-soft);">(${tracker.lastSession.session_date})</span></span>` : ''}
         ${tracker.pr ? `<span>🏆 PR: <strong class="mono">${tracker.pr.load_kg}kg × ${tracker.pr.reps}</strong></span>` : ''}
+        ${tracker.e1rm ? `<span title="${locale==='el'?'Εκτίμηση με τον τύπο Epley, ισχύει για έως 10 επαναλήψεις':'Epley estimate, valid up to 10 reps'}">📐 e1RM: <strong class="mono">~${tracker.e1rm}kg</strong></span>` : ''}
       </div>` : ''}
+      ${suggHtml ? `<div style="font-size:11.5px; background:rgba(226,162,51,0.12); border-radius:6px; padding:6px 9px; margin-bottom:8px;">💡 ${suggHtml}<div style="font-size:10px; color:var(--ink-soft); margin-top:2px;">${locale==='el'?'Απλός υπολογισμός από τις καταγραφές σου, όχι ιατρική οδηγία. Ο coach σου αποφασίζει το πρόγραμμα.':'Simple calculation from your logs, not medical advice. Your coach decides the program.'}</div></div>` : ''}
+      ${warm.length ? `<div style="margin-bottom:8px;"><button class="btn secondary warmToggleBtn" type="button" style="padding:3px 10px; font-size:11px; min-height:32px;">🔥 ${locale==='el'?'Προθέρμανση':'Warm-up'}</button>
+        <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:10px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
       <div class="whyPanel" style="display:none; background:#f6efe4; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
@@ -5115,6 +5341,8 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       p.style.display = p.style.display==='none' ? 'block' : 'none';
     });
     attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, execution_steps: ex.execution_steps, technique_cues: ex.technique_cues, common_mistakes: ex.common_mistakes, body_region: ex.body_region, primary_muscles: ex.primary_muscles, goal_tags: ex.goal_tags, regression_text: ex.regression_text, progression_text: ex.progression_text, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title }, client.id);
+    const warmBtn = card.querySelector('.warmToggleBtn');
+    if(warmBtn) warmBtn.addEventListener('click', ()=>{ const wp = card.querySelector('.warmPanel'); wp.style.display = wp.style.display==='none' ? 'block' : 'none'; });
     const setsCount = pe.target_sets || 3;
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
