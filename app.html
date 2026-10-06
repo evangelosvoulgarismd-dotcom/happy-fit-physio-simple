@@ -294,6 +294,41 @@ const VAPID_PUBLIC_KEY = 'BAiV52fua-R28j_R9K7tdThH6T6DSVDCMTQoRv1tNa7wOL4wvg8HKG
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Safety net for database writes. Many save buttons never looked at the result, so a failed save
+// (RLS, network, missing column) looked exactly like a successful one. Every insert/update/delete/upsert
+// now reports its own failure unless the calling code reads `.error` itself (those callers already
+// handle it). Nothing else changes for them.
+(function guardWrites(client){
+  const origFrom = client.from.bind(client);
+  client.from = (table)=>{
+    const b = origFrom(table);
+    ['insert','update','delete','upsert'].forEach(op=>{
+      if(typeof b[op] !== 'function') return;
+      const origOp = b[op].bind(b);
+      b[op] = (...args)=>{
+        const q = origOp(...args);
+        if(!q || typeof q.then !== 'function') return q;
+        const origThen = q.then.bind(q);
+        q.then = (res, rej)=> origThen((r)=>{
+          if(r && r.error){
+            let read = false; const err = r.error;
+            const wrapped = { data:r.data, count:r.count, status:r.status, statusText:r.statusText, get error(){ read = true; return err; } };
+            setTimeout(()=>{
+              if(read) return;
+              console.error('Write failed', table, op, err);
+              toast((locale==='el' ? 'Δεν αποθηκεύτηκε: ' : 'Not saved: ') + (err.message || err), 5000);
+            }, 0);
+            return res ? res(wrapped) : wrapped;
+          }
+          return res ? res(r) : r;
+        }, rej);
+        return q;
+      };
+    });
+    return b;
+  };
+})(supabase);
+
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -626,11 +661,11 @@ let session = null, profile = null, locale = 'el', view = 'dashboard', selectedC
 function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
 function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function uidCode(){ return crypto.randomUUID().slice(0,8).toUpperCase(); }
-function toast(msg){
+function toast(msg, ms){
   let tEl = document.getElementById('toast');
   if(!tEl){ tEl = el('<div id="toast" style="position:fixed;bottom:20px;right:20px;background:#241413;color:#fff;padding:10px 16px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .25s;"></div>'); document.body.appendChild(tEl); }
   tEl.textContent = msg; tEl.style.opacity = '1';
-  clearTimeout(toast._h); toast._h = setTimeout(()=>tEl.style.opacity='0', 1800);
+  clearTimeout(toast._h); toast._h = setTimeout(()=>tEl.style.opacity='0', ms || 1800);
 }
 
 // ============================================================
@@ -735,14 +770,16 @@ const LEGAL_CONTENT = {
         <h4>Εξωτερικές πηγές</h4>
         <p>Φορτώνουμε γραμματοσειρές από Google Fonts, που ενδέχεται να λαμβάνει τη διεύθυνση IP σας κατά το φόρτωμα της σελίδας. Αυτό είναι τεχνικό, όχι για διαφήμιση.</p>
         <h4>Push notifications</h4>
-        <p>Αν ενεργοποιήσετε ειδοποιήσεις, ο browser σας αποθηκεύει ένα μοναδικό "push subscription" ώστε να μπορούμε να σας στέλνουμε ειδοποιήσεις. Μπορείτε να το απενεργοποιήσετε από τις ρυθμίσεις ειδοποιήσεων του browser/συσκευής σας οποιαδήποτε στιγμή.</p>`,
+        <p>Αν ενεργοποιήσετε ειδοποιήσεις, ο browser σας αποθηκεύει ένα μοναδικό "push subscription" ώστε να μπορούμε να σας στέλνουμε ειδοποιήσεις. Μπορείτε να το απενεργοποιήσετε από τις ρυθμίσεις ειδοποιήσεων του browser/συσκευής σας οποιαδήποτε στιγμή.</p>
+        <p>Αν είστε ασκούμενος και έχετε ενεργοποιήσει ειδοποιήσεις, μπορεί να λάβετε μια υπενθύμιση προπόνησης όταν περάσουν 3 ή περισσότερες μέρες χωρίς καταγραφή προπόνησης (το πολύ μία κάθε 3 μέρες). Για αυτό χρησιμοποιούμε μόνο την ημερομηνία της τελευταίας σας προπόνησης. Μπορείτε να τις απενεργοποιήσετε από το Προφίλ σας.</p>`,
       en: `<p>This app <strong>does not use tracking or advertising cookies</strong>, and does not require a cookie consent banner.</p>
         <h4>What we use</h4>
         <p>Only technically necessary browser storage (localStorage) to keep you signed in, no third-party tracking cookies or ad networks.</p>
         <h4>External resources</h4>
         <p>We load fonts from Google Fonts, which may receive your IP address when the page loads. This is technical, not for advertising.</p>
         <h4>Push notifications</h4>
-        <p>If you enable notifications, your browser stores a unique "push subscription" so we can send you alerts. You can disable this anytime from your browser/device notification settings.</p>`,
+        <p>If you enable notifications, your browser stores a unique "push subscription" so we can send you alerts. You can disable this anytime from your browser/device notification settings.</p>
+        <p>If you are a client and have enabled notifications, you may receive a workout reminder after 3 or more days without a logged workout (at most one every 3 days). For this we only use the date of your last workout. You can turn reminders off in your Profile.</p>`,
     }
   },
   refund: {
@@ -3594,7 +3631,15 @@ async function renderCoachSummary(body, client, state){
   </div>`);
   const summaryBody = card.querySelector('.summaryBody');
   const allSteps = [...INTAKE_SECTIONS, COACH_ONLY_SECTION];
+  const { data: psfsLatest } = await supabase.from('psfs_entries').select('items, created_at').eq('client_id', client.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
   allSteps.forEach(section=>{
+    if(section.key === 'psfs'){
+      const items = (psfsLatest?.items || []).filter(it=>it && it.activity);
+      summaryBody.appendChild(el(`<div class="clinicalSection"><h4>${t(section.title,locale)}</h4>${items.length
+        ? items.map(it=>`<div style="margin-bottom:8px;"><strong>${escapeHtml(it.activity)}</strong> <span class="mono">${escapeHtml(String(it.score))}/10</span></div>`).join('') + `<div style="font-size:11px; color:var(--ink-soft);">${new Date(psfsLatest.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')} · 0 = ${locale==='el'?'αδύνατο':'unable'}, 10 = ${locale==='el'?'χωρίς κανένα πρόβλημα':'no difficulty'}</div>`
+        : `<span style="color:var(--ink-soft);">—</span>`}</div>`));
+      return;
+    }
     const rows = section.fields.map(([key])=>{
       const val = state[key];
       return `<div style="margin-bottom:8px;"><span style="font-size:11px; color:var(--ink-soft);">${t(key,locale)}:</span> <strong>${val ? escapeHtml(val) : `<span style="color:var(--ink-soft); font-weight:400;">${t('notFilled',locale)}</span>`}</strong></div>`;
@@ -5186,7 +5231,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   // One query for the client's whole logged history (joined to the exercise it belongs to),
   // grouped client-side, so the same real numbers used to display "last time" and "PR" match
   // exactly what's in session_logs — nothing estimated or invented.
-  const { data: allLogs } = await supabase.from('session_logs').select('*, program_exercises(exercise_id)').eq('client_id', client.id).order('session_date',{ascending:false}).order('set_number',{ascending:true});
+  const { data: allLogs } = await supabase.from('session_logs').select('program_exercise_id, session_date, set_number, load_kg, reps, rir, pain, program_exercises(exercise_id)').eq('client_id', client.id).order('session_date',{ascending:false}).order('set_number',{ascending:true});
   const logsByExerciseId = {};
   (allLogs||[]).forEach(l=>{
     const exId = l.program_exercises?.exercise_id;
@@ -5590,6 +5635,24 @@ async function renderClientDashboard(main){
     const exportRow = el(`<button class="profileMenuRow"><span class="cbn-ico">📤</span><span>${t('exportData',locale)}</span><span class="profileMenuArrow">›</span></button>`);
     exportRow.addEventListener('click', exportMyData);
     accountMenu.appendChild(exportRow);
+    // Notifications: the browser permission/subscription (opt-in) plus a switch for the workout
+    // reminders the server sends after 3+ days without a logged workout.
+    const pushRow = el(`<button class="profileMenuRow"><span class="cbn-ico">🔔</span><span>${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</span><span class="profileMenuArrow">›</span></button>`);
+    pushRow.addEventListener('click', enablePushNotifications);
+    accountMenu.appendChild(pushRow);
+    const { data: remPref } = await supabase.from('client_reminder_settings').select('enabled').eq('client_id', profile.id).maybeSingle();
+    let remindersOn = remPref ? remPref.enabled !== false : true;
+    const remRow = el(`<button class="profileMenuRow"><span class="cbn-ico">⏰</span><span>${locale==='el'?'Υπενθυμίσεις προπόνησης':'Workout reminders'}</span><span class="profileMenuArrow mono remState"></span></button>`);
+    const paintRem = () => { remRow.querySelector('.remState').textContent = remindersOn ? (locale==='el'?'Ενεργές':'On') : (locale==='el'?'Ανενεργές':'Off'); };
+    paintRem();
+    remRow.addEventListener('click', async ()=>{
+      const next = !remindersOn;
+      const { error } = await supabase.from('client_reminder_settings').upsert({ client_id: profile.id, enabled: next, updated_at: new Date().toISOString() }, { onConflict: 'client_id' });
+      if(error){ toast((locale==='el'?'Σφάλμα: ':'Error: ') + error.message); return; }
+      remindersOn = next; paintRem();
+      toast(next ? (locale==='el'?'Οι υπενθυμίσεις ενεργοποιήθηκαν':'Reminders turned on') : (locale==='el'?'Οι υπενθυμίσεις απενεργοποιήθηκαν':'Reminders turned off'));
+    });
+    accountMenu.appendChild(remRow);
     const logoutRow = el(`<button class="profileMenuRow"><span class="cbn-ico">🚪</span><span>${t('logout',locale)}</span><span class="profileMenuArrow">›</span></button>`);
     logoutRow.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
     accountMenu.appendChild(logoutRow);
