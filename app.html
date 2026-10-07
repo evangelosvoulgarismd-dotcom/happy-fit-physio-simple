@@ -384,7 +384,7 @@ const STR = {
   partners:{el:'Συνεργάτες', en:'Partners'},
   partnersIntro:{el:'Οι συνεργάτες σου (coaches/φυσικοθεραπευτές) που χρησιμοποιούν την πλατφόρμα, οι ενεργοί πελάτες τους, και η μηνιαία χρέωσή τους.', en:'Your partners (coaches/physios) using the platform, their active clients, and their monthly charge.'},
   newPartnerCode:{el:'+ Νέος κωδικός πρόσκλησης συνεργάτη', en:'+ New partner invite code'},
-  unusedPartnerCodes:{el:'Ανεξόφλητοι κωδικοί πρόσκλησης', en:'Unused invite codes'},
+  unusedPartnerCodes:{el:'Αχρησιμοποίητοι κωδικοί πρόσκλησης (λήγουν σε 14 ημέρες)', en:'Unused invite codes (expire after 14 days)'},
   suspend:{el:'Αναστολή', en:'Suspend'}, reactivate:{el:'Επανενεργοποίηση', en:'Reactivate'},
   suspended:{el:'Ανεσταλμένος', en:'Suspended'}, active_:{el:'Ενεργός', en:'Active'},
   monthlyCharge:{el:'Μηνιαία χρέωση', en:'Monthly charge'},
@@ -393,7 +393,7 @@ const STR = {
   accountSuspended:{el:'Ο λογαριασμός συνεργάτη σου έχει ανασταλεί προσωρινά. Επικοινώνησε με τον ιδιοκτήτη της πλατφόρμας.', en:'Your partner account has been temporarily suspended. Please contact the platform owner.'},
   noPartners:{el:'Δεν υπάρχουν ακόμα συνεργάτες.', en:'No partners yet.'},
   partnerWelcomeTitle:{el:'👋 Καλωσόρισες ως συνεργάτης', en:'👋 Welcome as a partner'},
-  partnerWelcomeBody:{el:'Έχεις πρόσβαση στο δικό σου, ξεχωριστό dashboard — οι πελάτες σου δεν είναι ορατοί σε κανέναν άλλον συνεργάτη. Μόνο ο ιδιοκτήτης της πλατφόρμας βλέπει συγκεντρωτικά στοιχεία, για λόγους ποιοτικού ελέγχου.', en:"You have your own, separate dashboard — your clients aren't visible to any other partner. Only the platform owner sees aggregate figures, for quality-control purposes."},
+  partnerWelcomeBody:{el:'Έχεις πρόσβαση στο δικό σου, ξεχωριστό dashboard — οι πελάτες σου δεν είναι ορατοί σε κανέναν άλλον συνεργάτη. Ο ιδιοκτήτης της πλατφόρμας βλέπει, μόνο για ποιοτικό έλεγχο και χωρίς δυνατότητα επεξεργασίας, την κατάσταση των πελατών σου: ονόματα, ενεργό πρόγραμμα, τελευταίο check-in και επίπεδο πόνου.', en:"You have your own, separate dashboard — your clients aren't visible to any other partner. The platform owner can see, for quality control only and without edit access, your clients' status: names, active program, last check-in and pain level."},
   partnerWelcomeBilling:{el:'Χρέωση συνεργασίας: {rate} ανά ενεργό πελάτη / μήνα. Υπολογίζεται αυτόματα εδώ· η πληρωμή διευθετείται απευθείας με τον ιδιοκτήτη (δεν υπάρχει αυτόματη χρέωση κάρτας μέσω της πλατφόρμας).', en:'Partnership fee: {rate} per active client / month. It is calculated automatically here; payment is arranged directly with the owner (there is no automatic card charge through the platform).'},
   partnerWelcomeStep1:{el:'Το προφίλ σου είναι έτοιμο ✓', en:'Your profile is ready ✓'},
   partnerWelcomeStep2:{el:'Πρόσθεσε τον πρώτο σου ασκούμενο παρακάτω για να πάρεις κωδικό πρόσκλησης', en:'Add your first client below to get an invite code'},
@@ -921,15 +921,28 @@ function renderAuth(){
           if(consentErr) throw new Error((locale==='el'?'Αποτυχία καταγραφής συναίνεσης: ':'Failed to record consent: ') + consentErr.message);
         } else {
           const coachCode = wrap.querySelector('#coachInviteCode').value.trim().toUpperCase();
-          const { data: coachCodeRow, error: coachCodeErr } = await supabase.from('coach_invite_codes').select('*').eq('code', coachCode).eq('used', false).single();
-          if(coachCodeErr || !coachCodeRow) throw new Error(t('invalidCoachCode',locale));
+          // Preferred path: server-side functions (migration_partner_security.sql). The code is checked
+          // and the coach role is set on the server. If the functions are not installed yet, fall back
+          // to the old flow so partner sign-up keeps working until the migration is run.
+          const { data: codeOk, error: checkErr } = await supabase.rpc('check_coach_code', { p_code: coachCode });
+          const hasRpc = !(checkErr && (checkErr.code === 'PGRST202' || /could not find the function/i.test(checkErr.message||'')));
+          if(hasRpc && (checkErr || !codeOk)) throw new Error(t('invalidCoachCode',locale));
+          if(!hasRpc){
+            const { data: coachCodeRow, error: coachCodeErr } = await supabase.from('coach_invite_codes').select('*').eq('code', coachCode).eq('used', false).single();
+            if(coachCodeErr || !coachCodeRow) throw new Error(t('invalidCoachCode',locale));
+          }
           const { data, error } = await supabase.auth.signUp({ email, password });
           if(error) throw error;
           const userId = data.user.id;
-          const { error: profErr } = await supabase.from('profiles').insert({ id:userId, role:'coach', full_name:fullName, locale });
-          if(profErr) throw new Error((locale==='el'?'Αποτυχία δημιουργίας προφίλ: ':'Failed to create profile: ') + profErr.message);
-          const { error: coachCodeUpdErr } = await supabase.from('coach_invite_codes').update({ used:true, used_by:userId }).eq('code', coachCode);
-          if(coachCodeUpdErr) throw new Error((locale==='el'?'Αποτυχία ενημέρωσης κωδικού: ':'Failed to update invite code: ') + coachCodeUpdErr.message);
+          if(hasRpc){
+            const { error: redeemErr } = await supabase.rpc('redeem_coach_code', { p_code: coachCode, p_full_name: fullName, p_locale: locale });
+            if(redeemErr) throw new Error((locale==='el'?'Αποτυχία εγγραφής συνεργάτη: ':'Failed to register partner: ') + redeemErr.message);
+          } else {
+            const { error: profErr } = await supabase.from('profiles').insert({ id:userId, role:'coach', full_name:fullName, locale });
+            if(profErr) throw new Error((locale==='el'?'Αποτυχία δημιουργίας προφίλ: ':'Failed to create profile: ') + profErr.message);
+            const { error: coachCodeUpdErr } = await supabase.from('coach_invite_codes').update({ used:true, used_by:userId }).eq('code', coachCode);
+            if(coachCodeUpdErr) throw new Error((locale==='el'?'Αποτυχία ενημέρωσης κωδικού: ':'Failed to update invite code: ') + coachCodeUpdErr.message);
+          }
           const { error: consentErr } = await supabase.from('consents').insert({ profile_id:userId, granted:true });
           if(consentErr) throw new Error((locale==='el'?'Αποτυχία καταγραφής συναίνεσης: ':'Failed to record consent: ') + consentErr.message);
         }
@@ -1728,8 +1741,8 @@ async function renderProjectionView(main){
         <div class="field"><label>Τιμή συνεδρίας</label><input class="pMassagePrice" type="number" min="0" value="60"></div>
         <div class="field"><label>Αξιολογήσεις / μήνα</label><input class="pAssess" type="number" min="0" value="10"></div>
         <div class="field"><label>Τιμή αξιολόγησης</label><input class="pAssessPrice" type="number" min="0" value="50"></div>
-        <div class="field"><label>Επαγγελματικές συνεργασίες</label><input class="pPartners" type="number" min="0" value="4"></div>
-        <div class="field"><label>Μηνιαία τιμή συνεργασίας</label><input class="pPartnerPrice" type="number" min="0" value="250"></div>
+        <div class="field"><label>Ενεργοί πελάτες συνεργατών</label><input class="pPartners" type="number" min="0" value="20"></div>
+        <div class="field"><label>Χρέωση ανά ενεργό πελάτη συνεργάτη</label><input class="pPartnerPrice" type="number" min="0" value="${PARTNER_RATE_PER_CLIENT}"></div>
         <div class="field"><label>Λειτουργικά έξοδα (%)</label><input class="pCosts" type="number" min="0" max="100" value="25"></div>
       </div>
       <div>
@@ -1755,7 +1768,7 @@ async function renderProjectionView(main){
     const partners=val('pPartners')*val('pPartnerPrice');
     const monthly=online+massage+assess+partners, annual=monthly*12, costs=monthly*val('pCosts')/100, preTax=(monthly-costs)*12;
     wrap.querySelector('.pMonthly').textContent=euro(monthly); wrap.querySelector('.pAnnual').textContent=euro(annual); wrap.querySelector('.pMonthlyCosts').textContent=euro(costs); wrap.querySelector('.pPreTax').textContent=euro(preTax);
-    wrap.querySelector('.pBreakdown').innerHTML=`<div style="display:grid;gap:8px;font-size:12px;"><div style="display:flex;justify-content:space-between"><span>Online καθοδήγηση</span><strong>${euro(online)}</strong></div><div style="display:flex;justify-content:space-between"><span>Κατ' οίκον θεραπευτική μάλαξη</span><strong>${euro(massage)}</strong></div><div style="display:flex;justify-content:space-between"><span>Αξιολογήσεις</span><strong>${euro(assess)}</strong></div><div style="display:flex;justify-content:space-between"><span>Επαγγελματικές συνεργασίες</span><strong>${euro(partners)}</strong></div><hr style="border:0;border-top:1px solid var(--line);width:100%"><div style="display:flex;justify-content:space-between"><strong>Σύνολο</strong><strong>${euro(monthly)}</strong></div></div>`;
+    wrap.querySelector('.pBreakdown').innerHTML=`<div style="display:grid;gap:8px;font-size:12px;"><div style="display:flex;justify-content:space-between"><span>Online καθοδήγηση</span><strong>${euro(online)}</strong></div><div style="display:flex;justify-content:space-between"><span>Κατ' οίκον θεραπευτική μάλαξη</span><strong>${euro(massage)}</strong></div><div style="display:flex;justify-content:space-between"><span>Αξιολογήσεις</span><strong>${euro(assess)}</strong></div><div style="display:flex;justify-content:space-between"><span>Χρεώσεις συνεργατών</span><strong>${euro(partners)}</strong></div><hr style="border:0;border-top:1px solid var(--line);width:100%"><div style="display:flex;justify-content:space-between"><strong>Σύνολο</strong><strong>${euro(monthly)}</strong></div></div>`;
   }
   ids.forEach(cls=>wrap.querySelector('.'+cls).addEventListener('input',calc)); calc();
 }
@@ -1921,7 +1934,8 @@ async function renderPartnersView(main){
   const topBar = el(`<div style="display:flex; justify-content:flex-end; margin-bottom:12px;"><button class="btn" id="newPartnerCodeBtn">${t('newPartnerCode',locale)}</button></div>`);
   main.appendChild(topBar);
   topBar.querySelector('#newPartnerCodeBtn').addEventListener('click', async ()=>{
-    const code = Math.random().toString(36).slice(2,10).toUpperCase();
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const code = Array.from(crypto.getRandomValues(new Uint8Array(10)), b => alphabet[b % alphabet.length]).join('');
     await supabase.from('coach_invite_codes').insert({ code, created_by: profile.id });
     renderPartnersView(main);
   });
