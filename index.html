@@ -852,6 +852,9 @@
 
     // ── COURSES ──
     const coursesGrid = document.getElementById('coursesGrid');
+    // Course fields come from the database (any partner coach can write them): escape everything, links must be https.
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const safeUrl = u => /^https:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
     const openChatFromCourses = ()=> document.querySelector('.js-open-chat')?.click();
     try{
       const { data: courses, error: cErr } = await supabase.from('courses').select('*').eq('published', true).order('sort_order');
@@ -860,19 +863,17 @@
         coursesGrid.innerHTML = `<p style="text-align:center; color:var(--ink-soft); grid-column:1/-1;">${curLang()==='en' ? 'Coming soon.' : 'Έρχονται σύντομα.'}</p>`;
       } else {
         const L = curLang();
-        const courseTagline = L==='en' ? 'Understanding → Self-management → Progressive exercise → Reassessment.' : 'Κατανόηση → Αυτοδιαχείριση → Προοδευτική άσκηση → Επανεκτίμηση.';
         const buyLabel = L==='en' ? 'Buy →' : 'Αγόρασε →';
         const requestLabel = L==='en' ? 'Request access →' : 'Ζήτησε πρόσβαση →';
         coursesGrid.innerHTML = courses.map(c => `
           <div class="service-card">
             <div class="service-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5c2-1.2 4.3-1.2 6.5 0v14c-2.2-1.2-4.5-1.2-6.5 0Z"/><path d="M21 5c-2-1.2-4.3-1.2-6.5 0v14c2.2-1.2 4.5-1.2 6.5 0Z"/></svg></div>
-            ${c.subtitle ? `<span class="service-loc">${c.subtitle}</span>` : ''}
-            <h3>${c.title}</h3>
-            <p>${courseTagline}</p>
+            ${c.subtitle ? `<span class="service-loc">${esc(c.subtitle)}</span>` : ''}
+            <h3>${esc(c.title)}</h3>
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-              ${c.price ? `<strong style="font-size:18px;">${c.price}€</strong>` : ''}
-              ${c.payment_link
-                ? `<a class="service-cta" href="${c.payment_link}" target="_blank" rel="noopener">${buyLabel}</a>`
+              ${Number(c.price) ? `<strong style="font-size:18px;">${Number(c.price)}€</strong>` : ''}
+              ${safeUrl(c.payment_link)
+                ? `<a class="service-cta" href="${esc(safeUrl(c.payment_link))}" target="_blank" rel="noopener noreferrer">${buyLabel}</a>`
                 : `<a class="service-cta js-course-lead" href="#lead" style="cursor:pointer;">${requestLabel}</a>`}
             </div>
           </div>`).join('');

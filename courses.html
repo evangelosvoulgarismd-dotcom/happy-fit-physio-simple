@@ -66,6 +66,9 @@
   const courseView = document.getElementById('courseView');
   const errorMsg = document.getElementById('errorMsg');
   let currentEmail = '';
+  // Everything that comes from the database is escaped before it goes into the page, and links must be https.
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeUrl = u => /^https:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
 
   document.getElementById('unlockBtn').addEventListener('click', unlock);
   document.getElementById('emailInput').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
@@ -91,9 +94,9 @@
   function renderList(courses){
     listView.style.display = 'block';
     listView.innerHTML = `<a class="backLink" id="logoutLink">← Αλλαγή email</a>` + courses.map(c => `
-      <div class="courseCard" data-id="${c.course_id}">
-        <h3>${c.title}</h3>
-        <p>${c.subtitle || ''}</p>
+      <div class="courseCard" data-id="${esc(c.course_id)}">
+        <h3>${esc(c.title)}</h3>
+        <p>${esc(c.subtitle || '')}</p>
       </div>`).join('');
     listView.querySelectorAll('.courseCard').forEach(el => el.addEventListener('click', () => openCourse(el.dataset.id, el.querySelector('h3').textContent)));
     document.getElementById('logoutLink').addEventListener('click', () => {
@@ -116,11 +119,11 @@
       if(!modules[row.module_title]) modules[row.module_title] = [];
       modules[row.module_title].push(row);
     });
-    let html = `<a class="backLink" id="backLink">← Πίσω</a><h1 style="font-size:20px; margin-bottom:20px;">${title}</h1>`;
+    let html = `<a class="backLink" id="backLink">← Πίσω</a><h1 style="font-size:20px; margin-bottom:20px;">${esc(title)}</h1>`;
     Object.entries(modules).forEach(([modTitle, lessons]) => {
-      html += `<div class="moduleBlock"><h3>${modTitle}</h3>`;
+      html += `<div class="moduleBlock"><h3>${esc(modTitle)}</h3>`;
       lessons.forEach(l => {
-        html += `<div class="lesson" data-lesson="${encodeURIComponent(l.lesson_title)}"><h4>${l.lesson_title}</h4><p>${(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${l.video_url ? `<a href="${l.video_url}" target="_blank" rel="noopener">🎥 Σου το εξηγώ ο ίδιος →</a>` : ''}<div style="margin-top:10px;"><label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--red); cursor:pointer;"><input type="checkbox" class="lessonDoneCheck" data-course="${courseId}" data-title="${l.lesson_title.replace(/"/g,'&quot;')}"> ✓ Ολοκληρώθηκε</label></div></div>`;
+        html += `<div class="lesson" data-lesson="${encodeURIComponent(l.lesson_title)}"><h4>${esc(l.lesson_title)}</h4><p>${esc(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${safeUrl(l.video_url) ? `<a href="${esc(safeUrl(l.video_url))}" target="_blank" rel="noopener noreferrer">🎥 Σου το εξηγώ ο ίδιος →</a>` : ''}<div style="margin-top:10px;"><label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--red); cursor:pointer;"><input type="checkbox" class="lessonDoneCheck" data-course="${esc(courseId)}" data-title="${esc(l.lesson_title)}"> ✓ Ολοκληρώθηκε</label></div></div>`;
       });
       html += `</div>`;
     });

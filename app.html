@@ -1471,7 +1471,7 @@ async function renderCoursesAdminView(main){
   const { data: courses } = await supabase.from('courses').select('*, course_modules(id)').eq('coach_id', profile.id).order('sort_order');
   main.innerHTML = '';
   main.appendChild(el(`<h2 style="margin-bottom:6px;">📚 ${locale==='el'?'Μαθήματα':'Courses'}</h2>`));
-  main.appendChild(el(`<p style="color:var(--ink-soft); font-size:12px; margin-bottom:16px;">${locale==='el'?'Όρισε τιμή και σύνδεσμο πληρωμής (Stripe/Viva Payment Link) για κάθε μάθημα. Χωρίς σύνδεσμο πληρωμής, το κουμπί στη δημόσια σελίδα ανοίγει το chat για χειροκίνητη κράτηση.':'Set price and payment link (Stripe/Viva Payment Link) per course. Without a payment link, the public button opens chat for manual booking.'}</p>`));
+  main.appendChild(el(`<p style="color:var(--ink-soft); font-size:12px; margin-bottom:16px;">${locale==='el'?'Όρισε τιμή και σύνδεσμο πληρωμής (Viva Wallet Payment Link) για κάθε μάθημα. Χωρίς σύνδεσμο πληρωμής, το κουμπί στη δημόσια σελίδα ανοίγει το chat για χειροκίνητη κράτηση.':'Set price and payment link (Viva Wallet Payment Link) per course. Without a payment link, the public button opens chat for manual booking.'}</p>`));
 
   (courses||[]).forEach(c=>{
     const card = el(`<div class="card" style="margin-bottom:12px;">
@@ -1483,7 +1483,7 @@ async function renderCoursesAdminView(main){
       </div>
       <div class="grid2">
         <div class="field"><label>${locale==='el'?'Τιμή (€)':'Price (€)'}</label><input class="priceInput" type="number" min="0" value="${c.price??''}"></div>
-        <div class="field"><label>Payment Link (Stripe/Viva)</label><input class="linkInput" value="${escapeHtml(c.payment_link||'')}" placeholder="https://..."></div>
+        <div class="field"><label>Payment Link (Viva Wallet)</label><input class="linkInput" value="${escapeHtml(c.payment_link||'')}" placeholder="https://..."></div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1564,7 +1564,7 @@ async function renderCourseModules(area, course){
 async function renderCourseAccess(area, course){
   area.innerHTML = '';
   const { data: enrollments } = await supabase.from('course_enrollments').select('*').eq('course_id', course.id).order('purchased_at',{ascending:false});
-  area.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πρόσθεσε το email του αγοραστή μετά την πληρωμή (Viva/Stripe) για να ξεκλειδώσει το μάθημα στο courses.html':'Add the buyer email after payment (Viva/Stripe) to unlock the course on courses.html'}</p>`));
+  area.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πρόσθεσε το email του αγοραστή μετά την πληρωμή (Viva Wallet) για να ξεκλειδώσει το μάθημα στο courses.html':'Add the buyer email after payment (Viva Wallet) to unlock the course on courses.html'}</p>`));
   (enrollments||[]).forEach(e=>{
     const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px;">
       <span>${escapeHtml(e.email)}</span>
