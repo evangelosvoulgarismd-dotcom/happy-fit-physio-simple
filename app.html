@@ -497,6 +497,7 @@ const STR = {
   needsAttention:{el:'Χρειάζονται προσοχή', en:'Need attention'},
   noAlerts:{el:'✓ Όλα καλά. Κανένας ασκούμενος δεν χρειάζεται άμεση προσοχή.', en:'✓ All good. No client needs immediate attention.'},
   alertNoCheckin:{el:'Καμία καταγραφή check-in >10 ημέρες', en:'No check-in logged for >10 days'},
+  alertWeeklyCheckin:{el:'Πακέτο με εβδομαδιαία ανατροφοδότηση: δεν έχει γίνει check-in εδώ και 8+ ημέρες', en:'Package includes weekly feedback: no check-in for 8+ days'},
   alertPainRising:{el:'Ο πόνος αυξάνεται στα τελευταία check-ins', en:'Pain is rising over recent check-ins'},
   alertAdherenceDrop:{el:'Η συνέπεια έπεσε απότομα', en:'Adherence dropped sharply'},
   alertLowEnergy:{el:'Χαμηλή ενέργεια/κίνητρο τις τελευταίες ημέρες', en:'Low energy/motivation recently'},
@@ -538,7 +539,7 @@ const STR = {
   pathway:{el:'Κλινική Πορεία', en:'Clinical Pathway'},
   filterBySport:{el:'Φίλτρο ανά δραστηριότητα', en:'Filter by activity'},
   allClients:{el:'Όλοι', en:'All'},
-  paymentLink:{el:'Link Πληρωμής (Stripe/Viva Wallet)', en:'Payment Link (Stripe/Viva Wallet)'},
+  paymentLink:{el:'Link Πληρωμής (Viva Wallet)', en:'Payment Link (Viva Wallet)'},
   payment:{el:'Πληρωμή', en:'Payment'},
   payNow:{el:'Πλήρωσε τώρα', en:'Pay now'},
   noPaymentLink:{el:'Δεν έχει οριστεί ακόμα link πληρωμής. Επικοινώνησε με τον coach σου.', en:'No payment link set up yet. Contact your coach.'},
@@ -1482,7 +1483,7 @@ async function renderCoursesAdminView(main){
       </div>
       <div class="grid2">
         <div class="field"><label>${locale==='el'?'Τιμή (€)':'Price (€)'}</label><input class="priceInput" type="number" min="0" value="${c.price??''}"></div>
-        <div class="field"><label>Payment Link (Stripe/Viva)</label><input class="linkInput" value="${escapeHtml(c.payment_link||'')}" placeholder="https://buy.stripe.com/..."></div>
+        <div class="field"><label>Payment Link (Stripe/Viva)</label><input class="linkInput" value="${escapeHtml(c.payment_link||'')}" placeholder="https://..."></div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1762,7 +1763,7 @@ async function renderProjectionView(main){
 async function renderBusinessOverview(main){
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
   const [{ data: clients }, { data: leads }, { data: courses }, { data: enrollments }, { data: massageRequests }, { data: myCharges }] = await Promise.all([
-    supabase.from('clients').select('status,monthly_price').eq('coach_id', profile.id),
+    supabase.from('clients').select('id,status,monthly_price').eq('coach_id', profile.id),
     supabase.from('leads').select('id,converted'),
     supabase.from('courses').select('id,title,price'),
     supabase.from('course_enrollments').select('course_id'),
@@ -1773,6 +1774,19 @@ async function renderBusinessOverview(main){
   ]);
 
   const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+  let collectedNow = null, paidActiveCount = 0;
+  {
+    const ids = (clients||[]).map(c=>c.id);
+    if(ids.length){
+      const { data: paysNow, error: paysErr } = await supabase.from('client_payments').select('client_id, amount').eq('period', currentPeriod()).in('client_id', ids);
+      if(!paysErr){
+        const activeIds = new Set((clients||[]).filter(c=>(c.status||'trial')==='active').map(c=>c.id));
+        const activePays = (paysNow||[]).filter(r=>activeIds.has(r.client_id));
+        collectedNow = activePays.reduce((sum,r)=>sum+(Number(r.amount)||0),0);
+        paidActiveCount = activePays.length;
+      }
+    }
+  }
 
   // ΣΥΝΔΡΟΜΗ — real MRR from active clients (same calculation used on the client list).
   const activeClients = (clients||[]).filter(c=>(c.status||'trial')==='active');
@@ -1830,7 +1844,8 @@ async function renderBusinessOverview(main){
   }
 
   main.appendChild(el(`<div class="statGrid" style="margin-bottom:16px;">
-    <div class="statCard"><div class="num mono">${euro(mrr)}</div><div class="lbl">${locale==='el'?'MRR (Online coaching)':'MRR (Online coaching)'}</div></div>
+    <div class="statCard"><div class="num mono">${euro(mrr)}</div><div class="lbl">${locale==='el'?'MRR αναμενόμενο (Online coaching)':'MRR expected (Online coaching)'}</div></div>
+    ${collectedNow!==null ? `<div class="statCard"><div class="num mono">${euro(collectedNow)}</div><div class="lbl">${locale==='el'?`Εισπράχθηκε αυτό τον μήνα (${paidActiveCount}/${activeClients.length} πληρώθηκαν)`:`Collected this month (${paidActiveCount}/${activeClients.length} paid)`}</div></div>` : ''}
     <div class="statCard"><div class="num mono">${activeClients.length}</div><div class="lbl">${locale==='el'?'Ενεργοί πελάτες':'Active clients'}</div></div>
     <div class="statCard"><div class="num mono">${trialClients.length}</div><div class="lbl">${locale==='el'?'Σε δοκιμή':'On trial'}</div></div>
     <div class="statCard"><div class="num mono">${totalLeads}</div><div class="lbl">${locale==='el'?'Λήψεις (leads)':'Leads'}</div></div>
@@ -1866,6 +1881,12 @@ async function renderBusinessOverview(main){
 // ============================================================
 const PARTNER_RATE_PER_CLIENT = 5; // €/active client/month — see business-model discussion with Evangelos
 
+const PLANS = {
+  start:{ label:'START', el:'Εξατομικευμένο πρόγραμμα, οδηγίες και προοδευτική φόρτιση, καταγραφή προόδου.', en:'Personalized program, guidance and progressive loading, progress tracking.' },
+  growth:{ label:'GROWTH', el:'Ό,τι στο START, με εβδομαδιαία ανατροφοδότηση, επανεκτίμηση και προσαρμογές.', en:'Everything in START, with weekly feedback, reassessment and adjustments.' },
+  performance:{ label:'PERFORMANCE', el:'Ό,τι στο GROWTH, με πιο συχνή επικοινωνία και άμεση προσαρμογή προγράμματος.', en:'Everything in GROWTH, with more frequent communication and immediate program adjustment.' },
+};
+function periodLabel(period){ return new Date(period + '-15').toLocaleDateString(locale==='el'?'el-GR':'en-GB', { month:'long', year:'numeric' }); }
 function currentPeriod(){ return localDateStr(new Date()).slice(0,7); } // 'YYYY-MM', local calendar month
 
 async function renderPartnersView(main){
@@ -2705,6 +2726,7 @@ async function renderCoachDashboard(main){
   ]);
 
   const clientIds = (clients||[]).map(c=>c.id);
+  let paidThisPeriod = new Set(), paymentsTracked = false;
   let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set(), aiEscalationByClient = {}, severePainClientIds = new Set();
   if(clientIds.length){
     // Recent AI-flagged interactions (see attachAskAssistant / ask-assistant.ts) feed the
@@ -2745,6 +2767,8 @@ async function renderCoachDashboard(main){
       if(!current || (severityRank[f.escalation] ?? 3) < (severityRank[current] ?? 3)) aiEscalationByClient[f.client_id] = f.escalation;
     });
     (allSeverePain||[]).forEach(p=>{ severePainClientIds.add(p.client_id); });
+    const { data: paysNow, error: paysErr } = await supabase.from('client_payments').select('client_id').eq('period', currentPeriod()).in('client_id', clientIds);
+    if(!paysErr){ paymentsTracked = true; (paysNow||[]).forEach(r=>paidThisPeriod.add(r.client_id)); }
   }
   function readinessScoreFor(id){
     const r = latestReadinessByClient[id];
@@ -2762,6 +2786,8 @@ async function renderCoachDashboard(main){
 
     if(cks.length===0 || daysSince(cks[0].date) > 10){
       alerts.push(t('alertNoCheckin',locale));
+    } else if((client.plan === 'growth' || client.plan === 'performance') && daysSince(cks[0].date) > 8){
+      alerts.push(t('alertWeeklyCheckin',locale));
     }
     if(cks.length>=2 && cks[0].pain_level!=null && cks[1].pain_level!=null && cks[0].pain_level > cks[1].pain_level && cks[0].pain_level >= 4){
       alerts.push(t('alertPainRising',locale));
@@ -3138,6 +3164,8 @@ async function renderCoachDashboard(main){
             ${c.sport ? `<span class="badge">🏃 ${escapeHtml(c.sport)}</span>` : ''}
             ${c.pathway ? `<span class="badge" style="color:var(--red-deep);">${escapeHtml(c.pathway)}</span>` : ''}
             ${c.monthly_price ? `<span class="badge mono">€${c.monthly_price}/${locale==='el'?'μήνα':'mo'}</span>` : ''}
+            ${c.plan && PLANS[c.plan] ? `<span class="badge">${PLANS[c.plan].label}</span>` : ''}
+            ${paymentsTracked && c.status==='active' && c.monthly_price ? (paidThisPeriod.has(c.id) ? `<span class="badge" style="color:#1f6b3a;">✓ ${locale==='el'?'Πληρώθηκε':'Paid'}</span>` : `<span class="badge" style="background:#f6e0da; color:var(--danger);">⏳ ${locale==='el'?'Ανεξόφλητο':'Unpaid'}</span>`) : ''}
             ${prog ? `<span class="badge">${escapeHtml(prog.title)}</span>` : `<span class="badge" style="color:var(--danger);">${locale==='el'?'Χωρίς πρόγραμμα':'No program'}</span>`}
             ${lastCk ? `<span class="badge">${locale==='el'?'Συνέπεια':'Adherence'} ${lastCk.adherence}%</span>` : ''}
             ${lastCk ? `<span class="badge mono">${lastCk.date}</span>` : ''}
@@ -3865,6 +3893,13 @@ function renderBusinessTab(body, client, onChanged){
 
   const card = el(`<div class="card gold">
     <div class="field"><label>${t('monthlyPrice',locale)}</label><input class="f_price" type="number" step="1" value="${client.monthly_price ?? ''}"></div>
+    <div class="field"><label>${locale==='el'?'Πακέτο':'Package'}</label>
+      <select class="f_plan">
+        <option value="" ${!client.plan?'selected':''}>—</option>
+        ${Object.entries(PLANS).map(([k,v])=>`<option value="${k}" ${client.plan===k?'selected':''}>${v.label}</option>`).join('')}
+      </select>
+    </div>
+    <div class="payRow" style="width:100%; display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 0;"></div>
     <div class="field"><label>${t('status',locale)}</label>
       <select class="f_status">
         <option value="trial" ${(!client.status||client.status==='trial')?'selected':''}>${t('statusTrial',locale)}</option>
@@ -3874,13 +3909,37 @@ function renderBusinessTab(body, client, onChanged){
       </select>
     </div>
     <div class="field"><label>${locale==='el'?'Προτάθηκε από':'Referred by'}</label><input class="f_ref" value="${escapeHtml(client.referred_by||'')}" placeholder="${locale==='el'?'π.χ. όνομα ασκούμενου':'e.g. client name'}"></div>
-    <div class="field"><label>${t('paymentLink',locale)}</label><input class="f_paylink" value="${escapeHtml(client.payment_link||'')}" placeholder="https://buy.stripe.com/... ή https://viva.com/..."></div>
+    <div class="field"><label>${t('paymentLink',locale)}</label><input class="f_paylink" value="${escapeHtml(client.payment_link||'')}" placeholder="https://..."></div>
     <div class="field"><label>${t('zoomLink',locale)}</label><input class="f_zoom" value="${escapeHtml(client.zoom_link||'')}" placeholder="https://zoom.us/j/..."></div>
     <div class="field"><label>${t('nextCall',locale)}</label><input class="f_nextcall" type="datetime-local" value="${client.next_call_at ? new Date(client.next_call_at).toISOString().slice(0,16) : ''}"></div>
     <div class="field"><label>📝 ${locale==='el'?'Επόμενη επανεκτίμηση':'Next reassessment'}</label><input class="f_nextreassess" type="date" value="${client.next_reassessment_at || ''}"></div>
     <span class="savedTag statusSpan"></span>
   </div>`);
   const statusEl = card.querySelector('.statusSpan');
+  // Monthly payment status for the current calendar month (marked by hand by the coach).
+  const payRow = card.querySelector('.payRow');
+  const period = currentPeriod();
+  async function paintPayRow(){
+    const { data: pay, error: payErr } = await supabase.from('client_payments').select('id').eq('client_id', client.id).eq('period', period).maybeSingle();
+    if(payErr){ payRow.innerHTML = `<span style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Η καταγραφή πληρωμών δεν είναι ενεργή ακόμα (migration_subscription.sql).':'Payment tracking is not active yet (migration_subscription.sql).'}</span>`; return; }
+    payRow.innerHTML = `<span style="font-size:12.5px;">${pay ? '✓ ' : '⏳ '}${escapeHtml(periodLabel(period))}: <strong>${pay ? (locale==='el'?'Πληρώθηκε':'Paid') : (locale==='el'?'Ανεξόφλητο':'Unpaid')}</strong></span>
+      <button class="btn ${pay?'secondary':''} togglePayBtn" type="button" style="padding:5px 12px; font-size:12px;">${pay ? (locale==='el'?'Αναίρεση':'Undo') : (locale==='el'?'Σήμανση ως πληρωμένο':'Mark as paid')}</button>`;
+    payRow.querySelector('.togglePayBtn').addEventListener('click', async ()=>{
+      const { error } = pay
+        ? await supabase.from('client_payments').delete().eq('client_id', client.id).eq('period', period)
+        : await supabase.from('client_payments').insert({ client_id: client.id, period, amount: Number(card.querySelector('.f_price').value) || null, marked_by: profile.id });
+      if(error){ toast((locale==='el'?'Σφάλμα: ':'Error: ') + error.message); return; }
+      paintPayRow();
+    });
+  }
+  paintPayRow();
+  card.querySelector('.f_plan').addEventListener('change', async (e)=>{
+    // Separate update so a missing column (migration not run yet) can never block the other billing fields.
+    const { error } = await supabase.from('clients').update({ plan: e.target.value || null }).eq('id', client.id);
+    if(error){ toast((locale==='el'?'Σφάλμα: ':'Error: ') + error.message); return; }
+    client.plan = e.target.value || null;
+    toast(t('saved',locale));
+  });
   let timer = null;
   function scheduleSave(){
     statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
@@ -5705,13 +5764,19 @@ async function renderClientDashboard(main){
     }
   } else if(tab==='payment'){
     const card = el('<div class="card gold"></div>');
-    if(clientRow?.payment_link){
-      card.innerHTML = `
+    const { data: planRow } = await supabase.from('clients').select('plan').eq('id', profile.id).maybeSingle();
+    const { data: paidRow, error: paidErr } = await supabase.from('client_payments').select('id').eq('client_id', profile.id).eq('period', currentPeriod()).maybeSingle();
+    const myPlan = planRow?.plan && PLANS[planRow.plan] ? PLANS[planRow.plan] : null;
+    const planHtml = myPlan ? `<div style="margin-bottom:14px;"><div style="font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Το πακέτο σου':'Your package'}</div><strong>${myPlan.label}</strong><p style="font-size:12.5px; color:var(--ink-soft); margin-top:4px;">${escapeHtml(locale==='el'?myPlan.el:myPlan.en)}</p></div>` : '';
+    if(!paidErr && paidRow){
+      card.innerHTML = `${planHtml}<p style="font-size:14px;">✓ ${locale==='el'?'Εξοφλημένο για':'Paid for'} <strong>${escapeHtml(periodLabel(currentPeriod()))}</strong></p>`;
+    } else if(clientRow?.payment_link){
+      card.innerHTML = planHtml + `
         ${clientRow.monthly_price ? `<p style="margin-bottom:14px;">${locale==='el'?'Μηνιαία συνδρομή':'Monthly subscription'}: <strong class="mono">€${clientRow.monthly_price}</strong></p>` : ''}
         <a class="btn" href="${escapeHtml(clientRow.payment_link)}" target="_blank" rel="noreferrer">${t('payNow',locale)} ↗</a>
       `;
     } else {
-      card.innerHTML = `<p style="color:var(--ink-soft);">${t('noPaymentLink',locale)}</p>`;
+      card.innerHTML = planHtml + `<p style="color:var(--ink-soft);">${t('noPaymentLink',locale)}</p>`;
     }
     body.appendChild(card);
   } else if(tab==='safety'){
