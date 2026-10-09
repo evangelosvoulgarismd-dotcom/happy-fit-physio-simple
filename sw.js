@@ -19,7 +19,9 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of windowClients) {
         if (client.url.includes('app.html') && 'focus' in client) return client.focus();
       }
-      if (clients.openWindow) return clients.openWindow(url);
+      // Resolve against the service worker's scope so it also works when the site lives in a sub-folder
+      // (e.g. GitHub Pages /happy-fit-physio-simple/), where a root-absolute '/app.html' would 404.
+      if (clients.openWindow) return clients.openWindow(new URL(String(url).replace(/^\//, ''), self.registration.scope).href);
     })
   );
 });
