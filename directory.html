@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Βρες προπονητή ή event · Happy Fit Physio</title>
+  <meta name="description" content="Κατάλογος επαγγελματιών και events από το δίκτυο συνεργατών του Happy Fit Physio. Ζήτα επικοινωνία ή κλείσε θέση σε event." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800&family=Fraunces:ital,wght@0,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#f5f5f5; --ink-soft:#9a9a9a; --bg:#0b0b0b; --panel:#121212; --panel2:#181818; --line:#242424; --red:#e50914; --ok:#3ecf8e; --danger:#ff4d4d; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; line-height:1.5; overflow-x:hidden; }
+    h1,h2,h3 { font-family:'Poppins',sans-serif; font-weight:800; }
+    a { color:inherit; }
+    .top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px max(16px,4vw); border-bottom:1px solid var(--line); position:sticky; top:0; background:rgba(11,11,11,.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); z-index:20; }
+    .back { text-decoration:none; font-size:13px; font-weight:700; color:var(--ink-soft); }
+    .back:hover { color:#fff; }
+    .langSwitch { display:flex; gap:2px; background:rgba(255,255,255,.06); border-radius:6px; padding:3px; }
+    .langSwitch button { background:transparent; border:none; color:var(--ink-soft); font-size:11px; font-weight:700; padding:5px 10px; border-radius:4px; cursor:pointer; font-family:inherit; }
+    .langSwitch button.active { background:var(--red); color:#fff; }
+    main { max-width:1040px; margin:0 auto; padding:36px max(16px,4vw) 80px; }
+    .label { font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--red); font-weight:700; margin-bottom:10px; }
+    h1 { font-size:clamp(1.8rem,5vw,2.8rem); line-height:1.1; margin-bottom:10px; }
+    .lead { color:var(--ink-soft); max-width:640px; font-size:15px; margin-bottom:20px; }
+    .notice { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--red); border-radius:10px; padding:12px 14px; font-size:12.5px; color:var(--ink-soft); margin-bottom:26px; max-width:760px; }
+    .tabs { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+    .tab { background:var(--panel); border:1px solid var(--line); color:var(--ink-soft); padding:9px 18px; border-radius:999px; font:600 13px 'Public Sans',sans-serif; cursor:pointer; transition:background .2s,color .2s,border-color .2s; }
+    .tab:hover { color:#fff; }
+    .tab.active { background:var(--red); border-color:var(--red); color:#fff; }
+    .filters { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:10px; margin-bottom:12px; }
+    @media (max-width:720px){ .filters { grid-template-columns:1fr; } }
+    input, select, textarea { width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink); border-radius:10px; padding:11px 12px; font:400 14px 'Public Sans',sans-serif; }
+    input:focus, select:focus, textarea:focus { outline:2px solid var(--red); outline-offset:1px; border-color:transparent; }
+    textarea { resize:vertical; min-height:80px; }
+    .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; align-items:center; }
+    .chip { background:transparent; border:1px solid var(--line); color:var(--ink-soft); padding:6px 12px; border-radius:999px; font:600 12px 'Public Sans',sans-serif; cursor:pointer; }
+    .chip.on { border-color:var(--red); color:#fff; background:rgba(229,9,20,.16); }
+    .count { color:var(--ink-soft); font-size:12px; margin-bottom:12px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:10px; transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .2s; }
+    @media (hover:hover) { .card:hover { transform:translateY(-2px); border-color:#3a3a3a; } }
+    .head { display:flex; gap:12px; align-items:center; }
+    .avatar { width:52px; height:52px; border-radius:50%; background:var(--panel2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font:800 17px 'Poppins',sans-serif; color:var(--red); overflow:hidden; flex-shrink:0; }
+    .avatar img { width:100%; height:100%; object-fit:cover; }
+    .name { font:800 16px 'Poppins',sans-serif; line-height:1.2; }
+    .role { font-size:12px; color:var(--ink-soft); }
+    .badge { display:inline-block; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:999px; letter-spacing:.02em; }
+    .badge.ver { background:rgba(62,207,142,.14); color:var(--ok); }
+    .badge.new { background:rgba(229,9,20,.18); color:#ff6b72; }
+    .badge.free { background:rgba(62,207,142,.14); color:var(--ok); }
+    .headline { font-size:14px; }
+    .bio { font-size:13px; color:var(--ink-soft); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .tags { display:flex; gap:5px; flex-wrap:wrap; }
+    .tag { font-size:11px; background:var(--panel2); border:1px solid var(--line); color:var(--ink-soft); border-radius:6px; padding:2px 8px; }
+    .meta { font-size:12.5px; color:var(--ink-soft); display:flex; gap:12px; flex-wrap:wrap; }
+    .actions { display:flex; gap:8px; margin-top:auto; padding-top:6px; }
+    .btn { background:var(--red); color:#fff; border:none; border-radius:10px; padding:10px 16px; font:700 13px 'Public Sans',sans-serif; cursor:pointer; flex:1; transition:transform .15s, filter .2s; }
+    .btn:hover { filter:brightness(1.1); }
+    .btn:active { transform:scale(.97); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink); flex:0 0 auto; }
+    .heart { background:transparent; border:1px solid var(--line); color:var(--ink-soft); width:42px; border-radius:10px; cursor:pointer; font-size:16px; flex:0 0 auto; }
+    .heart.on { color:var(--red); border-color:var(--red); }
+    .when { font:500 12px 'IBM Plex Mono',monospace; color:var(--red); }
+    .empty { text-align:center; color:var(--ink-soft); padding:56px 16px; border:1px dashed var(--line); border-radius:14px; }
+    .empty h3 { color:var(--ink); margin-bottom:6px; font-size:16px; }
+    .modal { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; padding:16px; z-index:50; }
+    .modal.open { display:flex; }
+    .box { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px; width:100%; max-width:460px; max-height:92vh; overflow:auto; position:relative; }
+    .box h2 { font-size:18px; margin-bottom:4px; }
+    .box .sub { color:var(--ink-soft); font-size:13px; margin-bottom:14px; }
+    .x { position:absolute; top:10px; right:12px; background:none; border:none; color:var(--ink-soft); font-size:24px; cursor:pointer; line-height:1; }
+    .field { margin-bottom:12px; }
+    .field label { display:block; font-size:12px; color:var(--ink-soft); margin-bottom:5px; font-weight:600; }
+    .check { display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--ink-soft); margin-bottom:10px; }
+    .check input { width:auto; margin-top:2px; }
+    .err { color:var(--danger); font-size:12.5px; margin:6px 0; }
+    .ok { color:var(--ok); font-size:14px; padding:14px 0; }
+    .hp { position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
+    .foot { margin-top:40px; font-size:12px; color:var(--ink-soft); max-width:720px; }
+    .foot a { color:var(--red); }
+    @media (prefers-reduced-motion:reduce) { *, *::before, *::after { transition:none !important; animation:none !important; scroll-behavior:auto !important; } }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a class="back" href="index.html" id="backLink"></a>
+    <div class="langSwitch"><button class="langBtn" data-lang="el">EL</button><button class="langBtn" data-lang="en">EN</button></div>
+  </div>
+  <main>
+    <div class="label" id="tLabel"></div>
+    <h1 id="tTitle"></h1>
+    <p class="lead" id="tLead"></p>
+    <div class="notice" id="tNotice"></div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" role="tab" data-tab="coaches" id="tabCoaches"></button>
+      <button class="tab" role="tab" data-tab="events" id="tabEvents"></button>
+    </div>
+    <div class="filters" id="filters">
+      <input type="search" id="q" autocomplete="off">
+      <select id="fSpec"></select>
+      <select id="fProf"></select>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="count" id="count" aria-live="polite"></div>
+    <div id="list"></div>
+
+    <div class="foot" id="foot"></div>
+  </main>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="box" id="box"></div></div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    const supabase = createClient('https://hxbpuamzisdldwbuumda.supabase.co', 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH');
+
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const safeUrl = u => /^https:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
+
+    const STR = {
+      el: {
+        back:'← Αρχική', label:'Δίκτυο συνεργατών', title:'Βρες προπονητή ή event',
+        lead:'Επαγγελματίες και events από το δίκτυο του Happy Fit Physio. Ζήτα επικοινωνία ή κλείσε θέση.',
+        notice:'Οι επαγγελματίες είναι ανεξάρτητοι συνεργάτες και ευθύνονται οι ίδιοι για τις υπηρεσίες τους. Ο κατάλογος δεν αποτελεί ιατρική συμβουλή ούτε φυσικοθεραπευτική αξιολόγηση. Αν έχεις πόνο, τραυματισμό ή πρόβλημα υγείας, ζήτα πρώτα την άποψη επαγγελματία υγείας.',
+        coaches:'Επαγγελματίες', events:'Events', search:'Αναζήτηση (όνομα, περιοχή, ειδίκευση)', allSpec:'Όλες οι ειδικεύσεις', allProf:'Όλες οι ιδιότητες',
+        physio:'Φυσικοθεραπευτής', physioDecl:'Φυσικοθεραπευτής (δήλωση του επαγγελματία)', trainer:'Προπονητής', other:'Επαγγελματίας άθλησης',
+        verified:'Έλεγχος τίτλου', isNew:'Νέος', online:'Online', studio:'Σε χώρο', home:'Κατ’ οίκον', outdoor:'Σε εξωτερικό χώρο',
+        from:'από', free:'Δωρεάν', perSession:'/ συνεδρία', saved:'♡ Αποθηκευμένα', request:'Ζήτα επικοινωνία', signup:'Κλείσε θέση', full:'Πλήρες',
+        spots:'θέσεις', spotLeft:'θέση', level:'Επίπεδο', count1:'αποτέλεσμα', countN:'αποτελέσματα',
+        emptyC:'Δεν υπάρχουν ακόμα επαγγελματίες που να ταιριάζουν.', emptyCs:'Δοκίμασε να αλλάξεις τα φίλτρα. Νέοι επαγγελματίες προστίθενται συνεχώς.',
+        emptyE:'Δεν υπάρχουν προγραμματισμένα events αυτή τη στιγμή.', emptyEs:'Έλεγξε ξανά σύντομα.',
+        unavailable:'Ο κατάλογος δεν είναι διαθέσιμος αυτή τη στιγμή.', unavailableS:'Δοκίμασε ξανά σε λίγο.',
+        reqTitle:'Επικοινωνία με', reqSub:'Θα λάβει τα στοιχεία σου και θα επικοινωνήσει μαζί σου. Δεν υπάρχει δέσμευση.',
+        name:'Ονοματεπώνυμο', email:'Email', phone:'Τηλέφωνο (προαιρετικό)', message:'Μήνυμα (στόχος, ειδικές ανάγκες, διαθεσιμότητα)',
+        consentReq:'Συναινώ να κοινοποιηθούν το όνομα, το email και το μήνυμά μου στον συγκεκριμένο επαγγελματία, ώστε να επικοινωνήσει μαζί μου. Μπορώ να ζητήσω διαγραφή οποιαδήποτε στιγμή.',
+        consentEv:'Συναινώ να κοινοποιηθούν τα στοιχεία μου στον διοργανωτή για τη συμμετοχή μου στο event.',
+        healthEv:'Κατανοώ ότι το event δεν αποτελεί ιατρική ή φυσικοθεραπευτική υπηρεσία και συμμετέχω με δική μου ευθύνη. Αν έχω πρόβλημα υγείας, θα ενημερώσω τον διοργανωτή και θα συμβουλευτώ ειδικό.',
+        send:'Αποστολή', sending:'Αποστολή…', close:'Κλείσιμο',
+        okReq:'Το αίτημά σου στάλθηκε. Ο επαγγελματίας θα επικοινωνήσει μαζί σου.', okEv:'Η θέση σου κλείστηκε. Ο διοργανωτής θα έχει τα στοιχεία σου. Η πληρωμή, αν υπάρχει, γίνεται απευθείας μαζί του.',
+        evTitle:'Εγγραφή στο event', payNote:'Η πληρωμή, αν υπάρχει, γίνεται απευθείας με τον διοργανωτή.',
+        eFull:'Το event γέμισε.', eDup:'Έχεις ήδη κλείσει θέση με αυτό το email.', eMany:'Πολλά αιτήματα. Δοκίμασε ξανά σε λίγο.', eGone:'Το event δεν είναι πλέον διαθέσιμο.',
+        eGeneric:'Κάτι πήγε στραβά. Δοκίμασε ξανά.', eFields:'Συμπλήρωσε όνομα και έγκυρο email, και τσέκαρε τις συναινέσεις.',
+        foot:'Είσαι επαγγελματίας; Οι συνεργάτες του Happy Fit Physio δημιουργούν το προφίλ τους από την εφαρμογή. Στείλε μας μήνυμα από την <a href="index.html#lead">αρχική σελίδα</a>.',
+        by:'από',
+      },
+      en: {
+        back:'← Home', label:'Partner network', title:'Find a coach or event',
+        lead:'Professionals and events from the Happy Fit Physio network. Request contact or book a spot.',
+        notice:'Professionals are independent partners and are responsible for their own services. This directory is not medical advice or a physiotherapy assessment. If you have pain, an injury or a health condition, ask a healthcare professional first.',
+        coaches:'Professionals', events:'Events', search:'Search (name, area, specialty)', allSpec:'All specialties', allProf:'All roles',
+        physio:'Physiotherapist', physioDecl:'Physiotherapist (self-declared)', trainer:'Coach', other:'Sports professional',
+        verified:'Credential checked', isNew:'New', online:'Online', studio:'On site', home:'At home', outdoor:'Outdoors',
+        from:'from', free:'Free', perSession:'/ session', saved:'♡ Saved', request:'Request contact', signup:'Book a spot', full:'Full',
+        spots:'spots', spotLeft:'spot', level:'Level', count1:'result', countN:'results',
+        emptyC:'No professionals match yet.', emptyCs:'Try changing the filters. New professionals are added regularly.',
+        emptyE:'No events scheduled right now.', emptyEs:'Check back soon.',
+        unavailable:'The directory is not available right now.', unavailableS:'Please try again shortly.',
+        reqTitle:'Contact', reqSub:'They will receive your details and get in touch. No commitment.',
+        name:'Full name', email:'Email', phone:'Phone (optional)', message:'Message (goal, special needs, availability)',
+        consentReq:'I consent to my name, email and message being shared with this professional so they can contact me. I can ask for deletion at any time.',
+        consentEv:'I consent to my details being shared with the organizer for my participation in the event.',
+        healthEv:'I understand the event is not a medical or physiotherapy service and I take part at my own responsibility. If I have a health condition I will tell the organizer and consult a professional.',
+        send:'Send', sending:'Sending…', close:'Close',
+        okReq:'Your request was sent. The professional will contact you.', okEv:'Your spot is booked. The organizer has your details. Payment, if any, is made directly with them.',
+        evTitle:'Event sign-up', payNote:'Payment, if any, is made directly with the organizer.',
+        eFull:'This event is full.', eDup:'You already booked with this email.', eMany:'Too many requests. Please try again shortly.', eGone:'This event is no longer available.',
+        eGeneric:'Something went wrong. Please try again.', eFields:'Enter your name and a valid email, and tick the consents.',
+        foot:'Are you a professional? Happy Fit Physio partners create their profile from the app. Send us a message from the <a href="index.html#lead">home page</a>.',
+        by:'by',
+      },
+    };
+    let lang = 'el';
+    try{ if(localStorage.getItem('hfp_lang')==='en') lang = 'en'; }catch(e){}
+    const T = k => (STR[lang][k] ?? STR.el[k] ?? k);
+
+    const state = { tab:'coaches', coaches:[], events:[], loaded:false, failed:false, q:'', spec:'', prof:'', formats:new Set(), savedOnly:false, saved:new Set() };
+    try{ JSON.parse(localStorage.getItem('hfp_dir_saved')||'[]').forEach(id=>state.saved.add(id)); }catch(e){}
+    const persistSaved = () => { try{ localStorage.setItem('hfp_dir_saved', JSON.stringify([...state.saved])); }catch(e){} };
+
+    const $ = id => document.getElementById(id);
+    const initials = n => String(n||'?').trim().split(/\s+/).slice(0,2).map(s=>s[0]||'').join('').toUpperCase();
+    const fmtDate = iso => new Date(iso).toLocaleString(lang==='el'?'el-GR':'en-GB', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    const euro = n => new Intl.NumberFormat(lang==='el'?'el-GR':'en-GB',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+    const profLabel = c => c.profession==='physio' ? (c.credential_verified ? T('physio') : T('physioDecl')) : T(c.profession==='trainer'?'trainer':'other');
+    const isNew = c => c.approved_at && (Date.now() - new Date(c.approved_at).getTime()) < 30*86400000;
+    const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+
+    function paintStatic(){
+      document.documentElement.lang = lang;
+      $('backLink').textContent = T('back'); $('tLabel').textContent = T('label'); $('tTitle').textContent = T('title');
+      $('tLead').textContent = T('lead'); $('tNotice').textContent = T('notice');
+      $('tabCoaches').textContent = T('coaches'); $('tabEvents').textContent = T('events');
+      $('q').placeholder = T('search'); $('q').setAttribute('aria-label', T('search'));
+      $('foot').innerHTML = T('foot');
+      document.querySelectorAll('.langBtn').forEach(b=>b.classList.toggle('active', b.dataset.lang===lang));
+      paintFilters();
+    }
+
+    function paintFilters(){
+      const specs = [...new Set(state.coaches.flatMap(c=>c.specialties||[]))].sort((a,b)=>a.localeCompare(b,'el'));
+      $('fSpec').innerHTML = `<option value="">${esc(T('allSpec'))}</option>` + specs.map(s=>`<option value="${esc(s)}"${state.spec===s?' selected':''}>${esc(s)}</option>`).join('');
+      $('fProf').innerHTML = `<option value="">${esc(T('allProf'))}</option>` + ['physio','trainer','other'].map(p=>`<option value="${p}"${state.prof===p?' selected':''}>${esc(T(p))}</option>`).join('');
+      const fm = ['online','studio','home']; if(state.tab==='events') fm.push('outdoor');
+      $('chips').innerHTML = fm.map(f=>`<button class="chip${state.formats.has(f)?' on':''}" data-f="${f}" aria-pressed="${state.formats.has(f)}">${esc(T(f))}</button>`).join('')
+        + (state.tab==='coaches' ? `<button class="chip${state.savedOnly?' on':''}" id="savedChip" aria-pressed="${state.savedOnly}">${esc(T('saved'))}</button>` : '');
+      $('fSpec').style.display = $('fProf').style.display = state.tab==='coaches' ? '' : 'none';
+      $('filters').style.gridTemplateColumns = state.tab==='coaches' ? '' : '1fr';
+    }
+
+    function filteredCoaches(){
+      const q = norm(state.q);
+      return state.coaches.filter(c=>{
+        if(state.savedOnly && !state.saved.has(c.id)) return false;
+        if(state.spec && !(c.specialties||[]).includes(state.spec)) return false;
+        if(state.prof && c.profession!==state.prof) return false;
+        if(state.formats.size && ![...state.formats].some(f=>(c.formats||[]).includes(f))) return false;
+        if(q && !norm([c.display_name,c.headline,c.area,(c.specialties||[]).join(' ')].join(' ')).includes(q)) return false;
+        return true;
+      });
+    }
+    function filteredEvents(){
+      const q = norm(state.q);
+      return state.events.filter(e=>{
+        if(state.formats.size && !state.formats.has(e.format)) return false;
+        if(q && !norm([e.title,e.coach_name,e.location,e.level].join(' ')).includes(q)) return false;
+        return true;
+      });
+    }
+
+    function empty(t, s){ return `<div class="empty"><h3>${esc(t)}</h3><p>${esc(s)}</p></div>`; }
+
+    function render(){
+      const list = $('list');
+      if(!state.loaded){ list.innerHTML = `<div class="empty"><p>…</p></div>`; $('count').textContent=''; return; }
+      if(state.failed){ list.innerHTML = empty(T('unavailable'), T('unavailableS')); $('count').textContent=''; return; }
+      if(state.tab==='coaches'){
+        const rows = filteredCoaches();
+        $('count').textContent = `${rows.length} ${rows.length===1?T('count1'):T('countN')}`;
+        list.innerHTML = rows.length ? `<div class="grid">${rows.map(coachCard).join('')}</div>` : empty(T('emptyC'), T('emptyCs'));
+        list.querySelectorAll('img[data-avatar]').forEach(img=>img.addEventListener('error',()=>{ img.parentElement.textContent = img.dataset.init; }, { once:true }));
+      } else {
+        const rows = filteredEvents();
+        $('count').textContent = `${rows.length} ${rows.length===1?T('count1'):T('countN')}`;
+        list.innerHTML = rows.length ? `<div class="grid">${rows.map(eventCard).join('')}</div>` : empty(T('emptyE'), T('emptyEs'));
+      }
+    }
+
+    function coachCard(c){
+      const photo = safeUrl(c.photo_url);
+      const fm = (c.formats||[]).map(f=>T(f)).join(' · ');
+      return `<article class="card">
+        <div class="head">
+          <div class="avatar">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" data-avatar data-init="${esc(initials(c.display_name))}">` : esc(initials(c.display_name))}</div>
+          <div><div class="name">${esc(c.display_name)}</div><div class="role">${esc(profLabel(c))}</div></div>
+        </div>
+        <div>${c.credential_verified ? `<span class="badge ver">✓ ${esc(T('verified'))}</span> ` : ''}${isNew(c) ? `<span class="badge new">${esc(T('isNew'))}</span>` : ''}</div>
+        ${c.headline ? `<div class="headline">${esc(c.headline)}</div>` : ''}
+        ${c.bio ? `<p class="bio">${esc(c.bio)}</p>` : ''}
+        ${(state.testi||[]).filter(x=>x.coach_id===c.id).slice(0,2).map(x=>`<blockquote class="bio" style="border-left:2px solid var(--line); padding-left:10px; margin:6px 0;">«${esc(x.quote)}» <span class="role">· ${esc(x.display_name)}</span></blockquote>`).join('')}
+        ${(c.specialties||[]).length ? `<div class="tags">${c.specialties.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div>` : ''}
+        <div class="meta">${c.area ? `<span>📍 ${esc(c.area)}</span>` : ''}${fm ? `<span>${esc(fm)}</span>` : ''}${c.price_from!=null ? `<span>${esc(T('from'))} ${esc(euro(c.price_from))} ${esc(T('perSession'))}</span>` : ''}</div>
+        <div class="actions">
+          <button class="btn" data-req="${esc(c.id)}">${esc(T('request'))}</button>
+          <button class="heart${state.saved.has(c.id)?' on':''}" data-save="${esc(c.id)}" aria-label="${esc(T('saved'))}" aria-pressed="${state.saved.has(c.id)}">${state.saved.has(c.id)?'♥':'♡'}</button>
+        </div>
+      </article>`;
+    }
+
+    function eventCard(e){
+      const left = Number(e.spots_left) || 0;
+      return `<article class="card">
+        <div class="when">${esc(fmtDate(e.starts_at))}</div>
+        <div class="name">${esc(e.title)}</div>
+        <div class="role">${esc(T('by'))} ${esc(e.coach_name)}</div>
+        ${e.description ? `<p class="bio">${esc(e.description)}</p>` : ''}
+        <div class="meta"><span>${esc(T(e.format))}</span>${e.location ? `<span>📍 ${esc(e.location)}</span>` : ''}${e.level ? `<span>${esc(T('level'))}: ${esc(e.level)}</span>` : ''}</div>
+        <div>${e.price==null || Number(e.price)===0 ? `<span class="badge free">${esc(T('free'))}</span>` : `<strong>${esc(euro(e.price))}</strong>`} <span class="role">· ${left} ${esc(left===1?T('spotLeft'):T('spots'))}</span></div>
+        <div class="actions"><button class="btn" data-ev="${esc(e.id)}" ${left<=0?'disabled':''}>${esc(left<=0?T('full'):T('signup'))}</button></div>
+      </article>`;
+    }
+
+    // ---------- modal ----------
+    const modal = $('modal'), box = $('box');
+    let lastFocus = null;
+    function openModal(html){ lastFocus = document.activeElement; box.innerHTML = `<button class="x" aria-label="${esc(T('close'))}" id="mx">&times;</button>` + html; modal.classList.add('open'); $('mx').addEventListener('click', closeModal); const f = box.querySelector('input,textarea,button.btn'); if(f) f.focus(); }
+    function closeModal(){ modal.classList.remove('open'); box.innerHTML=''; if(lastFocus && lastFocus.focus) lastFocus.focus(); }
+    modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modal.classList.contains('open')) closeModal(); });
+
+    const validEmail = s => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s);
+    function mapError(msg){
+      const m = String(msg||'');
+      if(/full/i.test(m)) return T('eFull');
+      if(/already/i.test(m)) return T('eDup');
+      if(/too many/i.test(m)) return T('eMany');
+      if(/not available/i.test(m)) return T('eGone');
+      return T('eGeneric');
+    }
+
+    function openRequest(id){
+      const c = state.coaches.find(x=>x.id===id); if(!c) return;
+      openModal(`<h2>${esc(T('reqTitle'))} ${esc(c.display_name)}</h2><p class="sub">${esc(T('reqSub'))}</p>
+        <form id="f" novalidate>
+          <input class="hp" id="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="field"><label for="fn">${esc(T('name'))}</label><input id="fn" maxlength="80" required autocomplete="name"></div>
+          <div class="field"><label for="fe">${esc(T('email'))}</label><input id="fe" type="email" maxlength="120" required autocomplete="email"></div>
+          <div class="field"><label for="fp">${esc(T('phone'))}</label><input id="fp" maxlength="30" autocomplete="tel"></div>
+          <div class="field"><label for="fm">${esc(T('message'))}</label><textarea id="fm" maxlength="600"></textarea></div>
+          <label class="check"><input type="checkbox" id="fc"><span>${esc(T('consentReq'))}</span></label>
+          <div class="err" id="fer" role="alert"></div>
+          <button class="btn" type="submit" id="fs" style="width:100%">${esc(T('send'))}</button>
+        </form>`);
+      $('f').addEventListener('submit', async ev=>{
+        ev.preventDefault();
+        const name = $('fn').value.trim(), email = $('fe').value.trim();
+        if($('hp').value){ box.innerHTML = `<div class="ok">${esc(T('okReq'))}</div>`; return; }
+        if(name.length<2 || !validEmail(email) || !$('fc').checked){ $('fer').textContent = T('eFields'); return; }
+        $('fs').disabled = true; $('fs').textContent = T('sending'); $('fer').textContent = '';
+        const { error } = await supabase.rpc('submit_directory_request', { p_coach_id:id, p_name:name, p_email:email, p_phone:$('fp').value.trim(), p_message:$('fm').value.trim(), p_consent:true });
+        if(error){ $('fer').textContent = mapError(error.message); $('fs').disabled=false; $('fs').textContent=T('send'); return; }
+        box.innerHTML = `<button class="x" aria-label="${esc(T('close'))}" id="mx2">&times;</button><div class="ok">${esc(T('okReq'))}</div><button class="btn" id="mc">${esc(T('close'))}</button>`;
+        $('mx2').addEventListener('click', closeModal); $('mc').addEventListener('click', closeModal);
+      });
+    }
+
+    function openSignup(id){
+      const e = state.events.find(x=>x.id===id); if(!e) return;
+      openModal(`<h2>${esc(T('evTitle'))}</h2><p class="sub">${esc(e.title)} · ${esc(fmtDate(e.starts_at))}<br>${esc(T('payNote'))}</p>
+        <form id="f" novalidate>
+          <div class="field"><label for="fn">${esc(T('name'))}</label><input id="fn" maxlength="80" required autocomplete="name"></div>
+          <div class="field"><label for="fe">${esc(T('email'))}</label><input id="fe" type="email" maxlength="120" required autocomplete="email"></div>
+          <div class="field"><label for="fp">${esc(T('phone'))}</label><input id="fp" maxlength="30" autocomplete="tel"></div>
+          <label class="check"><input type="checkbox" id="fc"><span>${esc(T('consentEv'))}</span></label>
+          <label class="check"><input type="checkbox" id="fh"><span>${esc(T('healthEv'))}</span></label>
+          <div class="err" id="fer" role="alert"></div>
+          <button class="btn" type="submit" id="fs" style="width:100%">${esc(T('signup'))}</button>
+        </form>`);
+      $('f').addEventListener('submit', async ev=>{
+        ev.preventDefault();
+        const name = $('fn').value.trim(), email = $('fe').value.trim();
+        if(name.length<2 || !validEmail(email) || !$('fc').checked || !$('fh').checked){ $('fer').textContent = T('eFields'); return; }
+        $('fs').disabled = true; $('fs').textContent = T('sending'); $('fer').textContent = '';
+        const { data, error } = await supabase.rpc('signup_event', { p_event_id:id, p_name:name, p_email:email, p_phone:$('fp').value.trim(), p_consent:true });
+        if(error){ $('fer').textContent = mapError(error.message); $('fs').disabled=false; $('fs').textContent=T('signup'); return; }
+        if(data && typeof data.spots_left==='number') e.spots_left = data.spots_left;
+        box.innerHTML = `<button class="x" aria-label="${esc(T('close'))}" id="mx2">&times;</button><div class="ok">${esc(T('okEv'))}</div><button class="btn" id="mc">${esc(T('close'))}</button>`;
+        $('mx2').addEventListener('click', ()=>{ closeModal(); render(); }); $('mc').addEventListener('click', ()=>{ closeModal(); render(); });
+      });
+    }
+
+    // ---------- events wiring ----------
+    document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click', ()=>{
+      state.tab = b.dataset.tab; state.formats.clear(); state.savedOnly = false;
+      document.querySelectorAll('.tab').forEach(x=>{ x.classList.toggle('active', x===b); x.setAttribute('aria-selected', x===b); });
+      paintFilters(); render();
+    }));
+    $('q').addEventListener('input', e=>{ state.q = e.target.value; render(); });
+    $('fSpec').addEventListener('change', e=>{ state.spec = e.target.value; render(); });
+    $('fProf').addEventListener('change', e=>{ state.prof = e.target.value; render(); });
+    $('chips').addEventListener('click', e=>{
+      const b = e.target.closest('button'); if(!b) return;
+      if(b.id==='savedChip'){ state.savedOnly = !state.savedOnly; }
+      else if(b.dataset.f){ state.formats.has(b.dataset.f) ? state.formats.delete(b.dataset.f) : state.formats.add(b.dataset.f); }
+      paintFilters(); render();
+    });
+    $('list').addEventListener('click', e=>{
+      const r = e.target.closest('[data-req]'); if(r) return openRequest(r.dataset.req);
+      const v = e.target.closest('[data-ev]'); if(v) return openSignup(v.dataset.ev);
+      const s = e.target.closest('[data-save]'); if(s){
+        const id = s.dataset.save; state.saved.has(id) ? state.saved.delete(id) : state.saved.add(id); persistSaved();
+        s.classList.toggle('on', state.saved.has(id)); s.textContent = state.saved.has(id) ? '♥' : '♡'; s.setAttribute('aria-pressed', state.saved.has(id));
+        if(state.savedOnly) render();
+      }
+    });
+    document.querySelectorAll('.langBtn').forEach(b=>b.addEventListener('click', ()=>{
+      lang = b.dataset.lang; try{ localStorage.setItem('hfp_lang', lang); }catch(e){}
+      paintStatic(); render();
+    }));
+
+    paintStatic(); render();
+    (async()=>{
+      try{
+        const [c, ev, ts] = await Promise.all([ supabase.rpc('list_public_listings'), supabase.rpc('list_public_events'), supabase.rpc('list_public_testimonials') ]);
+        if(c.error || ev.error) throw (c.error || ev.error);
+        state.testi = (!ts.error && Array.isArray(ts.data)) ? ts.data : [];
+        state.coaches = Array.isArray(c.data) ? c.data : []; state.events = Array.isArray(ev.data) ? ev.data : [];
+      }catch(err){ state.failed = true; console.error(err); }
+      state.loaded = true; paintFilters(); render();
+    })();
+  </script>
+</body>
+</html>

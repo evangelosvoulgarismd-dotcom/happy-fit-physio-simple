@@ -440,6 +440,7 @@
       <a href="#how"><span data-lang-el>Πώς λειτουργεί</span><span data-lang-en>How it works</span></a>
       <a href="#features"><span data-lang-el>Τι περιλαμβάνει</span><span data-lang-en>What's included</span></a>
       <a href="#services"><span data-lang-el>Υπηρεσίες</span><span data-lang-en>Services</span></a>
+      <a href="directory.html"><span data-lang-el>Κατάλογος</span><span data-lang-en>Directory</span></a>
       <a href="#pricing"><span data-lang-el>Τιμές</span><span data-lang-en>Pricing</span></a>
       <a href="#templates"><span data-lang-el>Πρότυπα προγραμμάτων</span><span data-lang-en>Program templates</span></a>
       <a href="#courses"><span data-lang-el>Μαθήματα</span><span data-lang-en>Courses</span></a>
@@ -456,6 +457,7 @@
     <a href="#how"><span data-lang-el>Πώς λειτουργεί</span><span data-lang-en>How it works</span></a>
     <a href="#features"><span data-lang-el>Τι περιλαμβάνει</span><span data-lang-en>What's included</span></a>
     <a href="#services"><span data-lang-el>Υπηρεσίες</span><span data-lang-en>Services</span></a>
+    <a href="directory.html"><span data-lang-el>Κατάλογος</span><span data-lang-en>Directory</span></a>
     <a href="#pricing"><span data-lang-el>Τιμές</span><span data-lang-en>Pricing</span></a>
     <a href="#templates"><span data-lang-el>Πρότυπα προγραμμάτων</span><span data-lang-en>Program templates</span></a>
     <a href="#courses"><span data-lang-el>Μαθήματα</span><span data-lang-en>Courses</span></a>
@@ -582,6 +584,27 @@
     </div>
   </section>
 
+  <!-- DIRECTORY -->
+  <section class="section" id="directory-promo" style="padding-top:0;">
+    <div class="service-card" style="max-width:860px; margin:0 auto; display:flex; gap:20px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+      <div style="flex:1; min-width:240px;">
+        <span class="service-loc"><span data-lang-el>Δίκτυο συνεργατών</span><span data-lang-en>Partner network</span></span>
+        <h3><span data-lang-el>Βρες προπονητή ή event</span><span data-lang-en>Find a coach or event</span></h3>
+        <p data-lang-el>Δες επαγγελματίες και events από το δίκτυο του Happy Fit Physio. Ζήτα επικοινωνία ή κλείσε θέση.</p>
+        <p data-lang-en>Browse professionals and events from the Happy Fit Physio network. Request contact or book a spot.</p>
+      </div>
+      <a class="cta-btn primary" href="directory.html" style="text-decoration:none;"><span data-lang-el>Δες τον κατάλογο →</span><span data-lang-en>Browse the directory →</span></a>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS (hidden until at least one approved testimonial exists) -->
+  <section class="section" id="testimonials" style="padding-top:0; display:none;">
+    <div style="max-width:860px; margin:0 auto;">
+      <h3 style="text-align:center; margin-bottom:6px;"><span data-lang-el>Τι λένε οι ασκούμενοι</span><span data-lang-en>What clients say</span></h3>
+      <p style="text-align:center; color:var(--ink-soft); font-size:0.8rem; margin-bottom:18px;"><span data-lang-el>Γραμμένες από τους ίδιους, με τη συναίνεσή τους. Εμπειρίες μεμονωμένων ατόμων, όχι εγγύηση αποτελέσματος.</span><span data-lang-en>Written by the clients themselves, with consent. Individual experiences, not a guarantee of results.</span></p>
+      <div id="testiGrid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;"></div>
+    </div>
+  </section>
 
   <!-- PRICING -->
   <section class="section pricing-section" id="pricing">
@@ -851,6 +874,19 @@
     });
 
     // ── COURSES ──
+
+    // Testimonials: approved + consented only, via public RPC. Text is escaped; section stays hidden on any failure or when empty.
+    (async()=>{
+      try{
+        const { data, error } = await supabase.rpc('list_public_testimonials');
+        if(error || !Array.isArray(data)) return;
+        const rows = data.filter(r=>r.by_owner).slice(0,6);
+        if(!rows.length) return;
+        const e2 = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        document.getElementById('testiGrid').innerHTML = rows.map(r=>`<figure style="margin:0; padding:18px; background:var(--panel); border:1px solid var(--line); border-radius:10px;"><blockquote style="margin:0 0 10px; font-size:0.9rem; line-height:1.6;">«${e2(r.quote)}»</blockquote><figcaption style="font-size:0.78rem; color:var(--ink-soft);">${e2(r.display_name)}</figcaption></figure>`).join('');
+        document.getElementById('testimonials').style.display = '';
+      }catch(e){}
+    })();
     const coursesGrid = document.getElementById('coursesGrid');
     // Course fields come from the database (any partner coach can write them): escape everything, links must be https.
     const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

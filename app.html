@@ -1027,7 +1027,7 @@ function renderShell(){
       ${isCoach ? `<button class="navBtn ${view==='business'?'active':''}" data-v="business">📊 ${locale==='el'?'Επιχείρηση':'Business'}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
-      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='groupclasses'?'active':''}" data-v="groupclasses">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='groupclasses'?'active':''}" data-v="groupclasses">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button><button class="navBtn ${view==='directory'?'active':''}" data-v="directory">🌐 ${locale==='el'?'Κατάλογος':'Directory'}</button>` : ''}
       ${isOwner ? `<button class="navBtn ${view==='partners'?'active':''}" data-v="partners">👥 ${t('partners',locale)}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;" id="sidebarBottom">
@@ -1097,6 +1097,7 @@ function renderShell(){
   else if(view==='groupclasses' && isCoach) renderGroupClassesView(main);
   else if(view==='projection' && isCoach) renderProjectionView(main);
   else if(view==='courses' && isCoach) renderCoursesAdminView(main);
+  else if(view==='directory' && isCoach) renderDirectoryView(main);
   else if(view==='partners' && isOwner) renderPartnersView(main);
   else if(isCoach) renderCoachDashboard(main);
   else renderClientDashboard(main);
@@ -1438,6 +1439,189 @@ async function renderTemplatesView(main){
 
     main.appendChild(card);
   });
+}
+
+// ============================================================
+// ΚΑΤΑΛΟΓΟΣ (coach): δημόσιο προφίλ, αιτήματα επικοινωνίας, events.
+// Δημοσιεύεται στο directory.html μόνο μετά από έγκριση του ιδιοκτήτη.
+// ============================================================
+async function renderDirectoryView(main){
+  const L = (el_, en_) => locale==='el' ? el_ : en_;
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const [{ data: listing, error: listErr }, { data: requests }, { data: events }] = await Promise.all([
+    supabase.from('coach_listings').select('*').eq('coach_id', profile.id).maybeSingle(),
+    supabase.from('directory_requests').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false}).limit(100),
+    supabase.from('coach_events').select('*, event_signups(id,full_name,email,phone,status,created_at)').eq('coach_id', profile.id).order('starts_at',{ascending:false}),
+  ]);
+  main.innerHTML = '';
+  main.appendChild(el(`<h2 style="margin-bottom:6px;">🌐 ${L('Κατάλογος','Directory')}</h2>`));
+  main.appendChild(el(`<p style="color:var(--ink-soft); font-size:12px; margin-bottom:16px;">${L('Το δημόσιο προφίλ σου στο directory.html, αιτήματα επικοινωνίας και events. Εμφανίζεται δημόσια μόνο μετά από έγκριση.','Your public profile on directory.html, contact requests and events. It only appears publicly after approval.')}</p>`));
+  if(listErr){
+    main.appendChild(el(`<p class="errorTag">${escapeHtml(L('Ο κατάλογος δεν είναι ενεργός ακόμα (λείπει η migration_directory.sql).','The directory is not active yet (migration_directory.sql is missing).'))}</p>`));
+    return;
+  }
+
+  const statusMap = { draft:L('Πρόχειρο','Draft'), pending:L('Αναμένει έγκριση','Pending approval'), approved:L('Δημοσιευμένο','Published'), rejected:L('Απορρίφθηκε','Rejected') };
+  const st = listing?.status || 'draft';
+  const stColor = st==='approved' ? '#1f6b3a' : st==='rejected' ? 'var(--danger)' : 'var(--gold)';
+  const FORMATS = [['online','Online','Online'],['studio','Σε χώρο','On site'],['home','Κατ’ οίκον','At home']];
+  const fmts = new Set(listing?.formats || []);
+
+  const card = el(`<div class="card gold" style="margin-bottom:18px;">
+    <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+      <h3 style="font-size:15px;">${L('Δημόσιο προφίλ','Public profile')}</h3>
+      <div><span class="badge" style="color:${stColor};">${escapeHtml(statusMap[st])}</span> ${listing?.credential_verified ? `<span class="badge" style="color:#1f6b3a;">✓ ${L('Έλεγχος τίτλου','Credential checked')}</span>` : ''}</div>
+    </div>
+    ${st==='approved' ? `<p style="font-size:11.5px; color:var(--ink-soft); margin-bottom:10px;">${L('Αν αλλάξεις δημόσια στοιχεία, το προφίλ κρύβεται και ξαναμπαίνει σε έγκριση μέχρι να εγκριθεί ξανά.','If you change public details, the profile is hidden and goes back to approval until approved again.')}</p>` : ''}
+    <div class="grid2">
+      <div class="field"><label>${L('Όνομα που εμφανίζεται','Display name')}</label><input class="d_name" maxlength="80" value="${escapeHtml(listing?.display_name || profile.full_name || '')}"></div>
+      <div class="field"><label>${L('Ιδιότητα','Role')}</label><select class="d_prof">
+        <option value="trainer" ${listing?.profession==='trainer'||!listing?'selected':''}>${L('Προπονητής','Coach')}</option>
+        <option value="physio" ${listing?.profession==='physio'?'selected':''}>${L('Φυσικοθεραπευτής (με άδεια)','Physiotherapist (licensed)')}</option>
+        <option value="other" ${listing?.profession==='other'?'selected':''}>${L('Άλλος επαγγελματίας άθλησης','Other sports professional')}</option>
+      </select></div>
+    </div>
+    <div class="field"><label>${L('Σύντομος τίτλος (έως 120 χαρακτήρες)','Headline (max 120 chars)')}</label><input class="d_head" maxlength="120" value="${escapeHtml(listing?.headline||'')}"></div>
+    <div class="field"><label>${L('Περιγραφή (έως 1200 χαρακτήρες)','About (max 1200 chars)')}</label><textarea class="d_bio" maxlength="1200" rows="4">${escapeHtml(listing?.bio||'')}</textarea></div>
+    <div class="field"><label>${L('Ειδικεύσεις, χωρισμένες με κόμμα (έως 6)','Specialties, comma separated (max 6)')}</label><input class="d_spec" value="${escapeHtml((listing?.specialties||[]).join(', '))}" placeholder="Pilates, Yoga, Strength"></div>
+    <div class="field"><label>${L('Τρόπος παροχής','Format')}</label><div style="display:flex; gap:14px; flex-wrap:wrap;">
+      ${FORMATS.map(([k,el_,en_])=>`<label style="display:flex; gap:6px; align-items:center; font-size:13px; margin:0;"><input type="checkbox" class="d_fmt" value="${k}" ${fmts.has(k)?'checked':''} style="width:auto;"> ${L(el_,en_)}</label>`).join('')}
+    </div></div>
+    <div class="grid2">
+      <div class="field"><label>${L('Περιοχή','Area')}</label><input class="d_area" maxlength="80" value="${escapeHtml(listing?.area||'')}"></div>
+      <div class="field"><label>${L('Ενδεικτική τιμή από (€ ανά συνεδρία)','Indicative price from (€ per session)')}</label><input class="d_price" type="number" min="0" step="1" value="${listing?.price_from ?? ''}"></div>
+    </div>
+    <div class="field"><label>${L('Φωτογραφία (σύνδεσμος https)','Photo (https link)')}</label><input class="d_photo" placeholder="https://..." value="${escapeHtml(listing?.photo_url||'')}"></div>
+    <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; margin:10px 0;"><input type="checkbox" class="d_ack" ${listing?.terms_ack_at?'checked':''} style="width:auto; margin-top:2px;"> <span>${L('Δηλώνω ότι τα στοιχεία είναι αληθή και ότι έχω το δικαίωμα να ασκώ τις υπηρεσίες που αναφέρω. Αν δηλώνω ιδιότητα φυσικοθεραπευτή, διαθέτω άδεια άσκησης επαγγέλματος. Αναλαμβάνω την ευθύνη των υπηρεσιών μου και της επεξεργασίας των αιτημάτων που λαμβάνω.','I declare that the details are true and that I have the right to practise the services I list. If I list the role of physiotherapist, I hold a licence to practise. I am responsible for my services and for processing the requests I receive.')}</span></label>
+    <div class="d_err errorTag" style="display:none;"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn secondary d_draft" type="button">${L('Αποθήκευση','Save')}</button>
+      <button class="btn d_submit" type="button">${st==='approved' ? L('Αποθήκευση αλλαγών','Save changes') : L('Υποβολή για έγκριση','Submit for approval')}</button>
+      ${st==='approved' ? `<a class="btn secondary" href="directory.html" target="_blank" rel="noopener" style="text-decoration:none; display:inline-block;">${L('Δες τον κατάλογο','View directory')}</a>` : ''}
+    </div>
+  </div>`);
+  main.appendChild(card);
+
+  async function saveListing(submit){
+    const q = s => card.querySelector(s);
+    const err = card.querySelector('.d_err'); err.style.display = 'none';
+    const fail = m => { err.textContent = m; err.style.display = 'block'; };
+    const name = q('.d_name').value.trim();
+    const spec = q('.d_spec').value.split(',').map(s=>s.trim()).filter(Boolean).slice(0,6);
+    const photo = q('.d_photo').value.trim();
+    const priceRaw = q('.d_price').value.trim();
+    if(name.length<2) return fail(L('Βάλε όνομα.','Enter a name.'));
+    if(photo && !/^https:\/\//i.test(photo)) return fail(L('Ο σύνδεσμος φωτογραφίας πρέπει να ξεκινά με https://','The photo link must start with https://'));
+    if(submit){
+      if(!q('.d_ack').checked) return fail(L('Χρειάζεται η δήλωση αλήθειας και δικαιώματος άσκησης.','The declaration is required.'));
+      if(!q('.d_head').value.trim() || !q('.d_bio').value.trim()) return fail(L('Συμπλήρωσε τίτλο και περιγραφή.','Fill in the headline and description.'));
+      if(![...card.querySelectorAll('.d_fmt:checked')].length) return fail(L('Διάλεξε τουλάχιστον έναν τρόπο παροχής.','Choose at least one format.'));
+    }
+    const row = {
+      display_name: name, profession: q('.d_prof').value, headline: q('.d_head').value.trim() || null, bio: q('.d_bio').value.trim() || null,
+      specialties: spec, formats: [...card.querySelectorAll('.d_fmt:checked')].map(c=>c.value), area: q('.d_area').value.trim() || null,
+      price_from: priceRaw==='' ? null : Math.max(0, Number(priceRaw)||0), photo_url: photo || null,
+      terms_ack_at: q('.d_ack').checked ? (listing?.terms_ack_at || new Date().toISOString()) : null,
+    };
+    if(st!=='approved') row.status = submit ? 'pending' : (st==='rejected' ? 'draft' : st);
+    const res = listing
+      ? await supabase.from('coach_listings').update(row).eq('coach_id', profile.id)
+      : await supabase.from('coach_listings').insert({ ...row, coach_id: profile.id, status: row.status || 'draft' });
+    if(res.error) return fail(L('Δεν αποθηκεύτηκε: ','Not saved: ') + res.error.message);
+    toast(submit && st!=='approved' ? L('Στάλθηκε για έγκριση.','Submitted for approval.') : L('Αποθηκεύτηκε.','Saved.'));
+    renderDirectoryView(main);
+  }
+  card.querySelector('.d_draft').addEventListener('click', ()=>saveListing(false));
+  card.querySelector('.d_submit').addEventListener('click', ()=>saveListing(true));
+
+  // ---- Requests ----
+  const reqBox = el(`<div class="card" style="margin-bottom:18px;"><h3 style="font-size:15px; margin-bottom:10px;">📥 ${L('Αιτήματα επικοινωνίας','Contact requests')}</h3></div>`);
+  if(!requests?.length) reqBox.appendChild(el(`<p style="color:var(--ink-soft); font-size:12.5px;">${L('Δεν υπάρχουν ακόμα αιτήματα.','No requests yet.')}</p>`));
+  (requests||[]).forEach(r=>{
+    const row = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
+      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <strong>${escapeHtml(r.full_name)}</strong>
+        <span class="mono" style="font-size:11px; color:var(--ink-soft);">${new Date(r.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}</span>
+      </div>
+      <div style="font-size:12px; color:var(--ink-soft); margin:3px 0;">📧 <a href="mailto:${escapeHtml(r.email)}">${escapeHtml(r.email)}</a>${r.phone ? ` · 📞 ${escapeHtml(r.phone)}` : ''}</div>
+      ${r.message ? `<p style="font-size:13px; margin:4px 0 8px;">${escapeHtml(r.message)}</p>` : ''}
+      <div style="display:flex; gap:6px; align-items:center;">
+        <select class="rStatus" style="width:auto; padding:5px 8px; font-size:12px;">
+          ${['new','contacted','closed'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${{new:L('Νέο','New'),contacted:L('Επικοινωνήθηκε','Contacted'),closed:L('Έκλεισε','Closed')}[s]}</option>`).join('')}
+        </select>
+        <button class="btn danger rDel" type="button" style="padding:5px 10px; font-size:11px;">🗑</button>
+      </div></div>`);
+    row.querySelector('.rStatus').addEventListener('change', async e=>{ await supabase.from('directory_requests').update({ status:e.target.value }).eq('id', r.id); });
+    row.querySelector('.rDel').addEventListener('click', async ev=>{
+      const b = ev.currentTarget; if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent = L('Σίγουρα;','Sure?'); return; }
+      await supabase.from('directory_requests').delete().eq('id', r.id); renderDirectoryView(main);
+    });
+    reqBox.appendChild(row);
+  });
+  main.appendChild(reqBox);
+
+  // ---- Events ----
+  const evBox = el(`<div class="card"><h3 style="font-size:15px; margin-bottom:4px;">🗓️ Events</h3>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin-bottom:12px;">${L('Τα events εμφανίζονται δημόσια μόνο όταν το προφίλ σου είναι δημοσιευμένο. Η πληρωμή γίνεται απευθείας με εσένα, εκτός πλατφόρμας.','Events appear publicly only while your profile is published. Payment is made directly with you, outside the platform.')}</p>
+    <form class="evForm">
+      <div class="grid2">
+        <div class="field"><label>${L('Τίτλος','Title')}</label><input class="e_title" maxlength="100" required></div>
+        <div class="field"><label>${L('Ημερομηνία και ώρα','Date and time')}</label><input class="e_when" type="datetime-local" required></div>
+      </div>
+      <div class="field"><label>${L('Περιγραφή','Description')}</label><textarea class="e_desc" maxlength="800" rows="2"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label>${L('Μορφή','Format')}</label><select class="e_fmt"><option value="studio">${L('Σε χώρο','On site')}</option><option value="online">Online</option><option value="home">${L('Κατ’ οίκον','At home')}</option><option value="outdoor">${L('Σε εξωτερικό χώρο','Outdoors')}</option></select></div>
+        <div class="field"><label>${L('Τοποθεσία','Location')}</label><input class="e_loc" maxlength="120"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>${L('Τιμή € (κενό = δωρεάν)','Price € (empty = free)')}</label><input class="e_price" type="number" min="0" step="1"></div>
+        <div class="field"><label>${L('Θέσεις','Spots')}</label><input class="e_cap" type="number" min="1" max="500" value="10"></div>
+      </div>
+      <div class="field"><label>${L('Επίπεδο (προαιρετικό)','Level (optional)')}</label><input class="e_level" maxlength="40" placeholder="${L('π.χ. Όλα τα επίπεδα','e.g. All levels')}"></div>
+      <div class="errorTag e_err" style="display:none;"></div>
+      <button class="btn" type="submit">${L('Δημιουργία event','Create event')}</button>
+    </form><div class="evList" style="margin-top:16px;"></div></div>`);
+  evBox.querySelector('.evForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const q = s => evBox.querySelector(s); const err = q('.e_err'); err.style.display='none';
+    const when = q('.e_when').value; const price = q('.e_price').value.trim();
+    if(!when || new Date(when) <= new Date()){ err.textContent = L('Διάλεξε μελλοντική ημερομηνία.','Pick a future date.'); err.style.display='block'; return; }
+    const { error } = await supabase.from('coach_events').insert({
+      coach_id: profile.id, title: q('.e_title').value.trim(), description: q('.e_desc').value.trim() || null,
+      starts_at: new Date(when).toISOString(), format: q('.e_fmt').value, location: q('.e_loc').value.trim() || null,
+      price: price==='' ? null : Math.max(0, Number(price)||0), capacity: Math.min(500, Math.max(1, parseInt(q('.e_cap').value)||10)), level: q('.e_level').value.trim() || null,
+    });
+    if(error){ err.textContent = L('Δεν αποθηκεύτηκε: ','Not saved: ') + error.message; err.style.display='block'; return; }
+    renderDirectoryView(main);
+  });
+  const evList = evBox.querySelector('.evList');
+  if(!events?.length) evList.appendChild(el(`<p style="color:var(--ink-soft); font-size:12.5px;">${L('Δεν έχεις events ακόμα.','No events yet.')}</p>`));
+  (events||[]).forEach(ev=>{
+    const signups = (ev.event_signups||[]).filter(s=>s.status==='confirmed');
+    const past = new Date(ev.starts_at) < new Date();
+    const row = el(`<div style="padding:12px 0; border-top:1px solid var(--line); ${past?'opacity:.6;':''}">
+      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:flex-start;">
+        <div><strong>${escapeHtml(ev.title)}</strong><div class="mono" style="font-size:11px; color:var(--ink-soft);">${new Date(ev.starts_at).toLocaleString(locale==='el'?'el-GR':'en-GB',{dateStyle:'medium',timeStyle:'short'})} · ${signups.length}/${ev.capacity} ${L('θέσεις','spots')} · ${ev.price==null||Number(ev.price)===0 ? L('Δωρεάν','Free') : escapeHtml(String(ev.price))+'€'}</div></div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn secondary evPub" type="button" style="padding:5px 10px; font-size:11px;">${ev.published ? L('Απόκρυψη','Hide') : L('Δημοσίευση','Publish')}</button>
+          <button class="btn secondary evWho" type="button" style="padding:5px 10px; font-size:11px;">${L('Συμμετέχοντες','Attendees')}</button>
+          <button class="btn danger evDel" type="button" style="padding:5px 10px; font-size:11px;">🗑</button>
+        </div>
+      </div>
+      <div class="evSignups" style="display:none; margin-top:8px; font-size:12.5px;"></div></div>`);
+    row.querySelector('.evPub').addEventListener('click', async ()=>{ await supabase.from('coach_events').update({ published: !ev.published }).eq('id', ev.id); renderDirectoryView(main); });
+    row.querySelector('.evDel').addEventListener('click', async e=>{
+      const b = e.currentTarget; if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent = L('Σίγουρα;','Sure?'); return; }
+      await supabase.from('coach_events').delete().eq('id', ev.id); renderDirectoryView(main);
+    });
+    row.querySelector('.evWho').addEventListener('click', ()=>{
+      const box = row.querySelector('.evSignups'); box.style.display = box.style.display==='none' ? 'block' : 'none';
+      box.innerHTML = signups.length ? signups.map(s=>`<div style="padding:4px 0;">${escapeHtml(s.full_name)} · <a href="mailto:${escapeHtml(s.email)}">${escapeHtml(s.email)}</a>${s.phone ? ' · '+escapeHtml(s.phone) : ''}</div>`).join('') : `<span style="color:var(--ink-soft);">${L('Κανένας ακόμα.','None yet.')}</span>`;
+    });
+    evList.appendChild(row);
+  });
+  main.appendChild(evBox);
+  await renderTestimonialsModeration(main);
 }
 
 async function renderAvailabilityView(main){
@@ -1998,6 +2182,40 @@ async function renderPartnersView(main){
       codesBox.appendChild(el(`<p style="font-family:monospace; font-size:13px; margin:4px 0;">${escapeHtml(c.code)}</p>`));
     });
     main.appendChild(codesBox);
+  }
+
+  await renderTestimonialsModeration(main);
+
+  // Directory moderation: approve/reject public listings and mark credential checks (tolerant if the migration is missing).
+  const { data: dirListings, error: dirErr } = await supabase.from('coach_listings').select('*').order('updated_at',{ascending:false});
+  if(!dirErr && dirListings && dirListings.length){
+    const nameOf = id => (coachProfiles||[]).find(c=>c.id===id)?.full_name || '—';
+    const order = { pending:0, approved:1, draft:2, rejected:3 };
+    const box = el(`<div class="card" style="margin-top:20px;"><h3 style="margin-bottom:4px; font-size:14px;">🌐 ${locale==='el'?'Καταχωρίσεις καταλόγου':'Directory listings'}</h3>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Το σήμα «Έλεγχος τίτλου» δώσ’ το μόνο αφού δεις πραγματικά την άδεια ή τον τίτλο του επαγγελματία.':'Give the "Credential checked" badge only after you have actually seen the professional\'s licence or qualification.'}</p></div>`);
+    dirListings.slice().sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)).forEach(l=>{
+      const row = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
+        <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+          <div><strong>${escapeHtml(l.display_name)}</strong> <span style="font-size:11px; color:var(--ink-soft);">(${escapeHtml(nameOf(l.coach_id))} · ${escapeHtml(l.profession)})</span>
+            ${l.credential_verified ? '<span class="badge" style="color:#1f6b3a;">✓</span>' : ''}</div>
+          <span class="badge">${escapeHtml(l.status)}</span>
+        </div>
+        ${l.headline ? `<div style="font-size:12.5px; margin-top:3px;">${escapeHtml(l.headline)}</div>` : ''}
+        ${l.bio ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:3px;">${escapeHtml(l.bio)}</div>` : ''}
+        <div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px;">${escapeHtml((l.specialties||[]).join(', '))} · ${escapeHtml((l.formats||[]).join('/'))} · ${escapeHtml(l.area||'')} ${l.photo_url ? '· 🖼' : ''} ${l.terms_ack_at ? '· ✓ '+(locale==='el'?'δήλωση':'declaration') : '· ✗ '+(locale==='el'?'χωρίς δήλωση':'no declaration')}</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+          ${l.status!=='approved' ? `<button class="btn lApprove" type="button" style="padding:5px 10px; font-size:11px;" ${l.terms_ack_at?'':'disabled'}>${locale==='el'?'Έγκριση':'Approve'}</button>` : `<button class="btn secondary lHide" type="button" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Απόσυρση':'Unpublish'}</button>`}
+          ${l.status!=='rejected' ? `<button class="btn secondary lReject" type="button" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Απόρριψη':'Reject'}</button>` : ''}
+          <button class="btn secondary lVerify" type="button" style="padding:5px 10px; font-size:11px;">${l.credential_verified ? (locale==='el'?'Αφαίρεση σήματος τίτλου':'Remove credential badge') : (locale==='el'?'Σήμα «Έλεγχος τίτλου»':'Give credential badge')}</button>
+        </div></div>`);
+      const upd = async patch => { const { error } = await supabase.from('coach_listings').update(patch).eq('coach_id', l.coach_id); if(error) toast((locale==='el'?'Δεν αποθηκεύτηκε: ':'Not saved: ')+error.message, 5000); renderPartnersView(main); };
+      row.querySelector('.lApprove')?.addEventListener('click', ()=>upd({ status:'approved' }));
+      row.querySelector('.lHide')?.addEventListener('click', ()=>upd({ status:'draft' }));
+      row.querySelector('.lReject')?.addEventListener('click', ()=>upd({ status:'rejected' }));
+      row.querySelector('.lVerify').addEventListener('click', ()=>upd({ credential_verified: !l.credential_verified }));
+      box.appendChild(row);
+    });
+    main.appendChild(box);
   }
 }
 
@@ -3785,6 +4003,179 @@ async function renderReassessmentTab(body, client, isCoach){
 
 
 
+// ---- Referral to verified physiotherapists (directory) + client testimonial ("proof engine") ----
+const HEALTH_CLAIM_RE = /θεραπε|θεράπευ|γιατρ|διάγνωσ|διαγνωσ|κήλη|κηλη|χειρουργ|φάρμακ|φαρμακ|εξαφαν|ίαση|ιαση|έφυγε ο πόνος|efyge o ponos|cure|cured|diagnos|surgery|medicat|healed|disc herniation/i;
+
+async function renderReferralCard(body){
+  const L = (a,b)=> locale==='el' ? a : b;
+  let listings = [];
+  try{
+    const { data, error } = await supabase.rpc('list_public_listings');
+    if(error) return;
+    listings = (data||[]).filter(l=>l.credential_verified && l.profession==='physio');
+  }catch(e){ return; }
+  if(!listings.length) return; // nothing honest to show until verified physios exist in the directory
+  const card = el(`<div class="card" style="margin-bottom:14px;">
+    <h3 style="font-size:14px; margin-bottom:6px;">${L('Χρειάζεσαι φυσικοθεραπευτή;','Need a physiotherapist?')}</h3>
+    <p style="font-size:12.5px; color:var(--ink-soft); line-height:1.6; margin-bottom:10px;">${L('Το Happy Fit Physio δεν αντικαθιστά τη φυσικοθεραπεία. Αν έχεις πόνο που επιμένει ή επιδεινώνεται, νέο τραυματισμό ή νευρολογικά συμπτώματα, χρειάζεσαι αξιολόγηση από αδειούχο επαγγελματία υγείας. Παρακάτω είναι φυσικοθεραπευτές του καταλόγου με ελεγμένο τίτλο.','Happy Fit Physio does not replace physiotherapy. If you have pain that persists or worsens, a new injury or neurological symptoms, you need assessment by a licensed health professional. Below are physiotherapists from the directory with a checked title.')}</p>
+    <div class="refList"></div>
+  </div>`);
+  const list = card.querySelector('.refList');
+  listings.slice(0,6).forEach(l=>{
+    const row = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
+      <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start; flex-wrap:wrap;">
+        <div><strong>${escapeHtml(l.display_name)}</strong> <span class="badge" style="color:#1f6b3a;">✓ ${L('Έλεγχος τίτλου','Title checked')}</span>
+          <div style="font-size:12px; color:var(--ink-soft);">${escapeHtml(l.area||'')}${l.price_from ? ` · ${L('από','from')} ${escapeHtml(String(l.price_from))}€` : ''}</div>
+          ${l.headline ? `<div style="font-size:12.5px; margin-top:2px;">${escapeHtml(l.headline)}</div>` : ''}</div>
+        <button class="btn secondary reqBtn" type="button" style="padding:6px 12px; font-size:12px;">${L('Ζήτα επικοινωνία','Request contact')}</button>
+      </div></div>`);
+    row.querySelector('.reqBtn').addEventListener('click', ()=>openReferralRequest(l));
+    list.appendChild(row);
+  });
+  body.appendChild(card);
+}
+
+function openReferralRequest(l){
+  const L = (a,b)=> locale==='el' ? a : b;
+  const overlay = el(`<div class="modalOverlay"><div class="modalBox">
+    <button class="modalCloseBtn" type="button">×</button>
+    <h2>${escapeHtml(l.display_name)}</h2>
+    <p>${L('Θα σταλεί στον επαγγελματία μόνο το όνομα, το email σου και το μήνυμα που γράφεις εδώ. Δεν στέλνονται δεδομένα υγείας ή προπόνησης από την εφαρμογή. Ό,τι θέλεις να μοιραστείς, το λες εσύ στον επαγγελματία.','Only your name, email and the message you write here are sent. No health or training data is sent from the app. Anything else you share yourself.')}</p>
+    <div class="field"><label>${L('Τηλέφωνο (προαιρετικό)','Phone (optional)')}</label><input class="rPhone" maxlength="30"></div>
+    <div class="field"><label>${L('Μήνυμα (προαιρετικό)','Message (optional)')}</label><textarea class="rMsg" rows="3" maxlength="500"></textarea></div>
+    <label style="display:flex; gap:8px; font-size:12.5px; align-items:flex-start; margin:10px 0;"><input type="checkbox" class="rConsent" style="margin-top:3px;"><span>${L('Συναινώ να λάβει ο επαγγελματίας το όνομα και το email μου για να επικοινωνήσει μαζί μου. Η φυσικοθεραπεία παρέχεται αποκλειστικά από τον ίδιο, με δική του ευθύνη.','I consent to the professional receiving my name and email to contact me. Physiotherapy is provided solely by them, under their own responsibility.')}</span></label>
+    <p class="rErr errorTag" style="display:none;"></p>
+    <button class="btn rSend" type="button" disabled>${L('Αποστολή αιτήματος','Send request')}</button>
+  </div></div>`);
+  const close = ()=>overlay.remove();
+  overlay.querySelector('.modalCloseBtn').addEventListener('click', close);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) close(); });
+  const cb = overlay.querySelector('.rConsent'), send = overlay.querySelector('.rSend');
+  cb.addEventListener('change', ()=>{ send.disabled = !cb.checked; });
+  send.addEventListener('click', async ()=>{
+    send.disabled = true;
+    const note = overlay.querySelector('.rMsg').value.trim();
+    const msg = ('[Παραπομπή από Happy Fit Physio] ' + note).slice(0,600);
+    const { error } = await supabase.rpc('submit_directory_request', {
+      p_coach_id: l.id, p_name: profile.full_name || '', p_email: session?.user?.email || '',
+      p_phone: overlay.querySelector('.rPhone').value.trim() || null, p_message: msg, p_consent: true,
+    });
+    if(error){
+      const er = overlay.querySelector('.rErr'); er.style.display='block';
+      er.textContent = /too many/.test(error.message) ? L('Έχεις στείλει πολλά αιτήματα. Δοκίμασε αργότερα.','Too many requests. Try later.') : L('Δεν στάλθηκε: ','Not sent: ') + error.message;
+      send.disabled = false; return;
+    }
+    toast(L('Το αίτημα στάλθηκε.','Request sent.'));
+    close();
+  });
+  document.body.appendChild(overlay);
+}
+
+async function renderTestimonialTab(body){
+  const L = (a,b)=> locale==='el' ? a : b;
+  const { data: row, error: tErr } = await supabase.from('client_testimonials').select('*').eq('client_id', profile.id).maybeSingle();
+  if(tErr){ body.appendChild(el(`<p class="errorTag">${escapeHtml(L('Η λειτουργία δεν είναι ενεργή ακόμα.','This feature is not active yet.'))}</p>`)); return; }
+  const first = (profile.full_name||'').trim().split(/\s+/)[0] || '';
+  const stTxt = !row ? '' : !row.consent_public ? L('Αποσύρθηκε, δεν εμφανίζεται πουθενά.','Withdrawn, not shown anywhere.')
+    : row.status==='approved' ? L('Δημοσιευμένη.','Published.') : row.status==='hidden' ? L('Δεν δημοσιεύεται.','Not published.') : L('Περιμένει έγκριση από τον coach σου.','Waiting for your coach to approve.');
+  const card = el(`<div class="card gold">
+    <h3 style="font-size:14px; margin-bottom:6px;">${L('Η γνώμη σου','Your feedback')}</h3>
+    <p style="font-size:12.5px; line-height:1.6; margin-bottom:12px;">${L('Αν θες, γράψε 1-3 προτάσεις για την εμπειρία σου με το πρόγραμμα. Μην αναφέρεις διάγνωση, ιατρικά αποτελέσματα ή υποσχέσεις θεραπείας. Ο coach σου δεν μπορεί να αλλάξει το κείμενο, μόνο να το δημοσιεύσει ή όχι.','If you wish, write 1-3 sentences about your experience. Do not mention diagnoses, medical results or treatment promises. Your coach cannot edit the text, only publish it or not.')}</p>
+    <div class="field"><label>${L('Όνομα που θα εμφανίζεται (π.χ. μικρό όνομα)','Name shown (e.g. first name)')}</label><input class="tName" maxlength="40" value="${escapeHtml(row?.display_name || first)}"></div>
+    <div class="field"><label>${L('Κείμενο','Text')} <span class="mono tCount" style="font-size:11px; color:var(--ink-soft);"></span></label><textarea class="tQuote" rows="4" maxlength="400">${escapeHtml(row?.quote||'')}</textarea></div>
+    <label style="display:flex; gap:8px; font-size:12.5px; align-items:flex-start; margin:10px 0;"><input type="checkbox" class="tConsent" style="margin-top:3px;" ${row?.consent_public?'checked':''}><span>${L('Συναινώ να δημοσιευθεί το κείμενο και το όνομα που επέλεξα στο site και στον κατάλογο του Happy Fit Physio. Μπορώ να το αποσύρω ή να το διαγράψω όποτε θέλω.','I consent to this text and chosen name being published on the Happy Fit Physio site and directory. I can withdraw or delete it at any time.')}</span></label>
+    <p class="tErr errorTag" style="display:none;"></p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <button class="btn tSave" type="button">${L('Αποθήκευση','Save')}</button>
+      ${row ? `<button class="btn danger tDel" type="button">${L('Διαγραφή','Delete')}</button>` : ''}
+      <span class="savedTag">${escapeHtml(stTxt)}</span>
+    </div></div>`);
+  const q = card.querySelector('.tQuote'), cnt = card.querySelector('.tCount');
+  const upd = ()=>{ cnt.textContent = `${q.value.trim().length}/400`; }; upd(); q.addEventListener('input', upd);
+  const err = card.querySelector('.tErr');
+  card.querySelector('.tSave').addEventListener('click', async ()=>{
+    const quote = q.value.trim(), display_name = card.querySelector('.tName').value.trim(), consent = card.querySelector('.tConsent').checked;
+    err.style.display='none';
+    const bad = (m)=>{ err.textContent=m; err.style.display='block'; };
+    if(quote.length<10) return bad(L('Το κείμενο είναι πολύ σύντομο (τουλάχιστον 10 χαρακτήρες).','Text too short (at least 10 characters).'));
+    if(!display_name) return bad(L('Βάλε ένα όνομα.','Enter a name.'));
+    if(!consent) return bad(L('Χωρίς συναίνεση δεν υποβάλλεται. Αν θες να αποσύρεις, πάτα Διαγραφή.','Consent is required to submit. To withdraw, press Delete.'));
+    if(HEALTH_CLAIM_RE.test(quote) && !card.dataset.warned){
+      card.dataset.warned='1';
+      return bad(L('Το κείμενο φαίνεται να αναφέρει ιατρικό όρο ή αποτέλεσμα. Ξαναδές το. Αν είσαι σίγουρος/η, πάτα ξανά Αποθήκευση.','The text seems to mention a medical term or outcome. Please review. If sure, press Save again.'));
+    }
+    const payload = { display_name, quote, consent_public: true };
+    const res = row ? await supabase.from('client_testimonials').update(payload).eq('client_id', profile.id)
+                    : await supabase.from('client_testimonials').insert({ ...payload, client_id: profile.id });
+    if(res.error) return bad(L('Δεν αποθηκεύτηκε: ','Not saved: ')+res.error.message);
+    toast(L('Αποθηκεύτηκε. Θα δημοσιευτεί μόνο αν την εγκρίνει ο coach σου.','Saved. It is published only if your coach approves it.'));
+    body.innerHTML=''; renderTestimonialTab(body);
+  });
+  const del = card.querySelector('.tDel');
+  if(del) del.addEventListener('click', async ()=>{
+    if(!del.dataset.sure){ del.dataset.sure='1'; del.textContent=L('Σίγουρα;','Sure?'); return; }
+    const { error } = await supabase.from('client_testimonials').delete().eq('client_id', profile.id);
+    if(error){ err.textContent=error.message; err.style.display='block'; return; }
+    toast(L('Διαγράφηκε.','Deleted.')); body.innerHTML=''; renderTestimonialTab(body);
+  });
+  body.appendChild(card);
+}
+
+// Prompt on the Today tab: only after real use (8+ distinct logged training days), once, dismissible.
+async function maybeShowTestimonialPrompt(body, sessionLogDates){
+  try{
+    if(localStorage.getItem('hfp_testi_dismiss')) return;
+  }catch(e){}
+  const days = new Set((sessionLogDates||[]).map(r=>r.session_date)).size;
+  if(days < 8) return;
+  const { data: row, error } = await supabase.from('client_testimonials').select('client_id').eq('client_id', profile.id).maybeSingle();
+  if(error || row) return;
+  const L = (a,b)=> locale==='el' ? a : b;
+  const card = el(`<div class="card" style="margin-top:14px; display:flex; gap:10px; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+    <span style="font-size:13px;">${L('Θες να μοιραστείς 1-2 προτάσεις για την εμπειρία σου; Είναι προαιρετικό.','Want to share a sentence or two about your experience? Optional.')}</span>
+    <span style="display:flex; gap:6px;"><button class="btn secondary tGo" type="button" style="padding:6px 12px; font-size:12px;">${L('Γράψε','Write')}</button><button class="btn secondary tNo" type="button" style="padding:6px 12px; font-size:12px;">${L('Όχι ευχαριστώ','No thanks')}</button></span></div>`);
+  card.querySelector('.tGo').addEventListener('click', ()=>{ renderClientDashboard._tab='testimonial'; renderClientDashboard(body.closest('#main')); });
+  card.querySelector('.tNo').addEventListener('click', ()=>{ try{ localStorage.setItem('hfp_testi_dismiss','1'); }catch(e){} card.remove(); });
+  body.appendChild(card);
+}
+
+// Coach/owner: approve or hide client testimonials. Text is never editable here.
+async function renderTestimonialsModeration(container){
+  const L = (a,b)=> locale==='el' ? a : b;
+  const { data: rows, error } = await supabase.from('client_testimonials').select('*').order('created_at',{ascending:false});
+  if(error || !rows || !rows.length) return;
+  const ids = rows.map(r=>r.client_id);
+  const { data: cl } = await supabase.from('clients').select('id,full_name').in('id', ids);
+  const nameOf = id => (cl||[]).find(c=>c.id===id)?.full_name || '—';
+  const box = el(`<div class="card" style="margin-top:20px;"><h3 style="margin-bottom:4px; font-size:14px;">💬 ${L('Μαρτυρίες πελατών','Client testimonials')}</h3>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin-bottom:10px;">${L('Τις γράφουν οι ίδιοι οι πελάτες, με συναίνεση. Δεν αλλάζεις το κείμενο. Μην εγκρίνεις κείμενο που υπόσχεται θεραπεία, αναφέρει διάγνωση ή ιατρικό αποτέλεσμα. Αν χρειάζεται, ζήτα από τον πελάτη να το ξαναγράψει.','Written by the clients themselves, with consent. You cannot edit the text. Do not approve text that promises treatment or mentions a diagnosis or medical outcome. Ask the client to rewrite if needed.')}</p></div>`);
+  const order = { pending:0, approved:1, hidden:2 };
+  rows.slice().sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)).forEach(r=>{
+    const flagged = HEALTH_CLAIM_RE.test(r.quote);
+    const row = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
+      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;"><div style="font-size:12px; color:var(--ink-soft);">${escapeHtml(nameOf(r.client_id))} → ${L('εμφανίζεται ως','shown as')} «${escapeHtml(r.display_name)}»</div><span class="badge">${escapeHtml(!r.consent_public ? L('χωρίς συναίνεση','no consent') : r.status)}</span></div>
+      <div style="font-size:13px; margin:4px 0; line-height:1.6;">«${escapeHtml(r.quote)}»</div>
+      ${flagged ? `<div class="errorTag" style="font-size:12px; margin-bottom:6px;">${L('Προσοχή: περιέχει όρο που μπορεί να διαβαστεί ως ισχυρισμός υγείας. Προτείνεται να μην εγκριθεί.','Warning: contains a term that may read as a health claim. Approval is not recommended.')}</div>` : ''}
+      <div style="display:flex; gap:6px;">
+        ${r.consent_public && r.status!=='approved' ? `<button class="btn tApprove" type="button" style="padding:5px 10px; font-size:11px;">${L('Έγκριση','Approve')}</button>` : ''}
+        ${r.status==='approved' ? `<button class="btn secondary tHide" type="button" style="padding:5px 10px; font-size:11px;">${L('Απόκρυψη','Hide')}</button>` : ''}
+      </div></div>`);
+    const setStatus = async (status)=>{
+      const { error: e2 } = await supabase.from('client_testimonials').update({ status }).eq('id', r.id);
+      if(e2){ toast(L('Δεν αποθηκεύτηκε: ','Not saved: ')+e2.message, 4000); return; }
+      box.remove(); renderTestimonialsModeration(container);
+    };
+    const ap = row.querySelector('.tApprove');
+    if(ap) ap.addEventListener('click', ()=>{
+      if(flagged && !ap.dataset.sure){ ap.dataset.sure='1'; ap.textContent=L('Σίγουρα;','Sure?'); return; }
+      setStatus('approved');
+    });
+    const hd = row.querySelector('.tHide'); if(hd) hd.addEventListener('click', ()=>setStatus('hidden'));
+    box.appendChild(row);
+  });
+  container.appendChild(box);
+}
+
 function renderSafetyCenterTab(body, todayReadiness){
   // Consolidates the same rule (pain >= 7 → flag) already used on the Today tab and the
   // readiness form, plus the already-reviewed disclaimer text, into one dedicated place —
@@ -3838,6 +4229,7 @@ function renderSafetyCenterTab(body, todayReadiness){
     <div style="font-size:12.5px; line-height:1.7;">${LEGAL_CONTENT.disclaimer.body[locale]}</div>
   </div>`);
   body.appendChild(disclaimerCard);
+  renderReferralCard(body);
 }
 
 function renderReferFriendTab(body){
@@ -5654,7 +6046,7 @@ async function renderClientDashboard(main){
 
   main.innerHTML = '';
   destroyCharts(); // clear any chart from the previously-shown tab before this one builds its own
-  const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer','safety'];
+  const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer','safety','testimonial'];
   const inProfileGroup = profileGroup.includes(tab);
   const tabs = el(`<div class="clientBottomNav">
     <button class="cbn-btn ${tab==='today'?'active':''}" data-t="today"><span class="cbn-ico">🏠</span><span>${locale==='el'?'Αρχική':'Home'}</span></button>
@@ -5690,6 +6082,7 @@ async function renderClientDashboard(main){
       { t:'payment', ico:'💳', label:t('payment',locale) },
       { t:'photos', ico:'📸', label:t('progressPhotos',locale) },
       { t:'refer', ico:'🎁', label:t('referFriend',locale) },
+      { t:'testimonial', ico:'💬', label: locale==='el'?'Η γνώμη σου':'Your feedback' },
     ];
     const menu = el('<div class="profileMenu"></div>');
     profileItems.forEach(item=>{
@@ -5732,6 +6125,7 @@ async function renderClientDashboard(main){
     body.appendChild(accountMenu);
   } else if(tab==='today'){
     renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings });
+    maybeShowTestimonialPrompt(body, sessionLogDates);
   } else if(tab==='intake'){
     const { data: intakeRow } = await supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle();
     renderIntakeForm(body, profile, intakeRow?.data || null, false);
@@ -5799,6 +6193,8 @@ async function renderClientDashboard(main){
     await renderPhotosTab(body, profile);
   } else if(tab==='refer'){
     renderReferFriendTab(body);
+  } else if(tab==='testimonial'){
+    await renderTestimonialTab(body);
   } else if(tab==='readiness'){
     renderReadinessForm(body, readiness);
   } else if(tab==='progress'){
