@@ -252,6 +252,14 @@
     .price-card ul{ margin:8px 0 22px; padding-left:18px; color:var(--ink-soft); font-size:0.875rem; line-height:1.8; }
     .price-cta{ margin-top:auto; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; background:var(--red); color:#fff; padding:12px 16px; border-radius:12px; font-size:12.5px; font-weight:800; cursor:pointer; }
     .price-card:not(.featured) .price-cta{ background:#2a2a2a; }
+    .plan-compare{ max-width:900px; margin:34px auto 0; }
+    .plan-compare-scroll{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
+    .plan-compare table{ width:100%; border-collapse:collapse; font-size:0.85rem; min-width:560px; }
+    .plan-compare th, .plan-compare td{ padding:12px 14px; border-bottom:1px solid var(--line); text-align:center; }
+    .plan-compare th:first-child, .plan-compare tbody th{ text-align:left; font-weight:600; color:var(--ink); }
+    .plan-compare thead th{ font-size:0.78rem; letter-spacing:.06em; color:var(--ink-soft); }
+    .plan-compare tbody tr:last-child th, .plan-compare tbody tr:last-child td{ border-bottom:none; }
+    .plan-compare td{ color:var(--ink-soft); }
     .pricing-note{ max-width:900px; margin:24px auto 0; padding:14px 18px; border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--ink-soft); font-size:12.5px; line-height:1.6; text-align:center; }
 
     @media (max-width:900px){ .templates-grid{grid-template-columns:repeat(2,minmax(0,1fr));} .pricing-grid{grid-template-columns:1fr;} .price-card.featured{transform:none;} }
@@ -641,32 +649,41 @@
         <div class="price-kicker"><span data-lang-el>Για ξεκίνημα</span><span data-lang-en>For getting started</span></div>
         <h3>START</h3>
         <div class="price">59€ <small><span data-lang-el>/ μήνα</span><span data-lang-en>/ month</span></small></div>
-        <p data-lang-el>Εξατομικευμένο πρόγραμμα άσκησης με βασική παρακολούθηση.</p>
-        <p data-lang-en>Personalized exercise program with basic follow-up.</p>
-        <ul data-lang-el><li>Εξατομικευμένο πρόγραμμα</li><li>Οδηγίες και προοδευτική φόρτιση</li><li>Καταγραφή προόδου</li></ul>
-        <ul data-lang-en><li>Personalized program</li><li>Guidance and progressive loading</li><li>Progress tracking</li></ul>
+        <p data-lang-el>Για όσους θέλουν σωστό πρόγραμμα και δομή και προπονούνται αυτόνομα.</p>
+        <p data-lang-en>For people who want a proper program and structure and train independently.</p>
+        <ul data-lang-el><li>Εξατομικευμένο πρόγραμμα βάσει της αρχικής σου αξιολόγησης</li><li>Εφαρμογή: καταγραφή προπονήσεων, πόνου και προόδου</li><li>Αναθεώρηση προγράμματος κάθε 4 εβδομάδες</li><li>Ερωτήσεις μέσω εφαρμογής, απάντηση εντός 2 εργάσιμων ημερών</li></ul>
+        <ul data-lang-en><li>Personalized program based on your initial assessment</li><li>App: log workouts, pain and progress</li><li>Program review every 4 weeks</li><li>Questions via the app, reply within 2 working days</li></ul>
         <a class="price-cta js-signup-link" href="app.html"><span data-lang-el>Ξεκίνα →</span><span data-lang-en>Start →</span></a>
       </article>
       <article class="price-card featured">
         <div class="price-kicker"><span data-lang-el>Η πιο δημοφιλής</span><span data-lang-en>Most popular</span></div>
         <h3>GROWTH</h3>
         <div class="price">99€ <small><span data-lang-el>/ μήνα</span><span data-lang-en>/ month</span></small></div>
-        <p data-lang-el>Ό,τι στο START, με εβδομαδιαία ανατροφοδότηση και επανεκτίμηση.</p>
-        <p data-lang-en>Everything in START, with weekly feedback and reassessment.</p>
-        <ul data-lang-el><li>Ό,τι περιλαμβάνει το START</li><li>Εβδομαδιαία ανατροφοδότηση</li><li>Επανεκτίμηση και προσαρμογές</li></ul>
-        <ul data-lang-en><li>Everything in START</li><li>Weekly feedback</li><li>Reassessment and adjustments</li></ul>
+        <p data-lang-el>Για όσους θέλουν τακτική καθοδήγηση και προσαρμογές όσο προχωρούν.</p>
+        <p data-lang-en>For people who want regular guidance and adjustments as they progress.</p>
+        <ul data-lang-el><li>Ό,τι περιλαμβάνει το START</li><li>Εβδομαδιαίο check-in με γραπτή ανατροφοδότηση</li><li>Προσαρμογή προγράμματος όποτε χρειάζεται</li><li>Επανεκτίμηση κάθε 4 εβδομάδες</li><li>1 βιντεοκλήση τον μήνα</li><li>Απάντηση εντός 24 ωρών (εργάσιμες)</li></ul>
+        <ul data-lang-en><li>Everything in START</li><li>Weekly check-in with written feedback</li><li>Program adjustment whenever needed</li><li>Reassessment every 4 weeks</li><li>1 video call per month</li><li>Reply within 24 hours (working days)</li></ul>
         <a class="price-cta js-signup-link" href="app.html"><span data-lang-el>Ξεκίνα καθοδήγηση →</span><span data-lang-en>Start coaching →</span></a>
       </article>
       <article class="price-card">
         <div class="price-kicker"><span data-lang-el>Για πιο εντατική παρακολούθηση</span><span data-lang-en>For more intensive follow-up</span></div>
         <h3>PERFORMANCE</h3>
         <div class="price">149€ <small><span data-lang-el>/ μήνα</span><span data-lang-en>/ month</span></small></div>
-        <p data-lang-el>Ό,τι στο GROWTH, με πιο συχνή επικοινωνία και στενότερη παρακολούθηση.</p>
-        <p data-lang-en>Everything in GROWTH, with more frequent communication and closer follow-up.</p>
-        <ul data-lang-el><li>Ό,τι περιλαμβάνει το GROWTH</li><li>Πιο συχνή επικοινωνία μαζί μου</li><li>Άμεση προσαρμογή προγράμματος</li></ul>
-        <ul data-lang-en><li>Everything in GROWTH</li><li>More frequent communication with me</li><li>Immediate program adjustment</li></ul>
+        <p data-lang-el>Για όσους θέλουν στενή παρακολούθηση, γρήγορες προσαρμογές και προτεραιότητα.</p>
+        <p data-lang-en>For people who want close follow-up, fast adjustments and priority.</p>
+        <ul data-lang-el><li>Ό,τι περιλαμβάνει το GROWTH</li><li>Επανεκτίμηση κάθε 2 εβδομάδες</li><li>2 βιντεοκλήσεις τον μήνα</li><li>Απάντηση την ίδια μέρα (εργάσιμες, μηνύματα πριν τις 18:00)</li><li>Προτεραιότητα στα διαθέσιμα ραντεβού</li></ul>
+        <ul data-lang-en><li>Everything in GROWTH</li><li>Reassessment every 2 weeks</li><li>2 video calls per month</li><li>Same-day reply (working days, messages before 18:00)</li><li>Priority on available appointment slots</li></ul>
         <a class="price-cta js-open-chat"><span data-lang-el>Ζήτησέ το →</span><span data-lang-en>Request it →</span></a>
       </article>
+    </div>
+    <div class="plan-compare">
+      <h3 class="pricing-subhead"><span data-lang-el>Σύγκριση πακέτων</span><span data-lang-en>Compare plans</span></h3>
+      <div class="plan-compare-scroll"><table>
+        <thead><tr><th></th><th>START</th><th>GROWTH</th><th>PERFORMANCE</th></tr></thead>
+        <tbody><tr><th scope="row"><span data-lang-el>Εξατομικευμένο πρόγραμμα</span><span data-lang-en>Personalized program</span></th><td><span data-lang-el>✓</span><span data-lang-en>✓</span></td><td><span data-lang-el>✓</span><span data-lang-en>✓</span></td><td><span data-lang-el>✓</span><span data-lang-en>✓</span></td></tr><tr><th scope="row"><span data-lang-el>Εφαρμογή: καταγραφή και πρόοδος</span><span data-lang-en>App: logging and progress</span></th><td><span data-lang-el>✓</span><span data-lang-en>✓</span></td><td><span data-lang-el>✓</span><span data-lang-en>✓</span></td><td><span data-lang-el>✓</span><span data-lang-en>✓</span></td></tr><tr><th scope="row"><span data-lang-el>Αναθεώρηση προγράμματος</span><span data-lang-en>Program review</span></th><td><span data-lang-el>Κάθε 4 εβδομάδες</span><span data-lang-en>Every 4 weeks</span></td><td><span data-lang-el>Όποτε χρειάζεται</span><span data-lang-en>Whenever needed</span></td><td><span data-lang-el>Όποτε χρειάζεται</span><span data-lang-en>Whenever needed</span></td></tr><tr><th scope="row"><span data-lang-el>Check-in με γραπτή ανατροφοδότηση</span><span data-lang-en>Check-in with written feedback</span></th><td><span data-lang-el>—</span><span data-lang-en>—</span></td><td><span data-lang-el>Εβδομαδιαίο</span><span data-lang-en>Weekly</span></td><td><span data-lang-el>Εβδομαδιαίο</span><span data-lang-en>Weekly</span></td></tr><tr><th scope="row"><span data-lang-el>Επανεκτίμηση</span><span data-lang-en>Reassessment</span></th><td><span data-lang-el>—</span><span data-lang-en>—</span></td><td><span data-lang-el>Κάθε 4 εβδομάδες</span><span data-lang-en>Every 4 weeks</span></td><td><span data-lang-el>Κάθε 2 εβδομάδες</span><span data-lang-en>Every 2 weeks</span></td></tr><tr><th scope="row"><span data-lang-el>Βιντεοκλήσεις</span><span data-lang-en>Video calls</span></th><td><span data-lang-el>—</span><span data-lang-en>—</span></td><td><span data-lang-el>1 τον μήνα</span><span data-lang-en>1 per month</span></td><td><span data-lang-el>2 τον μήνα</span><span data-lang-en>2 per month</span></td></tr><tr><th scope="row"><span data-lang-el>Χρόνος απάντησης σε μηνύματα</span><span data-lang-en>Reply time</span></th><td><span data-lang-el>2 εργάσιμες</span><span data-lang-en>2 working days</span></td><td><span data-lang-el>24 ώρες (εργάσιμες)</span><span data-lang-en>24 hours (working days)</span></td><td><span data-lang-el>Ίδια μέρα (εργάσιμες)</span><span data-lang-en>Same day (working days)</span></td></tr><tr><th scope="row"><span data-lang-el>Προτεραιότητα στα ραντεβού</span><span data-lang-en>Priority on appointments</span></th><td><span data-lang-el>—</span><span data-lang-en>—</span></td><td><span data-lang-el>—</span><span data-lang-en>—</span></td><td><span data-lang-el>✓</span><span data-lang-en>✓</span></td></tr></tbody>
+      </table></div>
+      <div class="pricing-note" data-lang-el>Η αρχική αξιολόγηση (50€) είναι το πρώτο βήμα και βάσει αυτής χτίζεται το πρόγραμμά σου. Κανένα πακέτο δεν περιλαμβάνει διάγνωση, θεραπεία ή φυσικοθεραπεία. Αν εμφανιστεί πόνος που επιμένει, νέος τραυματισμός ή νευρολογικά συμπτώματα, παραπέμπεσαι σε αδειούχο επαγγελματία υγείας. Οι χρόνοι απάντησης αφορούν εργάσιμες ημέρες.</div>
+      <div class="pricing-note" data-lang-en>The initial assessment (50€) is the first step and your program is built on it. No plan includes diagnosis, treatment or physiotherapy. If persistent pain, a new injury or neurological symptoms appear, you are referred to a licensed health professional. Reply times apply to working days.</div>
     </div>
     <div class="pricing-note" data-lang-el>Για επαγγελματικές συνεργασίες με προπονητές και φυσικοθεραπευτές, διαμορφώνεται ξεχωριστή μηνιαία πρόταση ανάλογα με τον αριθμό ασκούμενων και το επίπεδο υποστήριξης.</div>
     <div class="pricing-note" data-lang-en>For professional partnerships with coaches and physiotherapists, a separate monthly offer is formed depending on the number of clients and the level of support.</div>

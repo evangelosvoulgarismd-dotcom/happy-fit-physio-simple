@@ -2092,9 +2092,9 @@ function partnerFeeBandsText(euro){
 }
 
 const PLANS = {
-  start:{ label:'START', el:'Εξατομικευμένο πρόγραμμα, οδηγίες και προοδευτική φόρτιση, καταγραφή προόδου.', en:'Personalized program, guidance and progressive loading, progress tracking.' },
-  growth:{ label:'GROWTH', el:'Ό,τι στο START, με εβδομαδιαία ανατροφοδότηση, επανεκτίμηση και προσαρμογές.', en:'Everything in START, with weekly feedback, reassessment and adjustments.' },
-  performance:{ label:'PERFORMANCE', el:'Ό,τι στο GROWTH, με πιο συχνή επικοινωνία και άμεση προσαρμογή προγράμματος.', en:'Everything in GROWTH, with more frequent communication and immediate program adjustment.' },
+  start:{ label:'START', el:'Εξατομικευμένο πρόγραμμα, καταγραφή προόδου, αναθεώρηση κάθε 4 εβδομάδες, απάντηση σε ερωτήσεις εντός 2 εργάσιμων.', en:'Personalized program, progress tracking, review every 4 weeks, reply to questions within 2 working days.' },
+  growth:{ label:'GROWTH', el:'Ό,τι στο START, με εβδομαδιαίο check-in και γραπτή ανατροφοδότηση, επανεκτίμηση κάθε 4 εβδομάδες, 1 βιντεοκλήση τον μήνα, απάντηση εντός 24 ωρών (εργάσιμες).', en:'Everything in START, with weekly check-in and written feedback, reassessment every 4 weeks, 1 video call per month, reply within 24 hours (working days).' },
+  performance:{ label:'PERFORMANCE', el:'Ό,τι στο GROWTH, με επανεκτίμηση κάθε 2 εβδομάδες, 2 βιντεοκλήσεις τον μήνα, απάντηση την ίδια μέρα (εργάσιμες) και προτεραιότητα στα ραντεβού.', en:'Everything in GROWTH, with reassessment every 2 weeks, 2 video calls per month, same-day reply (working days) and priority on appointments.' },
 };
 function periodLabel(period){ return new Date(period + '-15').toLocaleDateString(locale==='el'?'el-GR':'en-GB', { month:'long', year:'numeric' }); }
 function currentPeriod(){ return localDateStr(new Date()).slice(0,7); } // 'YYYY-MM', local calendar month
