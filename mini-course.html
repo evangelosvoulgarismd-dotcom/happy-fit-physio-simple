@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800&family=Fraunces:ital,wght@0,300;1,400&display=swap" rel="stylesheet">
   <style>
-    :root { --ink:#f5f5f5; --ink-soft:#a5a5a5; --bg:#0b0b0b; --panel:#121212; --line:#242424; --red:#e50914; }
+    :root { --ink:#f5f5f5; --ink-soft:#a5a5a5; --bg:#0b0b0b; --panel:#121212; --panel2:#181818; --line:#242424; --red:#e50914; --ok:#3ecf8e; --warn:#f5b73b; --bad:#ff5b5b; }
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     body { background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; line-height:1.6; overflow-x:hidden; }
     h1,h2,h3 { font-family:'Poppins',sans-serif; font-weight:800; }
@@ -21,7 +21,9 @@
     main { max-width:720px; margin:0 auto; padding:36px max(16px,4vw) 80px; }
     .label { font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--red); font-weight:700; margin-bottom:10px; }
     h1 { font-size:clamp(1.8rem,5vw,2.6rem); line-height:1.15; margin-bottom:12px; }
-    .sub { color:var(--ink-soft); font-size:15px; margin-bottom:22px; }
+    .sub { color:var(--ink-soft); font-size:15px; margin-bottom:18px; }
+    .meta { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+    .pill { background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:5px 12px; font-size:12px; color:var(--ink-soft); }
     .notice { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--red); border-radius:10px; padding:12px 14px; font-size:12.5px; color:var(--ink-soft); margin-bottom:24px; }
     .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; }
     .field { margin-bottom:12px; }
@@ -30,18 +32,53 @@
     .chk { display:flex; gap:10px; align-items:flex-start; font-size:12.5px; color:var(--ink-soft); margin:12px 0; }
     .chk input { margin-top:4px; }
     .btn { display:inline-block; background:var(--red); color:#fff; border:none; border-radius:10px; padding:12px 20px; font:700 14px 'Public Sans',sans-serif; cursor:pointer; text-decoration:none; }
+    .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink); }
     .btn:disabled { opacity:.6; }
     .err { color:#ff6b6b; font-size:13px; margin-top:10px; display:none; }
-    details { background:var(--panel); border:1px solid var(--line); border-radius:12px; margin-bottom:10px; }
-    summary { cursor:pointer; padding:14px 16px; font-weight:700; list-style:none; display:flex; gap:12px; align-items:center; }
-    summary::-webkit-details-marker { display:none; }
-    summary .n { background:var(--red); color:#fff; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
-    details .body { padding:0 16px 16px 54px; font-size:14.5px; }
-    details .body p { margin-bottom:10px; }
-    details .body ul { padding-left:18px; margin-bottom:10px; }
-    .src { font-size:11.5px; color:var(--ink-soft); margin-top:22px; }
-    .cta { margin-top:26px; text-align:center; }
     #content { display:none; }
+    .prog { position:sticky; top:0; z-index:5; background:rgba(11,11,11,.95); backdrop-filter:blur(6px); padding:12px 0 10px; margin-bottom:14px; }
+    .prog .row { display:flex; justify-content:space-between; font-size:12px; color:var(--ink-soft); margin-bottom:6px; font-weight:600; }
+    .bar { height:6px; background:var(--line); border-radius:99px; overflow:hidden; }
+    .bar > i { display:block; height:100%; width:0; background:var(--red); transition:width .35s ease; }
+    details { background:var(--panel); border:1px solid var(--line); border-radius:14px; margin-bottom:12px; }
+    details.done { border-color:rgba(62,207,142,.45); }
+    summary { cursor:pointer; padding:16px; font-weight:700; list-style:none; display:flex; gap:12px; align-items:center; }
+    summary::-webkit-details-marker { display:none; }
+    summary .n { background:var(--red); color:#fff; width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+    details.done summary .n { background:var(--ok); color:#06210f; }
+    summary .t { flex:1; }
+    summary .min { font-size:11px; color:var(--ink-soft); font-weight:500; white-space:nowrap; }
+    .body { padding:0 16px 18px; font-size:14.5px; }
+    .body p { margin-bottom:10px; }
+    .body ul { padding-left:18px; margin-bottom:10px; }
+    .tool { background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:14px; margin:14px 0; }
+    .tool h4 { font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--red); margin-bottom:10px; }
+    .tool input[type=range] { width:100%; accent-color:var(--red); }
+    .out { margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13.5px; border:1px solid var(--line); background:#0b0b0b; }
+    .out.ok { border-color:var(--ok); } .out.warn { border-color:var(--warn); } .out.bad { border-color:var(--bad); }
+    .big { font-family:'Poppins',sans-serif; font-weight:800; font-size:28px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; margin:6px 0 4px; }
+    th, td { padding:7px 6px; border-bottom:1px solid var(--line); text-align:left; }
+    th { color:var(--ink-soft); font-weight:600; font-size:11.5px; }
+    .days { display:flex; gap:6px; flex-wrap:wrap; }
+    .day { background:#0b0b0b; border:1px solid var(--line); color:var(--ink); border-radius:10px; padding:9px 12px; font:600 13px 'Public Sans',sans-serif; cursor:pointer; }
+    .day.on { background:var(--red); border-color:var(--red); }
+    .check { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; padding:6px 0; color:var(--ink); }
+    .check input { margin-top:5px; }
+    .done-btn { margin-top:6px; }
+    .final { text-align:center; padding:26px 18px; margin-top:20px; }
+    .final h3 { margin-bottom:8px; }
+    .final .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+    .src { font-size:11.5px; color:var(--ink-soft); margin-top:22px; }
+    #sheet { display:none; }
+    @media print {
+      body > *:not(#sheet) { display:none !important; }
+      body { background:#fff; color:#000; }
+      #sheet { display:block !important; padding:24px; font-family:Arial,sans-serif; color:#000; }
+      #sheet h2 { font-size:20px; margin-bottom:4px; } #sheet h3 { font-size:14px; margin:14px 0 4px; }
+      #sheet p, #sheet li { font-size:12px; line-height:1.5; } #sheet ul { padding-left:18px; }
+      #sheet .foot { margin-top:16px; font-size:10.5px; color:#444; }
+    }
   </style>
 </head>
 <body>
@@ -50,6 +87,7 @@
     <div class="label" data-t="label"></div>
     <h1 data-t="h1"></h1>
     <p class="sub" data-t="sub"></p>
+    <div class="meta"><span class="pill" data-t="p1"></span><span class="pill" data-t="p2"></span><span class="pill" data-t="p3"></span></div>
     <div class="notice" data-t="notice"></div>
 
     <div class="card" id="gate">
@@ -65,73 +103,191 @@
 
     <div id="content"></div>
   </main>
+  <div id="sheet"></div>
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
     const supabase = createClient('https://hxbpuamzisdldwbuumda.supabase.co', 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH');
     let lang = 'el';
     try{ if(localStorage.getItem('hfp_lang')==='en') lang='en'; }catch(e){}
-    const S = {
-      el: {
-        label:'Δωρεάν mini-course', h1:'Ασφαλές ξεκίνημα στην άσκηση',
-        sub:'5 σύντομα μαθήματα για να ξεκινήσεις ή να ξαναρχίσεις προπόνηση με σύνεση και συνέπεια.',
-        notice:'Γενική εκπαιδευτική πληροφορία. Δεν αποτελεί ιατρική συμβουλή, διάγνωση ή εξατομικευμένο πρόγραμμα και δεν αντικαθιστά την αξιολόγηση από αδειούχο επαγγελματία υγείας.',
-        name:'Ονοματεπώνυμο', consent:'Προαιρετικά: συναινώ να λαμβάνω ενημερωτικά email από το Happy Fit Physio. Μπορώ να διαγραφώ όποτε θέλω. Η πρόσβαση στο mini-course δεν εξαρτάται από αυτό.',
-        go:'Δες το mini-course', sending:'Αποστολή…', bad:'Έλεγξε το όνομα και το email.',
-        cta:'Θες πρόγραμμα φτιαγμένο για σένα;', ctaBtn:'Δες τις επιλογές coaching', src:'Πηγές: WHO Guidelines on physical activity and sedentary behaviour (2020). Watson et al., Recommended Amount of Sleep for a Healthy Adult, Sleep 2015.',
-        lessons:[
-          ['Ξεκίνα πιο ελαφριά και αύξανε σταδιακά', '<p>Πολλοί τραυματισμοί υπερφόρτωσης σχετίζονται με απότομη αύξηση του φόρτου. Η λύση είναι απλή: αλλάζεις <strong>ένα πράγμα τη φορά</strong>.</p><ul><li>Αύξησε είτε το βάρος, είτε τις επαναλήψεις, είτε τις ημέρες προπόνησης. Όχι όλα μαζί.</li><li>Τις πρώτες εβδομάδες σταμάτα κάθε σετ 2-3 επαναλήψεις πριν από το σημείο που δεν μπορείς άλλη (RIR 2-3).</li><li>Αν μια εβδομάδα πήγε άσχημα, μείνε στο ίδιο φορτίο και μην το ανεβάσεις.</li></ul>'],
-          ['Πόνος και ενόχληση: μάθε να τα ξεχωρίζεις', '<p>Χρησιμοποίησε μια κλίμακα 0-10 για τον πόνο. Ο κανόνας που εφαρμόζω στην εφαρμογή μου είναι απλός:</p><ul><li><strong>0-3:</strong> ήπια ενόχληση, συνήθως μπορείς να συνεχίσεις προσεκτικά.</li><li><strong>4:</strong> μείωσε το φορτίο ή το εύρος κίνησης και παρακολούθησε.</li><li><strong>5 και πάνω σε ένα σετ:</strong> σταμάτα αυτή την άσκηση.</li></ul><p>Αν η ενόχληση δεν έχει υποχωρήσει την επόμενη μέρα, κάν’ το πιο ελαφρύ την επόμενη φορά. Είναι γενικός πρακτικός κανόνας, όχι ιατρική συμβουλή.</p>'],
-          ['Πότε σταματάς και ζητάς αξιολόγηση από επαγγελματία υγείας', '<p>Η άσκηση δεν είναι το σωστό βήμα όταν υπάρχει:</p><ul><li>Έντονος ή επιδεινούμενος πόνος</li><li>Νέος τραυματισμός</li><li>Νέο σημαντικό σύμπτωμα</li><li>Νευρολογικά συμπτώματα (π.χ. μούδιασμα, αδυναμία)</li><li>Οποιοδήποτε επείγον ιατρικό συμβάν: καλείς το 166 ή το 112</li></ul><p>Σε αυτές τις περιπτώσεις χρειάζεσαι αξιολόγηση από αδειούχο γιατρό ή φυσικοθεραπευτή, όχι ένα πρόγραμμα.</p>'],
-          ['Ύπνος και ανάκαμψη', '<p>Η βελτίωση γίνεται στην ανάκαμψη, όχι μόνο στην προπόνηση.</p><ul><li>Οι ενήλικες χρειάζονται τουλάχιστον 7 ώρες ύπνου τη νύχτα για καλή υγεία.</li><li>Άφησε τουλάχιστον 1-2 ημέρες χωρίς έντονη προπόνηση την εβδομάδα. Το περπάτημα και η ήπια κίνηση βοηθούν.</li><li>Αν για αρκετές μέρες κοιμάσαι λίγο και νιώθεις εξαντλημένος/η, μείωσε προσωρινά τον όγκο.</li></ul>'],
-          ['Συνέπεια πάνω από τελειότητα', '<p>Οι οδηγίες του Παγκόσμιου Οργανισμού Υγείας για ενήλικες περιλαμβάνουν 150-300 λεπτά μέτριας αερόβιας δραστηριότητας την εβδομάδα και ενδυνάμωση μυών τουλάχιστον 2 ημέρες την εβδομάδα.</p><ul><li>Ξεκίνα με 2 προπονήσεις των 30-40 λεπτών.</li><li>Κλείσε ώρες στο ημερολόγιο, σαν ραντεβού.</li><li>Σημείωνε μετά από κάθε προπόνηση: βάρος, επαναλήψεις, πόνο. Σε 4 εβδομάδες θα βλέπεις πρόοδο στα νούμερα.</li></ul>'],
-        ],
-      },
-      en: {
-        label:'Free mini-course', h1:'A safe start to training',
-        sub:'5 short lessons to start or restart training with good judgement and consistency.',
-        notice:'General educational information. It is not medical advice, a diagnosis or an individual program, and does not replace assessment by a licensed health professional.',
-        name:'Full name', consent:'Optional: I agree to receive informational emails from Happy Fit Physio. I can unsubscribe anytime. Access to the mini-course does not depend on this.',
-        go:'View the mini-course', sending:'Sending…', bad:'Please check your name and email.',
-        cta:'Want a program built for you?', ctaBtn:'See coaching options', src:'Sources: WHO Guidelines on physical activity and sedentary behaviour (2020). Watson et al., Recommended Amount of Sleep for a Healthy Adult, Sleep 2015.',
-        lessons:[
-          ['Start lighter and progress gradually', '<p>Many overuse injuries are linked to a sudden jump in load. The fix is simple: change <strong>one thing at a time</strong>.</p><ul><li>Increase either weight, reps or training days. Not all at once.</li><li>In the first weeks stop each set 2-3 reps before you could not do another (RIR 2-3).</li><li>If a week went badly, stay at the same load and do not increase it.</li></ul>'],
-          ['Pain and discomfort: learn to tell them apart', '<p>Use a 0-10 pain scale. The rule I use in my app is simple:</p><ul><li><strong>0-3:</strong> mild discomfort, you can usually continue carefully.</li><li><strong>4:</strong> reduce load or range of motion and monitor.</li><li><strong>5 or more in a set:</strong> stop that exercise.</li></ul><p>If discomfort has not settled the next day, go lighter next time. This is a general practical rule, not medical advice.</p>'],
-          ['When to stop and get assessed by a health professional', '<p>Exercise is not the right step when there is:</p><ul><li>Severe or worsening pain</li><li>A new injury</li><li>A new significant symptom</li><li>Neurological symptoms (e.g. numbness, weakness)</li><li>Any medical emergency: call 166 or 112</li></ul><p>In these cases you need assessment by a licensed doctor or physiotherapist, not a program.</p>'],
-          ['Sleep and recovery', '<p>Improvement happens in recovery, not only in training.</p><ul><li>Adults need at least 7 hours of sleep a night for good health.</li><li>Keep at least 1-2 days a week without hard training. Walking and easy movement help.</li><li>If you sleep little for several days and feel drained, temporarily reduce volume.</li></ul>'],
-          ['Consistency over perfection', '<p>The World Health Organization guidelines for adults include 150-300 minutes of moderate aerobic activity per week and muscle strengthening at least 2 days a week.</p><ul><li>Start with 2 sessions of 30-40 minutes.</li><li>Book them in your calendar like appointments.</li><li>After each session note weight, reps and pain. In 4 weeks you will see progress in the numbers.</li></ul>'],
-        ],
-      }
-    };
     const $ = id => document.getElementById(id);
     const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    function paint(){
+
+    // All text below is static content written by us (never user input).
+    const S = {
+    el: {
+      label:'Δωρεάν mini-course', h1:'Ασφαλές ξεκίνημα στην άσκηση',
+      sub:'5 σύντομα μαθήματα με μικρά διαδραστικά εργαλεία, για να ξεκινήσεις ή να ξαναρχίσεις προπόνηση με σύνεση και συνέπεια.',
+      p1:'5 μαθήματα', p2:'Περίπου 12 λεπτά', p3:'Φυλλάδιο για εκτύπωση στο τέλος',
+      notice:'Γενική εκπαιδευτική πληροφορία. Δεν αποτελεί ιατρική συμβουλή, διάγνωση ή εξατομικευμένο πρόγραμμα και δεν αντικαθιστά την αξιολόγηση από αδειούχο επαγγελματία υγείας.',
+      name:'Ονοματεπώνυμο', consent:'Προαιρετικά: συναινώ να λαμβάνω ενημερωτικά email από το Happy Fit Physio. Μπορώ να διαγραφώ όποτε θέλω. Η πρόσβαση στο mini-course δεν εξαρτάται από αυτό.',
+      go:'Δες το mini-course', sending:'Αποστολή…', bad:'Έλεγξε το όνομα και το email.',
+      progress:'Πρόοδος', of:'από', min:'λεπτά', markDone:'Το ολοκλήρωσα ✓', undo:'Ολοκληρώθηκε ✓ (πάτα για αναίρεση)',
+      finalT:'Τέλος του mini-course', finalP:'Έχεις τα βασικά για ασφαλές ξεκίνημα. Κατέβασε το φυλλάδιο με τους κανόνες και, αν θες πρόγραμμα φτιαγμένο για σένα, δες τις επιλογές.',
+      print:'Εκτύπωση / αποθήκευση PDF', plans:'Δες τις επιλογές coaching', cta:'Θες πρόγραμμα φτιαγμένο για σένα;',
+      src:'Πηγές: WHO Guidelines on physical activity and sedentary behaviour (2020). Watson et al., Recommended Amount of Sleep for a Healthy Adult, Sleep 2015.',
+      days:['Δευ','Τρι','Τετ','Πέμ','Παρ','Σαβ','Κυρ'],
+      l1:{t:'Ξεκίνα πιο ελαφριά και αύξανε σταδιακά', m:3, html:`<p>Πολλοί τραυματισμοί υπερφόρτωσης σχετίζονται με απότομη αύξηση του φόρτου. Η λύση είναι απλή: αλλάζεις <strong>ένα πράγμα τη φορά</strong>.</p>
+        <ul><li>Αύξησε είτε το βάρος, είτε τις επαναλήψεις, είτε τις ημέρες προπόνησης. Όχι όλα μαζί.</li><li>Τις πρώτες εβδομάδες σταμάτα κάθε σετ 2-3 επαναλήψεις πριν από το σημείο που δεν μπορείς άλλη (RIR 2-3).</li><li>Αν μια εβδομάδα πήγε άσχημα, μείνε στο ίδιο φορτίο.</li></ul>
+        <div class="tool"><h4>Παράδειγμα 4 εβδομάδων</h4><table><tr><th>Εβδ.</th><th>Σετ × επαναλήψεις</th><th>Βάρος</th><th>RIR</th></tr>
+        <tr><td>1</td><td>3 × 8</td><td>20 kg</td><td>3</td></tr><tr><td>2</td><td>3 × 10</td><td>20 kg</td><td>3 → 2</td></tr><tr><td>3</td><td>3 × 12</td><td>20 kg</td><td>2</td></tr><tr><td>4</td><td>3 × 8</td><td>22,5 kg</td><td>3</td></tr></table>
+        <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Πρώτα ανεβαίνουν οι επαναλήψεις, μετά το βάρος, και ξαναρχίζεις από λιγότερες. Είναι παράδειγμα, όχι πρόγραμμα για σένα.</p></div>`},
+      l2:{t:'Πόνος και ενόχληση: μάθε να τα ξεχωρίζεις', m:3, html:`<p>Χρησιμοποίησε μια κλίμακα 0-10 για τον πόνο. Ο κανόνας που εφαρμόζω στην εφαρμογή μου είναι απλός. Δοκίμασέ τον:</p>
+        <div class="tool"><h4>Πόσο πονάει τώρα;</h4><input type="range" min="0" max="10" value="2" id="painR"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);"><span>0</span><span class="big" id="painV" style="font-size:22px;color:var(--ink);">2</span><span>10</span></div><div class="out ok" id="painO"></div></div>
+        <p style="font-size:13px;color:var(--ink-soft);">Γενικός πρακτικός κανόνας, όχι ιατρική συμβουλή. Αν η ενόχληση δεν έχει υποχωρήσει την επόμενη μέρα, κάν' το πιο ελαφρύ την επόμενη φορά.</p>`,
+        pain:[['ok','Ήπια ενόχληση. Συνήθως μπορείς να συνεχίσεις προσεκτικά.'],['ok','Ήπια ενόχληση. Συνήθως μπορείς να συνεχίσεις προσεκτικά.'],['ok','Ήπια ενόχληση. Συνήθως μπορείς να συνεχίσεις προσεκτικά.'],['ok','Ήπια ενόχληση. Συνήθως μπορείς να συνεχίσεις προσεκτικά.'],['warn','Μείωσε το φορτίο ή το εύρος κίνησης και παρακολούθησε.'],['bad','Σταμάτα αυτή την άσκηση.'],['bad','Σταμάτα αυτή την άσκηση.'],['bad','Σταμάτα την προπόνηση. Έντονος πόνος χρειάζεται αξιολόγηση από επαγγελματία υγείας πριν συνεχίσεις.'],['bad','Σταμάτα την προπόνηση. Έντονος πόνος χρειάζεται αξιολόγηση από επαγγελματία υγείας πριν συνεχίσεις.'],['bad','Σταμάτα την προπόνηση. Έντονος πόνος χρειάζεται αξιολόγηση από επαγγελματία υγείας πριν συνεχίσεις.'],['bad','Σταμάτα την προπόνηση. Έντονος πόνος χρειάζεται αξιολόγηση από επαγγελματία υγείας πριν συνεχίσεις.']]},
+      l3:{t:'Πότε σταματάς και ζητάς αξιολόγηση', m:2, html:`<p>Η άσκηση δεν είναι το σωστό βήμα όταν υπάρχει κάτι από τα παρακάτω. Τσέκαρε ό,τι ισχύει:</p>
+        <div class="tool"><h4>Έλεγχος σημάτων</h4><div id="flags"></div><div class="out" id="flagO" style="display:none;"></div></div>`,
+        flags:['Έντονος ή επιδεινούμενος πόνος','Νέος τραυματισμός','Νέο σημαντικό σύμπτωμα','Νευρολογικά συμπτώματα (π.χ. μούδιασμα, αδυναμία)','Επείγον ιατρικό συμβάν'],
+        flagStop:'Σταμάτα την προπόνηση και ζήτα αξιολόγηση από αδειούχο γιατρό ή φυσικοθεραπευτή. Ένα πρόγραμμα δεν είναι το σωστό βήμα τώρα.', flagEmg:'Κάλεσε το 166 ή το 112 τώρα.'},
+      l4:{t:'Ύπνος και ανάκαμψη', m:2, html:`<p>Η βελτίωση γίνεται στην ανάκαμψη, όχι μόνο στην προπόνηση.</p>
+        <div class="tool"><h4>Πόσες ώρες κοιμάσαι συνήθως;</h4><input type="range" min="3" max="10" step="0.5" value="7" id="slR"><div style="text-align:center;"><span class="big" id="slV">7</span> <span style="color:var(--ink-soft);">ώρες</span></div><div class="out ok" id="slO"></div></div>
+        <ul><li>Οι ενήλικες χρειάζονται τουλάχιστον 7 ώρες ύπνου τη νύχτα για καλή υγεία.</li><li>Άφησε τουλάχιστον 1-2 ημέρες χωρίς έντονη προπόνηση την εβδομάδα. Το περπάτημα και η ήπια κίνηση βοηθούν.</li></ul>`,
+        sleep:[['bad','Πολύ λίγος ύπνος. Μείωσε προσωρινά τον όγκο προπόνησης και δώσε προτεραιότητα στον ύπνο.'],['warn','Λίγο κάτω από τη σύσταση των 7+ ωρών. Δοκίμασε να πηγαίνεις νωρίτερα για ύπνο και μην ανεβάζεις φορτίο αυτή την εβδομάδα.'],['ok','Είσαι εντός της σύστασης για ενήλικες (7+ ώρες).']]},
+      l5:{t:'Συνέπεια πάνω από τελειότητα', m:3, html:`<p>Οι οδηγίες του Παγκόσμιου Οργανισμού Υγείας για ενήλικες περιλαμβάνουν 150-300 λεπτά μέτριας αερόβιας δραστηριότητας την εβδομάδα και ενδυνάμωση μυών τουλάχιστον 2 ημέρες την εβδομάδα. Φτιάξε το δικό σου πρώτο πλάνο:</p>
+        <div class="tool"><h4>Ποιες ημέρες θα προπονείσαι;</h4><div class="days" id="days"></div><div class="out" id="planO" style="display:none;"></div></div>
+        <ul><li>Κλείσε ώρες στο ημερολόγιο, σαν ραντεβού.</li><li>Σημείωνε μετά από κάθε προπόνηση: βάρος, επαναλήψεις, πόνο. Σε 4 εβδομάδες θα βλέπεις πρόοδο στα νούμερα.</li></ul>`,
+        plan:{none:'Διάλεξε τουλάχιστον μία ημέρα.',one:'Ξεκίνα με 2 ημέρες αν μπορείς, ώστε να χτίσεις συνήθεια και να έχεις ενδυνάμωση 2 φορές την εβδομάδα.',good:'Καλό ξεκίνημα. Κράτησε 30-40 λεπτά ανά προπόνηση.',many:'Αν είσαι αρχάριος, ξεκίνα με 2-3 ημέρες και πρόσθεσε αργότερα. Η συνέπεια μετράει περισσότερο από τον αριθμό.',cons:' Προσπάθησε να μην έχεις έντονες προπονήσεις σε διαδοχικές ημέρες στην αρχή.'}},
+      sheet:{t:'Φυλλάδιο: ασφαλές ξεκίνημα στην άσκηση', rules:[['Αύξηση φόρτου','Άλλαζε ένα πράγμα τη φορά (βάρος, επαναλήψεις ή ημέρες). Σταμάτα κάθε σετ 2-3 επαναλήψεις πριν την αποτυχία.'],['Κανόνας πόνου 0-10','0-3 συνεχίζεις προσεκτικά. 4 μείωσε φορτίο ή εύρος. 5 και πάνω σε σετ: σταμάτα την άσκηση. 7 και πάνω: σταμάτα την προπόνηση και ζήτα αξιολόγηση.'],['Σταμάτα και ζήτα αξιολόγηση όταν υπάρχει','Έντονος ή επιδεινούμενος πόνος, νέος τραυματισμός, νέο σημαντικό σύμπτωμα, νευρολογικά συμπτώματα (μούδιασμα, αδυναμία). Επείγον: 166 ή 112.'],['Ανάκαμψη','Τουλάχιστον 7 ώρες ύπνου. 1-2 ημέρες την εβδομάδα χωρίς έντονη προπόνηση.'],['Συνέπεια','2 προπονήσεις των 30-40 λεπτών για αρχή. Σημείωνε βάρος, επαναλήψεις και πόνο μετά από κάθε προπόνηση.']], foot:'Γενική εκπαιδευτική πληροφορία, όχι ιατρική συμβουλή. Happy Fit Physio · evangelosvoulgarismd-dotcom.github.io/happy-fit-physio-simple'}
+    },
+    en: {
+      label:'Free mini-course', h1:'A safe start to training',
+      sub:'5 short lessons with small interactive tools, to start or restart training with good judgement and consistency.',
+      p1:'5 lessons', p2:'About 12 minutes', p3:'Printable cheat sheet at the end',
+      notice:'General educational information. It is not medical advice, a diagnosis or an individual program, and does not replace assessment by a licensed health professional.',
+      name:'Full name', consent:'Optional: I agree to receive informational emails from Happy Fit Physio. I can unsubscribe anytime. Access to the mini-course does not depend on this.',
+      go:'View the mini-course', sending:'Sending…', bad:'Please check your name and email.',
+      progress:'Progress', of:'of', min:'min', markDone:'Mark as done ✓', undo:'Done ✓ (tap to undo)',
+      finalT:'End of the mini-course', finalP:'You have the basics for a safe start. Download the cheat sheet with the rules and, if you want a program built for you, see the options.',
+      print:'Print / save as PDF', plans:'See coaching options', cta:'Want a program built for you?',
+      src:'Sources: WHO Guidelines on physical activity and sedentary behaviour (2020). Watson et al., Recommended Amount of Sleep for a Healthy Adult, Sleep 2015.',
+      days:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      l1:{t:'Start lighter and progress gradually', m:3, html:`<p>Many overuse injuries are linked to a sudden jump in load. The fix is simple: change <strong>one thing at a time</strong>.</p>
+        <ul><li>Increase either weight, reps or training days. Not all at once.</li><li>In the first weeks stop each set 2-3 reps before you could not do another (RIR 2-3).</li><li>If a week went badly, stay at the same load.</li></ul>
+        <div class="tool"><h4>4-week example</h4><table><tr><th>Wk</th><th>Sets × reps</th><th>Weight</th><th>RIR</th></tr>
+        <tr><td>1</td><td>3 × 8</td><td>20 kg</td><td>3</td></tr><tr><td>2</td><td>3 × 10</td><td>20 kg</td><td>3 → 2</td></tr><tr><td>3</td><td>3 × 12</td><td>20 kg</td><td>2</td></tr><tr><td>4</td><td>3 × 8</td><td>22.5 kg</td><td>3</td></tr></table>
+        <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Reps go up first, then weight, and you restart at fewer reps. It is an example, not a program for you.</p></div>`},
+      l2:{t:'Pain and discomfort: learn to tell them apart', m:3, html:`<p>Use a 0-10 pain scale. The rule I use in my app is simple. Try it:</p>
+        <div class="tool"><h4>How much does it hurt now?</h4><input type="range" min="0" max="10" value="2" id="painR"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);"><span>0</span><span class="big" id="painV" style="font-size:22px;color:var(--ink);">2</span><span>10</span></div><div class="out ok" id="painO"></div></div>
+        <p style="font-size:13px;color:var(--ink-soft);">This is a general practical rule, not medical advice. If discomfort has not settled the next day, go lighter next time.</p>`,
+        pain:[['ok','Mild discomfort. You can usually continue carefully.'],['ok','Mild discomfort. You can usually continue carefully.'],['ok','Mild discomfort. You can usually continue carefully.'],['ok','Mild discomfort. You can usually continue carefully.'],['warn','Reduce the load or range of motion and monitor.'],['bad','Stop this exercise.'],['bad','Stop this exercise.'],['bad','Stop the session. Severe pain needs assessment by a health professional before you continue.'],['bad','Stop the session. Severe pain needs assessment by a health professional before you continue.'],['bad','Stop the session. Severe pain needs assessment by a health professional before you continue.'],['bad','Stop the session. Severe pain needs assessment by a health professional before you continue.']]},
+      l3:{t:'When to stop and get assessed', m:2, html:`<p>Exercise is not the right step when any of the following is present. Tick what applies:</p>
+        <div class="tool"><h4>Warning signs check</h4><div id="flags"></div><div class="out" id="flagO" style="display:none;"></div></div>`,
+        flags:['Severe or worsening pain','A new injury','A new significant symptom','Neurological symptoms (e.g. numbness, weakness)','A medical emergency'],
+        flagStop:'Stop training and get assessed by a licensed doctor or physiotherapist. A program is not the right step now.', flagEmg:'Call 166 or 112 now.'},
+      l4:{t:'Sleep and recovery', m:2, html:`<p>Improvement happens in recovery, not only in training.</p>
+        <div class="tool"><h4>How many hours do you usually sleep?</h4><input type="range" min="3" max="10" step="0.5" value="7" id="slR"><div style="text-align:center;"><span class="big" id="slV">7</span> <span style="color:var(--ink-soft);">hours</span></div><div class="out ok" id="slO"></div></div>
+        <ul><li>Adults need at least 7 hours of sleep a night for good health.</li><li>Keep at least 1-2 days a week without hard training. Walking and easy movement help.</li></ul>`,
+        sleep:[['bad','Very little sleep. Temporarily reduce training volume and prioritise sleep.'],['warn','Slightly under the 7+ hours recommendation. Try going to bed earlier and do not increase load this week.'],['ok','You are within the adult recommendation (7+ hours).']]},
+      l5:{t:'Consistency over perfection', m:3, html:`<p>The World Health Organization guidelines for adults include 150-300 minutes of moderate aerobic activity per week and muscle strengthening at least 2 days a week. Build your own first plan:</p>
+        <div class="tool"><h4>Which days will you train?</h4><div class="days" id="days"></div><div class="out" id="planO" style="display:none;"></div></div>
+        <ul><li>Book them in your calendar like appointments.</li><li>After each session note weight, reps and pain. In 4 weeks you will see progress in the numbers.</li></ul>`,
+        plan:{none:'Pick at least one day.',one:'Start with 2 days if you can, to build the habit and get strengthening twice a week.',good:'A good start. Keep sessions to 30-40 minutes.',many:'If you are a beginner, start with 2-3 days and add later. Consistency matters more than the number.',cons:' Try not to have hard sessions on consecutive days at first.'}},
+      sheet:{t:'Cheat sheet: a safe start to training', rules:[['Progressing load','Change one thing at a time (weight, reps or days). Stop each set 2-3 reps before failure.'],['0-10 pain rule','0-3 continue carefully. 4 reduce load or range. 5 or more in a set: stop that exercise. 7 or more: stop the session and get assessed.'],['Stop and get assessed when there is','Severe or worsening pain, a new injury, a new significant symptom, neurological symptoms (numbness, weakness). Emergency: 166 or 112.'],['Recovery','At least 7 hours of sleep. 1-2 days a week without hard training.'],['Consistency','Start with 2 sessions of 30-40 minutes. Note weight, reps and pain after each session.']], foot:'General educational information, not medical advice. Happy Fit Physio · evangelosvoulgarismd-dotcom.github.io/happy-fit-physio-simple'}
+    }};
+
+    const LS = {
+      get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+      set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+    };
+    let done = new Set(); try{ done = new Set(JSON.parse(LS.get('hfp_mc_done')||'[]')); }catch(e){}
+    let daysSel = new Set(); try{ daysSel = new Set(JSON.parse(LS.get('hfp_mc_days')||'[]')); }catch(e){}
+    const KEYS = ['l1','l2','l3','l4','l5'];
+
+    function paintStatic(){
       const T = S[lang]; document.documentElement.lang = lang;
       document.querySelectorAll('[data-t]').forEach(n=>{ n.textContent = T[n.dataset.t]; });
       document.querySelectorAll('.langBtn').forEach(b=>b.classList.toggle('active', b.dataset.lang===lang));
-      if($('content').dataset.open) renderContent();
+    }
+    function wire(k){
+      const T = S[lang];
+      if(k==='l2'){
+        const r=$('painR'), v=$('painV'), o=$('painO');
+        const up=()=>{ const n=+r.value; v.textContent=n; const [c,txt]=T.l2.pain[n]; o.className='out '+c; o.textContent=txt; };
+        r.addEventListener('input',up); up();
+      }
+      if(k==='l3'){
+        const box=$('flags'), o=$('flagO');
+        box.innerHTML = T.l3.flags.map((f,i)=>`<label class="check"><input type="checkbox" data-i="${i}"><span>${esc(f)}</span></label>`).join('');
+        const up=()=>{
+          const on=[...box.querySelectorAll('input')].map(x=>x.checked);
+          if(!on.some(Boolean)){ o.style.display='none'; return; }
+          o.style.display='block';
+          if(on[4]){ o.className='out bad'; o.innerHTML='<strong>'+esc(T.l3.flagEmg)+'</strong> '+esc(T.l3.flagStop); }
+          else { o.className='out bad'; o.textContent=T.l3.flagStop; }
+        };
+        box.addEventListener('change',up);
+      }
+      if(k==='l4'){
+        const r=$('slR'), v=$('slV'), o=$('slO');
+        const up=()=>{ const h=+r.value; v.textContent=String(h).replace('.',lang==='el'?',':'.'); const i=h<6?0:h<7?1:2; o.className='out '+T.l4.sleep[i][0]; o.textContent=T.l4.sleep[i][1]; };
+        r.addEventListener('input',up); up();
+      }
+      if(k==='l5'){
+        const box=$('days'), o=$('planO');
+        box.innerHTML = T.days.map((d,i)=>`<button type="button" class="day ${daysSel.has(i)?'on':''}" data-i="${i}">${esc(d)}</button>`).join('');
+        const up=()=>{
+          const n=daysSel.size; o.style.display='block';
+          let txt, cls='ok';
+          if(n===0){ txt=T.l5.plan.none; cls=''; }
+          else if(n===1){ txt=T.l5.plan.one; cls='warn'; }
+          else if(n<=3){ txt=T.l5.plan.good; }
+          else { txt=T.l5.plan.many; cls='warn'; }
+          const arr=[...daysSel].sort((a,b)=>a-b);
+          if(n>=2 && arr.some((d,i)=>i>0 && d-arr[i-1]===1)) txt+=T.l5.plan.cons;
+          o.className='out '+cls; o.textContent=txt;
+        };
+        box.addEventListener('click',e=>{
+          const b=e.target.closest('.day'); if(!b) return; const i=+b.dataset.i;
+          if(daysSel.has(i)) daysSel.delete(i); else daysSel.add(i);
+          b.classList.toggle('on'); LS.set('hfp_mc_days',JSON.stringify([...daysSel])); up();
+        });
+        up();
+      }
+    }
+    function updateProgress(){
+      const T=S[lang], n=done.size;
+      $('pTxt').textContent = `${T.progress}: ${n} ${T.of} 5`; $('pBar').style.width = (n/5*100)+'%';
+      KEYS.forEach((k,i)=>{
+        const d=$('d_'+k); d.classList.toggle('done', done.has(k));
+        const b=d.querySelector('.done-btn'); b.textContent = done.has(k)? T.undo : T.markDone; b.className = 'btn done-btn '+(done.has(k)?'ghost':'');
+        d.querySelector('.n').textContent = done.has(k) ? '✓' : String(i+1);
+      });
+      $('final').style.display = n===5 ? 'block' : 'none';
+    }
+    function renderSheet(){
+      const T=S[lang].sheet;
+      $('sheet').innerHTML = `<h2>${esc(T.t)}</h2>` + T.rules.map(r=>`<h3>${esc(r[0])}</h3><p>${esc(r[1])}</p>`).join('') + `<p class="foot">${esc(T.foot)}</p>`;
     }
     function renderContent(){
       const T = S[lang];
       $('content').dataset.open = '1';
-      $('content').innerHTML = T.lessons.map((l,i)=>`<details ${i===0?'open':''}><summary><span class="n">${i+1}</span>${esc(l[0])}</summary><div class="body">${l[1]}</div></details>`).join('')
-        + `<div class="cta"><h3 style="margin-bottom:12px;">${esc(T.cta)}</h3><a class="btn" href="index.html#pricing">${esc(T.ctaBtn)}</a></div><p class="src">${esc(T.src)}</p>`;
-      $('content').style.display = 'block'; $('gate').style.display = 'none';
+      $('content').innerHTML = `<div class="prog"><div class="row"><span id="pTxt"></span></div><div class="bar"><i id="pBar"></i></div></div>`
+        + KEYS.map((k,i)=>`<details id="d_${k}" ${i===0?'open':''}><summary><span class="n">${i+1}</span><span class="t">${esc(T[k].t)}</span><span class="min">${T[k].m} ${esc(T.min)}</span></summary><div class="body">${T[k].html}<button class="btn done-btn" type="button" data-k="${k}"></button></div></details>`).join('')
+        + `<div class="card final" id="final" style="display:none;"><h3>${esc(T.finalT)}</h3><p class="sub" style="margin:0;">${esc(T.finalP)}</p><div class="btns"><button class="btn" id="printBtn" type="button">${esc(T.print)}</button><a class="btn ghost" href="index.html#pricing">${esc(T.plans)}</a></div></div>`
+        + `<p class="src">${esc(T.src)}</p>`;
+      $('content').style.display='block'; $('gate').style.display='none';
+      KEYS.forEach(wire);
+      document.querySelectorAll('.done-btn').forEach(b=>b.addEventListener('click',()=>{
+        const k=b.dataset.k; if(done.has(k)) done.delete(k); else { done.add(k); const next=KEYS[KEYS.indexOf(k)+1]; if(next){ $('d_'+k).open=false; $('d_'+next).open=true; $('d_'+next).scrollIntoView({behavior:'smooth',block:'start'}); } }
+        LS.set('hfp_mc_done',JSON.stringify([...done])); updateProgress();
+      }));
+      $('printBtn').addEventListener('click',()=>window.print());
+      renderSheet(); updateProgress();
     }
-    document.querySelectorAll('.langBtn').forEach(b=>b.addEventListener('click',()=>{ lang=b.dataset.lang; try{ localStorage.setItem('hfp_lang',lang); }catch(e){} paint(); }));
+    document.querySelectorAll('.langBtn').forEach(b=>b.addEventListener('click',()=>{ lang=b.dataset.lang; LS.set('hfp_lang',lang); paintStatic(); if($('content').dataset.open) renderContent(); }));
     $('f').addEventListener('submit', async ev=>{
       ev.preventDefault();
-      const name = $('n').value.trim(), email = $('e').value.trim();
-      const err = $('err'); err.style.display='none';
-      if(!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ err.textContent = S[lang].bad; err.style.display='block'; return; }
-      const btn = ev.submitter || document.querySelector('#f .btn'); btn.disabled = true; btn.textContent = S[lang].sending;
+      const name=$('n').value.trim(), email=$('e').value.trim();
+      const err=$('err'); err.style.display='none';
+      if(!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ err.textContent=S[lang].bad; err.style.display='block'; return; }
+      const btn=ev.submitter || document.querySelector('#f .btn'); btn.disabled=true; btn.textContent=S[lang].sending;
       if($('website').value.trim()===''){
         try{ await supabase.from('leads').insert({ full_name:name, email, interest:'Mini-course', marketing_consent:$('c').checked, source:'mini_course' }); }catch(e){ console.error(e); }
       }
-      try{ localStorage.setItem('hfp_minicourse','1'); }catch(e){}
-      renderContent();
+      LS.set('hfp_minicourse','1'); renderContent();
     });
-    paint();
-    try{ if(localStorage.getItem('hfp_minicourse')==='1') renderContent(); }catch(e){}
+    paintStatic();
+    if(LS.get('hfp_minicourse')==='1') renderContent();
   </script>
 </body>
 </html>
