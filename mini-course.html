@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Δωρεάν mini-course · Happy Fit Physio</title>
+  <meta name="description" content="Δωρεάν mini-course: 5 σύντομα μαθήματα για ασφαλές ξεκίνημα στην άσκηση, από το Happy Fit Physio.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800&family=Fraunces:ital,wght@0,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#f5f5f5; --ink-soft:#a5a5a5; --bg:#0b0b0b; --panel:#121212; --line:#242424; --red:#e50914; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; line-height:1.6; overflow-x:hidden; }
+    h1,h2,h3 { font-family:'Poppins',sans-serif; font-weight:800; }
+    a { color:inherit; }
+    .top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px max(16px,4vw); border-bottom:1px solid var(--line); }
+    .back { text-decoration:none; font-size:13px; font-weight:700; color:var(--ink-soft); }
+    .langSwitch { display:flex; gap:2px; background:rgba(255,255,255,.06); border-radius:6px; padding:3px; }
+    .langSwitch button { background:transparent; border:none; color:var(--ink-soft); font-size:11px; font-weight:700; padding:5px 10px; border-radius:4px; cursor:pointer; font-family:inherit; }
+    .langSwitch button.active { background:var(--red); color:#fff; }
+    main { max-width:720px; margin:0 auto; padding:36px max(16px,4vw) 80px; }
+    .label { font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--red); font-weight:700; margin-bottom:10px; }
+    h1 { font-size:clamp(1.8rem,5vw,2.6rem); line-height:1.15; margin-bottom:12px; }
+    .sub { color:var(--ink-soft); font-size:15px; margin-bottom:22px; }
+    .notice { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--red); border-radius:10px; padding:12px 14px; font-size:12.5px; color:var(--ink-soft); margin-bottom:24px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; }
+    .field { margin-bottom:12px; }
+    label { display:block; font-size:12px; font-weight:600; margin-bottom:5px; color:var(--ink-soft); }
+    input[type=text], input[type=email] { width:100%; background:#0b0b0b; border:1px solid var(--line); color:var(--ink); border-radius:10px; padding:11px 12px; font:400 15px 'Public Sans',sans-serif; }
+    .chk { display:flex; gap:10px; align-items:flex-start; font-size:12.5px; color:var(--ink-soft); margin:12px 0; }
+    .chk input { margin-top:4px; }
+    .btn { display:inline-block; background:var(--red); color:#fff; border:none; border-radius:10px; padding:12px 20px; font:700 14px 'Public Sans',sans-serif; cursor:pointer; text-decoration:none; }
+    .btn:disabled { opacity:.6; }
+    .err { color:#ff6b6b; font-size:13px; margin-top:10px; display:none; }
+    details { background:var(--panel); border:1px solid var(--line); border-radius:12px; margin-bottom:10px; }
+    summary { cursor:pointer; padding:14px 16px; font-weight:700; list-style:none; display:flex; gap:12px; align-items:center; }
+    summary::-webkit-details-marker { display:none; }
+    summary .n { background:var(--red); color:#fff; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+    details .body { padding:0 16px 16px 54px; font-size:14.5px; }
+    details .body p { margin-bottom:10px; }
+    details .body ul { padding-left:18px; margin-bottom:10px; }
+    .src { font-size:11.5px; color:var(--ink-soft); margin-top:22px; }
+    .cta { margin-top:26px; text-align:center; }
+    #content { display:none; }
+  </style>
+</head>
+<body>
+  <div class="top"><a class="back" href="index.html">← Happy Fit Physio</a><div class="langSwitch"><button class="langBtn" data-lang="el">EL</button><button class="langBtn" data-lang="en">EN</button></div></div>
+  <main>
+    <div class="label" data-t="label"></div>
+    <h1 data-t="h1"></h1>
+    <p class="sub" data-t="sub"></p>
+    <div class="notice" data-t="notice"></div>
+
+    <div class="card" id="gate">
+      <form id="f">
+        <input type="text" id="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" aria-hidden="true">
+        <div class="field"><label for="n" data-t="name"></label><input type="text" id="n" required maxlength="120"></div>
+        <div class="field"><label for="e">Email</label><input type="email" id="e" required maxlength="200"></div>
+        <label class="chk"><input type="checkbox" id="c"><span data-t="consent"></span></label>
+        <button class="btn" type="submit" data-t="go"></button>
+        <div class="err" id="err"></div>
+      </form>
+    </div>
+
+    <div id="content"></div>
+  </main>
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    const supabase = createClient('https://hxbpuamzisdldwbuumda.supabase.co', 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH');
+    let lang = 'el';
+    try{ if(localStorage.getItem('hfp_lang')==='en') lang='en'; }catch(e){}
+    const S = {
+      el: {
+        label:'Δωρεάν mini-course', h1:'Ασφαλές ξεκίνημα στην άσκηση',
+        sub:'5 σύντομα μαθήματα για να ξεκινήσεις ή να ξαναρχίσεις προπόνηση με σύνεση και συνέπεια.',
+        notice:'Γενική εκπαιδευτική πληροφορία. Δεν αποτελεί ιατρική συμβουλή, διάγνωση ή εξατομικευμένο πρόγραμμα και δεν αντικαθιστά την αξιολόγηση από αδειούχο επαγγελματία υγείας.',
+        name:'Ονοματεπώνυμο', consent:'Προαιρετικά: συναινώ να λαμβάνω ενημερωτικά email από το Happy Fit Physio. Μπορώ να διαγραφώ όποτε θέλω. Η πρόσβαση στο mini-course δεν εξαρτάται από αυτό.',
+        go:'Δες το mini-course', sending:'Αποστολή…', bad:'Έλεγξε το όνομα και το email.',
+        cta:'Θες πρόγραμμα φτιαγμένο για σένα;', ctaBtn:'Δες τις επιλογές coaching', src:'Πηγές: WHO Guidelines on physical activity and sedentary behaviour (2020). Watson et al., Recommended Amount of Sleep for a Healthy Adult, Sleep 2015.',
+        lessons:[
+          ['Ξεκίνα πιο ελαφριά και αύξανε σταδιακά', '<p>Πολλοί τραυματισμοί υπερφόρτωσης σχετίζονται με απότομη αύξηση του φόρτου. Η λύση είναι απλή: αλλάζεις <strong>ένα πράγμα τη φορά</strong>.</p><ul><li>Αύξησε είτε το βάρος, είτε τις επαναλήψεις, είτε τις ημέρες προπόνησης. Όχι όλα μαζί.</li><li>Τις πρώτες εβδομάδες σταμάτα κάθε σετ 2-3 επαναλήψεις πριν από το σημείο που δεν μπορείς άλλη (RIR 2-3).</li><li>Αν μια εβδομάδα πήγε άσχημα, μείνε στο ίδιο φορτίο και μην το ανεβάσεις.</li></ul>'],
+          ['Πόνος και ενόχληση: μάθε να τα ξεχωρίζεις', '<p>Χρησιμοποίησε μια κλίμακα 0-10 για τον πόνο. Ο κανόνας που εφαρμόζω στην εφαρμογή μου είναι απλός:</p><ul><li><strong>0-3:</strong> ήπια ενόχληση, συνήθως μπορείς να συνεχίσεις προσεκτικά.</li><li><strong>4:</strong> μείωσε το φορτίο ή το εύρος κίνησης και παρακολούθησε.</li><li><strong>5 και πάνω σε ένα σετ:</strong> σταμάτα αυτή την άσκηση.</li></ul><p>Αν η ενόχληση δεν έχει υποχωρήσει την επόμενη μέρα, κάν’ το πιο ελαφρύ την επόμενη φορά. Είναι γενικός πρακτικός κανόνας, όχι ιατρική συμβουλή.</p>'],
+          ['Πότε σταματάς και ζητάς αξιολόγηση από επαγγελματία υγείας', '<p>Η άσκηση δεν είναι το σωστό βήμα όταν υπάρχει:</p><ul><li>Έντονος ή επιδεινούμενος πόνος</li><li>Νέος τραυματισμός</li><li>Νέο σημαντικό σύμπτωμα</li><li>Νευρολογικά συμπτώματα (π.χ. μούδιασμα, αδυναμία)</li><li>Οποιοδήποτε επείγον ιατρικό συμβάν: καλείς το 166 ή το 112</li></ul><p>Σε αυτές τις περιπτώσεις χρειάζεσαι αξιολόγηση από αδειούχο γιατρό ή φυσικοθεραπευτή, όχι ένα πρόγραμμα.</p>'],
+          ['Ύπνος και ανάκαμψη', '<p>Η βελτίωση γίνεται στην ανάκαμψη, όχι μόνο στην προπόνηση.</p><ul><li>Οι ενήλικες χρειάζονται τουλάχιστον 7 ώρες ύπνου τη νύχτα για καλή υγεία.</li><li>Άφησε τουλάχιστον 1-2 ημέρες χωρίς έντονη προπόνηση την εβδομάδα. Το περπάτημα και η ήπια κίνηση βοηθούν.</li><li>Αν για αρκετές μέρες κοιμάσαι λίγο και νιώθεις εξαντλημένος/η, μείωσε προσωρινά τον όγκο.</li></ul>'],
+          ['Συνέπεια πάνω από τελειότητα', '<p>Οι οδηγίες του Παγκόσμιου Οργανισμού Υγείας για ενήλικες περιλαμβάνουν 150-300 λεπτά μέτριας αερόβιας δραστηριότητας την εβδομάδα και ενδυνάμωση μυών τουλάχιστον 2 ημέρες την εβδομάδα.</p><ul><li>Ξεκίνα με 2 προπονήσεις των 30-40 λεπτών.</li><li>Κλείσε ώρες στο ημερολόγιο, σαν ραντεβού.</li><li>Σημείωνε μετά από κάθε προπόνηση: βάρος, επαναλήψεις, πόνο. Σε 4 εβδομάδες θα βλέπεις πρόοδο στα νούμερα.</li></ul>'],
+        ],
+      },
+      en: {
+        label:'Free mini-course', h1:'A safe start to training',
+        sub:'5 short lessons to start or restart training with good judgement and consistency.',
+        notice:'General educational information. It is not medical advice, a diagnosis or an individual program, and does not replace assessment by a licensed health professional.',
+        name:'Full name', consent:'Optional: I agree to receive informational emails from Happy Fit Physio. I can unsubscribe anytime. Access to the mini-course does not depend on this.',
+        go:'View the mini-course', sending:'Sending…', bad:'Please check your name and email.',
+        cta:'Want a program built for you?', ctaBtn:'See coaching options', src:'Sources: WHO Guidelines on physical activity and sedentary behaviour (2020). Watson et al., Recommended Amount of Sleep for a Healthy Adult, Sleep 2015.',
+        lessons:[
+          ['Start lighter and progress gradually', '<p>Many overuse injuries are linked to a sudden jump in load. The fix is simple: change <strong>one thing at a time</strong>.</p><ul><li>Increase either weight, reps or training days. Not all at once.</li><li>In the first weeks stop each set 2-3 reps before you could not do another (RIR 2-3).</li><li>If a week went badly, stay at the same load and do not increase it.</li></ul>'],
+          ['Pain and discomfort: learn to tell them apart', '<p>Use a 0-10 pain scale. The rule I use in my app is simple:</p><ul><li><strong>0-3:</strong> mild discomfort, you can usually continue carefully.</li><li><strong>4:</strong> reduce load or range of motion and monitor.</li><li><strong>5 or more in a set:</strong> stop that exercise.</li></ul><p>If discomfort has not settled the next day, go lighter next time. This is a general practical rule, not medical advice.</p>'],
+          ['When to stop and get assessed by a health professional', '<p>Exercise is not the right step when there is:</p><ul><li>Severe or worsening pain</li><li>A new injury</li><li>A new significant symptom</li><li>Neurological symptoms (e.g. numbness, weakness)</li><li>Any medical emergency: call 166 or 112</li></ul><p>In these cases you need assessment by a licensed doctor or physiotherapist, not a program.</p>'],
+          ['Sleep and recovery', '<p>Improvement happens in recovery, not only in training.</p><ul><li>Adults need at least 7 hours of sleep a night for good health.</li><li>Keep at least 1-2 days a week without hard training. Walking and easy movement help.</li><li>If you sleep little for several days and feel drained, temporarily reduce volume.</li></ul>'],
+          ['Consistency over perfection', '<p>The World Health Organization guidelines for adults include 150-300 minutes of moderate aerobic activity per week and muscle strengthening at least 2 days a week.</p><ul><li>Start with 2 sessions of 30-40 minutes.</li><li>Book them in your calendar like appointments.</li><li>After each session note weight, reps and pain. In 4 weeks you will see progress in the numbers.</li></ul>'],
+        ],
+      }
+    };
+    const $ = id => document.getElementById(id);
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function paint(){
+      const T = S[lang]; document.documentElement.lang = lang;
+      document.querySelectorAll('[data-t]').forEach(n=>{ n.textContent = T[n.dataset.t]; });
+      document.querySelectorAll('.langBtn').forEach(b=>b.classList.toggle('active', b.dataset.lang===lang));
+      if($('content').dataset.open) renderContent();
+    }
+    function renderContent(){
+      const T = S[lang];
+      $('content').dataset.open = '1';
+      $('content').innerHTML = T.lessons.map((l,i)=>`<details ${i===0?'open':''}><summary><span class="n">${i+1}</span>${esc(l[0])}</summary><div class="body">${l[1]}</div></details>`).join('')
+        + `<div class="cta"><h3 style="margin-bottom:12px;">${esc(T.cta)}</h3><a class="btn" href="index.html#pricing">${esc(T.ctaBtn)}</a></div><p class="src">${esc(T.src)}</p>`;
+      $('content').style.display = 'block'; $('gate').style.display = 'none';
+    }
+    document.querySelectorAll('.langBtn').forEach(b=>b.addEventListener('click',()=>{ lang=b.dataset.lang; try{ localStorage.setItem('hfp_lang',lang); }catch(e){} paint(); }));
+    $('f').addEventListener('submit', async ev=>{
+      ev.preventDefault();
+      const name = $('n').value.trim(), email = $('e').value.trim();
+      const err = $('err'); err.style.display='none';
+      if(!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ err.textContent = S[lang].bad; err.style.display='block'; return; }
+      const btn = ev.submitter || document.querySelector('#f .btn'); btn.disabled = true; btn.textContent = S[lang].sending;
+      if($('website').value.trim()===''){
+        try{ await supabase.from('leads').insert({ full_name:name, email, interest:'Mini-course', marketing_consent:$('c').checked, source:'mini_course' }); }catch(e){ console.error(e); }
+      }
+      try{ localStorage.setItem('hfp_minicourse','1'); }catch(e){}
+      renderContent();
+    });
+    paint();
+    try{ if(localStorage.getItem('hfp_minicourse')==='1') renderContent(); }catch(e){}
+  </script>
+</body>
+</html>
