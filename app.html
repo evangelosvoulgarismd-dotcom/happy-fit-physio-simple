@@ -394,13 +394,13 @@ const STR = {
   noPartners:{el:'Δεν υπάρχουν ακόμα συνεργάτες.', en:'No partners yet.'},
   partnerWelcomeTitle:{el:'👋 Καλωσόρισες ως συνεργάτης', en:'👋 Welcome as a partner'},
   partnerWelcomeBody:{el:'Έχεις πρόσβαση στο δικό σου, ξεχωριστό dashboard — οι πελάτες σου δεν είναι ορατοί σε κανέναν άλλον συνεργάτη. Ο ιδιοκτήτης της πλατφόρμας βλέπει, μόνο για ποιοτικό έλεγχο και χωρίς δυνατότητα επεξεργασίας, την κατάσταση των πελατών σου: ονόματα, ενεργό πρόγραμμα, τελευταίο check-in και επίπεδο πόνου.', en:"You have your own, separate dashboard — your clients aren't visible to any other partner. The platform owner can see, for quality control only and without edit access, your clients' status: names, active program, last check-in and pain level."},
-  partnerWelcomeBilling:{el:'Χρέωση συνεργασίας: {rate} ανά ενεργό πελάτη / μήνα. Υπολογίζεται αυτόματα εδώ· η πληρωμή διευθετείται απευθείας με τον ιδιοκτήτη (δεν υπάρχει αυτόματη χρέωση κάρτας μέσω της πλατφόρμας).', en:'Partnership fee: {rate} per active client / month. It is calculated automatically here; payment is arranged directly with the owner (there is no automatic card charge through the platform).'},
+  partnerWelcomeBilling:{el:'Χρέωση συνεργασίας ανά ενεργό πελάτη / μήνα: {rate}. Υπολογίζεται αυτόματα εδώ· η πληρωμή διευθετείται απευθείας με τον ιδιοκτήτη (δεν υπάρχει αυτόματη χρέωση κάρτας μέσω της πλατφόρμας).', en:'Partnership fee per active client / month: {rate}. It is calculated automatically here; payment is arranged directly with the owner (there is no automatic card charge through the platform).'},
   partnerWelcomeStep1:{el:'Το προφίλ σου είναι έτοιμο ✓', en:'Your profile is ready ✓'},
   partnerWelcomeStep2:{el:'Πρόσθεσε τον πρώτο σου ασκούμενο παρακάτω για να πάρεις κωδικό πρόσκλησης', en:'Add your first client below to get an invite code'},
   partnerWelcomeStep3:{el:'Ένας πελάτης μετράει στη χρέωση μόνο όταν γίνει "Ενεργός" (όχι στη δοκιμή)', en:'A client only counts toward the fee once they become "Active" (not while on trial)'},
   partnerWelcomeCta:{el:'Πάμε →', en:"Let's go →"},
   myPartnershipFee:{el:'💶 Χρέωση συνεργασίας αυτόν τον μήνα', en:'💶 This month\'s partnership fee'},
-  myPartnershipFeeNote:{el:'Υπολογισμός: ενεργοί πελάτες × {rate}. Η πληρωμή γίνεται απευθείας με τον ιδιοκτήτη, εκτός πλατφόρμας.', en:'Calculation: active clients × {rate}. Payment is settled directly with the owner, outside the platform.'},
+  myPartnershipFeeNote:{el:'Υπολογισμός ανά ενεργό πελάτη: {rate}. Η πληρωμή γίνεται απευθείας με τον ιδιοκτήτη, εκτός πλατφόρμας.', en:'Calculation per active client: {rate}. Payment is settled directly with the owner, outside the platform.'},
   recordCharge:{el:'Καταχώρηση χρέωσης μήνα', en:'Record this month\'s charge'},
   alreadyRecorded:{el:'✓ Καταχωρήθηκε', en:'✓ Recorded'},
   chargeHistory:{el:'Ιστορικό χρεώσεων', en:'Charge history'},
@@ -987,8 +987,8 @@ async function renderNotifPanel(anchorEl, isCoach){
       const activeCount = (ownClients||[]).filter(c=>(c.status||'trial')==='active').length;
       const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
       const feeText = locale==='el'
-        ? `💶 Τρέχουσα εκτίμηση χρέωσης συνεργασίας: ${activeCount} × ${euro(PARTNER_RATE_PER_CLIENT)} = ${euro(activeCount*PARTNER_RATE_PER_CLIENT)}`
-        : `💶 Current partnership fee estimate: ${activeCount} × ${euro(PARTNER_RATE_PER_CLIENT)} = ${euro(activeCount*PARTNER_RATE_PER_CLIENT)}`;
+        ? `💶 Τρέχουσα εκτίμηση χρέωσης συνεργασίας: ${activeCount} ενεργοί πελάτες = ${euro(partnerFee(activeCount))}`
+        : `💶 Current partnership fee estimate: ${activeCount} active clients = ${euro(partnerFee(activeCount))}`;
       items.push({ t: new Date().toISOString(), text: feeText });
     }
   } else {
@@ -2015,11 +2015,11 @@ async function renderBusinessOverview(main){
   main.appendChild(el(`<div style="margin-bottom:16px;"><h2 style="margin:0 0 4px;">📊 ${locale==='el'?'Επιχείρηση — πραγματικά στοιχεία':'Business — real figures'}</h2><p style="margin:0; color:var(--ink-soft); font-size:12px;">${locale==='el'?'Ενοποιημένη εικόνα των 3 ενεργών πυλώνων, από πραγματικά δεδομένα (όχι πρόβλεψη). Για σενάρια/what-if, δες την Πρόβλεψη.':'A consolidated view of the 3 active pillars, from real data (not a projection). For what-if scenarios, see Projection.'}</p></div>`));
 
   if(profile.role !== 'owner'){
-    const feeOwed = activeClients.length * PARTNER_RATE_PER_CLIENT;
+    const feeOwed = partnerFee(activeClients.length);
     main.appendChild(el(`<div class="card" style="margin-bottom:16px; border-left-color:var(--gold);">
       <h3 style="margin-bottom:6px; font-size:14px;">${t('myPartnershipFee',locale)}</h3>
       <p class="mono" style="font-size:20px; color:var(--red-deep); margin-bottom:4px;">${euro(feeOwed)}</p>
-      <p style="font-size:11px; color:var(--ink-soft);">${t('myPartnershipFeeNote',locale).replace('{rate}', euro(PARTNER_RATE_PER_CLIENT))}</p>
+      <p style="font-size:11px; color:var(--ink-soft);">${t('myPartnershipFeeNote',locale).replace('{rate}', partnerFeeBandsText(euro))}</p>
     </div>`));
 
     if(myCharges && myCharges.length){
@@ -2076,7 +2076,20 @@ async function renderBusinessOverview(main){
 // (PARTNER_RATE_PER_CLIENT) so it is one place to change, and is
 // clearly labelled wherever it appears rather than hidden in a maths.
 // ============================================================
-const PARTNER_RATE_PER_CLIENT = 5; // €/active client/month — see business-model discussion with Evangelos
+const PARTNER_RATE_PER_CLIENT = 5; // €/active client/month for the first band — see business-model discussion with Evangelos
+// Graduated (marginal) bands: each client is charged at the rate of the band it falls in. The first band equals the
+// old flat rate, so no existing partner pays more than before; only larger partners pay less per extra client.
+const PARTNER_FEE_BANDS = [ { upTo:10, rate:5 }, { upTo:30, rate:4 }, { upTo:Infinity, rate:3 } ];
+function partnerFee(n){
+  let left = Math.max(0, n||0), prev = 0, total = 0;
+  for(const b of PARTNER_FEE_BANDS){ const inBand = Math.min(left, b.upTo - prev); total += inBand * b.rate; left -= inBand; prev = b.upTo; if(left<=0) break; }
+  return total;
+}
+function partnerFeeBandsText(euro){
+  return locale==='el'
+    ? `${euro(5)} για τους πρώτους 10, ${euro(4)} για τους επόμενους 20, ${euro(3)} από τον 31ο`
+    : `${euro(5)} for the first 10, ${euro(4)} for the next 20, ${euro(3)} from the 31st`;
+}
 
 const PLANS = {
   start:{ label:'START', el:'Εξατομικευμένο πρόγραμμα, οδηγίες και προοδευτική φόρτιση, καταγραφή προόδου.', en:'Personalized program, guidance and progressive loading, progress tracking.' },
@@ -2139,7 +2152,7 @@ async function renderPartnersView(main){
     const tbody = table.querySelector('tbody');
     coachProfiles.forEach(cp=>{
       const counts = clientsByCoach[cp.id] || { trial:0, active:0, paused:0, cancelled:0 };
-      const charge = counts.active * PARTNER_RATE_PER_CLIENT;
+      const charge = partnerFee(counts.active);
       const isRecorded = recordedThisPeriod.has(cp.id);
       const tr = el(`<tr>
         <td>${escapeHtml(cp.full_name||'—')}</td>
@@ -2167,7 +2180,7 @@ async function renderPartnersView(main){
         if(isRecorded) return;
         await supabase.from('partner_charges').insert({
           coach_id: cp.id, period, active_clients: counts.active,
-          rate: PARTNER_RATE_PER_CLIENT, amount: charge, paid: false, created_by: profile.id,
+          rate: counts.active ? Math.round(charge/counts.active*100)/100 : PARTNER_RATE_PER_CLIENT, amount: charge, paid: false, created_by: profile.id,
         });
         renderPartnersView(main);
       });
@@ -3084,7 +3097,7 @@ async function renderCoachDashboard(main){
   // orient them before the empty list below, rather than dropping them on a blank screen.
   if(profile.role !== 'owner' && !clients?.length && !invites?.length){
     const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
-    const rateStr = `${euro(PARTNER_RATE_PER_CLIENT)}`;
+    const rateStr = partnerFeeBandsText(euro);
     const welcome = el(`<div class="card gold" style="margin-bottom:16px;">
       <h3 style="margin-bottom:8px; font-size:15px;">${t('partnerWelcomeTitle',locale)}</h3>
       <p style="font-size:12.5px; margin-bottom:10px;">${t('partnerWelcomeBody',locale)}</p>
