@@ -2959,6 +2959,7 @@ async function renderCoachDashboard(main){
 
   const clientIds = (clients||[]).map(c=>c.id);
   let paidThisPeriod = new Set(), paymentsTracked = false;
+  const lastTrainingByClient = {};
   let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set(), aiEscalationByClient = {}, severePainClientIds = new Set();
   if(clientIds.length){
     // Recent AI-flagged interactions (see attachAskAssistant / ask-assistant.ts) feed the
@@ -2999,6 +3000,12 @@ async function renderCoachDashboard(main){
       if(!current || (severityRank[f.escalation] ?? 3) < (severityRank[current] ?? 3)) aiEscalationByClient[f.client_id] = f.escalation;
     });
     (allSeverePain||[]).forEach(p=>{ severePainClientIds.add(p.client_id); });
+    // Business follow-up signals (not clinical): last logged training day per client. One newest-row query per
+    // active/trial client, so large session_logs tables can't hide a client's recent sessions behind the row limit.
+    await Promise.all((clients||[]).filter(c=>['active','trial',null,undefined,''].includes(c.status)).map(async c=>{
+      const { data: lastLog } = await supabase.from('session_logs').select('session_date').eq('client_id', c.id).order('session_date',{ascending:false}).limit(1).maybeSingle();
+      if(lastLog?.session_date) lastTrainingByClient[c.id] = lastLog.session_date;
+    }));
     const { data: paysNow, error: paysErr } = await supabase.from('client_payments').select('client_id').eq('period', currentPeriod()).in('client_id', clientIds);
     if(!paysErr){ paymentsTracked = true; (paysNow||[]).forEach(r=>paidThisPeriod.add(r.client_id)); }
   }
@@ -3098,7 +3105,35 @@ async function renderCoachDashboard(main){
 
   const alertsByClient = {};
   (clients||[]).forEach(c=>{ alertsByClient[c.id] = computeAlerts(c); });
-  const flaggedClients = (clients||[]).filter(c=>alertsByClient[c.id].length>0);
+
+  // Follow-up signals for the coach's business, kept apart from computeAlerts on purpose: they are not
+  // clinical, so they must not push a client's clinical status dot to amber/red.
+  const opsByClient = {};
+  (clients||[]).forEach(c=>{
+    const list = [];
+    const st = c.status || 'trial';
+    const dayMs = 24*60*60*1000;
+    if(st==='active' || st==='trial'){
+      const stamps = [];
+      if(lastTrainingByClient[c.id]) stamps.push(new Date(lastTrainingByClient[c.id]).getTime());
+      (checkinsByClient[c.id]||[]).slice(0,1).forEach(x=>stamps.push(new Date(x.date).getTime()));
+      (readinessByClient[c.id]||[]).slice(0,1).forEach(x=>stamps.push(new Date(x.date).getTime()));
+      const last = stamps.length ? Math.max(...stamps) : null;
+      const ageDays = c.created_at ? (Date.now()-new Date(c.created_at).getTime())/dayMs : 99;
+      if(last!=null){
+        const d = Math.floor((Date.now()-last)/dayMs);
+        if(d>=7) list.push(locale==='el' ? `Καμία προπόνηση ή καταγραφή εδώ και ${d} ημέρες` : `No training or log for ${d} days`);
+      } else if(ageDays>=7){
+        list.push(locale==='el' ? 'Δεν έχει καταγράψει τίποτα ακόμα' : 'Has not logged anything yet');
+      }
+    }
+    // Payment is tracked per calendar month and marked by hand; flag from the 5th so a brand-new month isn't noise.
+    if(paymentsTracked && st==='active' && c.monthly_price && !paidThisPeriod.has(c.id) && new Date().getDate()>=5){
+      list.push(locale==='el' ? 'Δεν έχει σημειωθεί πληρωμή για τον μήνα' : 'No payment marked for this month');
+    }
+    opsByClient[c.id] = list;
+  });
+  const flaggedClients = (clients||[]).filter(c=>alertsByClient[c.id].length>0 || (opsByClient[c.id]||[]).length>0);
 
   if(clients?.length){
     const panel = el(`<div class="card" style="border-left-color:${flaggedClients.length?'var(--danger)':'var(--red)'};">
@@ -3111,6 +3146,7 @@ async function renderCoachDashboard(main){
         const row = el(`<div class="clickable" style="padding:6px 0; border-top:1px solid var(--line);">
           <strong style="font-size:13px;">${escapeHtml(c.full_name)}</strong>
           <div style="font-size:11px; color:var(--danger); margin-top:2px;">${alertsByClient[c.id].map(a=>`⚠ ${escapeHtml(a)}`).join(' · ')}</div>
+          ${(opsByClient[c.id]||[]).length ? `<div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">${opsByClient[c.id].map(a=>`• ${escapeHtml(a)}`).join(' · ')}</div>` : ''}
         </div>`);
         row.addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='checkins'; renderShell(); });
         panel.appendChild(row);
