@@ -5681,8 +5681,16 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
       ${readyHtml}
       <div class="dayList">${heroExercises.slice(0,4).map(exName).join(' · ')}${heroExercises.length>4 ? ` +${heroExercises.length-4}` : ''}</div>
       <button class="btn startWorkoutBtn dayCTA ${heroState==='done'?'secondary':''}" type="button">${btnLabel}</button>
-    ` : `<p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">${t('noWorkoutToday',locale)}</p>`}
+    ` : `<p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Ο coach σου ετοιμάζει το πρόγραμμά σου. Μέχρι τότε:':'Your coach is preparing your program. Until then:'}</p>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+        ${Object.keys(intakeData||{}).length ? '' : `<button class="btn goIntakeBtn" type="button">${locale==='el'?'Συμπλήρωσε το ιστορικό και τους στόχους σου':'Fill in your history and goals'}</button>`}
+        <button class="btn secondary goChatBtn" type="button">${locale==='el'?'Γράψε στον coach σου':'Message your coach'}</button>
+      </div>`}
   </div>`);
+  const goIntake = workoutCard.querySelector('.goIntakeBtn');
+  if(goIntake) goIntake.addEventListener('click', ()=>{ renderClientDashboard._tab='intake'; renderClientDashboard(body.closest('#main')); });
+  const goChat = workoutCard.querySelector('.goChatBtn');
+  if(goChat) goChat.addEventListener('click', ()=>{ renderClientDashboard._tab='messages'; renderClientDashboard(body.closest('#main')); });
   const nudge = workoutCard.querySelector('.fillReadinessNudge');
   if(nudge) nudge.addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
