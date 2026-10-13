@@ -647,6 +647,7 @@ const STR = {
   payNow:{el:'Πλήρωσε τώρα', en:'Pay now'},
   noPaymentLink:{el:'Δεν έχει οριστεί ακόμα link πληρωμής. Επικοινώνησε με τον coach σου.', en:'No payment link set up yet. Contact your coach.'},
   leads:{el:'Ενδιαφερόμενοι', en:'Leads'},
+  packages:{el:'Πακέτα συνεδριών', en:'Session packages'},
   downloadCsv:{el:'Λήψη CSV', en:'Download CSV'},
   convertToClient:{el:'Μετατροπή σε ασκούμενο', en:'Convert to client'},
   noLeads:{el:'Δεν υπάρχουν ακόμα ενδιαφερόμενοι από τη landing page.', en:'No leads yet from the landing page.'},
@@ -1228,6 +1229,7 @@ function renderShell(){
       <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
       ${isCoach ? `<button class="navBtn ${view==='business'?'active':''}" data-v="business">📊 ${locale==='el'?'Επιχείρηση':'Business'}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='packages'?'active':''}" data-v="packages">💆 ${t('packages',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='groupclasses'?'active':''}" data-v="groupclasses">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button><button class="navBtn ${view==='directory'?'active':''}" data-v="directory">🌐 ${locale==='el'?'Κατάλογος':'Directory'}</button>` : ''}
       ${isOwner ? `<button class="navBtn ${view==='partners'?'active':''}" data-v="partners">👥 ${t('partners',locale)}</button>` : ''}
@@ -1307,6 +1309,7 @@ function renderShell(){
   if(view==='library') renderLibrary(main, isCoach);
   else if(view==='business' && isCoach) renderBusinessOverview(main);
   else if(view==='leads' && isCoach) renderLeadsView(main);
+  else if(view==='packages' && isCoach) renderPackagesView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(view==='groupclasses' && isCoach) renderGroupClassesView(main);
@@ -1355,6 +1358,143 @@ async function fetchEuropePMC(query){
     doi: r.doi || null, pmid: r.pmid || null,
     url: r.doi ? `https://doi.org/${r.doi}` : (r.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/` : null),
   }));
+}
+
+// ---- Recovery / massage session packages (coach only; see migration_recovery_packages.sql) ----
+async function renderPackagesView(main){
+  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  const el_ = locale==='el';
+  const { data: pkgs, error: pErr } = await supabase.from('recovery_packages').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false});
+  if(pErr){
+    main.innerHTML = '';
+    main.appendChild(el(`<div><h2 style="margin-bottom:12px;">💆 ${t('packages',locale)}</h2><div class="card gold" style="font-size:13px;">${el_?'Τρέξε μία φορά το αρχείο migration_recovery_packages.sql στο Supabase για να ενεργοποιηθεί αυτή η οθόνη.':'Run migration_recovery_packages.sql once in Supabase to enable this screen.'}</div></div>`));
+    return;
+  }
+  const ids = (pkgs||[]).map(p=>p.id);
+  let sessions = [];
+  if(ids.length){
+    const { data } = await supabase.from('recovery_sessions').select('*').in('package_id', ids).order('session_date',{ascending:false}).order('created_at',{ascending:false});
+    sessions = data || [];
+  }
+  const byPkg = {}; sessions.forEach(x=>{ (byPkg[x.package_id] = byPkg[x.package_id] || []).push(x); });
+  const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+  const SERVICES = { massage: el_?'Μασάζ':'Massage', recovery: el_?'Recovery (συσκευές)':'Recovery (devices)', combo: el_?'Μασάζ και Recovery':'Massage and Recovery', other: el_?'Άλλο':'Other' };
+  const isDone = p => p.closed || (byPkg[p.id]||[]).length >= p.total_sessions;
+  const filter = renderPackagesView._filter || 'open';
+  const open = (pkgs||[]).filter(p=>!isDone(p));
+  const remainingTotal = open.reduce((a,p)=>a + Math.max(0, p.total_sessions - (byPkg[p.id]||[]).length), 0);
+  const unpaid = (pkgs||[]).filter(p=>!p.paid && p.price>0).reduce((a,p)=>a+Number(p.price),0);
+  const dstr = d => new Date(d+'T00:00:00').toLocaleDateString(el_?'el-GR':'en-GB');
+
+  main.innerHTML = '';
+  main.appendChild(el(`<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;"><h2>💆 ${t('packages',locale)}</h2><button class="btn newPkgBtn" type="button">+ ${el_?'Νέο πακέτο':'New package'}</button></div>`));
+  main.querySelector('.newPkgBtn').addEventListener('click', ()=>{ const f=main.querySelector('.pkgForm'); f.style.display = f.style.display==='none' ? 'block' : 'none'; });
+
+  const form = el(`<form class="card gold pkgForm" style="display:none; margin-bottom:14px;">
+    <div class="grid2">
+      <div class="field"><label>${el_?'Όνομα πελάτη':'Client name'}</label><input class="pk_name" required maxlength="120"></div>
+      <div class="field"><label>${el_?'Υπηρεσία':'Service'}</label><select class="pk_service">${Object.entries(SERVICES).map(([k,v])=>`<option value="${k}" ${k==='recovery'?'selected':''}>${v}</option>`).join('')}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>${el_?'Αριθμός συνεδριών':'Number of sessions'}</label><input class="pk_total" type="number" min="1" max="100" value="4" required inputmode="numeric"></div>
+      <div class="field"><label>${el_?'Τιμή πακέτου (€)':'Package price (€)'}</label><input class="pk_price" type="number" min="0" step="1" inputmode="decimal"></div>
+    </div>
+    <div class="field"><label>${el_?'Τοποθεσία (προαιρετικό)':'Place (optional)'}</label><input class="pk_place" maxlength="160" placeholder="${el_?'π.χ. Βίλα, Οία':'e.g. Villa, Oia'}"></div>
+    <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:12px;"><input type="checkbox" class="pk_paid"> ${el_?'Έχει πληρωθεί':'Already paid'}</label>
+    <button class="btn" type="submit">${t('save',locale)}</button>
+  </form>`);
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const total = parseInt(form.querySelector('.pk_total').value,10);
+    if(!(total>=1 && total<=100)){ toast(el_?'Βάλε 1 έως 100 συνεδρίες':'Enter 1 to 100 sessions'); return; }
+    const priceRaw = form.querySelector('.pk_price').value;
+    const { error } = await supabase.from('recovery_packages').insert({
+      coach_id: profile.id,
+      client_name: form.querySelector('.pk_name').value.trim(),
+      service: form.querySelector('.pk_service').value,
+      total_sessions: total,
+      price: priceRaw==='' ? null : Number(priceRaw),
+      place: form.querySelector('.pk_place').value.trim() || null,
+      paid: form.querySelector('.pk_paid').checked,
+    });
+    if(error){ toast((el_?'Σφάλμα: ':'Error: ')+error.message); return; }
+    toast(t('saved',locale)); renderPackagesView(main);
+  });
+  main.appendChild(form);
+
+  main.appendChild(el(`<div class="statGrid" style="margin-bottom:14px;">
+    <div class="statCard"><div class="num mono">${open.length}</div><div class="lbl">${el_?'Ενεργά πακέτα':'Open packages'}</div></div>
+    <div class="statCard"><div class="num mono">${remainingTotal}</div><div class="lbl">${el_?'Συνεδρίες που οφείλεις':'Sessions you owe'}</div></div>
+    <div class="statCard"><div class="num mono">${euro(unpaid)}</div><div class="lbl">${el_?'Απλήρωτα':'Unpaid'}</div></div>
+  </div>`));
+
+  const bar = el(`<div style="display:flex; gap:6px; margin-bottom:14px;">${[['open',el_?'Ενεργά':'Open'],['done',el_?'Ολοκληρωμένα':'Completed']].map(([k,lab])=>`<button type="button" class="btn ${filter===k?'':'secondary'} pkgChip" data-k="${k}" style="padding:6px 12px; font-size:12px;">${lab}</button>`).join('')}</div>`);
+  bar.querySelectorAll('.pkgChip').forEach(b=>b.addEventListener('click', ()=>{ renderPackagesView._filter = b.dataset.k; renderPackagesView(main); }));
+  main.appendChild(bar);
+
+  const shown = (pkgs||[]).filter(p => filter==='open' ? !isDone(p) : isDone(p));
+  if(!shown.length) main.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${(pkgs||[]).length ? (el_?'Κανένα σε αυτή την κατηγορία.':'None in this category.') : (el_?'Δεν υπάρχουν πακέτα ακόμα. Πάτα «Νέο πακέτο» για να καταγράψεις το πρώτο.':'No packages yet. Press "New package" to record the first.')}</p>`));
+
+  shown.forEach(p=>{
+    const list = byPkg[p.id] || [];
+    const used = list.length, left = Math.max(0, p.total_sessions - used);
+    const pct = Math.min(100, Math.round(used/p.total_sessions*100));
+    const card = el(`<div class="card">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start;">
+        <div style="min-width:180px; flex:1;">
+          <strong>${escapeHtml(p.client_name)}</strong>
+          <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="badge">${escapeHtml(SERVICES[p.service]||p.service)}</span>
+            ${p.place ? `<span class="badge">📍 ${escapeHtml(p.place)}</span>` : ''}
+            ${p.price!=null ? `<span class="badge mono">${euro(p.price)}</span>` : ''}
+            <button type="button" class="badge paidBtn" style="cursor:pointer; border:none; font-family:inherit; color:${p.paid?'var(--ok)':'var(--danger)'};">${p.paid ? (el_?'✓ Πληρώθηκε':'✓ Paid') : (el_?'Απλήρωτο':'Unpaid')}</button>
+            ${isDone(p) ? `<span class="badge">${el_?'Ολοκληρώθηκε':'Completed'}</span>` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;"><div class="mono" style="font-size:20px; font-weight:800;">${used}/${p.total_sessions}</div><div style="font-size:11px; color:var(--ink-soft);">${el_?`απομένουν ${left}`:`${left} left`}</div></div>
+      </div>
+      <div style="background:var(--surface2); border-radius:20px; height:8px; overflow:hidden; margin:12px 0;"><div style="background:var(--red); height:100%; width:${pct}%;"></div></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        ${left>0 && !p.closed ? `<button class="btn addSesBtn" type="button" style="padding:6px 12px; font-size:12px;">+ ${el_?'Συνεδρία':'Session'}</button>` : ''}
+        ${used ? `<button class="btn secondary histBtn" type="button" style="padding:6px 12px; font-size:12px;">${el_?'Ιστορικό':'History'} (${used})</button>` : ''}
+        <button class="btn secondary closeBtn" type="button" style="padding:6px 12px; font-size:12px;">${p.closed ? (el_?'Άνοιγμα':'Reopen') : (el_?'Κλείσιμο':'Close')}</button>
+        <button class="btn danger delPkgBtn" type="button" style="padding:6px 10px; font-size:12px;">🗑</button>
+      </div>
+      <div class="sesForm" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);">
+        <div class="grid2">
+          <div class="field"><label>${el_?'Ημερομηνία':'Date'}</label><input type="date" class="ss_date" value="${localDateStr(new Date())}"></div>
+          <div class="field"><label>${el_?'Σημείωση (μόνο για εσένα)':'Note (only for you)'}</label><input class="ss_note" maxlength="1000" placeholder="${el_?'Σύντομα, χωρίς διαγνώσεις':'Short, no diagnoses'}"></div>
+        </div>
+        <button class="btn saveSesBtn" type="button">${t('save',locale)}</button>
+      </div>
+      <div class="histBox" style="display:none; margin-top:12px; padding-top:10px; border-top:1px solid var(--line);">
+        ${list.map(x=>`<div style="display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:5px 0;"><span><span class="mono">${dstr(x.session_date)}</span>${x.note ? ` · ${escapeHtml(x.note)}` : ''}</span><button type="button" class="delSesBtn" data-id="${x.id}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:12px;">${el_?'Διαγραφή':'Delete'}</button></div>`).join('')}
+      </div>
+    </div>`);
+    const refresh = ()=>renderPackagesView(main);
+    const upd = async (patch)=>{ const { error } = await supabase.from('recovery_packages').update(patch).eq('id', p.id); if(error){ toast((el_?'Σφάλμα: ':'Error: ')+error.message); return; } refresh(); };
+    card.querySelector('.paidBtn').addEventListener('click', ()=>upd({ paid: !p.paid }));
+    card.querySelector('.closeBtn').addEventListener('click', ()=>upd({ closed: !p.closed }));
+    const addBtn = card.querySelector('.addSesBtn');
+    if(addBtn) addBtn.addEventListener('click', ()=>{ const f=card.querySelector('.sesForm'); f.style.display = f.style.display==='none' ? 'block' : 'none'; });
+    card.querySelector('.saveSesBtn').addEventListener('click', async ()=>{
+      const { error } = await supabase.from('recovery_sessions').insert({ package_id: p.id, coach_id: profile.id, session_date: card.querySelector('.ss_date').value || localDateStr(new Date()), note: card.querySelector('.ss_note').value.trim() || null });
+      if(error){ toast((el_?'Σφάλμα: ':'Error: ')+error.message); return; }
+      toast(t('saved',locale)); refresh();
+    });
+    const hb = card.querySelector('.histBtn');
+    if(hb) hb.addEventListener('click', ()=>{ const b=card.querySelector('.histBox'); b.style.display = b.style.display==='none' ? 'block' : 'none'; });
+    card.querySelectorAll('.delSesBtn').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!confirm(el_?'Διαγραφή αυτής της συνεδρίας;':'Delete this session?')) return;
+      await supabase.from('recovery_sessions').delete().eq('id', b.dataset.id); refresh();
+    }));
+    card.querySelector('.delPkgBtn').addEventListener('click', async ()=>{
+      if(!confirm(el_?`Διαγραφή του πακέτου "${p.client_name}" και όλων των συνεδριών του;`:`Delete package "${p.client_name}" and all its sessions?`)) return;
+      await supabase.from('recovery_packages').delete().eq('id', p.id); refresh();
+    });
+    main.appendChild(card);
+  });
+  main.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-top:14px;">${el_?'Οι τιμές είναι καταγραφή για εσένα, όχι τιμολόγιο ή απόδειξη.':'Prices are a record for you, not an invoice or receipt.'}</p>`));
 }
 
 async function renderLeadsView(main){
