@@ -246,6 +246,10 @@
     .bottomTab .lbl{ font-size:10px; font-weight:600; white-space:nowrap; }
     .bottomTab.active{ color:var(--red); }
   }
+  /* Small avatars in coach lists */
+  .miniAv{display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:var(--red); color:#fff; font-weight:800; font-size:12px; overflow:hidden; flex-shrink:0; vertical-align:middle; margin-right:8px; object-fit:cover;}
+  .miniAv.big{width:52px; height:52px; font-size:17px; margin-right:12px;}
+  img.miniAv{display:inline-block;}
   /* Client profile: avatar header, stats, grouped menu */
   .pfHero{position:relative; overflow:hidden; text-align:center; padding:22px 16px 16px;}
   .pfHero::before{content:""; position:absolute; inset:0 0 auto 0; height:84px; background:linear-gradient(135deg,var(--red) 0%,var(--red-deep) 100%); opacity:.9;}
@@ -3662,7 +3666,7 @@ async function renderCoachDashboard(main){
         const row = el(`<tr>
           <td><input type="checkbox" class="rowCheck" ${selected.has(c.id)?'checked':''}></td>
           <td title="${escapeHtml(clinStatus.label)}" style="text-align:center;">${clinStatus.dot}</td>
-          <td class="clickable"><strong>${escapeHtml(c.full_name)}</strong></td>
+          <td class="clickable"><strong>${avatarPlaceholder(c.full_name, c.id)}${escapeHtml(c.full_name)}</strong></td>
           <td>${escapeHtml(goal)}</td>
           <td class="mono">${rScore!==null ? rScore : '—'}</td>
           <td class="mono" style="${painColor}">${painVal!=null ? painVal : '—'}</td>
@@ -3686,7 +3690,7 @@ async function renderCoachDashboard(main){
         tbody.appendChild(row);
       });
       tableWrap.appendChild(table);
-      listContainer.appendChild(tableWrap);
+      listContainer.appendChild(tableWrap); hydrateAvatars(tableWrap);
       return;
     }
 
@@ -3701,7 +3705,7 @@ async function renderCoachDashboard(main){
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <input type="checkbox" class="cardCheck" ${selected.has(c.id)?'checked':''} style="flex-shrink:0;">
         <div class="clickable clientCardMain" style="flex:1; min-width:160px;">
-          <strong title="${escapeHtml(clinStatus.label)}">${clinStatus.dot} ${escapeHtml(c.full_name)}</strong>
+          <strong title="${escapeHtml(clinStatus.label)}">${avatarPlaceholder(c.full_name, c.id)}${clinStatus.dot} ${escapeHtml(c.full_name)}</strong>
           <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
             <span class="badge" style="color:${statusColor};">${t('status'+status.charAt(0).toUpperCase()+status.slice(1),locale)}</span>
             ${c.archived ? `<span class="badge" style="color:var(--ink-soft);">🗄 ${locale==='el'?'Αρχειοθετημένος':'Archived'}</span>` : ''}
@@ -3745,7 +3749,7 @@ async function renderCoachDashboard(main){
       }
       if(await deleteClientCompletely(c)) renderCoachDashboard(main);
     });
-    listContainer.appendChild(card);
+    listContainer.appendChild(card); hydrateAvatars(card);
   });
   }
 
@@ -3806,7 +3810,8 @@ async function renderClientDetail(main, forceRefresh){
   const back = el(`<button class="btn secondary">← ${locale==='el'?'Πίσω':'Back'}</button>`);
   back.addEventListener('click', ()=>{ selectedClient=null; renderClientDetail._cache=null; renderShell(); });
   main.appendChild(back);
-  main.appendChild(el(`<h2 style="margin-top:14px; margin-bottom:6px;">${escapeHtml(client.full_name)}</h2>`));
+  const detailTitle = el(`<h2 style="margin-top:14px; margin-bottom:6px; display:flex; align-items:center;">${avatarPlaceholder(client.full_name, client.id, true)}<span>${escapeHtml(client.full_name)}</span></h2>`);
+  main.appendChild(detailTitle); hydrateAvatars(detailTitle);
 
   // Quick status strip — same readiness-score formula used everywhere else in the app —
   // so a coach gets an at-a-glance read before picking a tab, instead of digging for it.
@@ -6497,6 +6502,19 @@ async function saveAvatar(userId, file){
   const { error } = await supabase.storage.from('progress-photos').upload(`${userId}/avatar.jpg`, blob, { contentType:'image/jpeg' });
   if(error) throw error;
   _avatarCache.delete(userId);
+}
+function avatarPlaceholder(name, uid, big){
+  const ini = (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  return `<span class="miniAv ${big?'big':''}" data-avuid="${escapeHtml(uid)}">${escapeHtml(ini)}</span>`;
+}
+// Fills every placeholder under root with the real photo when one exists (does not block rendering).
+function hydrateAvatars(root){
+  root.querySelectorAll('[data-avuid]').forEach(async node=>{
+    const url = await getAvatarUrl(node.dataset.avuid);
+    if(!url || !node.isConnected) return;
+    const img = document.createElement('img'); img.className = node.className; img.alt = ''; img.src = url;
+    node.replaceWith(img);
+  });
 }
 async function removeAvatar(userId){
   await supabase.storage.from('progress-photos').remove([`${userId}/avatar.jpg`]);
