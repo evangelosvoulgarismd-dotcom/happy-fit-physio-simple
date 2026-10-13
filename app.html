@@ -150,6 +150,21 @@
   .ic svg{width:1.12em; height:1.12em; flex-shrink:0;}
   .ic.icDot svg{width:.8em; height:.8em;}
   .ic.icDot{vertical-align:-0.1em;}
+  .dayCard{background:linear-gradient(135deg, var(--tint) 0%, var(--panel) 62%); border:1px solid var(--line); border-radius:14px; padding:20px 18px; margin-bottom:14px;}
+  .dayTop{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;}
+  .dayDate{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);}
+  .dayGreet{font-size:24px; line-height:1.15; margin-bottom:10px;}
+  .dayTitle{font-weight:700; font-size:16px; margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .dayStats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
+  .dayStat{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 6px; text-align:center;}
+  .dayStat strong{display:block; font-size:20px;}
+  .dayStat span{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .dayBarWrap{display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:12px;}
+  .dayBar{flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden;}
+  .dayBar>div{height:100%; background:var(--accent); transition:width .25s;}
+  .dayReady{display:flex; align-items:center; gap:8px; background:var(--tint-soft); border-radius:10px; padding:9px 11px; margin-bottom:12px; font-size:12.5px;}
+  .dayList{font-size:12px; color:var(--ink-soft); margin-bottom:14px; line-height:1.5;}
+  .dayCTA{width:100%; min-height:52px; font-size:15px; border-radius:12px;}
   .setLine{display:grid; grid-template-columns:22px 1fr 1fr 1fr 46px; gap:8px; align-items:end; margin-bottom:4px;}
   .setNum{font-size:12px; color:var(--ink-soft); padding-bottom:12px; text-align:center;}
   .setField{display:flex; flex-direction:column; gap:2px; min-width:0;}
@@ -753,6 +768,7 @@ const HFP_ICONS = {
   mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/>',
   book:'<path d="M3 5c2-1.2 4.3-1.2 6.5 0v14c-2.2-1.2-4.5-1.2-6.5 0Z"/><path d="M21 5c-2-1.2-4.3-1.2-6.5 0v14c2.2-1.2 4.5-1.2 6.5 0Z"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   pulse:'<polyline points="3 12 7 12 10 5 14 19 17 12 21 12"/>',
   moon:'<path d="M20 14A8 8 0 1 1 10 4a6.5 6.5 0 0 0 10 10z"/>',
   refresh:'<path d="M20 12a8 8 0 1 1-2.3-5.7"/><polyline points="20 4 20 9 15 9"/>',
@@ -768,7 +784,7 @@ const HFP_EMOJI_ICON = {
   '🔍':'search','🔎':'search','🗑':'trash','⚠':'alert','🚨':'alert','🚩':'alert','✅':'checkc','🏆':'trophy','🥇':'trophy','🏅':'trophy','⭐':'star',
   '🔥':'flame','⚡':'bolt','🎯':'target','💯':'target','💡':'bulb','📅':'calendar','🗓':'calendar','📥':'download','📤':'upload','🗄':'database','🔗':'link',
   '✏':'pencil','🤖':'robot','🪄':'sparkle','🧠':'sparkle','👋':'sparkle','🧬':'sparkle','📍':'pin','🗺':'pin','📞':'phone','📱':'phone','📧':'mail',
-  '🎓':'book','📚':'book','🏃':'pulse','😴':'moon','🔄':'refresh','🔁':'refresh','💾':'save','🖨':'print','🚪':'logout','📐':'ruler','📏':'ruler',
+  '🎓':'book','📚':'book','🏃':'pulse','🏝':'sun','🎉':'sparkle','😴':'moon','🔄':'refresh','🔁':'refresh','💾':'save','🖨':'print','🚪':'logout','📐':'ruler','📏':'ruler',
   '🔴':'dot:var(--danger)','🟡':'dot:var(--gold)','🟢':'dot:var(--ok)','⚪':'dot:var(--ink-soft)',
 };
 const HFP_EMOJI_RX = new RegExp('(' + Object.keys(HFP_EMOJI_ICON).join('|') + ')\\uFE0F?', 'g');
@@ -5505,7 +5521,7 @@ function renderLevelCard({ sessionLogDates, checkins, readiness }){
 
 function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings }){
   const wrap = el('<div></div>');
-  wrap.appendChild(renderLevelCard({ sessionLogDates, checkins, readiness }));
+  let nudgeEl = null;
 
   // Gentle re-engagement: shown only when there is an active program and 3+ days since the last logged
   // set (or since the program started). In-app only, based on the client's own data; no push is sent.
@@ -5513,7 +5529,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
     const lastLogDate = (sessionLogDates||[]).map(r=>r.session_date).filter(Boolean).sort().pop() || null;
     const gap = daysSinceLocal(lastLogDate || program.created_at, localDateStr(new Date()));
     if(gap != null && gap >= 3){
-      wrap.appendChild(el(`<div class="card gold" style="margin-bottom:12px;">
+      nudgeEl = (el(`<div class="card gold" style="margin-bottom:12px;">
         <strong style="font-size:13px;">💬 ${locale==='el'?'Είμαστε εδώ για σένα':'We are here for you'}</strong>
         <p style="font-size:12.5px; margin-top:6px;">${locale==='el'
           ? `Έχουν περάσει ${gap} μέρες ${lastLogDate ? 'από την τελευταία σου προπόνηση' : 'από τότε που ξεκίνησε το πρόγραμμά σου'}. Και μια σύντομη συνεδρία μετράει. Αν κάτι σε ενοχλεί ή δεν ξέρεις από πού να ξεκινήσεις, γράψε στον coach σου.`
@@ -5533,10 +5549,11 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
   }
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? (locale==='el'?'Καλημέρα':'Good morning') : (hour < 18 ? (locale==='el'?'Καλησπέρα':'Good afternoon') : (locale==='el'?'Καλησπέρα':'Good evening'));
+  const greeting = hour < 12 ? (locale==='el'?'Καλημέρα':'Good morning') : (locale==='el'?'Καλησπέρα':(hour < 18 ? 'Good afternoon' : 'Good evening'));
   const firstName = (profile.full_name||'').split(' ')[0] || '';
+  const todayStr = localDateStr(new Date());
 
-  // Readiness score + sub-metrics
+  // Readiness score (same formula as before)
   let readinessScore = null;
   if(todayReadiness){
     const r = todayReadiness;
@@ -5545,72 +5562,86 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
     readinessScore = Math.round(((positives+negatives)/7)*10);
   }
   const readinessColor = readinessScore===null ? 'var(--ink-soft)' : (readinessScore>=70 ? 'var(--ok)' : (readinessScore>=45 ? 'var(--gold)' : 'var(--danger)'));
-  const headerCard = el(`<div class="card gold" style="margin-bottom:12px;">
-    <h2 style="font-size:19px; margin-bottom:2px;">${greeting}${firstName?', '+escapeHtml(firstName):''}</h2>
-    <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">${locale==='el'?'Πώς είσαι σήμερα;':'How are you today?'}</p>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <div style="font-size:11px; color:var(--ink-soft);">${t('readinessScore',locale)}</div>
-        ${readinessScore!==null
-          ? `<div style="font-size:30px; font-weight:800; color:${readinessColor};" class="mono">${readinessScore}<span style="font-size:14px; color:var(--ink-soft);">%</span></div>`
-          : `<p style="font-size:12.5px; color:var(--ink-soft); margin-top:4px;">${t('fillReadiness',locale)}</p>`}
-      </div>
-      <button class="btn secondary goReadinessBtn" type="button" style="padding:8px 14px; font-size:12px;">${t('goToReadiness',locale)}</button>
-    </div>
-    ${todayReadiness ? `<div style="display:flex; gap:14px; margin-top:12px; font-size:11.5px; color:var(--ink-soft); flex-wrap:wrap;">
-      <span>😴 ${locale==='el'?'Ύπνος':'Sleep'} ${todayReadiness.sleep}/10</span>
-      <span>⚡ ${locale==='el'?'Ενέργεια':'Energy'} ${todayReadiness.energy}/10</span>
-      <span>💪 ${locale==='el'?'Πιάσιμο':'Soreness'} ${todayReadiness.soreness}/10</span>
-      <span>🩹 ${locale==='el'?'Πόνος':'Pain'} ${todayReadiness.pain}/10</span>
-    </div>` : ''}
-  </div>`);
-  headerCard.querySelector('.goReadinessBtn').addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
-  wrap.appendChild(headerCard);
 
-  // Hero: Today's workout card
-  const firstDayLabel = program ? ([...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}))[0] || 'Ημέρα 1') : null;
-  const firstDayExercises = program ? (program.program_exercises||[]).filter(pe=>(pe.day_label||'Ημέρα 1')===firstDayLabel) : [];
+  // Which day to show: the one in progress today, else the day after the last one trained, else the first.
+  const allPE = program ? (program.program_exercises||[]) : [];
+  const dayOf = pe => pe.day_label || 'Ημέρα 1';
+  const dayLabelsAll = [...new Set(allPE.map(dayOf))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+  const peDay = {}; allPE.forEach(pe=>{ peDay[pe.id] = dayOf(pe); });
+  const setsOfDay = d => allPE.filter(pe=>dayOf(pe)===d).reduce((n,pe)=>n+(pe.target_sets||3),0);
+  const doneToday = {}; (sessionLogDates||[]).filter(r=>r.session_date===todayStr).forEach(r=>{ const d = peDay[r.program_exercise_id]; if(d) doneToday[d] = (doneToday[d]||0)+1; });
+  let heroDay = dayLabelsAll[0] || 'Ημέρα 1';
+  const startedDays = Object.keys(doneToday);
+  if(startedDays.length){
+    heroDay = startedDays.sort((a,b)=>doneToday[b]-doneToday[a])[0];
+  } else if(dayLabelsAll.length > 1){
+    const lastRow = (sessionLogDates||[]).filter(r=>peDay[r.program_exercise_id]).sort((a,b)=>String(a.session_date).localeCompare(String(b.session_date))).pop();
+    if(lastRow){ const i = dayLabelsAll.indexOf(peDay[lastRow.program_exercise_id]); heroDay = dayLabelsAll[(i+1) % dayLabelsAll.length]; }
+  }
+  const heroExercises = allPE.filter(pe=>dayOf(pe)===heroDay).sort(byProgramOrder);
+  const heroTotalSets = setsOfDay(heroDay);
+  const heroDoneSets = doneToday[heroDay] || 0;
+  const heroState = heroDoneSets >= heroTotalSets && heroTotalSets > 0 ? 'done' : (heroDoneSets > 0 ? 'progress' : 'new');
+  // Rough length only: sets x 2.5 min (the 90 s rest timer plus the set itself). Shown as "~", never as a promise.
+  const estMin = Math.max(10, Math.round(heroTotalSets * 2.5 / 5) * 5);
+  const exName = pe => escapeHtml(locale==='el' ? pe.exercises.name_el : (pe.exercises.name_en || pe.exercises.name_el));
+  const dateLabel = new Date().toLocaleDateString(locale==='el'?'el-GR':'en-GB', { weekday:'long', day:'numeric', month:'long' });
 
-  // Same rule-based verdict used in the readiness form — surfaced here so today's
-  // check-in immediately says something about today's workout, not just a % score.
-  let verdictHtml = '';
+  // Readiness line inside the day card
+  let readyHtml = '';
   if(program && todayReadiness && readinessScore!==null){
     let dot, msg, vColor;
     if(readinessScore>=70){ dot='🟢'; vColor='var(--ok)'; msg = locale==='el' ? 'Η προπόνηση παραμένει ως έχει.' : 'Workout stays as planned.'; }
     else if(readinessScore>=45){ dot='🟡'; vColor='var(--gold)'; msg = locale==='el' ? 'Προτείνεται ελαφρώς μειωμένη επιβάρυνση.' : 'A slightly lighter load is suggested.'; }
     else { dot='🔴'; vColor='var(--danger)'; msg = locale==='el' ? 'Προτείνεται σημαντικά μειωμένη επιβάρυνση, ή ξεκούραση.' : 'A significantly lighter session, or rest, is suggested.'; }
-    verdictHtml = `<div style="display:flex; align-items:center; gap:8px; background:var(--tint-soft); border-radius:6px; padding:8px 10px; margin-bottom:12px;">
-      <span style="font-size:16px;">${dot}</span>
-      <span style="font-size:12.5px; font-weight:700; color:${vColor};">${msg}</span>
-    </div>`;
-  } else if(program && !todayReadiness){
-    verdictHtml = `<div class="fillReadinessNudge" style="cursor:pointer; display:flex; align-items:center; gap:8px; background:var(--tint-soft); border-radius:6px; padding:8px 10px; margin-bottom:12px;">
-      <span style="font-size:16px;">💡</span>
-      <span style="font-size:12px; color:var(--ink-soft);">${locale==='el' ? 'Συμπλήρωσε πώς είσαι σήμερα για εξατομικευμένη πρόταση.' : 'Fill in how you feel today for a tailored suggestion.'}</span>
-    </div>`;
+    readyHtml = `<div class="dayReady"><span>${dot}</span><span style="color:${vColor}; font-weight:700;">${msg}</span><span class="mono" style="margin-left:auto; color:var(--ink-soft);">${readinessScore}%</span></div>`;
+  } else if(program){
+    readyHtml = `<div class="dayReady fillReadinessNudge" style="cursor:pointer;"><span>💡</span><span style="color:var(--ink-soft);">${locale==='el' ? 'Πώς είσαι σήμερα; Συμπλήρωσε για εξατομικευμένη πρόταση.' : 'How do you feel today? Fill in for a tailored suggestion.'}</span><span style="margin-left:auto; color:var(--red-text); font-weight:700;">→</span></div>`;
   }
 
-  const workoutCard = el(`<div class="card" style="border-left-width:6px;">
-    <h3 style="font-size:12.5px; color:var(--red-text); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">⭐ ${locale==='el'?'Σήμερα για σένα':'Today for you'}</h3>
+  const btnLabel = heroState==='progress' ? (locale==='el'?'Συνέχισε την προπόνηση →':'Continue workout →') : (heroState==='done' ? (locale==='el'?'Δες την προπόνηση →':'View workout →') : t('startWorkout',locale));
+  const workoutCard = el(`<div class="dayCard">
+    <div class="dayTop"><span class="dayDate">${escapeHtml(dateLabel)}</span>${program ? `<span class="badge mono">📅 ${escapeHtml(heroDay)}</span>` : ''}</div>
+    <h2 class="dayGreet">${greeting}${firstName?', '+escapeHtml(firstName):''}</h2>
     ${program ? `
-      <div style="margin-bottom:4px; font-weight:700; font-size:16px;">${escapeHtml(program.title)}</div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-        <span class="badge mono">📅 ${escapeHtml(firstDayLabel)}</span>
-        ${program.phase ? `<span class="badge">${escapeHtml(program.phase)}</span>` : ''}
+      <div class="dayTitle">${escapeHtml(program.title)}${program.phase ? ` <span class="badge">${escapeHtml(program.phase)}</span>` : ''}</div>
+      <div class="dayStats">
+        <div class="dayStat"><strong class="mono">${heroExercises.length}</strong><span>${locale==='el'?'ασκήσεις':'exercises'}</span></div>
+        <div class="dayStat"><strong class="mono">${heroTotalSets}</strong><span>${locale==='el'?'σετ':'sets'}</span></div>
+        <div class="dayStat" title="${locale==='el'?'Εκτίμηση: σετ × 2,5 λεπτά':'Estimate: sets × 2.5 minutes'}"><strong class="mono">~${estMin}'</strong><span>${locale==='el'?'διάρκεια':'duration'}</span></div>
       </div>
-      ${verdictHtml}
-      <div style="font-size:12px; color:var(--ink-soft); margin-bottom:14px;">
-        ${firstDayExercises.slice(0,4).map(pe=>escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))).join(' · ')}
-        ${firstDayExercises.length>4 ? ` +${firstDayExercises.length-4}` : ''}
-      </div>
-      <button class="btn startWorkoutBtn" type="button" style="width:100%;">${t('startWorkout',locale)}</button>
-    ` : `<p style="font-size:13px; color:var(--ink-soft);">${t('noWorkoutToday',locale)}</p>`}
+      ${heroState!=='new' ? `<div class="dayBarWrap"><div class="dayBar"><div style="width:${Math.min(100,Math.round(heroDoneSets/heroTotalSets*100))}%"></div></div><span class="mono">${heroState==='done' ? (locale==='el'?'Ολοκληρώθηκε σήμερα ✓':'Completed today ✓') : `${heroDoneSets}/${heroTotalSets} ${locale==='el'?'σετ σήμερα':'sets today'}`}</span></div>` : ''}
+      ${readyHtml}
+      <div class="dayList">${heroExercises.slice(0,4).map(exName).join(' · ')}${heroExercises.length>4 ? ` +${heroExercises.length-4}` : ''}</div>
+      <button class="btn startWorkoutBtn dayCTA ${heroState==='done'?'secondary':''}" type="button">${btnLabel}</button>
+    ` : `<p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">${t('noWorkoutToday',locale)}</p>`}
   </div>`);
   const nudge = workoutCard.querySelector('.fillReadinessNudge');
   if(nudge) nudge.addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
-  if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
+  if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._startDay = heroDay; renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
   wrap.appendChild(workoutCard);
+
+  // Smaller cards below the day card: today's readiness details, gentle nudge, level
+  if(todayReadiness){
+    const readyCard = el(`<div class="card" style="padding:12px 14px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <div><div style="font-size:11px; color:var(--ink-soft);">${t('readinessScore',locale)}</div>
+          <div style="font-size:22px; font-weight:800; color:${readinessColor};" class="mono">${readinessScore}<span style="font-size:12px; color:var(--ink-soft);">%</span></div></div>
+        <button class="btn secondary goReadinessBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('goToReadiness',locale)}</button>
+      </div>
+      <div style="display:flex; gap:14px; margin-top:8px; font-size:11.5px; color:var(--ink-soft); flex-wrap:wrap;">
+        <span>😴 ${locale==='el'?'Ύπνος':'Sleep'} ${todayReadiness.sleep}/10</span>
+        <span>⚡ ${locale==='el'?'Ενέργεια':'Energy'} ${todayReadiness.energy}/10</span>
+        <span>💪 ${locale==='el'?'Πιάσιμο':'Soreness'} ${todayReadiness.soreness}/10</span>
+        <span>🩹 ${locale==='el'?'Πόνος':'Pain'} ${todayReadiness.pain}/10</span>
+      </div>
+    </div>`);
+    readyCard.querySelector('.goReadinessBtn').addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
+    wrap.appendChild(readyCard);
+  }
+  if(nudgeEl) wrap.appendChild(nudgeEl);
+  wrap.appendChild(renderLevelCard({ sessionLogDates, checkins, readiness }));
 
   // Goal + Reassessment mini-row
   const goal = intakeData?.priorityGoal || intakeData?.mainGoal || '';
@@ -5986,7 +6017,8 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   restBanner.querySelector('.restSkip').addEventListener('click', ()=>{ clearInterval(restTimer); restBanner.style.display='none'; });
 
   const dayLabels = [...new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1'))].sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
-  let selectedDay = dayLabels[0] || 'Ημέρα 1';
+  let selectedDay = (renderClientDashboard._startDay && dayLabels.includes(renderClientDashboard._startDay)) ? renderClientDashboard._startDay : (dayLabels[0] || 'Ημέρα 1');
+  renderClientDashboard._startDay = null;
   const exercisesWrap = el('<div></div>');
 
   if(dayLabels.length > 1){
@@ -6256,7 +6288,7 @@ async function renderClientDashboard(main){
     supabase.from('course_enrollments').select('id, course_id, courses(id,title)').eq('email', session?.user?.email || ''),
     // Lightweight (session_date only) — feeds the Level/Streak widget on the Today tab.
     // Real logged sets, not a separate gamification table: no schema change needed.
-    supabase.from('session_logs').select('session_date').eq('client_id', profile.id),
+    supabase.from('session_logs').select('session_date, program_exercise_id').eq('client_id', profile.id),
   ]);
   const program = programs?.[0] || null;
   let openSlots = [];
