@@ -165,6 +165,16 @@
   .dayReady{display:flex; align-items:center; gap:8px; background:var(--tint-soft); border-radius:10px; padding:9px 11px; margin-bottom:12px; font-size:12.5px;}
   .dayList{font-size:12px; color:var(--ink-soft); margin-bottom:14px; line-height:1.5;}
   .dayCTA{width:100%; min-height:52px; font-size:15px; border-radius:12px;}
+  .wkRow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .wkDay{display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; color:var(--ink-soft);}
+  .wkDay i{font-style:normal; width:28px; height:28px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff;}
+  .wkDay.done i{background:var(--accent); border-color:var(--accent);}
+  .wkDay.today i{border-color:var(--red);}
+  .wkDay.future{opacity:.55;}
+  .prBanner{position:fixed; top:14px; left:50%; transform:translate(-50%,-140%); z-index:2000; width:min(92vw,420px); background:var(--panel); border:1px solid var(--red); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,.35); transition:transform .35s cubic-bezier(.2,.9,.3,1.2);}
+  .prBanner.show{transform:translate(-50%,0);}
+  .prBanner .prIco{width:42px; height:42px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;}
+  @media (prefers-reduced-motion:reduce){ .prBanner{transition:none;} }
   .setLine{display:grid; grid-template-columns:22px 1fr 1fr 1fr 46px; gap:8px; align-items:end; margin-bottom:4px;}
   .setNum{font-size:12px; color:var(--ink-soft); padding-bottom:12px; text-align:center;}
   .setField{display:flex; flex-direction:column; gap:2px; min-width:0;}
@@ -198,14 +208,13 @@
     #brandMark svg{width:26px; height:26px;}
     #sidebar h1{font-size:13px; text-align:left;}
     #sidebar .tagline{display:none;}
-    .langToggle{width:auto; order:2; margin-left:auto;}
-    .langToggle button{padding:5px 8px;}
+    #notifBell{margin-left:auto;}
     .navBtn{padding:7px 10px; font-size:12px; border-left:none; border-bottom:3px solid transparent;}
     .navBtn.active{border-left:none; border-bottom-color:var(--gold);}
     /* Settings/export/logout + legal links + social icons: same weight as the nav links,
        so they hide behind the hamburger too instead of always sitting above the page
        content on every mobile screen. */
-    #sidebarBottom{order:5; width:100%; flex-direction:row !important; flex-wrap:wrap; gap:6px !important; margin-top:4px !important; display:none !important;}
+    #sidebarBottom{order:5; width:100%; flex-direction:column !important; flex-wrap:nowrap; gap:6px !important; margin-top:4px !important; display:none !important;}
     #sidebarBottom.open{display:flex !important;}
     #sidebarFooter{width:100%; order:6;}
     #main{padding:16px 14px 40px;}
@@ -236,6 +245,19 @@
     .bottomTab .lbl{ font-size:10px; font-weight:600; white-space:nowrap; }
     .bottomTab.active{ color:var(--red); }
   }
+  /* Language / theme choice rows and the red logout button: stacked, one per line */
+  .optLabel{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#d9b8b0; margin:8px 2px 0;}
+  .optGroup{display:flex; flex-direction:column; gap:6px;}
+  .optRow{display:flex; align-items:center; justify-content:space-between; width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid rgba(255,255,255,.18); background:transparent; color:#f0d9d4; cursor:pointer; font-size:13px; font-family:inherit; text-align:left;}
+  .optRow i{font-style:normal; font-weight:800; color:var(--gold);}
+  .optRow.active{border-color:var(--gold); background:rgba(226,162,51,.12); color:#fff; font-weight:600;}
+  .navBtn.logoutBtn{background:#e50914; color:#fff; font-weight:700; text-align:center; border:1px solid #ff6b6b; margin-top:8px;}
+  .navBtn.logoutBtn:hover{background:#c40812;}
+  .profileOptLabel{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin:18px 2px 8px;}
+  .profileMenuRow.optP.active{border-color:var(--red); background:var(--tint-soft);}
+  .profileMenuRow.optP i{font-style:normal; font-weight:800; color:var(--red-text);}
+  .profileMenuRow.logoutP{background:var(--red); border-color:var(--red); color:#fff; font-weight:700; justify-content:center;}
+  .profileMenuRow.logoutP span{flex:0 1 auto !important;}
   #menuToggleBtn{display:none; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #themeBtn{background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
@@ -264,9 +286,8 @@
     #brandMark { min-width:0; flex:1 1 auto; overflow:hidden; }
     #brandMark img { width:40px !important; height:40px !important; flex:0 0 40px; }
     #brandMark h1, #brandMark .brandName { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #menuToggleBtn, #notifBell, #themeBtn { width:42px; height:42px; min-width:42px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
-    .langToggle { flex:0 0 auto; }
-    .langToggle button { min-width:42px; min-height:38px; }
+    #menuToggleBtn, #notifBell { width:42px; height:42px; min-width:42px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+    #sidebarBottom .optRow, #sidebarBottom .navBtn{ min-height:44px; }
     .navBtnsWrap { width:100%; max-height:calc(100dvh - 145px); overflow:auto; -webkit-overflow-scrolling:touch; }
     .navBtnsWrap .navBtn { min-height:44px; padding:10px 12px; }
     .menuGroupLabel { padding:10px 10px 5px; }
@@ -314,14 +335,14 @@
   @media (max-width:380px){
     #sidebar { padding-left:8px; padding-right:8px; gap:5px; }
     #brandMark img { width:34px !important; height:34px !important; flex-basis:34px; }
-    #menuToggleBtn, #notifBell, #themeBtn { width:38px; height:38px; min-width:38px; }
+    #menuToggleBtn, #notifBell { width:38px; height:38px; min-width:38px; }
     #main { padding-left:9px; padding-right:9px; }
     .statCard .num { font-size:20px; }
     .bottomTab .lbl { font-size:8.5px; }
   }
 
   /* Reduce accidental selection/zoom while keeping form usability */
-  button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell, #themeBtn { user-select:none; }
+  button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell { user-select:none; }
 
   /* ── Press feedback + accessibility preferences ── */
   .btn:active{transform:scale(.97);}
@@ -1180,11 +1201,6 @@ function renderShell(){
         <p class="tagline" style="text-align:center; margin-top:2px;">${t('tagline',locale)}</p>
         ${isOwner ? `<p style="text-align:center; margin-top:4px;"><span style="display:inline-block; font-size:10px; font-weight:800; letter-spacing:0.5px; color:var(--red-text); background:var(--tint); border-radius:20px; padding:2px 10px;">CEO · ${locale==='el'?'Ιδρυτής':'Founder'}</span></p>` : ''}
       </div>
-      <div class="langToggle" id="langToggle">
-        <button data-l="el" class="${locale==='el'?'active':''}">ΕΛ</button>
-        <button data-l="en" class="${locale==='en'?'active':''}">EN</button>
-      </div>
-      <button id="themeBtn" aria-label="${locale==='el'?'Εναλλαγή θέματος':'Switch theme'}">${(document.documentElement.getAttribute('data-theme')||'dark')==='dark'?'☀':'☾'}</button>
       <button id="menuToggleBtn" aria-label="${locale==='el'?'Άνοιγμα μενού':'Open menu'}">☰</button>
       <button id="notifBell" aria-label="${locale==='el'?'Ειδοποιήσεις':'Notifications'}">🔔<span class="dot" id="notifDot"></span></button>
       <div class="navBtnsWrap" id="navBtnsWrap">
@@ -1197,9 +1213,20 @@ function renderShell(){
       ${isOwner ? `<button class="navBtn ${view==='partners'?'active':''}" data-v="partners">👥 ${t('partners',locale)}</button>` : ''}
       </div>
       <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;" id="sidebarBottom">
+        <div class="optLabel">${locale==='el'?'Γλώσσα':'Language'}</div>
+        <div class="optGroup" id="langToggle">
+          <button class="optRow ${locale==='el'?'active':''}" data-l="el"><span>Ελληνικά</span><i>${locale==='el'?'✓':''}</i></button>
+          <button class="optRow ${locale==='en'?'active':''}" data-l="en"><span>English</span><i>${locale==='en'?'✓':''}</i></button>
+        </div>
+        <div class="optLabel">${locale==='el'?'Εμφάνιση':'Appearance'}</div>
+        <div class="optGroup" id="themeToggle">
+          <button class="optRow" data-th="dark"><span>${locale==='el'?'Σκούρο':'Dark'}</span><i></i></button>
+          <button class="optRow" data-th="light"><span>${locale==='el'?'Ανοιχτό':'Light'}</span><i></i></button>
+        </div>
+        <div class="optLabel">${locale==='el'?'Λογαριασμός':'Account'}</div>
         <button class="navBtn" id="enablePushBtn">🔔 ${locale==='el'?'Ενεργοποίηση ειδοποιήσεων':'Enable notifications'}</button>
         <button class="navBtn" id="exportBtn">${t('exportData',locale)}</button>
-        <button class="navBtn" id="logoutBtn">${t('logout',locale)}</button>
+        <button class="navBtn logoutBtn" id="logoutBtn">${t('logout',locale)}</button>
         <div id="sidebarFooter">
           <div class="trustBadges">
             <span class="badge">🔒 GDPR</span><span class="badge">🇪🇺 EU hosting</span>
@@ -1246,7 +1273,8 @@ function renderShell(){
     shell.querySelector('#sidebarBottom').classList.toggle('open');
     shell.querySelector('#navBtnsWrap').scrollIntoView({ behavior: SCROLL_BEHAVIOR(), block:'start' });
   });
-  shell.querySelector('#themeBtn').addEventListener('click', ()=>{ applyTheme((document.documentElement.getAttribute('data-theme')||'dark')==='dark' ? 'light' : 'dark'); });
+  shell.querySelectorAll('#themeToggle .optRow').forEach(b=>b.addEventListener('click', ()=>applyTheme(b.dataset.th)));
+  applyTheme(document.documentElement.getAttribute('data-theme')||'dark');
   shell.querySelector('#notifBell').addEventListener('click', (e)=>{
     e.stopPropagation();
     const existing = document.querySelector('.notifPanel');
@@ -5022,7 +5050,7 @@ function applyTheme(th){
   document.documentElement.setAttribute('data-theme', th);
   try{ localStorage.setItem('hfp_theme', th); }catch(e){}
   const m = document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', th==='dark' ? '#0b0b0b' : '#c4201f');
-  const b = document.getElementById('themeBtn'); if(b){ b.textContent = th==='dark' ? '☀' : '☾'; }
+  document.querySelectorAll('[data-th]').forEach(b=>{ const on = b.dataset.th===th; b.classList.toggle('active', on); const i=b.querySelector('i'); if(i) i.textContent = on ? '✓' : ''; });
   recolorCharts();
 }
 function renderTrendChart(container, title, rows, dateKey, series){
@@ -5519,6 +5547,27 @@ function renderLevelCard({ sessionLogDates, checkins, readiness }){
   return card;
 }
 
+// ── Weekly rhythm and personal records (computed from the client's own logged sets, no extra storage) ──
+function weekStartStr(dateStr){
+  const d = new Date(dateStr+'T12:00:00'); const back = (d.getDay()+6)%7; d.setDate(d.getDate()-back); return localDateStr(d);
+}
+function addDaysStr(dateStr, n){ const d = new Date(dateStr+'T12:00:00'); d.setDate(d.getDate()+n); return localDateStr(d); }
+// A PR = a set with more load, or the same load with more reps, than anything logged before for that exercise.
+// The very first log of an exercise is a baseline, not a PR. Sets with pain 3+ never count (the app's safety rule).
+function computePRs(logs){
+  const sorted = (logs||[]).filter(l=>l.load_kg>0 && l.reps>0).slice().sort((a,b)=> String(a.session_date).localeCompare(String(b.session_date)) || (a.set_number||0)-(b.set_number||0));
+  const best = {}, found = {};
+  sorted.forEach(l=>{
+    const key = l.program_exercises?.exercise_id || l.program_exercise_id; if(!key) return;
+    const b = best[key];
+    const better = !b || l.load_kg>b.load_kg || (l.load_kg===b.load_kg && l.reps>b.reps);
+    if(b && better && !(Number(l.pain)>=3)) found[key+'|'+l.session_date] = { date:l.session_date, key };
+    if(better && !(Number(l.pain)>=3)) best[key] = l;
+    else if(!b) best[key] = l;
+  });
+  return Object.values(found);
+}
+
 function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount, nextReassessAt, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings }){
   const wrap = el('<div></div>');
   let nudgeEl = null;
@@ -5639,6 +5688,50 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
     </div>`);
     readyCard.querySelector('.goReadinessBtn').addEventListener('click', ()=>{ renderClientDashboard._tab='readiness'; renderClientDashboard(body.closest('#main')); });
     wrap.appendChild(readyCard);
+  }
+  // Weekly rhythm: this week's days, and a short summary of last week (facts only, never a verdict).
+  if(program && (sessionLogDates||[]).length){
+    const thisWeek = weekStartStr(todayStr);
+    const lastWeek = addDaysStr(thisWeek, -7);
+    const trainedDays = new Set((sessionLogDates||[]).map(r=>r.session_date));
+    const planned = dayLabelsAll.length || 0;
+    const dayNames = locale==='el' ? ['Δ','Τ','Τ','Π','Π','Σ','Κ'] : ['M','T','W','T','F','S','S'];
+    let dotsHtml = '', thisCount = 0;
+    for(let i=0;i<7;i++){
+      const d = addDaysStr(thisWeek, i); const did = trainedDays.has(d); if(did) thisCount++;
+      const isToday = d===todayStr, future = d>todayStr;
+      dotsHtml += `<div class="wkDay ${did?'done':''} ${isToday?'today':''} ${future?'future':''}"><span>${dayNames[i]}</span><i>${did?'✓':''}</i></div>`;
+    }
+    wrap.appendChild(el(`<div class="card" style="padding:12px 14px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;">${locale==='el'?'Η εβδομάδα σου':'Your week'}</h3>
+        <span class="mono" style="font-size:12px;">${thisCount}${planned&&thisCount<=planned?` / ${planned}`:''} ${locale==='el'?'προπονήσεις':'workouts'}</span>
+      </div>
+      <div class="wkRow">${dotsHtml}</div>
+    </div>`));
+
+    const dismissKey = 'hfp_wk_dismiss_'+lastWeek;
+    let dismissed = false; try{ dismissed = localStorage.getItem(dismissKey)==='1'; }catch(e){}
+    const lastRows = (sessionLogDates||[]).filter(r=>r.session_date>=lastWeek && r.session_date<thisWeek);
+    const dayOfWeek = (new Date().getDay()+6)%7; // 0 = Monday
+    if(!dismissed && lastRows.length && dayOfWeek<=3){
+      const sessions = new Set(lastRows.map(r=>r.session_date)).size;
+      const prs = computePRs(sessionLogDates).filter(x=>x.date>=lastWeek && x.date<thisWeek).length;
+      const sumCard = el(`<div class="card gold" style="margin-bottom:12px; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <h3 style="font-size:13px;">🏆 ${locale==='el'?'Η περασμένη εβδομάδα':'Last week'}</h3>
+          <button class="wkClose" type="button" aria-label="${locale==='el'?'Κλείσιμο':'Close'}" style="background:none; border:none; color:var(--ink-soft); font-size:16px; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <div class="dayStats" style="margin:10px 0 4px;">
+          <div class="dayStat"><strong class="mono">${sessions}${planned&&sessions<=planned?`/${planned}`:''}</strong><span>${locale==='el'?'προπονήσεις':'workouts'}</span></div>
+          <div class="dayStat"><strong class="mono">${lastRows.length}</strong><span>${locale==='el'?'σετ':'sets'}</span></div>
+          <div class="dayStat"><strong class="mono">${prs}</strong><span>${locale==='el'?'νέα PR':'new PRs'}</span></div>
+        </div>
+        <p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Ό,τι έγινε, μετράει. Συνέχισε με τον δικό σου ρυθμό.':'Whatever you did counts. Keep going at your own pace.'}</p>
+      </div>`);
+      sumCard.querySelector('.wkClose').addEventListener('click', ()=>{ try{ localStorage.setItem(dismissKey,'1'); }catch(e){} sumCard.remove(); });
+      wrap.appendChild(sumCard);
+    }
   }
   if(nudgeEl) wrap.appendChild(nudgeEl);
   wrap.appendChild(renderLevelCard({ sessionLogDates, checkins, readiness }));
@@ -5951,6 +6044,32 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     if(!exId) return;
     (logsByExerciseId[exId] = logsByExerciseId[exId] || []).push(l);
   });
+  // Live personal-record check for the set just saved (same rule as computePRs; never for sets with pain 3+).
+  const todayBestByEx = {};
+  function checkLivePR(pe, ex, setNo, payload){
+    if(!(payload.load_kg>0 && payload.reps>0) || Number(payload.pain)>=3) return null;
+    const hist = (logsByExerciseId[ex.id] || []).filter(l=>l.load_kg!=null && l.reps!=null && !(l.session_date===today && l.set_number===setNo && l.program_exercise_id===pe.id));
+    const better = (a,b)=> !b || a.load_kg>b.load_kg || (a.load_kg===b.load_kg && a.reps>b.reps);
+    let best = null; hist.forEach(l=>{ if(better(l,best)) best = l; });
+    const tb = todayBestByEx[ex.id]; if(tb && better(tb,best)) best = tb;
+    const cand = { load_kg:payload.load_kg, reps:payload.reps };
+    const isPR = !!best && better(cand,best);
+    if(better(cand, todayBestByEx[ex.id])) todayBestByEx[ex.id] = cand;
+    return isPR ? { now:cand, before:best } : null;
+  }
+  function showPRBanner(name, pr){
+    document.querySelectorAll('.prBanner').forEach(n=>n.remove());
+    const b = el(`<div class="prBanner" role="status"><div class="prIco">🏆</div><div style="min-width:0;">
+      <div style="font-weight:800; font-size:14px;">${locale==='el'?'Νέο προσωπικό ρεκόρ!':'New personal record!'}</div>
+      <div style="font-size:12.5px;">${name} · <strong class="mono">${pr.now.load_kg}kg × ${pr.now.reps}</strong></div>
+      <div style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Προηγούμενο καλύτερο':'Previous best'}: ${pr.before.load_kg}kg × ${pr.before.reps}</div>
+    </div></div>`);
+    document.body.appendChild(b);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>b.classList.add('show')));
+    try{ if(navigator.vibrate) navigator.vibrate([20,40,20]); }catch(e){}
+    setTimeout(()=>{ b.classList.remove('show'); setTimeout(()=>b.remove(), 400); }, 4200);
+  }
+
   function trackerStatsFor(exerciseId){
     const history = (logsByExerciseId[exerciseId] || []).filter(l=>l.load_kg!=null && l.reps!=null);
     if(!history.length) return null;
@@ -6205,6 +6324,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           showPainNote(painVal);
           updateSessionProgress();
           startRestTimer();
+          try{ const pr = checkLivePR(pe, ex, s, payload); if(pr) showPRBanner(exName, pr); }catch(e){}
         }catch(err){
           btn.textContent = '✓';
           toast(locale==='el' ? 'Σφάλμα αποθήκευσης' : 'Save error');
@@ -6288,7 +6408,7 @@ async function renderClientDashboard(main){
     supabase.from('course_enrollments').select('id, course_id, courses(id,title)').eq('email', session?.user?.email || ''),
     // Lightweight (session_date only) — feeds the Level/Streak widget on the Today tab.
     // Real logged sets, not a separate gamification table: no schema change needed.
-    supabase.from('session_logs').select('session_date, program_exercise_id').eq('client_id', profile.id),
+    supabase.from('session_logs').select('session_date, program_exercise_id, set_number, load_kg, reps, pain, program_exercises(exercise_id)').eq('client_id', profile.id),
   ]);
   const program = programs?.[0] || null;
   let openSlots = [];
@@ -6374,10 +6494,18 @@ async function renderClientDashboard(main){
 
     // Account-level actions — same functions the sidebar/hamburger menu already uses,
     // just reachable directly from Profile too since that's where a client looks for them.
-    const accountMenu = el('<div class="profileMenu" style="margin-top:14px;"></div>');
-    const langRow = el(`<button class="profileMenuRow"><span class="cbn-ico">🌐</span><span>${locale==='el'?'Γλώσσα':'Language'}</span><span class="profileMenuArrow mono">${locale==='el'?'ΕΛ':'EN'}</span></button>`);
-    langRow.addEventListener('click', ()=>{ locale = locale==='el' ? 'en' : 'el'; renderClientDashboard._tab='profile'; renderShell(); });
-    accountMenu.appendChild(langRow);
+    const accountMenu = el('<div class="profileMenu"></div>');
+    const mkOpt = (label, on, fn)=>{ const r = el(`<button class="profileMenuRow optP ${on?'active':''}"><span>${label}</span><i>${on?'✓':''}</i></button>`); r.addEventListener('click', fn); return r; };
+    const curTheme = document.documentElement.getAttribute('data-theme')||'dark';
+    const langMenu = el('<div class="profileMenu"></div>');
+    langMenu.appendChild(mkOpt('Ελληνικά', locale==='el', ()=>{ if(locale==='el') return; locale='el'; renderClientDashboard._tab='profile'; renderShell(); }));
+    langMenu.appendChild(mkOpt('English', locale==='en', ()=>{ if(locale==='en') return; locale='en'; renderClientDashboard._tab='profile'; renderShell(); }));
+    const themeMenu = el('<div class="profileMenu"></div>');
+    themeMenu.appendChild(mkOpt(locale==='el'?'Σκούρο':'Dark', curTheme==='dark', ()=>{ applyTheme('dark'); renderClientDashboard._tab='profile'; renderClientDashboard(main); }));
+    themeMenu.appendChild(mkOpt(locale==='el'?'Ανοιχτό':'Light', curTheme==='light', ()=>{ applyTheme('light'); renderClientDashboard._tab='profile'; renderClientDashboard(main); }));
+    body.appendChild(el(`<div class="profileOptLabel">${locale==='el'?'Γλώσσα':'Language'}</div>`)); body.appendChild(langMenu);
+    body.appendChild(el(`<div class="profileOptLabel">${locale==='el'?'Εμφάνιση':'Appearance'}</div>`)); body.appendChild(themeMenu);
+    body.appendChild(el(`<div class="profileOptLabel">${locale==='el'?'Λογαριασμός':'Account'}</div>`));
     const exportRow = el(`<button class="profileMenuRow"><span class="cbn-ico">📤</span><span>${t('exportData',locale)}</span><span class="profileMenuArrow">›</span></button>`);
     exportRow.addEventListener('click', exportMyData);
     accountMenu.appendChild(exportRow);
@@ -6399,9 +6527,10 @@ async function renderClientDashboard(main){
       toast(next ? (locale==='el'?'Οι υπενθυμίσεις ενεργοποιήθηκαν':'Reminders turned on') : (locale==='el'?'Οι υπενθυμίσεις απενεργοποιήθηκαν':'Reminders turned off'));
     });
     accountMenu.appendChild(remRow);
-    const logoutRow = el(`<button class="profileMenuRow"><span class="cbn-ico">🚪</span><span>${t('logout',locale)}</span><span class="profileMenuArrow">›</span></button>`);
+    const logoutRow = el(`<button class="profileMenuRow logoutP"><span>${t('logout',locale)}</span></button>`);
     logoutRow.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
     accountMenu.appendChild(logoutRow);
+    logoutRow.style.marginTop='10px';
     body.appendChild(accountMenu);
   } else if(tab==='today'){
     renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings });
