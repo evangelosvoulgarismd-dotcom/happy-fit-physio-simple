@@ -118,6 +118,20 @@
   .evidenceItem a{color:var(--red-deep);}
   .setRow{display:flex; gap:8px; align-items:center; margin-bottom:6px;}
   .setRow input{width:70px; padding:6px;}
+  .setLine{display:grid; grid-template-columns:22px 1fr 1fr 1fr 46px; gap:8px; align-items:end; margin-bottom:4px;}
+  .setNum{font-size:12px; color:var(--ink-soft); padding-bottom:12px; text-align:center;}
+  .setField{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .setField small{font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft);}
+  .setField input{width:100%; min-width:0; padding:10px 6px; font-size:16px; text-align:center; border-radius:10px;}
+  .setField input.prefilled{color:var(--ink-soft); font-style:italic;}
+  .setDone{width:46px; height:46px; border-radius:50%; border:2px solid var(--red-deep); background:transparent; color:var(--red-deep); font-size:20px; font-weight:800; line-height:1; cursor:pointer; padding:0; transition:transform .15s ease, background .15s ease, color .15s ease;}
+  .setDone.done{background:var(--red-deep); color:#fff;}
+  .setDone.pop{animation:setPop .28s ease;}
+  @keyframes setPop{0%{transform:scale(.85)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){ .setDone, .setDone.pop{animation:none; transition:none;} }
+  .setMoreBtn{background:none; border:none; color:var(--ink-soft); font-size:11px; padding:2px 0 8px 30px; cursor:pointer; font-family:inherit;}
+  .setMore{display:none; grid-template-columns:22px 1fr 1fr 46px; gap:8px; margin:0 0 8px; }
+  .setMore.open{display:grid;}
   .clickable{cursor:pointer;}
   .tableScroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
   /* Desktop default: hidden. Must come BEFORE the mobile media query below —
@@ -5904,21 +5918,43 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     const warmBtn = card.querySelector('.warmToggleBtn');
     if(warmBtn) warmBtn.addEventListener('click', ()=>{ const wp = card.querySelector('.warmPanel'); wp.style.display = wp.style.display==='none' ? 'block' : 'none'; });
     const setsCount = pe.target_sets || 3;
+    const setRows = [];
     for(let s=1; s<=setsCount; s++){
       const existing = logMap[`${pe.id}_${s}`];
       let logId = existing?.id || null;
+      const hasMore = existing && (existing.rpe != null || existing.rir != null);
       const row = el(`<div>
-        <div class="setRow">
-          <span class="mono" style="width:24px;">#${s}</span>
-          <input class="f_reps" placeholder="${t('reps',locale)}" value="${existing?.reps ?? ''}">
-          <input class="f_load" placeholder="${t('load',locale)}" value="${existing?.load_kg ?? ''}">
-          <input class="f_rpe" placeholder="${t('rpe',locale)}" value="${existing?.rpe ?? ''}">
-          <input class="f_rir" placeholder="RIR" value="${existing?.rir ?? ''}">
-          <input class="f_pain" placeholder="${t('pain',locale)}" value="${existing?.pain ?? ''}">
-          <button class="btn ${existing?'':'secondary'}" type="button" style="padding:6px 12px; font-size:12px;">${existing ? '✓ '+t('saved',locale).replace('✓ ','') : t('logSet',locale)}</button>
+        <div class="setLine">
+          <span class="setNum mono">${s}</span>
+          <label class="setField"><small>${t('reps',locale)}</small><input class="f_reps" inputmode="numeric" value="${existing?.reps ?? ''}"></label>
+          <label class="setField"><small>${locale==='el'?'κιλά':'kg'}</small><input class="f_load" inputmode="decimal" value="${existing?.load_kg ?? ''}"></label>
+          <label class="setField"><small>${t('pain',locale)} 0-10</small><input class="f_pain" inputmode="numeric" value="${existing?.pain ?? ''}"></label>
+          <button class="setDone ${existing?'done':''}" type="button" aria-label="${t('logSet',locale)}">✓</button>
+        </div>
+        <button class="setMoreBtn" type="button">${hasMore?'−':'+'} RPE / RIR</button>
+        <div class="setMore ${hasMore?'open':''}">
+          <span></span>
+          <label class="setField"><small>RPE</small><input class="f_rpe" inputmode="decimal" value="${existing?.rpe ?? ''}"></label>
+          <label class="setField"><small>RIR</small><input class="f_rir" inputmode="numeric" value="${existing?.rir ?? ''}"></label>
+          <span></span>
         </div>
         <div class="painNote" style="display:none; margin:4px 0 6px; font-size:11px; font-weight:600; border-radius:6px; padding:5px 8px;"></div>
       </div>`);
+      setRows.push(row);
+      row.querySelector('.setMoreBtn').addEventListener('click', ()=>{
+        const m = row.querySelector('.setMore'); const open = m.classList.toggle('open');
+        row.querySelector('.setMoreBtn').textContent = (open?'−':'+')+' RPE / RIR';
+      });
+      // Prefill is only a convenience for an unlogged set: the client still confirms with the tick.
+      // Load is not prefilled when last time's pain was 3+ (the app-safety rule says reduce, not repeat).
+      if(!existing){
+        const firstNum = String(pe.target_reps||'').match(/\d+/);
+        const prevLoad = (sugg && sugg.kind==='pain') ? null : (parseLoadKg(pe.target_load) || tracker?.lastSession?.load_kg || null);
+        const fr = row.querySelector('.f_reps'), fl = row.querySelector('.f_load');
+        if(firstNum){ fr.value = firstNum[0]; fr.classList.add('prefilled'); }
+        if(prevLoad){ fl.value = prevLoad; fl.classList.add('prefilled'); }
+      }
+      row.querySelectorAll('.f_reps,.f_load').forEach(i=>i.addEventListener('input', ()=>i.classList.remove('prefilled')));
       // Immediate in-session feedback on the pain value just logged for this set — the
       // app-safety pain rule (not a medical rule): 0-2 no note, 3-4 modify/reduce and
       // monitor, 5+ stop this exercise and it's surfaced to the coach. Previously this pain
@@ -5947,7 +5983,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         }
       }
       showPainNote(existing?.pain);
-      row.querySelector('button').addEventListener('click', async ()=>{
+      row.querySelector('.setDone').addEventListener('click', async ()=>{
         const painVal = row.querySelector('.f_pain').value;
         const payload = {
           program_exercise_id: pe.id, client_id: client.id, logged_by: profile.id, session_date: today, set_number: s,
@@ -5957,7 +5993,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           rir: Number(row.querySelector('.f_rir').value)||null,
           pain: Number(painVal)||0,
         };
-        const btn = row.querySelector('button');
+        const btn = row.querySelector('.setDone');
         btn.textContent = '…';
         try{
           if(logId){
@@ -5968,15 +6004,24 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
             if(error) throw error;
             logId = data.id;
           }
-          btn.textContent = '✓ '+t('saved',locale).replace('✓ ','');
-          btn.classList.remove('secondary');
+          btn.textContent = '✓';
+          btn.classList.add('done'); btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop');
+          try{ if(navigator.vibrate) navigator.vibrate(12); }catch(e){}
+          row.querySelectorAll('.f_reps,.f_load').forEach(i=>i.classList.remove('prefilled'));
+          // carry this set's reps and load into the next unlogged set, so the next tick is one tap
+          const nextRow = setRows[s];
+          if(nextRow && !logMap[`${pe.id}_${s+1}`]){
+            const nr = nextRow.querySelector('.f_reps'), nl = nextRow.querySelector('.f_load');
+            if(nr && (nr.value==='' || nr.classList.contains('prefilled')) && payload.reps){ nr.value = payload.reps; nr.classList.add('prefilled'); }
+            if(nl && (nl.value==='' || nl.classList.contains('prefilled')) && payload.load_kg){ nl.value = payload.load_kg; nl.classList.add('prefilled'); }
+          }
           toast(t('saved',locale));
           logMap[`${pe.id}_${s}`] = { id: logId, ...payload };
           showPainNote(painVal);
           updateSessionProgress();
           startRestTimer();
         }catch(err){
-          btn.textContent = t('logSet',locale);
+          btn.textContent = '✓';
           toast(locale==='el' ? 'Σφάλμα αποθήκευσης' : 'Save error');
         }
       });
