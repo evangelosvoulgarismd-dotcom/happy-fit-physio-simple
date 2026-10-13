@@ -246,6 +246,21 @@
     .bottomTab .lbl{ font-size:10px; font-weight:600; white-space:nowrap; }
     .bottomTab.active{ color:var(--red); }
   }
+  /* Client profile: avatar header, stats, grouped menu */
+  .pfHero{position:relative; overflow:hidden; text-align:center; padding:22px 16px 16px;}
+  .pfHero::before{content:""; position:absolute; inset:0 0 auto 0; height:84px; background:linear-gradient(135deg,var(--red) 0%,var(--red-deep) 100%); opacity:.9;}
+  .pfAvatarWrap{position:relative; width:96px; height:96px; margin:0 auto 10px; z-index:1;}
+  .pfAvatar{width:96px; height:96px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:30px; border:4px solid var(--panel); object-fit:cover; overflow:hidden;}
+  .pfCam{position:absolute; right:-2px; bottom:-2px; width:34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; border:3px solid var(--panel); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;}
+  .pfCam svg{width:16px; height:16px;}
+  .pfName{font-weight:800; font-size:18px; position:relative; z-index:1;}
+  .pfMail{font-size:12px; color:var(--ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pfChips{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:10px;}
+  .pfStats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px;}
+  .pfStat{background:var(--surface2); border-radius:10px; padding:10px 6px;}
+  .pfStat strong{display:block; font-size:18px;}
+  .pfStat span{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .pfRemove{background:none; border:none; color:var(--ink-soft); font-size:11.5px; cursor:pointer; text-decoration:underline; font-family:inherit; margin-top:8px;}
   /* Language / theme choice rows and the red logout button: stacked, one per line */
   .optLabel{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#d9b8b0; margin:8px 2px 0;}
   .optGroup{display:flex; flex-direction:column; gap:6px;}
@@ -6450,6 +6465,44 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
 // ============================================================
 // CLIENT DASHBOARD
 // ============================================================
+// ---- Profile photo (avatar) ----
+// Stored in the existing private "progress-photos" bucket at <user id>/avatar.jpg, so no new bucket or database column
+// is needed. Resized to a small square in the browser before upload. Falls back to initials when there is no photo.
+const _avatarCache = new Map();
+async function getAvatarUrl(userId){
+  const hit = _avatarCache.get(userId);
+  if(hit && hit.exp > Date.now()) return hit.url;
+  try{
+    const { data, error } = await supabase.storage.from('progress-photos').createSignedUrl(`${userId}/avatar.jpg`, 3600);
+    const url = (!error && data?.signedUrl) ? data.signedUrl : null;
+    _avatarCache.set(userId, { url, exp: Date.now() + (url ? 50*60*1000 : 60*1000) });
+    return url;
+  }catch(e){ return null; }
+}
+async function makeAvatarBlob(file){
+  const bmp = await new Promise((resolve, reject)=>{
+    const img = new Image(); const u = URL.createObjectURL(file);
+    img.onload = ()=>{ URL.revokeObjectURL(u); resolve(img); };
+    img.onerror = ()=>{ URL.revokeObjectURL(u); reject(new Error(locale==='el'?'Η φωτογραφία δεν διαβάστηκε. Δοκίμασε JPG ή PNG.':'Could not read the photo. Try JPG or PNG.')); };
+    img.src = u;
+  });
+  const size = 320, c = document.createElement('canvas'); c.width = size; c.height = size;
+  const side = Math.min(bmp.width, bmp.height);
+  c.getContext('2d').drawImage(bmp, (bmp.width-side)/2, (bmp.height-side)/2, side, side, 0, 0, size, size);
+  return await new Promise((resolve, reject)=> c.toBlob(b=> b ? resolve(b) : reject(new Error('blob')), 'image/jpeg', 0.85));
+}
+async function saveAvatar(userId, file){
+  const blob = await makeAvatarBlob(file);
+  await supabase.storage.from('progress-photos').remove([`${userId}/avatar.jpg`]);   // replace the old one (ignore if none)
+  const { error } = await supabase.storage.from('progress-photos').upload(`${userId}/avatar.jpg`, blob, { contentType:'image/jpeg' });
+  if(error) throw error;
+  _avatarCache.delete(userId);
+}
+async function removeAvatar(userId){
+  await supabase.storage.from('progress-photos').remove([`${userId}/avatar.jpg`]);
+  _avatarCache.delete(userId);
+}
+
 async function renderClientDashboard(main){
   let tab = renderClientDashboard._tab || 'today';
   main.innerHTML = `<p>${t('loading',locale)}</p>`;
@@ -6523,34 +6576,67 @@ async function renderClientDashboard(main){
 
   if(tab==='profile'){
     const initials = (profile.full_name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-    const headerCard = el(`<div class="card" style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
-      <div style="width:48px; height:48px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; flex-shrink:0;">${escapeHtml(initials)}</div>
-      <div style="min-width:0;">
-        <div style="font-weight:700; font-size:15px;">${escapeHtml(profile.full_name||'')}</div>
-        <div style="font-size:12px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(session?.user?.email||'')}</div>
+    const gam = computeGamification({ sessionLogDates, checkins, readiness });
+    const trainingDays = new Set((sessionLogDates||[]).map(r=>r.session_date)).size;
+    const memberSince = clientRow?.created_at || profile?.created_at;
+    const sinceTxt = memberSince ? new Date(memberSince).toLocaleDateString(locale==='el'?'el-GR':'en-GB', { month:'short', year:'numeric' }) : '—';
+    const avatarUrl = await getAvatarUrl(profile.id);
+    const headerCard = el(`<div class="card pfHero">
+      <div class="pfAvatarWrap">
+        ${avatarUrl ? `<img class="pfAvatar" src="${escapeHtml(avatarUrl)}" alt="">` : `<div class="pfAvatar">${escapeHtml(initials)}</div>`}
+        <button class="pfCam" type="button" aria-label="${locale==='el'?'Αλλαγή φωτογραφίας':'Change photo'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
+        <input type="file" class="pfFile" accept="image/*" style="display:none;">
       </div>
+      <div class="pfName">${escapeHtml(profile.full_name||'')}</div>
+      <div class="pfMail">${escapeHtml(session?.user?.email||'')}</div>
+      <div class="pfChips"><span class="badge">${escapeHtml(gam.rankLabel)} · ${locale==='el'?'Επίπεδο':'Level'} ${gam.level}</span>${gam.streak>0 ? `<span class="badge">${gam.streak} ${locale==='el'?'μέρες σερί':'day streak'}</span>` : ''}</div>
+      <div class="pfStats">
+        <div class="pfStat"><strong class="mono">${trainingDays}</strong><span>${locale==='el'?'Προπονήσεις':'Workouts'}</span></div>
+        <div class="pfStat"><strong class="mono">${(sessionLogDates||[]).length}</strong><span>${locale==='el'?'Σετ':'Sets'}</span></div>
+        <div class="pfStat"><strong class="mono" style="font-size:14px; line-height:24px;">${escapeHtml(sinceTxt)}</strong><span>${locale==='el'?'Μέλος από':'Member since'}</span></div>
+      </div>
+      ${avatarUrl ? `<button class="pfRemove" type="button">${locale==='el'?'Αφαίρεση φωτογραφίας':'Remove photo'}</button>` : ''}
     </div>`);
+    const pfFile = headerCard.querySelector('.pfFile');
+    headerCard.querySelector('.pfCam').addEventListener('click', ()=>pfFile.click());
+    pfFile.addEventListener('change', async ()=>{
+      const f = pfFile.files[0]; if(!f) return;
+      try{ await saveAvatar(profile.id, f); toast(t('saved',locale)); renderClientDashboard._tab='profile'; renderClientDashboard(main); }
+      catch(err){ toast((locale==='el'?'Σφάλμα: ':'Error: ') + (err.message||err)); }
+    });
+    const pfRemove = headerCard.querySelector('.pfRemove');
+    if(pfRemove) pfRemove.addEventListener('click', async ()=>{ await removeAvatar(profile.id); renderClientDashboard._tab='profile'; renderClientDashboard(main); });
     body.appendChild(headerCard);
 
-    const profileItems = [
-      { t:'safety', ico:'🛡️', label: locale==='el'?'Ασφάλεια':'Safety' },
-      { t:'intake', ico:'📋', label:t('intake',locale) },
-      { t:'messages', ico:'💬', label:t('messages',locale) },
-      { t:'nutrition', ico:'🍽️', label:t('nutrition',locale) },
-      { t:'massage', ico:'💆', label:t('massage',locale) },
-      { t:'calls', ico:'📹', label:'Zoom' },
-      { t:'payment', ico:'💳', label:t('payment',locale) },
-      { t:'photos', ico:'📸', label:t('progressPhotos',locale) },
-      { t:'refer', ico:'🎁', label:t('referFriend',locale) },
-      { t:'testimonial', ico:'💬', label: locale==='el'?'Η γνώμη σου':'Your feedback' },
+    // Menu grouped by purpose instead of one long flat list
+    const profileGroups = [
+      { title: locale==='el'?'Η υγεία και η πρόοδός μου':'My health and progress', items: [
+        { t:'intake', ico:'📋', label:t('intake',locale) },
+        { t:'safety', ico:'🛡️', label: locale==='el'?'Ασφάλεια':'Safety' },
+        { t:'nutrition', ico:'🍽️', label:t('nutrition',locale) },
+        { t:'photos', ico:'📸', label:t('progressPhotos',locale) },
+      ]},
+      { title: locale==='el'?'Επικοινωνία και υπηρεσίες':'Contact and services', items: [
+        { t:'messages', ico:'💬', label:t('messages',locale) },
+        { t:'massage', ico:'💆', label:t('massage',locale) },
+        { t:'calls', ico:'📹', label:'Zoom' },
+      ]},
+      { title: locale==='el'?'Συνδρομή και φίλοι':'Plan and friends', items: [
+        { t:'payment', ico:'💳', label:t('payment',locale) },
+        { t:'refer', ico:'🎁', label:t('referFriend',locale) },
+        { t:'testimonial', ico:'💬', label: locale==='el'?'Η γνώμη σου':'Your feedback' },
+      ]},
     ];
-    const menu = el('<div class="profileMenu"></div>');
-    profileItems.forEach(item=>{
-      const row = el(`<button class="profileMenuRow"><span class="cbn-ico">${item.ico}</span><span>${item.label}</span><span class="profileMenuArrow">›</span></button>`);
-      row.addEventListener('click', ()=>{ renderClientDashboard._tab = item.t; renderClientDashboard(main); });
-      menu.appendChild(row);
+    profileGroups.forEach(g=>{
+      body.appendChild(el(`<div class="profileOptLabel" style="margin-top:16px;">${g.title}</div>`));
+      const menu = el('<div class="profileMenu"></div>');
+      g.items.forEach(item=>{
+        const row = el(`<button class="profileMenuRow"><span class="cbn-ico">${item.ico}</span><span>${item.label}</span><span class="profileMenuArrow">›</span></button>`);
+        row.addEventListener('click', ()=>{ renderClientDashboard._tab = item.t; renderClientDashboard(main); });
+        menu.appendChild(row);
+      });
+      body.appendChild(menu);
     });
-    body.appendChild(menu);
 
     // Account-level actions — same functions the sidebar/hamburger menu already uses,
     // just reachable directly from Profile too since that's where a client looks for them.
