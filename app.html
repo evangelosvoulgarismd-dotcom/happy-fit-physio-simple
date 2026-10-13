@@ -1343,7 +1343,17 @@ async function renderLeadsView(main){
   const { data: leadsRaw } = await supabase.from('leads').select('*').order('created_at',{ascending:false});
   // Unconverted (actionable) leads first, converted ones after — so the leads that still
   // need a follow-up aren't buried under old ones you've already handled.
-  const leads = (leadsRaw||[]).slice().sort((a,b)=>(a.converted===b.converted) ? 0 : (a.converted ? 1 : -1));
+  const pipelineOn = !leadsRaw?.length || ('stage' in leadsRaw[0]);   // false until migration_lead_pipeline.sql has been run
+  const todayStr = localDateStr(new Date());
+  const isDue = l => pipelineOn && !l.converted && l.stage!=='lost' && l.stage!=='won' && l.next_followup && l.next_followup<=todayStr;
+  const rank = l => (l.converted||l.stage==='won') ? 3 : (l.stage==='lost' ? 4 : (isDue(l) ? 0 : (l.stage==='new'||!l.stage ? 1 : 2)));
+  let leads = (leadsRaw||[]).slice().sort((a,b)=> rank(a)-rank(b) || (new Date(b.created_at)-new Date(a.created_at)));
+  const STAGES = [['new', locale==='el'?'Νέο':'New'], ['contacted', locale==='el'?'Επικοινώνησα':'Contacted'], ['won', locale==='el'?'Έκλεισε':'Won'], ['lost', locale==='el'?'Χάθηκε':'Lost']];
+  const stageLabel = k => (STAGES.find(x=>x[0]===k)||STAGES[0])[1];
+  const filterKey = renderLeadsView._filter || 'all';
+  const allLeads = leads;
+  const inCat = (l,k)=> k==='all' ? true : k==='due' ? isDue(l) : k==='won' ? (l.converted || l.stage==='won') : (!l.converted && (l.stage||'new')===k);
+  if(pipelineOn && filterKey!=='all') leads = allLeads.filter(l=>inCat(l,filterKey));
   main.innerHTML = '';
 
   const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1352,9 +1362,19 @@ async function renderLeadsView(main){
   </div>`);
   main.appendChild(header);
 
-  if(!leads?.length){
+  if(!allLeads?.length){
     main.appendChild(el(`<p>${t('noLeads',locale)}</p>`));
     return;
+  }
+  if(pipelineOn){
+    const cnt = k => allLeads.filter(l=>inCat(l,k)).length;
+    const chips = [['all', locale==='el'?'Όλα':'All'], ['due', locale==='el'?'Να καλέσω':'Follow up']].concat(STAGES);
+    const bar = el(`<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">${chips.map(([k,lab])=>`<button type="button" class="btn ${filterKey===k?'':'secondary'} leadChip" data-k="${k}" style="padding:6px 12px; font-size:12px;">${lab} <span class="mono">${cnt(k)}</span></button>`).join('')}</div>`);
+    bar.querySelectorAll('.leadChip').forEach(b=>b.addEventListener('click', ()=>{ renderLeadsView._filter = b.dataset.k; renderLeadsView(main); }));
+    main.appendChild(bar);
+    if(!leads.length) main.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${locale==='el'?'Κανένα σε αυτή την κατηγορία.':'None in this category.'}</p>`));
+  } else {
+    main.appendChild(el(`<div class="card gold" style="padding:12px 14px; margin-bottom:14px; font-size:12.5px;">${locale==='el'?'Για κατάσταση και υπενθύμιση επικοινωνίας, τρέξε μία φορά το αρχείο migration_lead_pipeline.sql στο Supabase.':'For status and follow-up reminders, run migration_lead_pipeline.sql once in Supabase.'}</div>`));
   }
 
   header.querySelector('#csvBtn').addEventListener('click', ()=>{
@@ -1373,7 +1393,7 @@ async function renderLeadsView(main){
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
         <div class="leadView" style="flex:1; min-width:200px;">
-          <strong>${escapeHtml(l.full_name)}</strong> ${l.converted ? `<span class="badge">${locale==='el'?'Έγινε ασκούμενος':'Became client'}</span>` : ''}
+          <strong>${escapeHtml(l.full_name)}</strong> ${l.converted ? `<span class="badge">${locale==='el'?'Έγινε ασκούμενος':'Became client'}</span>` : ''}${isDue(l) ? ` <span class="badge" style="color:var(--danger);">${locale==='el'?'Να επικοινωνήσεις':'Follow up now'}</span>` : ''}
           <div style="font-size:12px; color:var(--ink-soft); margin-top:4px;">
             ${l.email ? `📧 ${escapeHtml(l.email)}` : ''} ${l.phone ? `· 📞 ${escapeHtml(l.phone)}` : ''} ${l.social_handle ? `· 📱 ${escapeHtml(l.social_handle)}` : ''}
           </div>
@@ -1390,6 +1410,11 @@ async function renderLeadsView(main){
           <button class="btn danger delLeadBtn" type="button" style="padding:6px 10px; font-size:12px;">🗑</button>
         </div>
       </div>
+      ${pipelineOn && !l.converted ? `<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+        <select class="leadStage" style="padding:7px 10px; border-radius:8px; border:1px solid var(--line); background:var(--input-bg); color:var(--ink); font-family:inherit; font-size:13px;">${STAGES.filter(x=>x[0]!=='won' || l.stage==='won').map(([k,lab])=>`<option value="${k}" ${(l.stage||'new')===k?'selected':''}>${lab}</option>`).join('')}</select>
+        <label style="font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:6px;">${locale==='el'?'Επόμενη επαφή':'Next contact'}
+          <input type="date" class="leadFollow" value="${l.next_followup||''}" style="padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:var(--input-bg); color:var(--ink); font-family:inherit; font-size:13px;"></label>
+      </div>` : ''}
       <div class="leadEditForm" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);">
         <div class="grid2">
           <div class="field"><label>${locale==='el'?'Ονοματεπώνυμο':'Full name'}</label><input class="lf_name" value="${escapeHtml(l.full_name)}"></div>
@@ -1406,11 +1431,20 @@ async function renderLeadsView(main){
     if(convertBtn) convertBtn.addEventListener('click', async ()=>{
       const code = uidCode();
       await supabase.from('invite_codes').insert({ code, coach_id: profile.id, client_name: l.full_name });
-      await supabase.from('leads').update({ converted: true }).eq('id', l.id);
+      await supabase.from('leads').update(pipelineOn ? { converted: true, stage: 'won' } : { converted: true }).eq('id', l.id);
       try{ await navigator.clipboard.writeText(code); }catch(err){}
       toast(locale==='el' ? `Κωδικός πρόσκλησης αντιγράφηκε: ${code}` : `Invite code copied: ${code}`);
       renderLeadsView(main);
     });
+    const saveLeadField = async (patch)=>{
+      const { error } = await supabase.from('leads').update(patch).eq('id', l.id);
+      if(error){ toast((locale==='el'?'Σφάλμα: ':'Error: ')+error.message); return; }
+      toast(t('saved',locale)); renderLeadsView(main);
+    };
+    const stageSel = card.querySelector('.leadStage');
+    if(stageSel) stageSel.addEventListener('change', ()=>saveLeadField({ stage: stageSel.value }));
+    const followIn = card.querySelector('.leadFollow');
+    if(followIn) followIn.addEventListener('change', ()=>saveLeadField({ next_followup: followIn.value || null }));
     card.querySelector('.editLeadBtn').addEventListener('click', ()=>{
       const form = card.querySelector('.leadEditForm');
       form.style.display = form.style.display==='none' ? 'block' : 'none';
