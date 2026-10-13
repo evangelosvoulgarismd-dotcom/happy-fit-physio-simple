@@ -3437,7 +3437,7 @@ async function renderCoachDashboard(main){
   </div>`);
   main.appendChild(toolbar);
 
-  const viewMode = renderCoachDashboard._viewMode || 'table';
+  const viewMode = renderCoachDashboard._viewMode || (window.matchMedia('(max-width:760px)').matches ? 'cards' : 'table');
   const toggleBar = el(`<div style="margin-bottom:12px; display:flex; justify-content:flex-end; gap:6px;">
     <button class="btn ${viewMode==='table'?'':'secondary'} viewTableBtn" type="button" style="padding:6px 14px; font-size:12px;">📋 ${locale==='el'?'Πίνακας':'Table'}</button>
     <button class="btn ${viewMode==='cards'?'':'secondary'} viewCardsBtn" type="button" style="padding:6px 14px; font-size:12px;">🗂 ${locale==='el'?'Κάρτες':'Cards'}</button>
