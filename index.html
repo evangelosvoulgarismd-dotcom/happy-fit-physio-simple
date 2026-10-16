@@ -1048,14 +1048,14 @@
           <div class="chat-avatar">HF</div>
           <div class="chat-header-info">
             <span>Happy Fit Physio</span>
-            <small>● Online · Βοηθός</small>
+            <small><span data-lang-el>Απαντώ ο ίδιος, εντός 24 ωρών</span><span data-lang-en>I reply personally, within 24 hours</span></small>
           </div>
         </div>
         <button class="chat-close" id="closeChat" aria-label="Κλείσιμο συνομιλίας">✕</button>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-row">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Ρώτησέ μας για το coaching…" autocomplete="off" aria-label="Γράψε το μήνυμά σου" />
+        <input class="chat-input" id="chatInput" type="text" placeholder="Γράψε την ερώτησή σου…" autocomplete="off" aria-label="Γράψε το μήνυμά σου" />
         <button class="chat-send" id="sendBtn" aria-label="Αποστολή μηνύματος">➤</button>
       </div>
     </div>
@@ -1067,6 +1067,7 @@
       'https://hxbpuamzisdldwbuumda.supabase.co',
       'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH'
     );
+    window.hfpSupabase = supabase;   // used by the chat box to save a visitor's question as a lead
     const leadForm = document.getElementById('leadForm');
     const leadCard = document.getElementById('leadCard');
     const leadError = document.getElementById('leadError');
@@ -1238,7 +1239,23 @@
     // Άδειασέ το αν δεν έχεις ακόμα webhook (π.χ. n8n). Το widget θα
     // δείχνει τότε ένα φιλικό μήνυμα με τρόπο επικοινωνίας αντί να σκάει.
     const WEBHOOK_URL = ''; // π.χ. 'https://your-n8n-instance/webhook/xxxx'
-    const WELCOME_MSG = "Γεια σου! Θέλεις να μάθεις περισσότερα για το online coaching ή να ξεκινήσεις κατευθείαν την εγγραφή σου;";
+    // This box is NOT an automatic bot. It takes the visitor's question and contact, saves it as a lead
+    // (the owner gets a push notification in the app) and promises a personal reply within 24 hours.
+    const isEn = () => document.body.classList.contains('lang-en');
+    const CHAT_T = {
+      welcome: { el: "Γεια σου! Εδώ δεν απαντά αυτόματο bot. Γράψε την ερώτησή σου και θα σου απαντήσω εγώ ο ίδιος μέσα σε 24 ώρες. Για κράτηση πιο γρήγορα, στείλε μου μήνυμα στο Instagram: instagram.com/happyfit.physio",
+                 en: "Hi! This is not an automatic bot. Write your question and I will reply to you personally within 24 hours. For a faster booking, message me on Instagram: instagram.com/happyfit.physio" },
+      askContact: { el: "Ευχαριστώ! Πώς σε λένε και πού να σε βρω; Γράψε το όνομά σου και email ή Instagram, π.χ. «Μαρία, @maria» ή «Μαρία, maria@email.gr».",
+                    en: "Thank you! What is your name and how can I reach you? Write your name and an email or Instagram, e.g. \"Maria, @maria\" or \"Maria, maria@email.com\"." },
+      needContact: { el: "Δεν βρήκα email ή Instagram. Γράψε ένα από τα δύο, π.χ. @maria ή maria@email.gr, για να σε βρω.",
+                     en: "I could not find an email or Instagram. Please write one of them, e.g. @maria or maria@email.com, so I can reach you." },
+      done: { el: "Το μήνυμά σου έφτασε. Θα σου απαντήσω μέσα σε 24 ώρες. Αν θες να προσθέσεις κάτι, γράψε το εδώ.",
+              en: "Your message arrived. I will reply within 24 hours. If you want to add something, write it here." },
+      fail: { el: "Δεν κατάφερα να στείλω το μήνυμα. Στείλε μου το απευθείας στο Instagram: instagram.com/happyfit.physio",
+              en: "I could not send the message. Please send it to me directly on Instagram: instagram.com/happyfit.physio" },
+    };
+    const ct = (k) => CHAT_T[k][isEn() ? 'en' : 'el'];
+    const WELCOME_MSG = CHAT_T.welcome.el;
     const FALLBACK_MSG = "Ευχαριστούμε για το μήνυμα! Το chat δεν είναι ακόμα πλήρως συνδεδεμένο. Στείλε μας μήνυμα απευθείας ή πάτα «Ξεκίνα Coaching» για να κάνεις εγγραφή.";
     const SIGNUP_URL = 'app.html'; // link προς το ίδιο το coaching app
     function applyFormLang(lang){
@@ -1250,7 +1267,7 @@
         opt.textContent = lang==='en' ? opt.dataset.en : opt.dataset.el;
       });
       const chatInput = document.getElementById('chatInput');
-      if(chatInput) chatInput.placeholder = lang==='en' ? 'Ask us about coaching…' : 'Ρώτησέ μας για το coaching…';
+      if(chatInput) chatInput.placeholder = lang==='en' ? 'Write your question…' : 'Γράψε την ερώτησή σου…';
       if(typeof applyTemplatesLang === 'function') applyTemplatesLang();
     }
     document.querySelectorAll('.langBtn').forEach(btn=>{
@@ -1332,7 +1349,7 @@
     function openChat() {
       overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
-      if (!welcomeShown) { welcomeShown = true; setTimeout(() => addMessage('agent', WELCOME_MSG), 350); }
+      if (!welcomeShown) { welcomeShown = true; setTimeout(() => addMessage('agent', ct('welcome')), 350); }
       setTimeout(() => input.focus(), 500);
     }
     function closeChat() { overlay.classList.remove('open'); document.body.style.overflow = ''; }
@@ -1359,6 +1376,39 @@
     }
     function hideTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
 
+    // Two steps: the question, then the contact. Then it is saved to the leads table like any other request.
+    let chatQuestion = '', chatStage = 0, chatTries = 0;
+    async function leadChat(text) {
+      await new Promise(r => setTimeout(r, 450));
+      hideTyping();
+      if (chatStage === 0) {
+        chatQuestion = text.slice(0, 600); chatStage = 1; chatTries = 0;
+        addMessage('agent', ct('askContact'));
+      } else {
+        const email = (text.match(/[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+/) || [])[0] || null;
+        const noEmail = email ? text.replace(email, ' ') : text;
+        const handle = (noEmail.match(/@[\w.]{2,30}/) || [])[0] || null;
+        if (!email && !handle) {
+          chatTries++;
+          addMessage('agent', ct('needContact'));
+          if (chatTries < 3) { sendBtn.disabled = false; input.focus(); return; }
+        } else {
+          const name = text.replace(email || '', ' ').replace(handle || '', ' ').replace(/[,;:·|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || (isEn() ? 'Website chat visitor' : 'Επισκέπτης chat');
+          try {
+            const sb = window.hfpSupabase;
+            if (!sb) throw new Error('no client');
+            const { error } = await sb.from('leads').insert({ full_name: name, email: email, social_handle: handle, interest: ('Ερώτηση από το chat: ' + chatQuestion).slice(0, 700), marketing_consent: false, source: 'site_chat' });
+            if (error) throw error;
+            addMessage('agent', ct('done'));
+          } catch (err) {
+            addMessage('agent', ct('fail'));
+          }
+        }
+        chatStage = 0; chatTries = 0; chatQuestion = '';
+      }
+      sendBtn.disabled = false; input.focus();
+    }
+
     async function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
@@ -1367,10 +1417,7 @@
       sendBtn.disabled = true;
       showTyping();
 
-      if (!WEBHOOK_URL) {
-        setTimeout(() => { hideTyping(); addMessage('agent', FALLBACK_MSG); sendBtn.disabled = false; input.focus(); }, 500);
-        return;
-      }
+      if (!WEBHOOK_URL) { await leadChat(text); return; }
       try {
         const res = await fetch(WEBHOOK_URL, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
