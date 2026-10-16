@@ -1762,7 +1762,8 @@ async function renderLeadsView(main){
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   });
 
-  leads.forEach(l=>{
+  const rk = (renderLeadsView._rk = (renderLeadsView._rk||0) + 1);
+  const renderLead = (l)=>{
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
         <div class="leadView" style="flex:1; min-width:200px;">
@@ -1838,7 +1839,15 @@ async function renderLeadsView(main){
       renderLeadsView(main);
     });
     main.appendChild(card);
-  });
+  };
+  // First screenful at once, the rest in small batches between frames, so a long list never freezes a phone.
+  leads.slice(0,10).forEach(renderLead);
+  const restLeads = leads.slice(10);
+  (function nextBatch(){
+    if(!restLeads.length || renderLeadsView._rk!==rk || !main.isConnected) return;
+    restLeads.splice(0,8).forEach(renderLead);
+    requestAnimationFrame(nextBatch);
+  })();
 }
 
 async function renderTemplatesView(main){

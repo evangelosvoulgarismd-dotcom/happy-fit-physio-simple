@@ -445,12 +445,12 @@
     .cqSummary b{ color:#fff; }
 
     /* ── Audit fixes: header fits at every width, tap targets, anchors, contrast ── */
-    @media (max-width:1180px){
+    @media (max-width:1320px){
       .stickyNav .navLinks{ display:none; }
       #navMobileToggle{ display:inline-flex; width:40px; height:40px; min-width:40px; margin-right:10px; }
       .stickyNav{ padding-left:20px; padding-right:20px; }
     }
-    @media (min-width:641px) and (max-width:1180px){
+    @media (min-width:641px) and (max-width:1320px){
       .navMobileDropdown{ left:auto; right:20px; width:min(360px, calc(100vw - 40px)); max-height:calc(100dvh - 80px); overflow:auto; }
       .navMobileDropdown a{ min-height:44px; display:flex; align-items:center; }
     }
@@ -465,6 +465,52 @@
     .section-label{ color:#ff5a62; }
     .service-card a.service-cta, .service-card .service-loc{ color:#ff5a62; }
     .service-card.b2b a.service-cta{ color:var(--gold); }
+
+    /* ══ Skin v2 (same look as the app): Inter, pill buttons, big rounded cards, hairline borders, glass bars ══ */
+    :root{ --r-card:22px; --hair:rgba(255,255,255,.09); --btn-bg:#f4f4f4; --btn-ink:#0b0b0b; }
+    body{ font-family:'Inter','Public Sans',system-ui,sans-serif; letter-spacing:-.006em; }
+    h1,h2,h3,h4{ font-family:'Inter',sans-serif; font-weight:700; letter-spacing:-.03em; }
+    .hero-tagline, .section-title, .statement-section p, .book-section h2{ font-family:'Inter',sans-serif; font-style:normal; font-weight:700; letter-spacing:-.035em; line-height:1.06; }
+    .hero-tagline{ font-size:clamp(2.4rem, 7vw, 4.4rem); }
+    .hero-tagline span, .statement-section p span{ font-style:normal; font-weight:700; color:var(--red-text); }
+    .statement-section p{ font-weight:600; font-size:clamp(1.7rem, 4.8vw, 3rem); line-height:1.12; }
+    .section-title{ font-size:clamp(1.9rem, 4.6vw, 3rem); }
+    .bio-text .bio-quote{ font-family:'Inter',sans-serif; font-style:normal; font-weight:400; }
+
+    /* buttons: pills; primary is white, secondary is a hairline outline, red stays as an accent */
+    .cta-btn, .price-cta, .lead-submit, .template-open{ border-radius:999px !important; font-family:'Inter',sans-serif; font-weight:600; letter-spacing:-.005em; transition:transform .28s cubic-bezier(.22,1,.36,1), background-color .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease; }
+    .cta-btn{ padding:16px 28px; font-size:.95rem; }
+    .cta-btn.primary, .price-cta, .lead-submit, .template-open{ background:var(--btn-bg) !important; color:var(--btn-ink) !important; border:1px solid var(--btn-bg) !important; }
+    .cta-btn.primary:hover, .price-cta:hover, .lead-submit:hover, .template-open:hover{ background:var(--btn-bg) !important; opacity:.88; }
+    .cta-btn.secondary, .price-card:not(.featured) .price-cta{ background:transparent !important; color:var(--ink) !important; border:1px solid rgba(255,255,255,.22) !important; }
+    .cta-btn.secondary:hover, .price-card:not(.featured) .price-cta:hover{ background:rgba(255,255,255,.08) !important; color:#fff !important; opacity:1; }
+    .cta-btn:active, .price-cta:active, .lead-submit:active, .template-open:active{ transform:scale(.96); transition-duration:.06s; }
+    .stickyNav .navCta{ background:var(--btn-bg); color:var(--btn-ink); border-radius:999px; }
+    .stickyNav .navLinks a, .stickyNav .navLogo span{ white-space:nowrap; }
+    @media (max-width:360px){ .stickyNav{ padding-left:12px; padding-right:12px; } .langSwitch{ margin-right:6px; } #navMobileToggle{ margin-right:6px; } }
+
+    /* cards */
+    .feature-card, .service-card, .template-card, .price-card, .program-modal-box, .plan-compare-scroll{ border-radius:var(--r-card); border:1px solid var(--hair); box-shadow:none; }
+    .feature-card, .service-card{ padding:30px 26px; }
+    .feature-card:hover, .service-card:hover, .template-card:hover{ box-shadow:none; transform:translateY(-3px); border-color:rgba(255,255,255,.18); }
+    .template-card:hover{ border-color:rgba(255,255,255,.18); }
+    .service-card.b2b{ border-color:rgba(229,9,20,.45); }
+    .price-card.featured{ border:1px solid rgba(255,90,98,.7); box-shadow:0 0 0 4px rgba(229,9,20,.10); transform:none; }
+    .program-modal-box{ border-radius:26px; }
+    .trustPill, .service-card .service-loc{ border-radius:999px; }
+    .cqBody, .cqSummary{ border-radius:var(--r-card); }
+    input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select, textarea{ border-radius:14px; }
+
+    /* glass bars */
+    .stickyNav{ background:rgba(14,14,14,.66) !important; -webkit-backdrop-filter:blur(22px) saturate(180%); backdrop-filter:blur(22px) saturate(180%); border-bottom:1px solid var(--hair); }
+    .navMobileDropdown{ background:rgba(18,18,18,.82); -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%); border:1px solid var(--hair); border-radius:22px; }
+    .langSwitch{ border-radius:999px; } .langSwitch button{ border-radius:999px; }
+    #navMobileToggle{ border-radius:999px; }
+    .chat-launcher{ box-shadow:0 10px 30px rgba(0,0,0,.45); }
+    @media (prefers-reduced-transparency: reduce){
+      .stickyNav{ background:#0e0e0e !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
+      .navMobileDropdown{ background:#121212; -webkit-backdrop-filter:none; backdrop-filter:none; }
+    }
 </style>
 </head>
 <body>
