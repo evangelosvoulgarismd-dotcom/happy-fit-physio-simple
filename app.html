@@ -1512,13 +1512,16 @@ async function renderLeadsView(main){
   const pipelineOn = !leadsRaw?.length || ('stage' in leadsRaw[0]);   // false until migration_lead_pipeline.sql has been run
   const todayStr = localDateStr(new Date());
   const isDue = l => pipelineOn && !l.converted && l.stage!=='lost' && l.stage!=='won' && l.next_followup && l.next_followup<=todayStr;
-  const rank = l => (l.converted||l.stage==='won') ? 3 : (l.stage==='lost' ? 4 : (isDue(l) ? 0 : (l.stage==='new'||!l.stage ? 1 : 2)));
+  // The site promises a reply within 24 hours: a lead still at "new" after 24h is late.
+  const isLate = l => pipelineOn && !l.converted && (l.stage==='new'||!l.stage) && l.created_at && (Date.now()-new Date(l.created_at).getTime()) > 24*3600*1000;
+  const ageText = l => { const h = Math.floor((Date.now()-new Date(l.created_at).getTime())/3600000); return h<48 ? (locale==='el'?`${h} ώρες`:`${h} h`) : (locale==='el'?`${Math.floor(h/24)} μέρες`:`${Math.floor(h/24)} days`); };
+  const rank = l => (l.converted||l.stage==='won') ? 3 : (l.stage==='lost' ? 4 : ((isDue(l)||isLate(l)) ? 0 : (l.stage==='new'||!l.stage ? 1 : 2)));
   let leads = (leadsRaw||[]).slice().sort((a,b)=> rank(a)-rank(b) || (new Date(b.created_at)-new Date(a.created_at)));
   const STAGES = [['new', locale==='el'?'Νέο':'New'], ['contacted', locale==='el'?'Επικοινώνησα':'Contacted'], ['won', locale==='el'?'Έκλεισε':'Won'], ['lost', locale==='el'?'Χάθηκε':'Lost']];
   const stageLabel = k => (STAGES.find(x=>x[0]===k)||STAGES[0])[1];
   const filterKey = renderLeadsView._filter || 'all';
   const allLeads = leads;
-  const inCat = (l,k)=> k==='all' ? true : k==='due' ? isDue(l) : k==='won' ? (l.converted || l.stage==='won') : (!l.converted && (l.stage||'new')===k);
+  const inCat = (l,k)=> k==='all' ? true : k==='due' ? (isDue(l)||isLate(l)) : k==='won' ? (l.converted || l.stage==='won') : (!l.converted && (l.stage||'new')===k);
   if(pipelineOn && filterKey!=='all') leads = allLeads.filter(l=>inCat(l,filterKey));
   main.innerHTML = '';
 
@@ -1542,6 +1545,8 @@ async function renderLeadsView(main){
       ${srcRows.map(([k,v])=>`<div style="display:flex; justify-content:space-between; gap:10px; padding:4px 0;"><span>${escapeHtml(SRC[k]||(k==='other'?(locale==='el'?'Άλλη/άγνωστη':'Other/unknown'):k))}</span><span class="mono">${v.won}/${v.n} (${Math.round(v.won/v.n*100)}%)</span></div>`).join('')}
       <div style="color:var(--ink-soft); font-size:11.5px; margin-top:6px;">${locale==='el'?'Με λίγα leads, τα ποσοστά δεν είναι αξιόπιστα. Κοίτα τα όταν υπάρχουν πάνω από 10 ανά πηγή.':'With few leads, the percentages are not reliable. Look at them once there are over 10 per source.'}</div>
     </div>`));
+    const lateN = allLeads.filter(isLate).length;
+    if(lateN) main.appendChild(el(`<div class="card gold" style="padding:12px 14px; margin-bottom:14px; font-size:13px;"><strong>⏰ ${locale==='el'?`${lateN} ${lateN===1?'αίτημα περιμένει':'αιτήματα περιμένουν'} πάνω από 24 ώρες`:`${lateN} ${lateN===1?'request has':'requests have'} been waiting over 24 hours`}</strong><div style="color:var(--ink-soft); font-size:12px; margin-top:4px;">${locale==='el'?'Το site υπόσχεται απάντηση σε 24 ώρες. Απάντησε και άλλαξε την κατάσταση σε «Επικοινώνησα».':'The site promises a reply within 24 hours. Reply, then set the status to "Contacted".'}</div></div>`));
     const cnt = k => allLeads.filter(l=>inCat(l,k)).length;
     const chips = [['all', locale==='el'?'Όλα':'All'], ['due', locale==='el'?'Να καλέσω':'Follow up']].concat(STAGES);
     const bar = el(`<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">${chips.map(([k,lab])=>`<button type="button" class="btn ${filterKey===k?'':'secondary'} leadChip" data-k="${k}" style="padding:6px 12px; font-size:12px;">${lab} <span class="mono">${cnt(k)}</span></button>`).join('')}</div>`);
@@ -1568,7 +1573,7 @@ async function renderLeadsView(main){
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
         <div class="leadView" style="flex:1; min-width:200px;">
-          <strong>${escapeHtml(l.full_name)}</strong> ${l.converted ? `<span class="badge">${locale==='el'?'Έγινε ασκούμενος':'Became client'}</span>` : ''}${isDue(l) ? ` <span class="badge" style="color:var(--danger);">${locale==='el'?'Να επικοινωνήσεις':'Follow up now'}</span>` : ''}
+          <strong>${escapeHtml(l.full_name)}</strong> ${l.converted ? `<span class="badge">${locale==='el'?'Έγινε ασκούμενος':'Became client'}</span>` : ''}${isDue(l) ? ` <span class="badge" style="color:var(--danger);">${locale==='el'?'Να επικοινωνήσεις':'Follow up now'}</span>` : ''}${isLate(l) ? ` <span class="badge" style="color:var(--danger);">⏰ ${locale==='el'?'Περιμένει '+ageText(l):'Waiting '+ageText(l)}</span>` : ''}
           <div style="font-size:12px; color:var(--ink-soft); margin-top:4px;">
             ${l.email ? `📧 ${escapeHtml(l.email)}` : ''} ${l.phone ? `· 📞 ${escapeHtml(l.phone)}` : ''} ${l.social_handle ? `· 📱 ${escapeHtml(l.social_handle)}` : ''}
           </div>
