@@ -434,6 +434,15 @@
       .stickyNav { background:#1c0f0e; backdrop-filter:none; -webkit-backdrop-filter:none; }
       .program-modal { background:#000; backdrop-filter:none; }
     }
+
+    .cqSvc{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
+    .cqChip{ display:block; cursor:pointer; position:relative; }
+    .cqChip input{ position:absolute; left:0; top:0; width:1px; height:1px; opacity:0; pointer-events:none; }
+    .cqChip .cqBody{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; font-size:14px; background:#1a1a1a; color:#fff; min-height:48px; }
+    .cqChip .cqBody strong{ font-size:15px; white-space:nowrap; }
+    .cqChip.sel .cqBody, .cqChip input:focus-visible + .cqBody{ border-color:var(--red); box-shadow:0 0 0 1px var(--red) inset; }
+    .cqSummary{ padding:12px 14px; border:1px dashed var(--line); border-radius:10px; font-size:13.5px; line-height:1.6; color:var(--ink-soft); }
+    .cqSummary b{ color:#fff; }
 </style>
 </head>
 <body>
@@ -448,6 +457,7 @@
       <a href="#how"><span data-lang-el>Πώς λειτουργεί</span><span data-lang-en>How it works</span></a>
       <a href="#features"><span data-lang-el>Τι περιλαμβάνει</span><span data-lang-en>What's included</span></a>
       <a href="#services"><span data-lang-el>Υπηρεσίες</span><span data-lang-en>Services</span></a>
+      <a href="#recovery"><span data-lang-el>Μάλαξη στο σπίτι</span><span data-lang-en>Massage at home</span></a>
       <a href="directory.html"><span data-lang-el>Κατάλογος</span><span data-lang-en>Directory</span></a>
       <a href="#pricing"><span data-lang-el>Τιμές</span><span data-lang-en>Pricing</span></a>
       <a href="#templates"><span data-lang-el>Πρότυπα προγραμμάτων</span><span data-lang-en>Program templates</span></a>
@@ -491,6 +501,7 @@
       <a class="cta-btn secondary" href="#how"><span data-lang-el>Δες πώς λειτουργεί</span><span data-lang-en>See how it works</span></a>
       <a class="cta-btn primary js-signup-link" href="app.html"><span data-lang-el>Ξεκίνα την πορεία σου</span><span data-lang-en>Start your journey</span></a>
     </div>
+    <p style="text-align:center; margin:14px 0 0; font-size:14px;"><a href="#offer" style="color:var(--gold); font-weight:700; text-decoration:none;"><span data-lang-el>Ψάχνεις μάλαξη ή recovery στο σπίτι σου; Δες την προσφορά →</span><span data-lang-en>Looking for massage or recovery at your place? See the offer →</span></a></p>
     <div class="trustRow">
       <span class="trustPill"><span data-lang-el>🎓 Φοιτητής Φυσικοθεραπείας</span><span data-lang-en>🎓 Physiotherapy Student</span></span>
       <span class="trustPill"><span data-lang-el>📚 Βασισμένο σε βιβλιογραφία</span><span data-lang-en>📚 Evidence-based</span></span>
@@ -643,13 +654,11 @@
   </section>
 
   <!-- PRICING -->
-  <section class="section pricing-section" id="pricing">
-    <div class="section-label"><span data-lang-el>Επιλογές καθοδήγησης</span><span data-lang-en>Coaching options</span></div>
-    <h2 class="section-title"><span data-lang-el>Διάλεξε το επίπεδο υποστήριξης που χρειάζεσαι</span><span data-lang-en>Choose the level of support you need</span></h2>
-    <p class="templates-intro" data-lang-el>Οι τιμές είναι ενδεικτικές, προσαρμόζονται στις ανάγκες και τον στόχο σου.</p>
-    <p class="templates-intro" data-lang-en>Prices are indicative, adjusted to your needs and your goal.</p>
-    <h3 class="pricing-subhead"><span data-lang-el>Concierge Recovery · κατ' οίκον</span><span data-lang-en>Concierge Recovery · at your place</span></h3>
-    <div class="price-card offer-card" style="max-width:760px; margin:0 auto 22px; border:1px solid var(--gold);">
+  <!-- RECOVERY AT HOME: offer, prices, booking -->
+  <section class="section pricing-section" id="recovery">
+    <div class="section-label"><span data-lang-el>Στο σπίτι σου</span><span data-lang-en>At your place</span></div>
+    <h2 class="section-title"><span data-lang-el>Μάλαξη και Recovery στο σπίτι ή στη βίλα σου</span><span data-lang-en>Massage and Recovery at your home or villa</span></h2>
+        <div id="offer" class="price-card offer-card" style="max-width:760px; margin:0 auto 22px; border:1px solid var(--gold);">
       <div class="price-kicker"><span data-lang-el>Η προσφορά</span><span data-lang-en>The offer</span></div>
       <h3><span data-lang-el>Πρόγραμμα Αποκατάστασης στο σπίτι σου</span><span data-lang-en>Recovery Program at your place</span></h3>
       <p style="font-size:14px; color:var(--ink-soft);" data-lang-el>Έρχομαι εγώ, στην ώρα που ορίζουμε. Εσύ δεν χάνεις χρόνο και δεν ψάχνεις τίποτα.</p>
@@ -670,6 +679,20 @@
       </ul>
       <p style="font-size:14px; font-weight:700; color:var(--gold);" data-lang-el>Εγγύηση ικανοποίησης: αν η πρώτη συνεδρία δεν σε ικανοποιήσει, δεν την πληρώνεις.</p>
       <p style="font-size:14px; font-weight:700; color:var(--gold);" data-lang-en>Satisfaction guarantee: if the first session doesn't satisfy you, you don't pay for it.</p>
+      <div style="margin:14px 0 4px; padding:14px 16px; border:1px solid var(--line); border-radius:12px;">
+        <div style="font-size:12px; letter-spacing:.12em; text-transform:uppercase; font-weight:800; color:var(--ink-soft); margin-bottom:8px;"><span data-lang-el>Τι γίνεται μετά</span><span data-lang-en>What happens next</span></div>
+        <ol data-lang-el style="margin:0; padding-left:18px; font-size:14px; line-height:1.7;"><li>Μου στέλνεις ένα μήνυμα στο Instagram. Απαντώ μέσα σε 24 ώρες.</li><li>Συμφωνούμε ώρα. Σου στέλνω επιβεβαίωση και υπενθύμιση.</li><li>Έρχομαι: 10' αξιολόγηση, μάλαξη ή Recovery, και 2 ασκήσεις για το σπίτι.</li></ol>
+        <ol data-lang-en style="margin:0; padding-left:18px; font-size:14px; line-height:1.7;"><li>You send me a message on Instagram. I reply within 24 hours.</li><li>We agree a time. I send you a confirmation and a reminder.</li><li>I come to you: 10' check-in, massage or Recovery, and 2 exercises for home.</li></ol>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin:14px 0;">
+        <a class="price-cta" href="https://ig.me/m/happyfit.physio" target="_blank" rel="noopener noreferrer" style="background:var(--red); margin-top:0;"><span data-lang-el>Κλείσε με ένα μήνυμα στο Instagram →</span><span data-lang-en>Book with one message on Instagram →</span></a>
+        <a class="price-cta" href="#conciergeRequest" style="margin-top:0;"><span data-lang-el>Ή άφησε στοιχεία</span><span data-lang-en>Or leave your details</span></a>
+      </div>
+      <div style="margin:10px 0 6px; font-size:14px;">
+        <details style="border-top:1px solid var(--line); padding:10px 0;"><summary style="cursor:pointer; font-weight:700;"><span data-lang-el>Είσαι φυσικοθεραπευτής;</span><span data-lang-en>Are you a physiotherapist?</span></summary><p style="min-height:0; margin:8px 0 0;" data-lang-el>Όχι ακόμα. Είμαι φοιτητής 4ου έτους και δεν έχω άδεια άσκησης επαγγέλματος. Γι' αυτό η υπηρεσία είναι μάλαξη και ανάρρωση, όχι θεραπεία, και αν χρειάζεται ιατρική ή φυσικοθεραπευτική αξιολόγηση σε παραπέμπω.</p><p style="min-height:0; margin:8px 0 0;" data-lang-en>Not yet. I am a 4th-year student and I do not hold a licence to practise. That is why the service is massage and recovery, not treatment, and if you need a medical or physiotherapy assessment I refer you.</p></details>
+        <details style="border-top:1px solid var(--line); padding:10px 0;"><summary style="cursor:pointer; font-weight:700;"><span data-lang-el>Τι διαφέρει από μια απλή μάλαξη στο σπίτι;</span><span data-lang-en>How is this different from a plain home massage?</span></summary><p style="min-height:0; margin:8px 0 0;" data-lang-el>Ξεκινάω με 10' αξιολόγηση, μετά μάλαξη ή recovery με συσκευές, και στο τέλος σου στέλνω 2 ασκήσεις κινητικότητας για το σπίτι.</p><p style="min-height:0; margin:8px 0 0;" data-lang-en>I start with a 10' check-in, then massage or recovery with devices, and at the end I send you 2 mobility exercises for home.</p></details>
+        <details style="border-top:1px solid var(--line); padding:10px 0;"><summary style="cursor:pointer; font-weight:700;"><span data-lang-el>Τι γίνεται αν η πρώτη συνεδρία δεν με ικανοποιήσει;</span><span data-lang-en>What if the first session doesn't satisfy me?</span></summary><p style="min-height:0; margin:8px 0 0;" data-lang-el>Δεν την πληρώνεις.</p><p style="min-height:0; margin:8px 0 0;" data-lang-en>You don't pay for it.</p></details>
+      </div>
       <p style="font-size:13px;"><a href="#about" style="color:var(--gold); font-weight:700;"><span data-lang-el>Δες ποιος είμαι και πού σπουδάζω →</span><span data-lang-en>See who I am and where I study →</span></a></p>
       <p style="font-size:12.5px; color:var(--ink-soft);" data-lang-el>Δουλεύω με περιορισμένο αριθμό πελατών ανά εβδομάδα, ώστε να έχεις την προσοχή και τον χρόνο που χρειάζεσαι. Είμαι φοιτητής φυσικοθεραπείας. Η υπηρεσία δεν αποτελεί ιατρική θεραπεία.</p>
       <p style="font-size:12.5px; color:var(--ink-soft);" data-lang-en>I work with a limited number of clients per week so you get the attention and time you need. I am a physiotherapy student. The service is not a medical treatment.</p>
@@ -695,26 +718,42 @@
     <div class="pricing-note" data-lang-el>Η ανάρρωση με συσκευές (compression boots, PowerDot) γίνεται μετά από σύντομο έλεγχο αντενδείξεων. Δεν αποτελεί ιατρική θεραπεία. Για περισσότερα άτομα ή μακρινές περιοχές η τιμή προσαρμόζεται.</div>
     <div class="pricing-note" data-lang-en>Recovery with devices (compression boots, PowerDot) follows a short contraindication check. It is not a medical treatment. For more people or distant areas the price is adjusted.</div>
 
-    <div id="conciergeRequest" class="price-card" style="max-width:640px; margin:22px auto;">
-      <h3><span data-lang-el>Γρήγορο αίτημα</span><span data-lang-en>Quick request</span></h3>
-      <p style="font-size:13.5px; color:var(--ink-soft);" data-lang-el>Άφησε 3 στοιχεία και σε βρίσκω το ίδιο ή την επόμενη μέρα. Ή στείλε απευθείας μήνυμα στο Instagram.</p>
-      <p style="font-size:13.5px; color:var(--ink-soft);" data-lang-en>Leave 3 details and I reply the same or next day. Or message me directly on Instagram.</p>
-      <form id="cqForm" style="display:grid; gap:10px;">
+    <div id="conciergeRequest" class="price-card" style="max-width:760px; margin:22px auto;">
+      <h3><span data-lang-el>Κλείσε ραντεβού</span><span data-lang-en>Book your appointment</span></h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); min-height:0;" data-lang-el>4 βήματα, κάτω από ένα λεπτό. Δεν πληρώνεις τίποτα μέσω του site.</p>
+      <p style="font-size:13.5px; color:var(--ink-soft); min-height:0;" data-lang-en>4 steps, under a minute. You pay nothing through the site.</p>
+      <form id="cqForm" style="display:grid; grid-template-columns:minmax(0,1fr); gap:12px;">
         <input type="text" id="cqWebsite" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" aria-hidden="true">
-        <div class="lead-field"><label for="cqName"><span data-lang-el>Όνομα</span><span data-lang-en>Name</span></label><input type="text" id="cqName" required maxlength="80"></div>
-        <div class="lead-field"><label for="cqEmail">Email</label><input type="email" id="cqEmail" required maxlength="120"></div>
-        <div class="lead-field"><label for="cqWhere"><span data-lang-el>Πού και πότε</span><span data-lang-en>Where and when</span></label>
+        <div class="lead-field" style="margin-bottom:0;"><label for="cqPlace"><span data-lang-el>1. Πού</span><span data-lang-en>1. Where</span></label>
           <select id="cqPlace"><option value="Αθήνα" data-el="Αθήνα" data-en="Athens">Αθήνα</option><option value="Σαντορίνη" data-el="Σαντορίνη" data-en="Santorini">Σαντορίνη</option></select>
-          <input type="text" id="cqWhen" maxlength="120" placeholder="π.χ. 12-16 Ιουλίου, 3 συνεδρίες" style="margin-top:6px;">
         </div>
-        <button class="lead-submit" type="submit"><span data-lang-el>Στείλε το αίτημα</span><span data-lang-en>Send request</span></button>
+        <div class="lead-field" style="margin-bottom:0;"><label><span data-lang-el>2. Τι θέλεις</span><span data-lang-en>2. What you want</span></label>
+          <div id="cqSvc" class="cqSvc" role="radiogroup"></div>
+        </div>
+        <div class="lead-field" style="margin-bottom:0;"><label for="cqWhen"><span data-lang-el>3. Πότε σε βολεύει</span><span data-lang-en>3. When suits you</span></label>
+          <input type="text" id="cqWhen" maxlength="100" placeholder="π.χ. καθημερινές απόγευμα">
+        </div>
+        <div class="lead-field" style="margin-bottom:0;"><label for="cqName"><span data-lang-el>4. Τα στοιχεία σου</span><span data-lang-en>4. Your details</span></label>
+          <input type="text" id="cqName" required maxlength="80" placeholder="Όνομα / Name" style="margin-bottom:8px;">
+          <input type="email" id="cqEmail" required maxlength="120" placeholder="Email" style="margin-bottom:8px;">
+          <input type="text" id="cqSocial" maxlength="80" placeholder="Instagram ή τηλέφωνο (προαιρετικό)">
+        </div>
+        <div id="cqSummary" class="cqSummary" aria-live="polite"></div>
+        <button class="lead-submit" type="submit"><span data-lang-el>Στείλε αίτημα κράτησης</span><span data-lang-en>Send booking request</span></button>
         <div class="lead-error" id="cqError" style="display:none;"></div>
-        <a class="price-cta" href="https://ig.me/m/happyfit.physio" target="_blank" rel="noopener noreferrer" style="margin-top:4px;"><span data-lang-el>Ή γράψε μου στο Instagram →</span><span data-lang-en>Or message me on Instagram →</span></a>
+        <a class="price-cta" href="https://ig.me/m/happyfit.physio" target="_blank" rel="noopener noreferrer" style="margin-top:0;"><span data-lang-el>Προτιμάς Instagram; Γράψε μου εκεί →</span><span data-lang-en>Prefer Instagram? Message me there →</span></a>
       </form>
-      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:8px;" data-lang-el>Χρησιμοποιώ τα στοιχεία μόνο για να απαντήσω στο αίτημά σου. Μην στείλεις πληροφορίες υγείας εδώ.</p>
-      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:8px;" data-lang-en>I use your details only to reply to your request. Please do not send health information here.</p>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:8px; min-height:0;" data-lang-el>Χρησιμοποιώ τα στοιχεία μόνο για να απαντήσω στο αίτημά σου. Μην στείλεις πληροφορίες υγείας εδώ.</p>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:8px; min-height:0;" data-lang-en>I use your details only to reply to your request. Please do not send health information here.</p>
     </div>
 
+  </section>
+
+  <section class="section pricing-section" id="pricing">
+    <div class="section-label"><span data-lang-el>Επιλογές καθοδήγησης</span><span data-lang-en>Coaching options</span></div>
+    <h2 class="section-title"><span data-lang-el>Διάλεξε το επίπεδο υποστήριξης που χρειάζεσαι</span><span data-lang-en>Choose the level of support you need</span></h2>
+    <p class="templates-intro" data-lang-el>Οι τιμές είναι ενδεικτικές, προσαρμόζονται στις ανάγκες και τον στόχο σου.</p>
+    <p class="templates-intro" data-lang-en>Prices are indicative, adjusted to your needs and your goal.</p>
     <h3 class="pricing-subhead"><span data-lang-el>Online Coaching</span><span data-lang-en>Online Coaching</span></h3>
     <div class="pricing-grid">
       <article class="price-card">
@@ -1011,25 +1050,58 @@
         document.getElementById('testimonials').style.display = '';
       }catch(e){}
     })();
-    // Concierge quick request: saved as a lead (no health data, no marketing consent implied).
+    // Concierge booking request: saved as a lead (no health data, no marketing consent implied, no payment taken).
     (function(){
       const f = document.getElementById('cqForm'); if(!f) return;
+      // Keep these prices in sync with the price cards above.
+      const CQ = {
+        'Αθήνα': [
+          {k:'m60', el:"Μάλαξη 60'", en:"60' massage", price:70},
+          {k:'r90', el:"Recovery 90' (μάλαξη + boots)", en:"Recovery 90' (massage + boots)", price:95},
+          {k:'p4',  el:'Πακέτο 4 συνεδριών', en:'4-session package', price:260},
+          {k:'p8',  el:'Πακέτο 8 συνεδριών', en:'8-session package', price:480}],
+        'Σαντορίνη': [
+          {k:'m60', el:"Μάλαξη 60'", en:"60' massage", price:120},
+          {k:'r90', el:"Recovery 90' (μάλαξη + boots)", en:"Recovery 90' (massage + boots)", price:150},
+          {k:'s3',  el:'Πακέτο διαμονής 3 συνεδριών', en:'3-session stay package', price:330},
+          {k:'s4',  el:'Πακέτο διαμονής 4 συνεδριών', en:'4-session stay package', price:420}]
+      };
+      const place = ()=>document.getElementById('cqPlace').value;
+      const chosen = ()=>{ const r = f.querySelector('input[name="cqSvc"]:checked'); return r ? CQ[place()].find(x=>x.k===r.value) : null; };
+      const giftOn = ()=> place()==='Αθήνα' && new Date() < new Date('2026-12-01T00:00:00');
+      function renderSummary(){
+        const o = chosen(), box = document.getElementById('cqSummary'); if(!o){ box.innerHTML=''; return; }
+        const gift = (giftOn() && o.k==='p4') ? '<br><span data-lang-el>Δώρο εκκίνησης: 30\' compression boots, έως 30/11/2026.</span><span data-lang-en>Launch gift: 30\' compression boots, until 30/11/2026.</span>' : '';
+        const pl = place()==='Αθήνα' ? ['Αθήνα','Athens'] : ['Σαντορίνη','Santorini'];
+        box.innerHTML = '<b><span data-lang-el>'+o.el+'</span><span data-lang-en>'+o.en+'</span></b> · <span data-lang-el>'+pl[0]+'</span><span data-lang-en>'+pl[1]+'</span> · <b>'+o.price+'€</b>'
+          + '<br><span data-lang-el>Εγγύηση ικανοποίησης στην πρώτη συνεδρία. Απαντώ μέσα σε 24 ώρες για να κλείσουμε ώρα.</span><span data-lang-en>Satisfaction guarantee on the first session. I reply within 24 hours to set a time.</span>' + gift;
+      }
+      function renderChips(keep){
+        const box = document.getElementById('cqSvc'); const list = CQ[place()];
+        box.innerHTML = list.map((o,i)=>'<label class="cqChip"><input type="radio" name="cqSvc" value="'+o.k+'"'+((keep? keep===o.k : i===0)?' checked':'')+'><span class="cqBody"><span><span data-lang-el>'+o.el+'</span><span data-lang-en>'+o.en+'</span></span><strong>'+o.price+'€</strong></span></label>').join('');
+        sync();
+      }
+      function sync(){ f.querySelectorAll('.cqChip').forEach(c=>c.classList.toggle('sel', c.querySelector('input').checked)); renderSummary(); }
+      document.getElementById('cqPlace').addEventListener('change', ()=>{ const r=f.querySelector('input[name="cqSvc"]:checked'); renderChips(r ? r.value : null); });
+      document.getElementById('cqSvc').addEventListener('change', sync);
+      renderChips(null);
       document.querySelectorAll('.js-conc-pick').forEach(a => a.addEventListener('click', ()=>{
-        const sel = document.getElementById('cqPlace'); if(sel) sel.value = a.dataset.pick;
+        const sel = document.getElementById('cqPlace'); if(sel){ sel.value = a.dataset.pick; renderChips(null); }
         setTimeout(()=>document.getElementById('cqName')?.focus(), 400);
       }));
       f.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const L = curLang(); const err = document.getElementById('cqError'); err.style.display='none';
         const card = document.getElementById('conciergeRequest');
-        const okHtml = L==='en' ? '<h3>Thank you!</h3><p>I received your request and will reply the same or next day.</p>' : '<h3>Ευχαριστώ!</h3><p>Έλαβα το αίτημά σου και θα απαντήσω την ίδια ή την επόμενη μέρα.</p>';
+        const o = chosen();
+        const okHtml = L==='en' ? '<h3>Thank you!</h3><p>I received your request'+(o?' ('+o.en+')':'')+' and will reply within 24 hours to set a time and send you a confirmation.</p>' : '<h3>Ευχαριστώ!</h3><p>Έλαβα το αίτημά σου'+(o?' ('+o.el+')':'')+' και θα απαντήσω μέσα σε 24 ώρες, για να κλείσουμε ώρα και να σου στείλω επιβεβαίωση.</p>';
         if(document.getElementById('cqWebsite').value.trim()!==''){ card.innerHTML = okHtml; return; }
-        const place = document.getElementById('cqPlace').value;
         const when = document.getElementById('cqWhen').value.trim();
         const payload = {
           full_name: document.getElementById('cqName').value.trim(),
           email: document.getElementById('cqEmail').value.trim(),
-          interest: ('Concierge Recovery: ' + place + (when ? ', ' + when : '')).slice(0,200),
+          interest: ('Concierge Recovery: ' + place() + (o ? ', ' + o.el + ' ' + o.price + '€' : '') + (when ? ', ' + when : '')).slice(0,200),
+          social_handle: document.getElementById('cqSocial').value.trim() || null,
           marketing_consent: false,
           source: 'concierge_quick',
         };
