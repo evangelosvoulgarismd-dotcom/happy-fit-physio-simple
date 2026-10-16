@@ -1243,8 +1243,8 @@
     // (the owner gets a push notification in the app) and promises a personal reply within 24 hours.
     const isEn = () => document.body.classList.contains('lang-en');
     const CHAT_T = {
-      welcome: { el: "Γεια σου! Εδώ δεν απαντά αυτόματο bot. Γράψε την ερώτησή σου και θα σου απαντήσω εγώ ο ίδιος μέσα σε 24 ώρες. Για κράτηση πιο γρήγορα, στείλε μου μήνυμα στο Instagram: instagram.com/happyfit.physio",
-                 en: "Hi! This is not an automatic bot. Write your question and I will reply to you personally within 24 hours. For a faster booking, message me on Instagram: instagram.com/happyfit.physio" },
+      welcome: { el: "Γεια σου! Εδώ δεν απαντά αυτόματο bot. Ρώτησέ με για τιμές, περιοχές ή ώρες και σου απαντάω αμέσως. Για οτιδήποτε άλλο, γράψε την ερώτησή σου και θα σου απαντήσω εγώ ο ίδιος μέσα σε 24 ώρες. Για κράτηση πιο γρήγορα, στείλε μου μήνυμα στο Instagram: instagram.com/happyfit.physio",
+                 en: "Hi! This is not an automatic bot. Ask me about prices, areas or hours and I answer right away. For anything else, write your question and I will reply to you personally within 24 hours. For a faster booking, message me on Instagram: instagram.com/happyfit.physio" },
       askContact: { el: "Ευχαριστώ! Πώς σε λένε και πού να σε βρω; Γράψε το όνομά σου και email ή Instagram, π.χ. «Μαρία, @maria» ή «Μαρία, maria@email.gr».",
                     en: "Thank you! What is your name and how can I reach you? Write your name and an email or Instagram, e.g. \"Maria, @maria\" or \"Maria, maria@email.com\"." },
       needContact: { el: "Δεν βρήκα email ή Instagram. Γράψε ένα από τα δύο, π.χ. @maria ή maria@email.gr, για να σε βρω.",
@@ -1254,6 +1254,29 @@
       fail: { el: "Δεν κατάφερα να στείλω το μήνυμα. Στείλε μου το απευθείας στο Instagram: instagram.com/happyfit.physio",
               en: "I could not send the message. Please send it to me directly on Instagram: instagram.com/happyfit.physio" },
     };
+    // Fixed answers on practical topics (not AI). Anything medical is never answered here.
+    const FAQ = {
+      price: {
+        re: /τιμ|κοστ|πόσο|ποσο|πακέτ|πακετ|έκπτωσ|price|cost|how much|package|rate|fee/i,
+        el: "Τιμές μάλαξης στο σπίτι:\nΑθήνα: 70€ (60'), Recovery 90' με compression boots 95€, πακέτο 4 συνεδριών 260€, πακέτο 8 συνεδριών 480€.\nΣαντορίνη (καλοκαίρι): 120€ (60'), Recovery 90' 150€, πακέτο 3 συνεδριών 330€, πακέτο 4 συνεδριών 420€, με τη μετακίνηση εντός Σαντορίνης.\nOnline coaching: αρχική αξιολόγηση 50€, μετά από 59€ τον μήνα.",
+        en: "Home massage prices:\nAthens: 70€ (60'), Recovery 90' with compression boots 95€, 4-session package 260€, 8-session package 480€.\nSantorini (summer): 120€ (60'), Recovery 90' 150€, 3-session package 330€, 4-session package 420€, travel within Santorini included.\nOnline coaching: initial assessment 50€, then from 59€ per month." },
+      area: {
+        re: /περιοχ|πού |που |πουθε|έρχεσ|ερχεσ|μετακίν|μετακιν|σαντορ|αθήν|αθην|βίλα|βιλα|ξενοδοχ|where|area|santorini|athens|villa|hotel|travel to/i,
+        el: "Έρχομαι εγώ στον χώρο σου. Αθήνα: στο σπίτι σου, βόρεια και νότια προάστια. Σαντορίνη (καλοκαίρι): στη βίλα ή το ξενοδοχείο σου, με τη μετακίνηση εντός νησιού συμπεριλαμβανόμενη. Για μακρινές περιοχές ή περισσότερα άτομα η τιμή προσαρμόζεται, ρώτησέ με.",
+        en: "I come to you. Athens: at your home, north and south suburbs. Santorini (summer): at your villa or hotel, travel within the island included. For distant areas or more people the price is adjusted, just ask." },
+      hours: {
+        re: /ώρες|ωρες|ωράρι|ωραρι|πότε|ποτε|διαθέσιμ|διαθεσιμ|κλείσ|κλεισ|ραντεβ|πόση ώρα|διάρκει|διαρκει|when|hours|available|availability|book|appointment|how long|duration/i,
+        el: "Τα ραντεβού κλείνουν στο δικό σου ωράριο. Στέλνεις αίτημα (φόρμα «Ζήτησε ραντεβού» ή Instagram DM) και σου επιβεβαιώνω ώρα μέσα σε 24 ώρες. Η μάλαξη κρατά 60' (προηγείται σύντομη αξιολόγηση 10'), το Recovery 90'.",
+        en: "Appointments are set around your schedule. Send a request (the \"Request appointment\" form or Instagram DM) and I confirm a time within 24 hours. A massage takes 60' (a short 10' check-in comes first), Recovery 90'." }
+    };
+    const MEDICAL = /πόνο|πονά|πονα|πονάει|τραυμα|διάστρεμ|διαστρεμ|κήλη|κηλη|ισχιαλγ|οσφυ|αυχεν|σπονδυλ|φλεγμον|διάγνωσ|διαγνωσ|θεραπε|φάρμακ|φαρμακ|εγκυ|χειρουργ|θρόμβ|θρομβ|pain|hurt|injur|sprain|herniat|sciatica|diagnos|treat|pregnan|surgery|thrombo|medic/i;
+    function faqAnswer(text) {
+      if (MEDICAL.test(text)) return null;
+      const hit = ['price','area','hours'].filter(k => FAQ[k].re.test(text));
+      if (!hit.length) return null;
+      return hit.map(k => FAQ[k][isEn() ? 'en' : 'el']).join('\n\n');
+    }
+    const CHAT_MORE = { el: "Αν έχεις άλλη ερώτηση, γράψ' την εδώ και θα σου απαντήσω εγώ μέσα σε 24 ώρες.", en: "If you have another question, write it here and I will reply personally within 24 hours." };
     const ct = (k) => CHAT_T[k][isEn() ? 'en' : 'el'];
     const WELCOME_MSG = CHAT_T.welcome.el;
     const FALLBACK_MSG = "Ευχαριστούμε για το μήνυμα! Το chat δεν είναι ακόμα πλήρως συνδεδεμένο. Στείλε μας μήνυμα απευθείας ή πάτα «Ξεκίνα Coaching» για να κάνεις εγγραφή.";
@@ -1382,6 +1405,11 @@
       await new Promise(r => setTimeout(r, 450));
       hideTyping();
       if (chatStage === 0) {
+        const quick = faqAnswer(text);
+        if (quick) {
+          addMessage('agent', quick + '\n\n' + CHAT_MORE[isEn() ? 'en' : 'el']);
+          sendBtn.disabled = false; input.focus(); return;
+        }
         chatQuestion = text.slice(0, 600); chatStage = 1; chatTries = 0;
         addMessage('agent', ct('askContact'));
       } else {
