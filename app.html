@@ -376,6 +376,52 @@
     .btn:active, .navBtn:active, .clientCard:active{transform:none;}
     .btn, .navBtn{transition:background-color .15s ease, border-color .15s ease, color .15s ease;}
   }
+
+  /* ── Fluid feel (Apple-style): instant press feedback, springy easing, translucent chrome ── */
+  :root{ --ease-out:cubic-bezier(.22,1,.36,1); }
+  html{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  button, a, select, summary, label, .card, .navBtn, .bottomTab, .clientCard, .optRow, .leadChip{ touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  h1,h2{ letter-spacing:-.015em; }
+  /* press feedback happens on touch-down and lets go with a soft spring */
+  .btn, .navBtn, .bottomTab, .clientCard, .optRow, .profileMenuRow, .setDone{ transition:transform .28s var(--ease-out), background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, opacity .2s ease; }
+  .btn:active, .bottomTab:active, .optRow:active, .profileMenuRow:active, .setDone:active{ transform:scale(.96); transition-duration:.06s; }
+  .clientCard:active{ transform:scale(.985); transition-duration:.06s; }
+  .btn{ -webkit-user-select:none; user-select:none; }
+  .btn:disabled{ opacity:.55; }
+  .card{ transition:box-shadow .25s var(--ease-out), border-color .2s ease; }
+  /* screens ease in on navigation (not on every re-render) */
+  @keyframes viewIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none; } }
+  #main.viewEnter > *{ animation:viewIn .32s var(--ease-out) both; }
+  #main.viewEnter > *:nth-child(2){ animation-delay:.03s; } #main.viewEnter > *:nth-child(3){ animation-delay:.06s; }
+  #main.viewEnter > *:nth-child(n+4){ animation-delay:.09s; }
+  /* the loading line only appears if the wait is noticeable; an existing screen just dims a touch */
+  @keyframes loadIn{ from{ opacity:0;} to{ opacity:1;} }
+  .loadingP{ opacity:0; animation:loadIn .2s ease .3s forwards; }
+  #main{ transition:opacity .2s ease; }
+  #main.busy{ opacity:.6; pointer-events:none; transition-delay:.15s; }
+  #toast{ transform:translateY(8px); transition:opacity .25s ease, transform .35s var(--ease-out) !important; }
+  #toast[style*="opacity: 1"]{ transform:none; }
+  /* bars scroll over content as translucent material */
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)){
+    #bottomTabBar{ background:color-mix(in srgb, var(--panel) 74%, transparent) !important; -webkit-backdrop-filter:blur(22px) saturate(180%); backdrop-filter:blur(22px) saturate(180%); }
+    @media (max-width: 760px){
+      #sidebar{ background:color-mix(in srgb, var(--red-deep) 80%, transparent); -webkit-backdrop-filter:blur(20px) saturate(160%); backdrop-filter:blur(20px) saturate(160%); }
+    }
+  }
+  /* iOS zooms the page when a field under 16px is focused; that jump is the "stuck" feeling on phones */
+  @media (max-width: 760px){
+    input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea, .field input, .field select, .field textarea{ font-size:16px !important; }
+  }
+  html{ overscroll-behavior-y:contain; }
+  @media (prefers-reduced-motion: reduce){
+    #main.viewEnter > *{ animation:none; }
+    .btn:active, .bottomTab:active, .optRow:active, .profileMenuRow:active, .setDone:active, .clientCard:active{ transform:none; }
+    #toast{ transform:none; }
+  }
+  @media (prefers-reduced-transparency: reduce){
+    #bottomTabBar{ background:var(--panel) !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
+    #sidebar{ background:var(--red-deep) !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
+  }
 </style>
 </head>
 <body>
@@ -1210,6 +1256,38 @@ async function renderNotifPanel(anchorEl, isCoach){
     : `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Καμία πρόσφατη ειδοποίηση.':'No recent notifications.'}</p>`;
 }
 
+// Loading state that never blanks a screen the user is already looking at (no flash, no scroll jump):
+// existing content stays, dimmed slightly after a short delay, until the view replaces it.
+function showLoading(main){
+  if(main.childElementCount && !main.querySelector('.loadingP')){
+    main.classList.add('busy');
+    const done = ()=>{ main.classList.remove('busy'); mo.disconnect(); clearTimeout(tm); };
+    const mo = new MutationObserver(done); mo.observe(main,{childList:true});
+    const tm = setTimeout(done, 8000);
+    return;
+  }
+  main.innerHTML = `<p class="loadingP">${t('loading',locale)}</p>`;
+}
+
+// Switch screen in place: the sidebar, bottom bar and logo are NOT rebuilt (the old code rebuilt the
+// whole shell on every tap). A fresh #main is swapped in so a slow screen from before can never
+// paint over the new one.
+function switchView(v){
+  const shell = document.getElementById('shell');
+  const old = shell && shell.querySelector('#main');
+  if(!shell || !old){ view = v; selectedClient = null; renderShell(); return; }
+  view = v; selectedClient = null;
+  shell.querySelectorAll('.navBtn[data-v], .bottomTab[data-v]').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
+  shell.querySelector('#navBtnsWrap')?.classList.remove('open');
+  shell.querySelector('#sidebarBottom')?.classList.remove('open');
+  const fresh = document.createElement('div');
+  fresh.id = 'main'; fresh.className = 'viewEnter';
+  old.replaceWith(fresh);
+  window.scrollTo(0,0);
+  setTimeout(()=>fresh.classList.remove('viewEnter'), 700);
+  renderMainView(fresh, profile.role==='coach' || profile.role==='owner', profile.role==='owner');
+}
+
 function renderShell(){
   const isOwner = profile.role === 'owner';
   const isCoach = profile.role === 'coach' || isOwner;
@@ -1281,7 +1359,7 @@ function renderShell(){
   </div>`);
   app.appendChild(shell);
   shell.querySelectorAll('#langToggle button').forEach(b=>b.addEventListener('click', ()=>{ locale=b.dataset.l; renderShell(); }));
-  shell.querySelectorAll('.navBtn[data-v], .bottomTab[data-v]').forEach(b=>b.addEventListener('click', ()=>{ view=b.dataset.v; selectedClient=null; renderShell(); }));
+  shell.querySelectorAll('.navBtn[data-v], .bottomTab[data-v]').forEach(b=>b.addEventListener('click', ()=>switchView(b.dataset.v)));
   shell.querySelector('#logoutBtn').addEventListener('click', async ()=>{ await supabase.auth.signOut(); await boot(); });
   shell.querySelector('#exportBtn').addEventListener('click', exportMyData);
   shell.querySelector('#enablePushBtn').addEventListener('click', enablePushNotifications);
@@ -1306,6 +1384,10 @@ function renderShell(){
   shell.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', ()=>showLegalModal(a.dataset.legal)));
 
   const main = shell.querySelector('#main');
+  renderMainView(main, isCoach, isOwner);
+}
+
+function renderMainView(main, isCoach, isOwner){
   if(view==='library') renderLibrary(main, isCoach);
   else if(view==='business' && isCoach) renderBusinessOverview(main);
   else if(view==='leads' && isCoach) renderLeadsView(main);
@@ -1362,7 +1444,7 @@ async function fetchEuropePMC(query){
 
 // ---- Recovery / massage session packages (coach only; see migration_recovery_packages.sql) ----
 async function renderPackagesView(main){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const el_ = locale==='el';
   const { data: pkgs, error: pErr } = await supabase.from('recovery_packages').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false});
   if(pErr){
@@ -1505,7 +1587,7 @@ async function renderPackagesView(main){
 }
 
 async function renderLeadsView(main){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const { data: leadsRaw } = await supabase.from('leads').select('*').order('created_at',{ascending:false});
   // Unconverted (actionable) leads first, converted ones after — so the leads that still
   // need a follow-up aren't buried under old ones you've already handled.
@@ -1649,7 +1731,7 @@ async function renderLeadsView(main){
 }
 
 async function renderTemplatesView(main){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const [{ data: templates }, { data: exercises }] = await Promise.all([
     supabase.from('program_templates').select('*, program_template_exercises(*, exercises(*))').eq('coach_id', profile.id).order('created_at',{ascending:false}),
     supabase.from('exercises').select('*').order('category'),
@@ -1858,7 +1940,7 @@ async function renderTemplatesView(main){
 // ============================================================
 async function renderDirectoryView(main){
   const L = (el_, en_) => locale==='el' ? el_ : en_;
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const [{ data: listing, error: listErr }, { data: requests }, { data: events }] = await Promise.all([
     supabase.from('coach_listings').select('*').eq('coach_id', profile.id).maybeSingle(),
     supabase.from('directory_requests').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false}).limit(100),
@@ -2036,7 +2118,7 @@ async function renderDirectoryView(main){
 }
 
 async function renderAvailabilityView(main){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const { data: slots } = await supabase.from('availability_slots').select('*, clients(full_name)').eq('coach_id', profile.id).order('start_at',{ascending:true});
   main.innerHTML = '';
 
@@ -2228,7 +2310,7 @@ function dowLabel(n){
 }
 
 async function renderGroupClassesView(main){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const { data: classes } = await supabase.from('group_classes').select('*').eq('coach_id', profile.id).order('day_of_week',{ascending:true}).order('start_time',{ascending:true});
   main.innerHTML = '';
   main.appendChild(el(`<h2 style="margin-bottom:4px;">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</h2>`));
@@ -2369,7 +2451,7 @@ async function renderProjectionView(main){
 }
 
 async function renderBusinessOverview(main){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const [{ data: clients }, { data: leads }, { data: courses }, { data: enrollments }, { data: massageRequests }, { data: myCharges }] = await Promise.all([
     supabase.from('clients').select('id,status,monthly_price').eq('coach_id', profile.id),
     supabase.from('leads').select('id,converted'),
@@ -2511,7 +2593,7 @@ function periodLabel(period){ return new Date(period + '-15').toLocaleDateString
 function currentPeriod(){ return localDateStr(new Date()).slice(0,7); } // 'YYYY-MM', local calendar month
 
 async function renderPartnersView(main){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
   const period = currentPeriod();
 
@@ -2647,7 +2729,7 @@ async function renderPartnersView(main){
 // being looked after (last check-in, active program, pain flags) without
 // exposing chat/edit access — for oversight, not day-to-day management.
 async function renderPartnerClientsView(main, coachProfile){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const [{ data: clients }] = await Promise.all([
     supabase.from('clients').select('id,full_name,status,created_at').eq('coach_id', coachProfile.id).order('created_at',{ascending:false}),
   ]);
@@ -2702,7 +2784,7 @@ async function renderPartnerClientsView(main, coachProfile){
 // partners table, plus a manual paid/pending flag (there is no automated
 // payment collection anywhere in this app, so this is a record, not a charge).
 async function renderPartnerHistoryView(main, coachProfile){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
   const { data: charges } = await supabase.from('partner_charges').select('*').eq('coach_id', coachProfile.id).order('period',{ascending:false});
 
@@ -2977,7 +3059,7 @@ function exSelectOptions(list, selectedEl){
 }
 
 async function renderLibrary(main, isCoach){
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const { data: exercises, error } = await supabase.from('exercises').select('*, evidence(*)').order('category');
   if(error){ main.innerHTML = `<p class="errorTag">${escapeHtml(error.message)}</p>`; return; }
 
@@ -3375,7 +3457,7 @@ async function renderNewExerciseForm(main, onDone){
 // ============================================================
 async function renderCoachDashboard(main){
   if(selectedClient){ return renderClientDetail(main); }
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const [{ data: clients }, { data: invites }] = await Promise.all([
     supabase.from('clients').select('*').eq('coach_id', profile.id).order('created_at',{ascending:false}),
     supabase.from('invite_codes').select('*').eq('coach_id', profile.id).eq('used', false).order('created_at',{ascending:false}),
@@ -3953,7 +4035,7 @@ async function renderClientDetail(main, forceRefresh){
   if(!forceRefresh && cache && cache.clientId === client.id){
     ({ programs, exercises, checkins, readiness, intakeRow } = cache);
   } else {
-    main.innerHTML = `<p>${t('loading',locale)}</p>`;
+    showLoading(main);
     const results = await Promise.all([
       supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', client.id).order('created_at',{ascending:false}),
       supabase.from('exercises').select('*').order('category'),
@@ -6684,7 +6766,7 @@ async function removeAvatar(userId){
 
 async function renderClientDashboard(main){
   let tab = renderClientDashboard._tab || 'today';
-  main.innerHTML = `<p>${t('loading',locale)}</p>`;
+  showLoading(main);
   const today = localDateStr(new Date());
   const [{ data: programs }, { data: checkins }, { data: readiness }, { data: clientRow }, { data: todayReadiness }, { data: lastMsg }, { data: intakeRow }, { data: lastReassess }, { data: nutritionTarget }, { data: todayNutritionLogs }, { data: courseEnrollments }, { data: sessionLogDates }] = await Promise.all([
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
