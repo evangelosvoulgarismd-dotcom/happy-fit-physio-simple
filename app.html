@@ -503,6 +503,16 @@
     .btn[style*="padding:3px"], .btn[style*="padding:5px"], .btn[style*="padding:6px"], .setMoreBtn, .goalEditBtn{ min-height:40px; min-width:40px; }
     .social-ico{ padding:10px; margin:-4px; }
   }
+
+/* Library (easier browsing) */
+.libChips{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 10px; margin:0 -2px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
+.libChips::-webkit-scrollbar{display:none}
+.libChip{flex:0 0 auto; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:999px; padding:8px 14px; font:inherit; font-size:12.5px; min-height:36px; cursor:pointer; white-space:nowrap}
+.libChip.on{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.libCount{font-size:12px; color:var(--ink-soft); margin:0 0 8px}
+.libGroup{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin:16px 2px 8px}
+.libSub{font-size:12px; color:var(--ink-soft); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.favBtn{background:none; border:0; font-size:20px; line-height:1; color:var(--gold, #e2a233); cursor:pointer; min-width:40px; min-height:40px; padding:0}
 </style>
 </head>
 <body>
@@ -3178,6 +3188,38 @@ function exSelectOptions(list, selectedEl){
     list.map(o=>`<option value="${escapeHtml(o.el)}" ${o.el===selectedEl?'selected':''}>${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('');
 }
 
+
+// ---- Execution guide fields (setup, tempo, breathing, feel, stop): what makes the client perform the exercise well ----
+const EXEC_FIELDS = [
+  {k:'setup_text',    ico:'🧍', el:'Αρχική θέση',            en:'Starting position',        ph_el:'π.χ. Πόδια στο πλάτος των ώμων, ώμοι πίσω και κάτω, κορμός σταθερός.', ph_en:'e.g. Feet shoulder-width, shoulders back and down, trunk braced.'},
+  {k:'tempo_text',    ico:'⏱', el:'Ρυθμός (tempo)',          en:'Tempo',                    ph_el:'π.χ. 3 δευτ. κάθοδος, 1 δευτ. παύση, 1 δευτ. άνοδος.', ph_en:'e.g. 3 s down, 1 s pause, 1 s up.'},
+  {k:'breathing_text',ico:'🌬', el:'Αναπνοή',                 en:'Breathing',                ph_el:'π.χ. Εισπνοή στην κάθοδο, εκπνοή στην προσπάθεια.', ph_en:'e.g. Inhale on the way down, exhale on the effort.'},
+  {k:'feel_text',     ico:'🎯', el:'Τι πρέπει να νιώθεις',    en:'What you should feel',     ph_el:'π.χ. Δουλεύουν οι γλουτοί και οι μηροί. Όχι στη μέση.', ph_en:'e.g. Glutes and thighs working. Not in the lower back.'},
+  {k:'stop_text',     ico:'🛑', el:'Πότε σταματάς',           en:'When to stop',             ph_el:'π.χ. Οξύς πόνος, μούδιασμα ή η τεχνική χαλάει.', ph_en:'e.g. Sharp pain, numbness or your technique breaks down.'}
+];
+function execViewHtml(ex, compact){
+  const rows = EXEC_FIELDS.filter(f=>ex && ex[f.k]);
+  const note = `<p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Αν νιώσεις οξύ πόνο, μούδιασμα ή ζάλη, σταμάτα και πες το στον coach σου.':'If you feel sharp pain, numbness or dizziness, stop and tell your coach.'}</p>`;
+  if(!rows.length) return '';
+  return `<div class="execGuide" style="border:1px solid var(--line); border-radius:10px; padding:${compact?'8px 10px':'10px 12px'}; margin:8px 0 10px;">
+    <div style="font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--ink-soft); margin-bottom:6px;">${locale==='el'?'Οδηγός εκτέλεσης':'Execution guide'}</div>
+    ${rows.map(f=>`<p style="margin:0 0 5px; font-size:${compact?12:12.5}px; line-height:1.45;"><strong>${f.ico} ${locale==='el'?f.el:f.en}:</strong> ${escapeHtml(ex[f.k])}</p>`).join('')}
+    ${note}</div>`;
+}
+function execFormFields(ex, pre){
+  return `<h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">${locale==='el'?'Οδηγός εκτέλεσης (προαιρετικό)':'Execution guide (optional)'}</h4>` + EXEC_FIELDS.map(f=>
+    `<div class="field"><label>${f.ico} ${locale==='el'?f.el:f.en}</label><input class="${pre}${f.k}" value="${escapeHtml((ex&&ex[f.k])||'')}" placeholder="${escapeHtml(locale==='el'?f.ph_el:f.ph_en)}"></div>`).join('');
+}
+// Only sends columns that have a value (or had one before), so saving still works before the SQL migration is run.
+function execPayload(wrap, pre, ex){
+  const out = {};
+  EXEC_FIELDS.forEach(f=>{
+    const v = (wrap.querySelector('.'+pre+f.k)?.value||'').trim();
+    if(v || (ex && ex[f.k])) out[f.k] = v || null;
+  });
+  return out;
+}
+
 async function renderLibrary(main, isCoach){
   showLoading(main);
   const { data: exercises, error } = await supabase.from('exercises').select('*, evidence(*)').order('category');
@@ -3198,17 +3240,35 @@ async function renderLibrary(main, isCoach){
   const selStyle = 'padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;';
   const toolbar = el(`<div class="card" style="margin-bottom:14px; padding:12px 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
     <input class="libSearchInput" placeholder="${locale==='el'?'🔍 Αναζήτηση άσκησης...':'🔍 Search exercise...'}" style="flex:1; min-width:160px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
-    ${categories.length ? `<select class="libCatSelect" style="${selStyle}">
-      <option value="">${locale==='el'?'Όλες οι κατηγορίες':'All categories'}</option>
-      ${categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
-    </select>` : ''}
+    <button class="btn secondary libFilterToggle" type="button" style="padding:7px 12px; font-size:12px;">⚙ ${locale==='el'?'Φίλτρα':'Filters'}<span class="libFilterCount"></span></button>
+    <div class="libFilters" style="display:none; flex-basis:100%; gap:8px; flex-wrap:wrap;">
     <select class="libRegionSelect" style="${selStyle}"><option value="">${locale==='el'?'Περιοχή σώματος':'Body region'}</option>${EX_BODY_REGIONS.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
     <select class="libGoalSelect" style="${selStyle}"><option value="">${locale==='el'?'Στόχος':'Goal'}</option>${EX_GOALS.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
     <select class="libDiffSelect" style="${selStyle}"><option value="">${locale==='el'?'Επίπεδο':'Level'}</option>${EX_DIFFICULTIES.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
     <select class="libEquipSelect" style="${selStyle}"><option value="">${locale==='el'?'Εξοπλισμός':'Equipment'}</option>${EX_EQUIPMENT.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
+    </div>
     ${isCoach ? `<button class="btn secondary autoFillGifsBtn" type="button" style="padding:7px 12px; font-size:12px;">🪄 ${locale==='el'?'Αυτόματη συμπλήρωση GIF':'Auto-fill GIFs'}</button>` : ''}
   </div>`);
   main.appendChild(toolbar);
+
+  const FAV_KEY = 'hfp_fav_ex';
+  let favs = new Set(); try{ favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY)||'[]')); }catch(e){}
+  const saveFavs = ()=>{ try{ localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); }catch(e){} };
+  let chip = '';            // '' = all, '__fav' = favourites, '__novis' = missing visuals (coach), otherwise a category
+  let limit = 40;
+  const noVisualCount = exercises.filter(e=>!e.gif_url && !e.video_url).length;
+  const chipsBar = el(`<div class="libChips" role="tablist" aria-label="${locale==='el'?'Κατηγορίες':'Categories'}"></div>`);
+  main.appendChild(chipsBar);
+  const countLine = el('<div class="libCount"></div>');
+  main.appendChild(countLine);
+  function renderChips(){
+    const items = [{k:'', l: locale==='el'?'Όλες':'All'}, {k:'__fav', l:'⭐ '+(locale==='el'?'Αγαπημένα':'Favourites')}];
+    if(isCoach && noVisualCount) items.push({k:'__novis', l:'🎥 '+(locale==='el'?'Χωρίς βίντεο/GIF':'No video/GIF')+' ('+noVisualCount+')'});
+    categories.forEach(c=>items.push({k:c, l:c}));
+    chipsBar.innerHTML = items.map(i=>`<button type="button" class="libChip${chip===i.k?' on':''}" data-k="${escapeHtml(i.k)}">${escapeHtml(i.l)}</button>`).join('');
+  }
+  chipsBar.addEventListener('click', e=>{ const b=e.target.closest('.libChip'); if(!b) return; chip = b.dataset.k; limit = 40; renderChips(); renderList(); });
+  renderChips();
 
   if(isCoach){
     toolbar.querySelector('.autoFillGifsBtn').addEventListener('click', async ()=>{
@@ -3251,20 +3311,22 @@ async function renderLibrary(main, isCoach){
   main.appendChild(listBox);
 
   function thumbFor(ex){
-    if(ex.gif_url) return `<img src="${escapeHtml(ex.gif_url)}" style="width:44px; height:44px; border-radius:6px; object-fit:cover; flex-shrink:0;">`;
-    if(ex.video_url) return `<div style="width:44px; height:44px; border-radius:6px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px;">🎥</div>`;
-    return `<div style="width:44px; height:44px; border-radius:6px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; color:var(--ink-soft);">—</div>`;
+    if(ex.gif_url) return `<img src="${escapeHtml(ex.gif_url)}" style="width:52px; height:52px; border-radius:10px; object-fit:cover; flex-shrink:0;" loading="lazy" decoding="async" alt="">`;
+    if(ex.video_url) return `<div style="width:52px; height:52px; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px;">🎥</div>`;
+    return `<div style="width:52px; height:52px; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; color:var(--ink-soft);">—</div>`;
   }
 
   function renderList(){
     const q = (toolbar.querySelector('.libSearchInput').value||'').trim().toLowerCase();
-    const cat = toolbar.querySelector('.libCatSelect')?.value || '';
+    const cat = (chip && chip[0]!=='_') ? chip : '';
     const region = toolbar.querySelector('.libRegionSelect')?.value || '';
     const goal = toolbar.querySelector('.libGoalSelect')?.value || '';
     const diff = toolbar.querySelector('.libDiffSelect')?.value || '';
     const equip = toolbar.querySelector('.libEquipSelect')?.value || '';
     let visible = exercises;
     if(cat) visible = visible.filter(e=>e.category===cat);
+    if(chip==='__fav') visible = visible.filter(e=>favs.has(e.id));
+    if(chip==='__novis') visible = visible.filter(e=>!e.gif_url && !e.video_url);
     if(region) visible = visible.filter(e=>e.body_region===region);
     if(goal) visible = visible.filter(e=>(e.goal_tags||'').split(',').map(s=>s.trim()).includes(goal));
     if(diff) visible = visible.filter(e=>e.difficulty_level===diff);
@@ -3274,9 +3336,15 @@ async function renderLibrary(main, isCoach){
       return n1.includes(q) || n2.includes(q);
     });
     listBox.innerHTML = '';
+    const activeFilters = [region,goal,diff,equip].filter(Boolean).length;
+    const fc = toolbar.querySelector('.libFilterCount'); if(fc) fc.textContent = activeFilters ? ' ('+activeFilters+')' : '';
+    countLine.textContent = (locale==='el' ? visible.length+' ασκήσεις' : visible.length+' exercises');
     if(!visible.length){ listBox.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${locale==='el'?'Καμία αντιστοιχία.':'No matches.'}</p>`)); return; }
 
-    visible.forEach(ex=>{
+    const shown = visible.slice(0, limit);
+    let lastCat = null;
+    shown.forEach(ex=>{
+    if(!cat && chip!=='__fav' && chip!=='__novis' && ex.category!==lastCat){ lastCat = ex.category; listBox.appendChild(el(`<h4 class="libGroup">${escapeHtml(ex.category||'—')}</h4>`)); }
     const name = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
     const desc = locale==='el' ? ex.description_el : (ex.description_en || ex.description_el);
     const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
@@ -3293,12 +3361,14 @@ async function renderLibrary(main, isCoach){
       }
     }
 
+    const subLine = [ex.body_region?exLabel(EX_BODY_REGIONS,ex.body_region):'', ex.equipment?exLabel(EX_EQUIPMENT,ex.equipment):'', ex.difficulty_level?exLabel(EX_DIFFICULTIES,ex.difficulty_level):''].filter(Boolean).join(' · ') || (ex.category||'');
     const card = el(`<div class="card">
       <div class="clickable" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
         <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
           ${thumbFor(ex)}
-          <div><strong>${escapeHtml(name)}</strong> <span class="badge">${escapeHtml(ex.category||'')}</span> ${reviewBadge}</div>
+          <div style="min-width:0;"><strong>${escapeHtml(name)}</strong> ${reviewBadge}<div class="libSub">${escapeHtml(subLine)}</div></div>
         </div>
+        <button type="button" class="favBtn" aria-label="${locale==='el'?'Αγαπημένο':'Favourite'}" aria-pressed="${favs.has(ex.id)}">${favs.has(ex.id)?'★':'☆'}</button>
         <span class="caret">▸</span>
       </div>
       <div class="detail" style="display:none; margin-top:12px;">
@@ -3314,6 +3384,7 @@ async function renderLibrary(main, isCoach){
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
+        ${execViewHtml(ex)}
         ${(ex.body_region || ex.primary_muscles || ex.movement_pattern || ex.goal_tags || ex.difficulty_level || ex.equipment) ? `
         <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${locale==='el'?'Προφίλ άσκησης':'Exercise profile'}</h4>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
@@ -3409,6 +3480,7 @@ async function renderLibrary(main, isCoach){
           <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="ef_steps">${escapeHtml(ex.execution_steps||'')}</textarea></div>
           <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="ef_cues">${escapeHtml(ex.technique_cues||'')}</textarea></div>
           <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="ef_mistakes">${escapeHtml(ex.common_mistakes||'')}</textarea></div>
+          ${execFormFields(ex,'ef_')}
           <h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">${locale==='el'?'Προφίλ άσκησης (προαιρετικό)':'Exercise profile (optional)'}</h4>
           <div class="grid2">
             <div class="field"><label>${locale==='el'?'Περιοχή σώματος':'Body region'}</label><select class="ef_region">${exSelectOptions(EX_BODY_REGIONS, ex.body_region)}</select></div>
@@ -3440,6 +3512,7 @@ async function renderLibrary(main, isCoach){
             execution_steps: editWrap.querySelector('.ef_steps').value.trim() || null,
             technique_cues: editWrap.querySelector('.ef_cues').value.trim() || null,
             common_mistakes: editWrap.querySelector('.ef_mistakes').value.trim() || null,
+            ...execPayload(editWrap,'ef_',ex),
             body_region: editWrap.querySelector('.ef_region').value || null,
             difficulty_level: editWrap.querySelector('.ef_diff').value || null,
             equipment: editWrap.querySelector('.ef_equip').value || null,
@@ -3454,15 +3527,20 @@ async function renderLibrary(main, isCoach){
         });
       });
     }
+    card.querySelector('.favBtn').addEventListener('click', e=>{ e.stopPropagation(); if(favs.has(ex.id)) favs.delete(ex.id); else favs.add(ex.id); saveFavs(); const b=e.currentTarget; b.textContent = favs.has(ex.id)?'★':'☆'; b.setAttribute('aria-pressed', favs.has(ex.id)); if(chip==='__fav') renderList(); });
     listBox.appendChild(card);
     });
+    if(visible.length > limit){
+      const more = el(`<button type="button" class="btn secondary libMore" style="width:100%; margin:6px 0 14px;">${locale==='el'?'Δείξε περισσότερες':'Show more'} (${visible.length-limit})</button>`);
+      more.addEventListener('click', ()=>{ limit += 40; renderList(); });
+      listBox.appendChild(more);
+    }
   }
 
-  toolbar.querySelector('.libSearchInput').addEventListener('input', renderList);
-  const catSel = toolbar.querySelector('.libCatSelect');
-  if(catSel) catSel.addEventListener('change', renderList);
+  let libTimer; toolbar.querySelector('.libSearchInput').addEventListener('input', ()=>{ clearTimeout(libTimer); libTimer=setTimeout(()=>{ limit=40; renderList(); }, 120); });
+  toolbar.querySelector('.libFilterToggle').addEventListener('click', ()=>{ const f=toolbar.querySelector('.libFilters'); f.style.display = f.style.display==='none' ? 'flex' : 'none'; });
   ['.libRegionSelect','.libGoalSelect','.libDiffSelect','.libEquipSelect'].forEach(sel=>{
-    toolbar.querySelector(sel).addEventListener('change', renderList);
+    toolbar.querySelector(sel).addEventListener('change', ()=>{ limit=40; renderList(); });
   });
   renderList();
 }
@@ -3518,6 +3596,7 @@ async function renderNewExerciseForm(main, onDone){
       <div class="field"><label>${t('executionSteps',locale)}</label><textarea class="f_steps" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>
       <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="f_cues"></textarea></div>
       <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="f_mistakes"></textarea></div>
+      ${execFormFields(null,'f_')}
       <h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">${locale==='el'?'Προφίλ άσκησης':'Exercise profile'}</h4>
       <div class="grid2">
         <div class="field"><label>${locale==='el'?'Περιοχή σώματος':'Body region'}</label><select class="f_region">${exSelectOptions(EX_BODY_REGIONS, '')}</select></div>
@@ -3557,6 +3636,7 @@ async function renderNewExerciseForm(main, onDone){
       execution_steps: form.querySelector('.f_steps').value.trim() || null,
       technique_cues: form.querySelector('.f_cues').value.trim() || null,
       common_mistakes: form.querySelector('.f_mistakes').value.trim() || null,
+      ...execPayload(form,'f_',null),
       body_region: form.querySelector('.f_region').value || null,
       difficulty_level: form.querySelector('.f_diff').value || null,
       equipment: form.querySelector('.f_equip').value || null,
@@ -6647,6 +6727,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         ${ex.execution_steps ? `<p style="margin-bottom:6px; white-space:pre-line;"><strong>${t('executionSteps',locale)}:</strong> ${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<p style="margin-bottom:6px; color:var(--danger);"><strong>${t('commonMistakes',locale)}:</strong> ${escapeHtml(ex.common_mistakes)}</p>` : ''}
+        ${execViewHtml(ex, true)}
         ${(ex.body_region || ex.primary_muscles || ex.goal_tags) ? `<div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:6px;">
           ${ex.body_region ? `<span class="badge">📍 ${escapeHtml(exLabel(EX_BODY_REGIONS, ex.body_region))}</span>` : ''}
           ${ex.primary_muscles ? `<span class="badge">💪 ${escapeHtml(ex.primary_muscles)}</span>` : ''}
@@ -6654,7 +6735,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         </div>` : ''}
         ${ex.regression_text ? `<p style="margin-bottom:4px;">⬇ <strong>${locale==='el'?'Πιο εύκολα':'Easier'}:</strong> ${escapeHtml(ex.regression_text)}</p>` : ''}
         ${ex.progression_text ? `<p style="margin-bottom:6px;">⬆ <strong>${locale==='el'?'Πιο δύσκολα':'Harder'}:</strong> ${escapeHtml(ex.progression_text)}</p>` : ''}
-        ${!why && !ex.execution_steps && !ex.technique_cues && !ex.common_mistakes && !ex.video_url && !ex.gif_url && !ex.body_region && !ex.primary_muscles && !ex.goal_tags && !ex.regression_text && !ex.progression_text ? `<span style="color:var(--ink-soft);">—</span>` : ''}
+        ${!why && !ex.execution_steps && !ex.technique_cues && !ex.common_mistakes && !EXEC_FIELDS.some(f=>ex[f.k]) && !ex.video_url && !ex.gif_url && !ex.body_region && !ex.primary_muscles && !ex.goal_tags && !ex.regression_text && !ex.progression_text ? `<span style="color:var(--ink-soft);">—</span>` : ''}
       </div>
     </div>`);
     card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
