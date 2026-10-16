@@ -1385,6 +1385,8 @@ async function renderPackagesView(main){
   const remainingTotal = open.reduce((a,p)=>a + Math.max(0, p.total_sessions - (byPkg[p.id]||[]).length), 0);
   const unpaid = (pkgs||[]).filter(p=>!p.paid && p.price>0).reduce((a,p)=>a+Number(p.price),0);
   const dstr = d => new Date(d+'T00:00:00').toLocaleDateString(el_?'el-GR':'en-GB');
+  const costed = sessions.filter(x=>x.cost!=null);
+  const avgCost = costed.length ? costed.reduce((a,x)=>a+Number(x.cost),0)/costed.length : 0;
 
   main.innerHTML = '';
   main.appendChild(el(`<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;"><h2>💆 ${t('packages',locale)}</h2><button class="btn newPkgBtn" type="button">+ ${el_?'Νέο πακέτο':'New package'}</button></div>`));
@@ -1426,6 +1428,7 @@ async function renderPackagesView(main){
     <div class="statCard"><div class="num mono">${open.length}</div><div class="lbl">${el_?'Ενεργά πακέτα':'Open packages'}</div></div>
     <div class="statCard"><div class="num mono">${remainingTotal}</div><div class="lbl">${el_?'Συνεδρίες που οφείλεις':'Sessions you owe'}</div></div>
     <div class="statCard"><div class="num mono">${euro(unpaid)}</div><div class="lbl">${el_?'Απλήρωτα':'Unpaid'}</div></div>
+    ${costed.length ? `<div class="statCard"><div class="num mono">${new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',minimumFractionDigits:1,maximumFractionDigits:1}).format(avgCost)}</div><div class="lbl">${el_?`Μέσο κόστος ανά συνεδρία (${costed.length} καταγραφές)`:`Average cost per session (${costed.length} entries)`}</div></div>` : ''}
   </div>`));
 
   const bar = el(`<div style="display:flex; gap:6px; margin-bottom:14px;">${[['open',el_?'Ενεργά':'Open'],['done',el_?'Ολοκληρωμένα':'Completed']].map(([k,lab])=>`<button type="button" class="btn ${filter===k?'':'secondary'} pkgChip" data-k="${k}" style="padding:6px 12px; font-size:12px;">${lab}</button>`).join('')}</div>`);
@@ -1465,10 +1468,11 @@ async function renderPackagesView(main){
           <div class="field"><label>${el_?'Ημερομηνία':'Date'}</label><input type="date" class="ss_date" value="${localDateStr(new Date())}"></div>
           <div class="field"><label>${el_?'Σημείωση (μόνο για εσένα)':'Note (only for you)'}</label><input class="ss_note" maxlength="1000" placeholder="${el_?'Σύντομα, χωρίς διαγνώσεις':'Short, no diagnoses'}"></div>
         </div>
+        <div class="field"><label>${el_?'Κόστος συνεδρίας € (προαιρετικό: καύσιμο, patches)':'Session cost € (optional: fuel, patches)'}</label><input class="ss_cost" type="number" min="0" max="500" step="0.5" inputmode="decimal"></div>
         <button class="btn saveSesBtn" type="button">${t('save',locale)}</button>
       </div>
       <div class="histBox" style="display:none; margin-top:12px; padding-top:10px; border-top:1px solid var(--line);">
-        ${list.map(x=>`<div style="display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:5px 0;"><span><span class="mono">${dstr(x.session_date)}</span>${x.note ? ` · ${escapeHtml(x.note)}` : ''}</span><button type="button" class="delSesBtn" data-id="${x.id}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:12px;">${el_?'Διαγραφή':'Delete'}</button></div>`).join('')}
+        ${list.map(x=>`<div style="display:flex; justify-content:space-between; gap:10px; font-size:12.5px; padding:5px 0;"><span><span class="mono">${dstr(x.session_date)}</span>${x.note ? ` · ${escapeHtml(x.note)}` : ''}${x.cost!=null ? ` · <span class="mono">${euro(x.cost)}</span>` : ''}</span><button type="button" class="delSesBtn" data-id="${x.id}" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:12px;">${el_?'Διαγραφή':'Delete'}</button></div>`).join('')}
       </div>
     </div>`);
     const refresh = ()=>renderPackagesView(main);
@@ -1478,7 +1482,10 @@ async function renderPackagesView(main){
     const addBtn = card.querySelector('.addSesBtn');
     if(addBtn) addBtn.addEventListener('click', ()=>{ const f=card.querySelector('.sesForm'); f.style.display = f.style.display==='none' ? 'block' : 'none'; });
     card.querySelector('.saveSesBtn').addEventListener('click', async ()=>{
-      const { error } = await supabase.from('recovery_sessions').insert({ package_id: p.id, coach_id: profile.id, session_date: card.querySelector('.ss_date').value || localDateStr(new Date()), note: card.querySelector('.ss_note').value.trim() || null });
+      const costRaw = card.querySelector('.ss_cost').value;
+      const row = { package_id: p.id, coach_id: profile.id, session_date: card.querySelector('.ss_date').value || localDateStr(new Date()), note: card.querySelector('.ss_note').value.trim() || null };
+      if(costRaw!=='' && Number(costRaw)>=0) row.cost = Number(costRaw);
+      const { error } = await supabase.from('recovery_sessions').insert(row);
       if(error){ toast((el_?'Σφάλμα: ':'Error: ')+error.message); return; }
       toast(t('saved',locale)); refresh();
     });
@@ -1526,6 +1533,15 @@ async function renderLeadsView(main){
     return;
   }
   if(pipelineOn){
+    const SRC = { landing_page: locale==='el'?'Φόρμα site':'Site form', concierge_quick: locale==='el'?'Γρήγορο αίτημα (Concierge)':'Concierge quick request', instagram_dm: 'Instagram DM' };
+    const bySrc = {};
+    allLeads.forEach(l=>{ const k = l.source || 'other'; (bySrc[k] = bySrc[k] || { n:0, won:0 }); bySrc[k].n++; if(l.converted || l.stage==='won') bySrc[k].won++; });
+    const srcRows = Object.entries(bySrc).sort((a,b)=>b[1].n-a[1].n);
+    main.appendChild(el(`<div class="card" style="padding:12px 14px; margin-bottom:14px; font-size:12.5px;">
+      <strong>${locale==='el'?'Από πού έρχονται και πόσοι κλείνουν':'Where they come from and how many close'}</strong>
+      ${srcRows.map(([k,v])=>`<div style="display:flex; justify-content:space-between; gap:10px; padding:4px 0;"><span>${escapeHtml(SRC[k]||(k==='other'?(locale==='el'?'Άλλη/άγνωστη':'Other/unknown'):k))}</span><span class="mono">${v.won}/${v.n} (${Math.round(v.won/v.n*100)}%)</span></div>`).join('')}
+      <div style="color:var(--ink-soft); font-size:11.5px; margin-top:6px;">${locale==='el'?'Με λίγα leads, τα ποσοστά δεν είναι αξιόπιστα. Κοίτα τα όταν υπάρχουν πάνω από 10 ανά πηγή.':'With few leads, the percentages are not reliable. Look at them once there are over 10 per source.'}</div>
+    </div>`));
     const cnt = k => allLeads.filter(l=>inCat(l,k)).length;
     const chips = [['all', locale==='el'?'Όλα':'All'], ['due', locale==='el'?'Να καλέσω':'Follow up']].concat(STAGES);
     const bar = el(`<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">${chips.map(([k,lab])=>`<button type="button" class="btn ${filterKey===k?'':'secondary'} leadChip" data-k="${k}" style="padding:6px 12px; font-size:12px;">${lab} <span class="mono">${cnt(k)}</span></button>`).join('')}</div>`);
