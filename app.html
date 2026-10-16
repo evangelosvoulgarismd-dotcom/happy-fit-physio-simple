@@ -54,7 +54,7 @@
   .clientBottomNav { position:fixed; bottom:0; left:0; right:0; z-index:40; display:flex; justify-content:space-around; align-items:center; background:var(--panel); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -2px 10px rgba(0,0,0,0.06); }
   .cbn-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--ink-soft); font-family:inherit; font-size:10.5px; padding:4px 2px; cursor:pointer; }
   .cbn-btn .cbn-ico { font-size:19px; line-height:1; }
-  .cbn-btn.active { color:var(--red); font-weight:700; }
+  .cbn-btn.active { color:var(--red-text); font-weight:700; }
   .cbn-btn.cbn-central .cbn-ico { background:var(--red); color:#fff; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:2px; box-shadow:0 3px 8px rgba(196,32,31,0.35); }
   .cbn-btn.cbn-central { color:var(--red); }
   .profileMenu { display:flex; flex-direction:column; gap:8px; }
@@ -486,6 +486,22 @@
     #bottomTabBar, .clientBottomNav{ background:var(--panel) !important; }
     #sidebar{ background:var(--side-bg) !important; }
     .modalOverlay{ -webkit-backdrop-filter:none; backdrop-filter:none; }
+  }
+
+  /* ── Audit fixes: layout, contrast, tap targets ── */
+  #main{ min-width:0; }
+  #main > *{ max-width:100%; }
+  html[data-theme="light"]{ --gold:#946508; }
+  html[data-theme="dark"] .cbn-btn.cbn-central{ color:#ff7a80; }
+  html[data-theme="dark"] .cbn-btn:not(.active):not(.cbn-central){ color:#bdbdbd; }
+  .bottomTab, .cbn-btn{ min-width:0; flex:1 1 0; }
+  .bottomTab .lbl, .cbn-btn{ overflow:hidden; text-overflow:ellipsis; }
+  .bottomTab .lbl{ max-width:100%; }
+  @media (max-width: 360px){ .bottomTab .lbl{ font-size:9px; } .cbn-btn{ font-size:9.5px; } }
+  @media (max-width: 760px){
+    .btn, .navBtn, select, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]){ min-height:44px; }
+    .btn[style*="padding:3px"], .btn[style*="padding:5px"], .btn[style*="padding:6px"], .setMoreBtn, .goalEditBtn{ min-height:40px; min-width:40px; }
+    .social-ico{ padding:10px; margin:-4px; }
   }
 </style>
 </head>
@@ -1451,6 +1467,36 @@ function renderShell(){
   const main = shell.querySelector('#main');
   renderMainView(main, isCoach, isOwner);
 }
+
+
+// Accessibility: give icon-only buttons and unlabeled fields a name for screen readers (and voice control).
+// Runs on whatever the views render, so no view needs to remember to do it.
+(function a11yNames(){
+  const el_ = ()=>document.documentElement.lang==='en' || (typeof locale!=='undefined' && locale==='en') ? 'en' : 'el';
+  const T = {
+    editLeadBtn:['Επεξεργασία','Edit'], delLeadBtn:['Διαγραφή','Delete'], delRowBtn:['Διαγραφή γραμμής','Delete row'],
+    delClientBtn:['Διαγραφή ασκούμενου','Delete client'], archiveBtn:['Αρχειοθέτηση ή επαναφορά','Archive or restore'],
+  };
+  const JUMP = { live:['Ζωντανή προπόνηση','Live session'], program:['Πρόγραμμα','Program'], messages:['Μηνύματα','Messages'] };
+  let queued = false;
+  function run(){
+    queued = false;
+    const en = el_()==='en' ? 1 : 0;
+    document.querySelectorAll('#app button:not([aria-label])').forEach(b=>{
+      if((b.innerText||'').replace(/[\p{Emoji}\s]/gu,'').length) return;   // has real text already
+      for(const k in T) if(b.classList.contains(k)){ b.setAttribute('aria-label', T[k][en]); return; }
+      if(b.classList.contains('jumpBtn') && JUMP[b.dataset.jump]) b.setAttribute('aria-label', JUMP[b.dataset.jump][en]);
+    });
+    document.querySelectorAll('#app input:not([type=hidden]):not([aria-label]), #app select:not([aria-label]), #app textarea:not([aria-label])').forEach(f=>{
+      if(f.labels && f.labels.length) return;
+      const near = f.closest('.field')?.querySelector('label') || f.previousElementSibling;
+      const txt = (f.placeholder || (near && near.tagName!=='INPUT' && near.innerText) || f.closest('label')?.innerText || '').trim();
+      if(txt) f.setAttribute('aria-label', txt.slice(0,60));
+    });
+  }
+  const queue = ()=>{ if(!queued){ queued = true; requestAnimationFrame(run); } };
+  new MutationObserver(queue).observe(document.body, { childList:true, subtree:true });
+})();
 
 function renderMainView(main, isCoach, isOwner){
   if(view==='library') renderLibrary(main, isCoach);
