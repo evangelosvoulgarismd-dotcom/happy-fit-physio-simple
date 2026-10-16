@@ -16,7 +16,7 @@
 <meta name="description" content="Πλατφόρμα online coaching φυσικής κατάστασης βασισμένη σε βιβλιογραφία.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
@@ -421,6 +421,71 @@
   @media (prefers-reduced-transparency: reduce){
     #bottomTabBar{ background:var(--panel) !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
     #sidebar{ background:var(--red-deep) !important; -webkit-backdrop-filter:none; backdrop-filter:none; }
+  }
+
+  /* ══ Skin v2: pill buttons, big rounded cards, Inter, floating glass bars (inspired by valakos.com style) ══ */
+  :root{ --r-card:22px; --r-field:14px; --hair:rgba(0,0,0,.09); --glass:rgba(255,255,255,.72); --btn-bg:#0b0b0b; --btn-ink:#fff; --nav-ink:#5c5c5c; --nav-on:#0b0b0b; --nav-on-bg:rgba(0,0,0,.06); --side-bg:#fff; }
+  html[data-theme="dark"]{ --hair:rgba(255,255,255,.09); --glass:rgba(22,22,22,.68); --btn-bg:#f4f4f4; --btn-ink:#0b0b0b; --nav-ink:#a8a8a8; --nav-on:#fff; --nav-on-bg:rgba(255,255,255,.09); --side-bg:#0b0b0b; --panel:#101010; --line:rgba(255,255,255,.09); }
+  html[data-theme="light"]{ --bg:#f3f3f1; --panel:#fff; --line:rgba(0,0,0,.09); --surface2:#eeeeec; --tint-soft:#f7f7f5; --ink:#111; --ink-soft:#666; --red:#d11a22; --accent:#d11a22; --red-text:#c4141c; }
+  body{ font-family:'Inter','Public Sans',system-ui,sans-serif; letter-spacing:-.006em; }
+  h1,h2,h3,h4{ font-family:'Inter',sans-serif; font-weight:700; letter-spacing:-.03em; }
+  #main h2{ font-size:clamp(22px,3.2vw,30px); line-height:1.1; }
+  .mono, .badge, .statCard .num{ font-feature-settings:"tnum"; }
+
+  /* sidebar / top bar */
+  #sidebar{ background:var(--side-bg); color:var(--nav-ink); border-right:1px solid var(--line); }
+  #sidebar h1{ color:var(--ink); }
+  #sidebar .tagline{ color:var(--ink-soft); }
+  .navBtn{ color:var(--nav-ink); border-left:none; border-radius:999px; padding:10px 14px; font-weight:500; }
+  .navBtn:hover{ background:var(--nav-on-bg); color:var(--nav-on); }
+  .navBtn.active{ background:var(--nav-on-bg); color:var(--nav-on); font-weight:600; border-left:none; box-shadow:inset 0 0 0 1px var(--hair); }
+  #sidebarFooter{ border-top:1px solid var(--line); color:var(--ink-soft); }
+  #sidebarFooter a{ color:var(--ink-soft); }
+  .optLabel{ color:var(--ink-soft); }
+  .optGroup .optRow, .langToggle button{ color:var(--nav-ink); }
+  #notifBell, #menuToggleBtn{ background:var(--nav-on-bg); color:var(--ink); border:1px solid var(--hair); border-radius:999px; }
+
+  /* cards: large radius, hairline border, no red edge */
+  .card, .statCard, .clinicalCard, .chartWrap{ border:1px solid var(--line); border-left:1px solid var(--line); border-radius:var(--r-card); box-shadow:none; }
+  .card{ padding:22px; }
+  .card.gold{ border-left:1px solid var(--line); background:linear-gradient(180deg, color-mix(in srgb, var(--gold) 10%, var(--panel)), var(--panel)); }
+  .statCard{ border-radius:18px; }
+  .clientCard:hover{ box-shadow:none; transform:none; border-color:var(--hair); background:color-mix(in srgb, var(--ink) 4%, var(--panel)); }
+  html[data-theme="light"] .card, html[data-theme="light"] .statCard{ box-shadow:0 1px 2px rgba(0,0,0,.03); }
+
+  /* buttons: pills. Primary is white (dark theme) or black (light theme); red stays for danger and accents */
+  .btn{ border-radius:999px; background:var(--btn-bg); color:var(--btn-ink); border:1px solid var(--btn-bg); padding:11px 22px; font-weight:600; letter-spacing:-.005em; }
+  .btn:hover{ background:var(--btn-bg); border-color:var(--btn-bg); opacity:.88; }
+  .btn.secondary{ background:transparent; color:var(--ink); border:1px solid var(--hair); }
+  .btn.secondary:hover{ background:var(--nav-on-bg); opacity:1; }
+  .btn.danger{ background:transparent; color:var(--danger); border:1px solid color-mix(in srgb, var(--danger) 45%, transparent); }
+  .btn.danger:hover{ background:var(--tint); opacity:1; }
+  .leadChip.btn{ padding:7px 14px !important; }
+
+  /* fields */
+  .field input, .field select, .field textarea, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea{ border-radius:var(--r-field); border-color:var(--line); padding:11px 14px; }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color:color-mix(in srgb, var(--ink) 40%, transparent); box-shadow:0 0 0 3px color-mix(in srgb, var(--ink) 10%, transparent); }
+  .badge{ border-radius:999px; padding:3px 10px; border:1px solid var(--line); background:transparent; }
+
+  /* modals: scrim with blur, big radius */
+  .modalOverlay{ background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  .modalBox{ border-radius:26px; border:1px solid var(--line); box-shadow:0 30px 80px rgba(0,0,0,.45); padding:30px; }
+
+  /* mobile: floating glass tab bars and a glass top bar */
+  @media (max-width: 760px){
+    #sidebar{ background:var(--glass); border-right:none; border-bottom:1px solid var(--line); }
+    #bottomTabBar, .clientBottomNav{ left:12px !important; right:12px !important; bottom:calc(10px + env(safe-area-inset-bottom)) !important; border:1px solid var(--hair) !important; border-radius:26px !important; padding:6px 6px !important; background:var(--glass) !important; -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%); box-shadow:0 10px 30px rgba(0,0,0,.25) !important; }
+    #main{ padding-bottom:calc(104px + env(safe-area-inset-bottom)) !important; }
+    .bottomTab, .cbn-btn{ border-radius:20px; color:var(--ink-soft); }
+    .bottomTab.active{ background:var(--nav-on-bg); color:var(--ink); }
+    .cbn-btn.active{ color:var(--ink); }
+    .card{ padding:18px; border-radius:20px; }
+    .navBtnsWrap .navBtn{ border-radius:14px; }
+  }
+  @media (prefers-reduced-transparency: reduce){
+    #bottomTabBar, .clientBottomNav{ background:var(--panel) !important; }
+    #sidebar{ background:var(--side-bg) !important; }
+    .modalOverlay{ -webkit-backdrop-filter:none; backdrop-filter:none; }
   }
 </style>
 </head>
