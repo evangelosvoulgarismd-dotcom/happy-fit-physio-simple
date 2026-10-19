@@ -3644,35 +3644,36 @@ function ex3dPayload(wrap, pre, ex){
 }
 // Keyword guess from name / equipment / movement pattern. Always saved as draft, never shown to clients before approval.
 function ex3dSuggest(ex){
-  const raw = [ex.name_el, ex.name_en, ex.movement_pattern, ex.equipment, ex.category].filter(Boolean).join(' ').toLowerCase();
-  const x = raw.normalize('NFD').replace(/[̀-ͯ]/g,'');
-  const has = r => r.test(x);
-  if(has(/leg curl|hamstring curl|nordic|extension|μηρι/)) return null;
+  const norm = t => (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const nameOnly = norm([ex.name_el, ex.name_en].filter(Boolean).join(' '));
+  const x = norm([ex.name_el, ex.name_en, ex.equipment].filter(Boolean).join(' '));
+  const hasN = r => r.test(nameOnly), has = r => r.test(x);
+  // Only high-confidence matches. Anything unusual (single-leg, side-lying, jumps, seated, holds with bands...) is left for manual choice.
+  if(hasN(/single.?leg|μονοποδ|ενα ποδι|lateral lunge|πλαγια προβολ|side plank|πλαγια σανιδα|copenhagen|step.?up|jump|pogo|seated|καθιστου|slider|spanish|curl.?up|hip thrust|side.?lying|πλαγια κατακλιση|wall sit|bulgarian|split squat|push.?up plus|farmer|swing|nordic|leg curl|hamstring curl|extension|μηρι/)) return null;
   let pat = null;
-  if(has(/clamshell|κλαμσελ/)) pat='clamshell';
-  else if(has(/bird.?dog|τετραποδ/)) pat='bird_dog';
-  else if(has(/dead.?bug/)) pat='dead_bug';
-  else if(has(/pull.?up|chin.?up|pulldown|ελξη|ελξεις/)) pat='pullup';
-  else if(has(/push.?up|καμψεις στηριξης|βαθμιδ/)) pat='pushup';
-  else if(has(/plank|σανιδα/)) pat='plank';
-  else if(has(/bridge|γεφυρα|hip thrust/)) pat='glute_bridge';
-  else if(has(/goblet/)) pat='goblet_squat';
-  else if(has(/lunge|προβολ|split squat|bulgarian|step.?up/)) pat='lunge';
-  else if(has(/deadlift|rdl|romanian|ρουμανικ|good morning|hinge|νεκρη/)) pat='hinge';
-  else if(has(/squat|σκουατ|καθισμα/)) pat='squat';
-  else if(has(/row|κωπηλασ/)) pat='row';
-  else if(has(/overhead|shoulder press|military|arnold|πιεση ωμων|πιεσεις ωμων/)) pat='overhead_press';
-  else if(has(/lateral raise|πλαγια ανυψωσ|πλαγιες ανυψωσ/)) pat='lateral_raise';
-  else if(has(/calf|γαμπ/)) pat='calf_raise';
-  else if(has(/curl|bicep|δικεφαλ/)) pat='biceps_curl';
-  else if(has(/crunch|sit.?up|κοιλιακ/)) pat='crunch';
+  if(hasN(/clamshell|κλαμσελ/)) pat='clamshell';
+  else if(hasN(/bird.?dog|τετραποδ/)) pat='bird_dog';
+  else if(hasN(/dead.?bug/)) pat='dead_bug';
+  else if(hasN(/pull.?up|chin.?up|pulldown|ελκυσεις|ελξεις/)) pat='pullup';
+  else if(hasN(/push.?up|καμψεις στηριξης/)) pat='pushup';
+  else if(hasN(/plank|σανιδα/)) pat='plank';
+  else if(hasN(/glute bridge|γεφυρα γλουτων/)) pat='glute_bridge';
+  else if(hasN(/goblet/)) pat='goblet_squat';
+  else if(hasN(/lunge|προβολ/)) pat='lunge';
+  else if(hasN(/deadlift|rdl|romanian|ρουμανικ|good morning|hinge|νεκρη/)) pat='hinge';
+  else if(hasN(/squat|σκουατ/)) pat='squat';
+  else if(hasN(/row|κωπηλασ/)) pat='row';
+  else if(hasN(/overhead|shoulder press|military|arnold|πιεση ωμων|πιεσεις ωμων/)) pat='overhead_press';
+  else if(hasN(/lateral raise|πλαγια ανυψωσ|πλαγιες ανυψωσ/)) pat='lateral_raise';
+  else if(hasN(/calf|γαμπ/)) pat='calf_raise';
+  else if(hasN(/biceps curl|bicep curl|hammer curl|κλαση βραχιον|δικεφαλ βραχιον/)) pat='biceps_curl';
+  else if(hasN(/crunch|sit.?up/)) pat='crunch';
   if(!pat) return null;
   let prop = 'none';
   if(pat==='pullup') prop='pullbar';
   else if(has(/kettlebell/)) prop='kettlebell';
   else if(has(/dumbbell|αλτηρ/)) prop='dumbbells';
   else if(has(/barbell|μπαρα/)) prop = pat==='squat' ? 'barbell_back' : 'barbell';
-  else if(has(/band|λαστιχ|elastic/)) prop = pat==='clamshell' ? 'band_knees' : 'band_hands';
   if(pat==='goblet_squat' && prop==='none') prop='kettlebell';
   return {pat, prop};
 }
