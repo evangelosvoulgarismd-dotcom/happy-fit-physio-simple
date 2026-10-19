@@ -3163,6 +3163,7 @@ const EX_BODY_REGIONS = [
   {el:'Στήθος', en:'Chest'}, {el:'Πλάτη', en:'Back'}, {el:'Ώμος', en:'Shoulder'}, {el:'Χέρι', en:'Arm'},
   {el:'Κορμός', en:'Core'}, {el:'Ισχίο', en:'Hip'}, {el:'Γόνατο', en:'Knee'}, {el:'Ποδοκνημική', en:'Ankle'},
   {el:'Πόδι', en:'Leg'}, {el:'Ολόκληρο σώμα', en:'Full body'},
+  {el:'Αυχένας', en:'Neck'}, {el:'Σπονδυλική στήλη', en:'Spine'}, {el:'Αγκώνας και καρπός', en:'Elbow and wrist'},
 ];
 const EX_GOALS = [
   {el:'Μυϊκή ανάπτυξη', en:'Hypertrophy'}, {el:'Δύναμη', en:'Strength'}, {el:'Αντοχή', en:'Endurance'},
@@ -3176,7 +3177,7 @@ const EX_DIFFICULTIES = [
 const EX_EQUIPMENT = [
   {el:'Βάρος σώματος', en:'Bodyweight'}, {el:'Αλτήρες', en:'Dumbbells'}, {el:'Μπάρα', en:'Barbell'},
   {el:'Μηχάνημα', en:'Machine'}, {el:'Τροχαλία', en:'Cable'}, {el:'Λάστιχα', en:'Bands'},
-  {el:'Kettlebell', en:'Kettlebell'}, {el:'Cardio', en:'Cardio'},
+  {el:'Kettlebell', en:'Kettlebell'}, {el:'Cardio', en:'Cardio'}, {el:'Βοηθητικά', en:'Accessories (box, ball, dowel)'},
 ];
 function exLabel(list, elValue){
   if(!elValue) return '';
@@ -3220,6 +3221,462 @@ function execPayload(wrap, pre, ex){
   return out;
 }
 
+// ===== Happy Fit Physio: 3D exercise engine (keyframe poses, no video files) =====
+// Angles in degrees. Sagittal chain: x = forward, y = up, z = sideways.
+const EX3D_PATTERNS = {
+  squat: { el:'Καθιστή (squat)', anchor:'ankleR', T:4, frames:[
+    {t:0,   hip:0,   knee:0,   ankle:0,   spine:0,  shoulder:90,  elbow:0},
+    {t:1.6, hip:120, knee:110, ankle:-25, spine:35, shoulder:125, elbow:0},
+    {t:2.2, hip:120, knee:110, ankle:-25, spine:35, shoulder:125, elbow:0},
+    {t:3.8, hip:0,   knee:0,   ankle:0,   spine:0,  shoulder:90,  elbow:0},
+    {t:4,   hip:0,   knee:0,   ankle:0,   spine:0,  shoulder:90,  elbow:0}] },
+  goblet_squat: { el:'Squat με βάρος μπροστά', anchor:'ankleR', T:4, frames:[
+    {t:0,   hip:0,   knee:0,   ankle:0,   spine:0,  shoulder:15, elbow:135},
+    {t:1.6, hip:120, knee:110, ankle:-25, spine:35, shoulder:25, elbow:135},
+    {t:2.2, hip:120, knee:110, ankle:-25, spine:35, shoulder:25, elbow:135},
+    {t:3.8, hip:0,   knee:0,   ankle:0,   spine:0,  shoulder:15, elbow:135},
+    {t:4,   hip:0,   knee:0,   ankle:0,   spine:0,  shoulder:15, elbow:135}] },
+  hinge: { el:'Σύνθλιψη ισχίου (hinge / RDL)', anchor:'ankleR', T:4, frames:[
+    {t:0,   hip:0,  knee:0,  spine:0,  shoulder:0},
+    {t:1.8, hip:85, knee:15, spine:70, shoulder:70},
+    {t:2.3, hip:85, knee:15, spine:70, shoulder:70},
+    {t:3.9, hip:0,  knee:0,  spine:0,  shoulder:0},
+    {t:4,   hip:0,  knee:0,  spine:0,  shoulder:0}] },
+  lunge: { el:'Προβολή (lunge)', anchor:'ankleL', T:4, frames:[
+    {t:0,   hipL:15, kneeL:10, hipR:-15, kneeR:10, ankleL:0, ankleR:15, shoulder:0},
+    {t:1.8, hipL:90, kneeL:90, hipR:-5,  kneeR:90, ankleL:-5, ankleR:0, shoulder:0, spine:3},
+    {t:2.3, hipL:90, kneeL:90, hipR:-5,  kneeR:90, ankleL:-5, ankleR:0, shoulder:0, spine:3},
+    {t:3.9, hipL:15, kneeL:10, hipR:-15, kneeR:10, ankleL:0, ankleR:15, shoulder:0},
+    {t:4,   hipL:15, kneeL:10, hipR:-15, kneeR:10, ankleL:0, ankleR:15, shoulder:0}] },
+  glute_bridge: { el:'Γέφυρα γλουτών', anchor:'ankleR', T:4, frames:[
+    {t:0,   rot:-90, spine:0,   hip:40,  knee:95, ankle:35, shoulder:0,   elbow:0},
+    {t:1.5, rot:-90, spine:-35, hip:-45, knee:80, ankle:0,  shoulder:-35, elbow:0},
+    {t:2.3, rot:-90, spine:-35, hip:-45, knee:80, ankle:0,  shoulder:-35, elbow:0},
+    {t:3.8, rot:-90, spine:0,   hip:40,  knee:95, ankle:35, shoulder:0,   elbow:0},
+    {t:4,   rot:-90, spine:0,   hip:40,  knee:95, ankle:35, shoulder:0,   elbow:0}] },
+  plank: { el:'Σανίδα (plank)', anchor:'toeR', T:4, frames:[
+    {t:0, rot:72, hip:0, knee:0, ankle:-5, shoulder:72, elbow:0, spine:0},
+    {t:2, rot:72, hip:0, knee:0, ankle:-5, shoulder:72, elbow:0, spine:1.5},
+    {t:4, rot:72, hip:0, knee:0, ankle:-5, shoulder:72, elbow:0, spine:0}] },
+  pushup: { el:'Βαθμίδα (push-up)', anchor:'toeR', T:4, frames:[
+    {t:0,   rot:72, hip:0, knee:0, ankle:-5, shoulder:72,  elbow:0},
+    {t:1.7, rot:84, hip:0, knee:0, ankle:-5, shoulder:30, elbow:95},
+    {t:2.2, rot:84, hip:0, knee:0, ankle:-5, shoulder:30, elbow:95},
+    {t:3.9, rot:72, hip:0, knee:0, ankle:-5, shoulder:72,  elbow:0},
+    {t:4,   rot:72, hip:0, knee:0, ankle:-5, shoulder:72,  elbow:0}] },
+  row: { el:'Κωπηλασία (bent-over row)', anchor:'ankleR', T:4, frames:[
+    {t:0,   hip:70, knee:25, ankle:-5, spine:50, shoulder:50, elbow:0},
+    {t:1.5, hip:70, knee:25, ankle:-5, spine:50, shoulder:-5, elbow:100},
+    {t:2.2, hip:70, knee:25, ankle:-5, spine:50, shoulder:-5, elbow:100},
+    {t:3.8, hip:70, knee:25, ankle:-5, spine:50, shoulder:50, elbow:0},
+    {t:4,   hip:70, knee:25, ankle:-5, spine:50, shoulder:50, elbow:0}] },
+  overhead_press: { el:'Πιέσεις πάνω από το κεφάλι', anchor:'ankleR', T:4, frames:[
+    {t:0,   shoulder:30,  elbow:140},
+    {t:1.7, shoulder:175, elbow:5},
+    {t:2.2, shoulder:175, elbow:5},
+    {t:3.9, shoulder:30,  elbow:140},
+    {t:4,   shoulder:30,  elbow:140}] },
+  biceps_curl: { el:'Κάμψη βραχιόνων (curl)', anchor:'ankleR', T:4, frames:[
+    {t:0,   shoulder:0, elbow:0},
+    {t:1.6, shoulder:5, elbow:140},
+    {t:2.2, shoulder:5, elbow:140},
+    {t:3.9, shoulder:0, elbow:0},
+    {t:4,   shoulder:0, elbow:0}] },
+  lateral_raise: { el:'Πλάγια ανύψωση', anchor:'ankleR', T:4, frames:[
+    {t:0,   sabd:5,  elbow:10, shoulder:0},
+    {t:1.7, sabd:88, elbow:10, shoulder:0},
+    {t:2.2, sabd:88, elbow:10, shoulder:0},
+    {t:3.9, sabd:5,  elbow:10, shoulder:0},
+    {t:4,   sabd:5,  elbow:10, shoulder:0}] },
+  calf_raise: { el:'Ανύψωση γάμπας', anchor:'toeR', T:3, frames:[
+    {t:0,   ankle:0,  shoulder:0},
+    {t:1.0, ankle:45, shoulder:0},
+    {t:1.6, ankle:45, shoulder:0},
+    {t:2.9, ankle:0,  shoulder:0},
+    {t:3,   ankle:0,  shoulder:0}] },
+  clamshell: { el:'Clamshell (πλάγια ξαπλωτή)', anchor:'pelvis', T:4, frames:[
+    {t:0,   rot:90, roll:90, hip:50, knee:90, habdL:0,  shoulder:0, elbow:90},
+    {t:1.6, rot:90, roll:90, hip:50, knee:90, habdL:45, shoulder:0, elbow:90},
+    {t:2.2, rot:90, roll:90, hip:50, knee:90, habdL:45, shoulder:0, elbow:90},
+    {t:3.8, rot:90, roll:90, hip:50, knee:90, habdL:0,  shoulder:0, elbow:90},
+    {t:4,   rot:90, roll:90, hip:50, knee:90, habdL:0,  shoulder:0, elbow:90}] },
+  bird_dog: { el:'Bird-dog (τετραποδία)', anchor:'pelvis', T:8, frames:[
+    {t:0, rot:90, hipL:90, kneeL:90, hipR:90, kneeR:90, shoulderL:90, shoulderR:90},
+    {t:1.5, rot:90, hipL:0,  kneeL:0,  hipR:90, kneeR:90, shoulderL:90, shoulderR:180},
+    {t:2.5, rot:90, hipL:0,  kneeL:0,  hipR:90, kneeR:90, shoulderL:90, shoulderR:180},
+    {t:4, rot:90, hipL:90, kneeL:90, hipR:90, kneeR:90, shoulderL:90, shoulderR:90},
+    {t:5.5, rot:90, hipL:90, kneeL:90, hipR:0,  kneeR:0,  shoulderL:180, shoulderR:90},
+    {t:6.5, rot:90, hipL:90, kneeL:90, hipR:0,  kneeR:0,  shoulderL:180, shoulderR:90},
+    {t:8, rot:90, hipL:90, kneeL:90, hipR:90, kneeR:90, shoulderL:90, shoulderR:90}] },
+  dead_bug: { el:'Dead bug (ύπτια)', anchor:'pelvis', T:8, frames:[
+    {t:0, rot:-90, hipL:90, kneeL:90, hipR:90, kneeR:90, shoulderL:90, shoulderR:90},
+    {t:1.5, rot:-90, hipL:20, kneeL:10, hipR:90, kneeR:90, shoulderL:90, shoulderR:175},
+    {t:2.5, rot:-90, hipL:20, kneeL:10, hipR:90, kneeR:90, shoulderL:90, shoulderR:175},
+    {t:4, rot:-90, hipL:90, kneeL:90, hipR:90, kneeR:90, shoulderL:90, shoulderR:90},
+    {t:5.5, rot:-90, hipL:90, kneeL:90, hipR:20, kneeR:10, shoulderL:175, shoulderR:90},
+    {t:6.5, rot:-90, hipL:90, kneeL:90, hipR:20, kneeR:10, shoulderL:175, shoulderR:90},
+    {t:8, rot:-90, hipL:90, kneeL:90, hipR:90, kneeR:90, shoulderL:90, shoulderR:90}] },
+  crunch: { el:'Κοιλιακός (crunch)', anchor:'pelvis', T:4, frames:[
+    {t:0,   rot:-90, hip:60, knee:100, ankle:-10, spine:0,  shoulder:90, elbow:90},
+    {t:1.5, rot:-90, hip:60, knee:100, ankle:-10, spine:35, shoulder:90, elbow:90},
+    {t:2.1, rot:-90, hip:60, knee:100, ankle:-10, spine:35, shoulder:90, elbow:90},
+    {t:3.8, rot:-90, hip:60, knee:100, ankle:-10, spine:0,  shoulder:90, elbow:90},
+    {t:4,   rot:-90, hip:60, knee:100, ankle:-10, spine:0,  shoulder:90, elbow:90}] },
+  pullup: { el:'Έλξη (pull-up)', anchor:'none', hang:true, T:4, frames:[
+    {t:0,   shoulder:178, elbow:0,   hip:0, knee:30},
+    {t:1.8, shoulder:120, elbow:110, hip:0, knee:30},
+    {t:2.3, shoulder:120, elbow:110, hip:0, knee:30},
+    {t:3.9, shoulder:178, elbow:0,   hip:0, knee:30},
+    {t:4,   shoulder:178, elbow:0,   hip:0, knee:30}] }
+};
+// prop presets: what the exercise holds / uses
+const EX3D_PROPS = {
+  none:        {el:'Χωρίς εξοπλισμό', items:[]},
+  dumbbells:   {el:'Αλτήρες', items:[{t:'db',at:'wristL'},{t:'db',at:'wristR'}]},
+  dumbbell1:   {el:'Ένας αλτήρας', items:[{t:'db',at:'wristR'}]},
+  barbell:     {el:'Μπάρα (στα χέρια)', items:[{t:'bar',at:'hands'}]},
+  barbell_back:{el:'Μπάρα στην πλάτη', items:[{t:'bar',at:'shoulders'}]},
+  kettlebell:  {el:'Kettlebell', items:[{t:'kb',at:'hands'}]},
+  bench:       {el:'Πάγκος', items:[{t:'box',x:-0.3,y:0.2,z:0,w:0.9,h:0.4,d:0.3}]},
+  band_hands:  {el:'Λάστιχο (χέρια)', items:[{t:'line',a:'wristL',b:'wristR',c:'#e0a030'}]},
+  band_knees:  {el:'Λάστιχο (γόνατα)', items:[{t:'line',a:'kneeL',b:'kneeR',c:'#e0a030'}]},
+  pullbar:     {el:'Δοκός έλξης', items:[{t:'pullbar'}]},
+  mat:         {el:'Στρώμα', items:[{t:'mat'}]}
+};
+
+function ex3dBuild(THREE){
+  const D2R = Math.PI/180;
+  const L = {thigh:.45, shank:.45, foot:.22, heel:.06, torso:.52, neck:.2, uarm:.30, farm:.27, hipW:.09, shW:.19};
+  const ease = x => x*x*(3-2*x);
+  function sample(pat, time){
+    const T = pat.T, t = ((time % T)+T)%T, F = pat.frames;
+    let i = 0; while(i < F.length-2 && t >= F[i+1].t) i++;
+    const a = F[i], b = F[i+1], u = ease(Math.min(1, Math.max(0,(t-a.t)/Math.max(1e-6,(b.t-a.t)))));
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]); keys.delete('t');
+    const o = {};
+    keys.forEach(k => { const va = a[k] ?? 0, vb = b[k] ?? 0; o[k] = va + (vb-va)*u; });
+    return o;
+  }
+  function g(p, k, side){ return (p[k+side] ?? p[k] ?? 0); }
+  // compute joints. Bird-dog / dead-bug use per-side keys (hipL/hipR etc.)
+  function joints(p){
+    const rot = p.rot||0, spine = p.spine||0, roll = (p.roll||0)*D2R;
+    const phi = (rot + spine)*D2R;
+    const J = {pelvis:[0,0,0]};
+    const up = [Math.sin(phi), Math.cos(phi)];
+    J.shoulderC = [up[0]*L.torso, up[1]*L.torso, 0];
+    const nk = (rot+spine+(p.head||0))*D2R;
+    J.head = [J.shoulderC[0]+Math.sin(nk)*L.neck, J.shoulderC[1]+Math.cos(nk)*L.neck, 0];
+    const dir = (psi, a, zs) => { const ca = Math.cos(a*D2R); return [Math.sin(psi*D2R)*ca, -Math.cos(psi*D2R)*ca, zs*Math.sin(a*D2R)]; };
+    const add = (P, d, len) => [P[0]+d[0]*len, P[1]+d[1]*len, P[2]+d[2]*len];
+    [['L',-1],['R',1]].forEach(([s,zs])=>{
+      const H = [0,0,zs*L.hipW];
+      const a = g(p,'habd',s);
+      const psiT = -(rot+spine) + g(p,'hip',s);
+      const K = add(H, dir(psiT, a, zs), L.thigh);
+      const psiS = psiT - g(p,'knee',s);
+      const A = add(K, dir(psiS, a, zs), L.shank);
+      const psiF = psiS + 90 - g(p,'ankle',s);
+      const T_ = add(A, dir(psiF, 0, 0), L.foot);
+      const Hl = add(A, dir(psiF, 0, 0), -L.heel);
+      J['hip'+s]=H; J['knee'+s]=K; J['ankle'+s]=A; J['toe'+s]=T_; J['heel'+s]=Hl;
+      const S = [J.shoulderC[0], J.shoulderC[1], zs*L.shW];
+      const sa = g(p,'sabd',s);
+      const psiU = -(rot+spine) + g(p,'shoulder',s);
+      const E = add(S, dir(psiU, sa, zs), L.uarm);
+      const psiFa = psiU + g(p,'elbow',s);
+      const W = add(E, dir(psiFa, sa, zs), L.farm);
+      J['shoulder'+s]=S; J['elbow'+s]=E; J['wrist'+s]=W;
+    });
+    // roll about the global x axis through the pelvis
+    if(roll){
+      const c = Math.cos(roll), s = Math.sin(roll);
+      Object.keys(J).forEach(k=>{ const q=J[k]; J[k]=[q[0], q[1]*c - q[2]*s, q[1]*s + q[2]*c]; });
+    }
+    return J;
+  }
+  const PAD = .045;
+  function groundOffset(J){
+    let m = 1e9;
+    ['kneeL','kneeR','ankleL','ankleR','toeL','toeR','heelL','heelR','hipL','hipR','pelvis','shoulderL','shoulderR','elbowL','elbowR','wristL','wristR','head'].forEach(k=>{
+      const r = k==='head' ? .1 : PAD; m = Math.min(m, J[k][1]-r);
+    });
+    return -m;
+  }
+  // Pose -> world joints. Applies ground contact and anchors horizontal drift.
+  function place(pat, p, ref){
+    const J = joints(p);
+    let dy = pat.hang ? 2.15 - (J.wristL[1]+J.wristR[1])/2 : groundOffset(J);
+    let dx = 0;
+    if(pat.anchor && pat.anchor !== 'none' && ref){ dx = ref[0] - J[pat.anchor][0]; }
+    const out = {};
+    Object.keys(J).forEach(k=>{ out[k]=[J[k][0]+dx, J[k][1]+dy, J[k][2]]; });
+    return out;
+  }
+  function refFor(pat){
+    if(!pat.anchor || pat.anchor==='none') return null;
+    const J0 = joints(sample(pat,0));
+    return [J0[pat.anchor][0]];
+  }
+
+  // ----- scene -----
+  function mount(container, patKey, propKey, opts){
+    opts = opts || {};
+    const pat = EX3D_PATTERNS[patKey] || EX3D_PATTERNS.squat;
+    const propSet = (EX3D_PROPS[propKey] || EX3D_PROPS.none).items;
+    const W = container.clientWidth || 320, H = opts.height || 300;
+    const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, preserveDrawingBuffer: !!opts.preserve});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.setSize(W, H);
+    renderer.domElement.style.cssText = 'width:100%;height:'+H+'px;display:block;touch-action:pan-y;border-radius:10px;cursor:grab;';
+    container.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    const cam = new THREE.PerspectiveCamera(35, W/H, .1, 50);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x556070, 1.15));
+    const dl = new THREE.DirectionalLight(0xffffff, 1.1); dl.position.set(2,4,3); scene.add(dl);
+    const grid = new THREE.GridHelper(4, 16, 0x8a93a3, 0x8a93a3); grid.material.transparent = true; grid.material.opacity = .28; scene.add(grid);
+
+    const matBody = new THREE.MeshStandardMaterial({color:0xb7c0cf, roughness:.55, metalness:.05});
+    const matJoint = new THREE.MeshStandardMaterial({color:0xc4201f, roughness:.4});
+    const matProp = new THREE.MeshStandardMaterial({color:0x2c3038, roughness:.5, metalness:.5});
+    const matWood = new THREE.MeshStandardMaterial({color:0x7a8696, roughness:.8});
+    const segs = []; const cyl = new THREE.CylinderGeometry(1,1,1,14); const sph = new THREE.SphereGeometry(1,16,12);
+    function seg(a, b, r, mat){ const m = new THREE.Mesh(cyl, mat||matBody); scene.add(m); segs.push({m,a,b,r}); return m; }
+    function ball(name, r, mat){ const m = new THREE.Mesh(sph, mat||matJoint); m.scale.setScalar(r); scene.add(m); return {m,name}; }
+    const BONES = [['hipL','kneeL',.058],['kneeL','ankleL',.05],['ankleL','toeL',.035],['ankleL','heelL',.035],
+                   ['hipR','kneeR',.058],['kneeR','ankleR',.05],['ankleR','toeR',.035],['ankleR','heelR',.035],
+                   ['shoulderL','elbowL',.045],['elbowL','wristL',.04],['shoulderR','elbowR',.045],['wristR','elbowR',.04],
+                   ['hipL','hipR',.07],['shoulderL','shoulderR',.05],['pelvis','shoulderC',.1],['shoulderC','head',.04]];
+    BONES.forEach(([a,b,r])=>seg(a,b,r));
+    const balls = ['kneeL','kneeR','elbowL','elbowR','wristL','wristR','ankleL','ankleR'].map(n=>ball(n,.052));
+    const headM = new THREE.Mesh(sph, matBody); headM.scale.set(.1,.115,.095); scene.add(headM);
+
+    // props
+    const dyn = []; // updated every frame
+    function cylBetween(m, a, b, r){
+      const d = new THREE.Vector3().subVectors(b,a), len = d.length()||1e-6;
+      m.position.copy(a).addScaledVector(d,.5); m.scale.set(r,len,r);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
+    }
+    propSet.forEach(it=>{
+      if(it.t==='db'){
+        const grp = new THREE.Group();
+        const bar = new THREE.Mesh(cyl, matProp); bar.rotation.x = Math.PI/2; bar.scale.set(.016,.2,.016);
+        const h1 = new THREE.Mesh(new THREE.BoxGeometry(.07,.09,.07), matProp); h1.position.z = .1;
+        const h2 = h1.clone(); h2.position.z = -.1;
+        grp.add(bar,h1,h2); scene.add(grp); dyn.push(J=>{ const q=J[it.at]; grp.position.set(q[0],q[1],q[2]); });
+      } else if(it.t==='bar' || it.t==='kb'){
+        const grp = new THREE.Group();
+        if(it.t==='bar'){
+          const bar = new THREE.Mesh(cyl, matProp); bar.rotation.x = Math.PI/2; bar.scale.set(.015,1.1,.015);
+          const mk = z => { const p = new THREE.Mesh(cyl, matProp); p.rotation.x = Math.PI/2; p.scale.set(.13,.04,.13); p.position.z = z; return p; };
+          grp.add(bar, mk(.45), mk(-.45), mk(.5), mk(-.5));
+        } else {
+          const b = new THREE.Mesh(sph, matProp); b.scale.setScalar(.1); b.position.y = -.07;
+          const h = new THREE.Mesh(new THREE.TorusGeometry(.055,.012,8,16), matProp); h.position.y = .05; h.rotation.y = Math.PI/2;
+          grp.add(b,h);
+        }
+        scene.add(grp);
+        dyn.push(J=>{
+          let q;
+          if(it.at==='hands') q = [(J.wristL[0]+J.wristR[0])/2,(J.wristL[1]+J.wristR[1])/2,0];
+          else { const s=J.shoulderC; q=[s[0]-.08,s[1]+.02,0]; }
+          grp.position.set(q[0],q[1],q[2]);
+        });
+      } else if(it.t==='line'){
+        const m = new THREE.Mesh(cyl, new THREE.MeshStandardMaterial({color:new THREE.Color(it.c||'#e0a030')}));
+        scene.add(m); dyn.push(J=>cylBetween(m, new THREE.Vector3(...J[it.a]), new THREE.Vector3(...J[it.b]), .012));
+      } else if(it.t==='box'){
+        const m = new THREE.Mesh(new THREE.BoxGeometry(it.w,it.h,it.d), matWood); m.position.set(it.x,it.y,it.z); scene.add(m);
+      } else if(it.t==='mat'){
+        const m = new THREE.Mesh(new THREE.BoxGeometry(2.2,.02,.9), new THREE.MeshStandardMaterial({color:0x4a5a6a})); m.position.set(-.3,-.01,0); scene.add(m);
+      } else if(it.t==='pullbar'){
+        const bar = new THREE.Mesh(cyl, matProp); bar.rotation.x = Math.PI/2; bar.scale.set(.02,1.1,.02); bar.position.set(0,2.2,0); scene.add(bar);
+        [-.55,.55].forEach(z=>{ const p = new THREE.Mesh(cyl, matProp); p.scale.set(.03,2.2,.03); p.position.set(0,1.1,z); scene.add(p); });
+      }
+    });
+
+    const ref = refFor(pat); const ref0 = ref;
+    // auto-fit the camera to the whole movement
+    let bx0=1e9,bx1=-1e9,by0=1e9,by1=-1e9;
+    for(let i=0;i<24;i++){ const Jf = place(pat, sample(pat, pat.T*i/24), ref0); for(const k in Jf){ const q=Jf[k]; bx0=Math.min(bx0,q[0]);bx1=Math.max(bx1,q[0]);by0=Math.min(by0,q[1]);by1=Math.max(by1,q[1]); } }
+    const size = Math.max(bx1-bx0, by1-by0, 1.2) + .5;
+    const fitDist = (size/2)/Math.tan(17.5*D2R) * 1.05 + .6;
+    const cx0 = (bx0+bx1)/2, cy0 = Math.max(.3,(by0+by1)/2);
+    let az = (opts.az ?? 55)*D2R, el = (opts.el ?? 12)*D2R, dist = opts.dist || fitDist, target = new THREE.Vector3(cx0,cy0,0);
+    function placeCam(){
+      cam.position.set(target.x + dist*Math.cos(el)*Math.sin(az), target.y + dist*Math.sin(el), target.z + dist*Math.cos(el)*Math.cos(az));
+      cam.lookAt(target);
+    }
+    let playing = !opts.paused, speed = 1, tt = opts.t0 || 0, auto = !!opts.autorotate, last = performance.now(), raf = 0, alive = true;
+    // drag to rotate
+    let drag = null;
+    const cv = renderer.domElement;
+    cv.addEventListener('pointerdown', e=>{ drag = {x:e.clientX,y:e.clientY,az0:az}; cv.setPointerCapture(e.pointerId); cv.style.cursor='grabbing'; auto=false; });
+    cv.addEventListener('pointermove', e=>{ if(!drag) return; az = drag.az0 - (e.clientX-drag.x)*.012; });
+    const endDrag = ()=>{ drag=null; cv.style.cursor='grab'; };
+    cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+
+    const V = (a)=> new THREE.Vector3(a[0],a[1],a[2]);
+    function draw(){
+      const p = sample(pat, tt);
+      const J = place(pat, p, ref);
+      segs.forEach(s=>{ const A=V(J[s.a]), B=V(J[s.b]); cylBetween(s.m, A, B, s.r); });
+      balls.forEach(b=>b.m.position.copy(V(J[b.name])));
+      headM.position.copy(V(J.head)).add(new THREE.Vector3(0,.0,0));
+      dyn.forEach(f=>f(J));
+      target.set(cx0, opts.ty ?? cy0, 0);
+      placeCam(); renderer.render(scene, cam);
+    }
+    function loop(now){
+      if(!alive) return;
+      if(!cv.isConnected){ alive=false; return; }
+      if(cv.offsetParent===null){ last=now; raf=requestAnimationFrame(loop); return; }
+      const dt = Math.min(.05, (now-last)/1000); last = now;
+      if(playing) tt += dt*speed;
+      if(auto) az += dt*.25;
+      draw(); raf = requestAnimationFrame(loop);
+    }
+    if(opts.static){ draw(); } else { raf = requestAnimationFrame(loop); }
+    const api = {
+      play(v){ playing = v; }, isPlaying(){ return playing; },
+      setSpeed(s){ speed = s; }, setView(a,e){ az = a*D2R; el = (e??12)*D2R; auto=false; },
+      seek(t){ tt = t; draw(); }, draw,
+      destroy(){ alive=false; cancelAnimationFrame(raf); renderer.dispose(); cv.remove(); },
+      period: pat.T
+    };
+    return api;
+  }
+  return {mount, sample, joints, place, refFor, PATTERNS: EX3D_PATTERNS, PROPS: EX3D_PROPS};
+}
+
+
+// ---- 3D exercise viewer (interactive, no video files). Coach sees drafts; clients only see "approved". ----
+let _ex3dLib = null;
+async function ex3dLoad(){
+  if(_ex3dLib) return _ex3dLib;
+  const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+  _ex3dLib = ex3dBuild(THREE);
+  return _ex3dLib;
+}
+function ex3dIsCoachRole(){ try{ return profile && (profile.role==='coach' || profile.role==='owner'); }catch(e){ return false; } }
+function ex3dVisible(ex, isCoach){ return !!(ex && ex.anim_pattern && EX3D_PATTERNS[ex.anim_pattern] && (isCoach || ex.anim_status==='approved')); }
+function ex3dSlotHtml(ex, isCoach){
+  if(!ex3dVisible(ex, isCoach)) return '';
+  const draft = ex.anim_status !== 'approved';
+  return `<div class="ex3dSlot" data-pat="${escapeHtml(ex.anim_pattern)}" data-prop="${escapeHtml(ex.anim_prop||'none')}" style="border:1px solid var(--line); border-radius:10px; padding:8px; margin:8px 0 10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">
+      <span style="font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--ink-soft);">🧊 ${locale==='el'?'Κίνηση 3D':'3D movement'}</span>
+      ${draft ? `<span class="badge" style="background:rgba(226,162,51,.18);">${locale==='el'?'Πρόχειρο, δεν το βλέπουν οι πελάτες':'Draft, hidden from clients'}</span>` : (ex3dIsCoachRole() ? `<span class="badge">✓ ${locale==='el'?'Εγκεκριμένο':'Approved'}</span>` : '')}
+    </div>
+    <div class="ex3dStage" style="min-height:260px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση 3D…':'Loading 3D…'}</div>
+    <div class="ex3dCtl" style="display:none; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
+    <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σχηματική απεικόνιση. Σύρε για να γυρίσεις το μοντέλο. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου.':'Schematic illustration. Drag to rotate. Follow the execution guide and your coach.'}</p>
+  </div>`;
+}
+async function ex3dMount(slot){
+  if(!slot || slot.dataset.mounted) return;
+  slot.dataset.mounted = '1';
+  const stage = slot.querySelector('.ex3dStage'), ctl = slot.querySelector('.ex3dCtl');
+  try{
+    const lib = await ex3dLoad();
+    stage.innerHTML = ''; stage.style.display = 'block'; stage.style.minHeight = '0';
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const api = lib.mount(stage, slot.dataset.pat, slot.dataset.prop, {height:280, paused: reduce, autorotate:false});
+    const btn = (label, fn, cls) => { const b = document.createElement('button'); b.type='button'; b.className='btn secondary'; b.style.cssText='padding:3px 10px; font-size:11px; min-height:32px;'; b.textContent=label; b.addEventListener('click', ()=>fn(b)); ctl.appendChild(b); return b; };
+    const pb = btn(reduce?'▶':'⏸', b=>{ const on = !api.isPlaying(); api.play(on); b.textContent = on ? '⏸' : '▶'; });
+    let slow = false; btn('×0.5', b=>{ slow=!slow; api.setSpeed(slow?.5:1); b.style.opacity = slow?1:.7; }).style.opacity=.7;
+    [[el_label('Πλάγια','Side'),0,8],[el_label('Μπροστά','Front'),90,8],[el_label('Πάνω','Top'),0,80],['3/4',55,12]].forEach(([l,a,e])=>btn(l, ()=>api.setView(a,e)));
+    ctl.style.display = 'flex';
+    slot._ex3d = api;
+  }catch(err){
+    stage.style.display='flex';
+    stage.textContent = locale==='el' ? 'Δεν φορτώθηκε το 3D (χρειάζεται σύνδεση στο ίντερνετ).' : 'Could not load 3D (needs an internet connection).';
+  }
+  function el_label(a,b){ return locale==='el'?a:b; }
+}
+function ex3dMountAll(root){ if(root) root.querySelectorAll('.ex3dSlot').forEach(ex3dMount); }
+
+// Form fields for the coach: pattern, equipment, status + live preview.
+function ex3dFormFields(ex, pre){
+  const pats = Object.entries(EX3D_PATTERNS), props = Object.entries(EX3D_PROPS);
+  const st = (ex && ex.anim_status) || 'draft';
+  return `<h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">🧊 ${locale==='el'?'Κίνηση 3D (προαιρετικό)':'3D movement (optional)'}</h4>
+  <div class="field"><label>${locale==='el'?'Τύπος κίνησης':'Movement type'}</label><select class="${pre}anim_pattern"><option value="">${locale==='el'?'— Καμία —':'— None —'}</option>${pats.map(([k,v])=>`<option value="${k}" ${ex&&ex.anim_pattern===k?'selected':''}>${escapeHtml(v.el)}</option>`).join('')}</select></div>
+  <div class="field"><label>${locale==='el'?'Εξοπλισμός στο 3D':'Equipment in 3D'}</label><select class="${pre}anim_prop">${props.map(([k,v])=>`<option value="${k}" ${(ex&&ex.anim_prop||'none')===k?'selected':''}>${escapeHtml(v.el)}</option>`).join('')}</select></div>
+  <div class="field"><label>${locale==='el'?'Κατάσταση':'Status'}</label><select class="${pre}anim_status"><option value="draft" ${st!=='approved'?'selected':''}>${locale==='el'?'Πρόχειρο (κρυφό από πελάτες)':'Draft (hidden from clients)'}</option><option value="approved" ${st==='approved'?'selected':''}>${locale==='el'?'Εγκεκριμένο (το βλέπουν οι πελάτες)':'Approved (clients can see it)'}</option></select>
+    <div style="font-size:11px; color:var(--ink-soft); margin-top:4px;">${locale==='el'?'Βλέπε την προεπισκόπηση και έγκρινε μόνο αν η κίνηση ταιριάζει με την άσκηση. Αν αλλάξεις τύπο ή εξοπλισμό, γυρνά σε πρόχειρο.':'Check the preview and approve only if it matches the exercise. Changing type or equipment resets to draft.'}</div></div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+    <button class="btn secondary ${pre}anim_suggest" type="button" style="font-size:12px;">${locale==='el'?'Αυτόματη πρόταση':'Auto-suggest'}</button>
+    <button class="btn secondary ${pre}anim_preview" type="button" style="font-size:12px;">${locale==='el'?'Προεπισκόπηση':'Preview'}</button>
+  </div>
+  <div class="${pre}anim_slot"></div>`;
+}
+function ex3dBind(wrap, pre, nameGetter){
+  const q = c => wrap.querySelector('.'+pre+c);
+  const prev = q('anim_preview'), sug = q('anim_suggest');
+  if(!prev) return;
+  prev.addEventListener('click', ()=>{
+    const pat = q('anim_pattern').value, prop = q('anim_prop').value;
+    const slot = q('anim_slot'); slot.innerHTML = '';
+    if(!pat) return;
+    slot.innerHTML = ex3dSlotHtml({anim_pattern:pat, anim_prop:prop, anim_status:q('anim_status').value}, true);
+    ex3dMountAll(slot);
+  });
+  sug.addEventListener('click', ()=>{
+    const s = ex3dSuggest(nameGetter());
+    if(!s){ alert(locale==='el'?'Δεν βρέθηκε αντιστοιχία. Διάλεξε χειροκίνητα.':'No match found. Pick manually.'); return; }
+    q('anim_pattern').value = s.pat; q('anim_prop').value = s.prop; q('anim_status').value = 'draft';
+    prev.click();
+  });
+}
+function ex3dPayload(wrap, pre, ex){
+  const q = c => wrap.querySelector('.'+pre+c);
+  if(!q('anim_pattern')) return {};
+  const pat = q('anim_pattern').value, prop = q('anim_prop').value || 'none';
+  let st = q('anim_status').value || 'draft';
+  const had = ex && ex.anim_pattern;
+  if(!pat && !had) return {};
+  if(!pat) return {anim_pattern:null, anim_prop:null, anim_status:null};
+  const changed = !ex || pat !== ex.anim_pattern || prop !== (ex.anim_prop||'none');
+  if(changed && ex && ex.anim_status==='approved' && st==='approved') st = 'draft';
+  return {anim_pattern:pat, anim_prop:prop, anim_status:st};
+}
+// Keyword guess from name / equipment / movement pattern. Always saved as draft, never shown to clients before approval.
+function ex3dSuggest(ex){
+  const raw = [ex.name_el, ex.name_en, ex.movement_pattern, ex.equipment, ex.category].filter(Boolean).join(' ').toLowerCase();
+  const x = raw.normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const has = r => r.test(x);
+  if(has(/leg curl|hamstring curl|nordic|extension|μηρι/)) return null;
+  let pat = null;
+  if(has(/clamshell|κλαμσελ/)) pat='clamshell';
+  else if(has(/bird.?dog|τετραποδ/)) pat='bird_dog';
+  else if(has(/dead.?bug/)) pat='dead_bug';
+  else if(has(/pull.?up|chin.?up|pulldown|ελξη|ελξεις/)) pat='pullup';
+  else if(has(/push.?up|καμψεις στηριξης|βαθμιδ/)) pat='pushup';
+  else if(has(/plank|σανιδα/)) pat='plank';
+  else if(has(/bridge|γεφυρα|hip thrust/)) pat='glute_bridge';
+  else if(has(/goblet/)) pat='goblet_squat';
+  else if(has(/lunge|προβολ|split squat|bulgarian|step.?up/)) pat='lunge';
+  else if(has(/deadlift|rdl|romanian|ρουμανικ|good morning|hinge|νεκρη/)) pat='hinge';
+  else if(has(/squat|σκουατ|καθισμα/)) pat='squat';
+  else if(has(/row|κωπηλασ/)) pat='row';
+  else if(has(/overhead|shoulder press|military|arnold|πιεση ωμων|πιεσεις ωμων/)) pat='overhead_press';
+  else if(has(/lateral raise|πλαγια ανυψωσ|πλαγιες ανυψωσ/)) pat='lateral_raise';
+  else if(has(/calf|γαμπ/)) pat='calf_raise';
+  else if(has(/curl|bicep|δικεφαλ/)) pat='biceps_curl';
+  else if(has(/crunch|sit.?up|κοιλιακ/)) pat='crunch';
+  if(!pat) return null;
+  let prop = 'none';
+  if(pat==='pullup') prop='pullbar';
+  else if(has(/kettlebell/)) prop='kettlebell';
+  else if(has(/dumbbell|αλτηρ/)) prop='dumbbells';
+  else if(has(/barbell|μπαρα/)) prop = pat==='squat' ? 'barbell_back' : 'barbell';
+  else if(has(/band|λαστιχ|elastic/)) prop = pat==='clamshell' ? 'band_knees' : 'band_hands';
+  if(pat==='goblet_squat' && prop==='none') prop='kettlebell';
+  return {pat, prop};
+}
+
 async function renderLibrary(main, isCoach){
   showLoading(main);
   const { data: exercises, error } = await supabase.from('exercises').select('*, evidence(*)').order('category');
@@ -3228,12 +3685,35 @@ async function renderLibrary(main, isCoach){
   main.innerHTML = '';
   const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
     <h2>${t('exerciseLibrary',locale)}</h2>
-    ${isCoach ? `<button class="btn" id="newExBtn">${t('newExercise',locale)}</button>` : ''}
+    ${isCoach ? `<span style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary" id="exportExBtn" style="font-size:12px;">⬇ ${locale==='el'?'Εξαγωγή ασκήσεων':'Export exercises'}</button><button class="btn secondary" id="bulk3dBtn" style="font-size:12px;">🧊 ${locale==='el'?'Πρόταση 3D για όλες':'Suggest 3D for all'}</button><button class="btn" id="newExBtn">${t('newExercise',locale)}</button></span>` : ''}
   </div>`);
   main.appendChild(header);
 
   if(isCoach){
     header.querySelector('#newExBtn').addEventListener('click', ()=>renderNewExerciseForm(main, ()=>renderLibrary(main, isCoach)));
+    {
+      const total = exercises.length, appr = exercises.filter(e=>e.anim_pattern && e.anim_status==='approved').length, drf = exercises.filter(e=>e.anim_pattern && e.anim_status!=='approved').length;
+      const info = el(`<p style="font-size:12px; color:var(--ink-soft); margin:-6px 0 12px;">🧊 3D: <strong>${appr}</strong> ${locale==='el'?'εγκεκριμένες':'approved'} · <strong>${drf}</strong> ${locale==='el'?'πρόχειρες':'drafts'} · <strong>${total-appr-drf}</strong> ${locale==='el'?'χωρίς 3D':'without 3D'}</p>`);
+      header.after(info);
+    }
+    header.querySelector('#exportExBtn').addEventListener('click', ()=>{
+      const cols = ['id','name_el','name_en','category','body_region','equipment','movement_pattern','difficulty_level','primary_muscles','goal_tags','why_rationale_el','description_el','execution_steps','technique_cues','common_mistakes','setup_text','tempo_text','breathing_text','feel_text','stop_text','regression_text','progression_text','anim_pattern','anim_prop','anim_status'];
+      const rows = exercises.map(e=>{ const o={}; cols.forEach(c=>{ o[c]=e[c]??null; }); o.evidence_count=(e.evidence||[]).length; return o; });
+      const blob = new Blob([JSON.stringify(rows,null,1)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'happyfit_exercises_'+new Date().toISOString().slice(0,10)+'.json';
+      document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    });
+    header.querySelector('#bulk3dBtn').addEventListener('click', async ()=>{
+      const todo = exercises.map(e=>({e, s:(e.anim_pattern?null:ex3dSuggest(e))})).filter(x=>x.s);
+      if(!todo.length){ alert(locale==='el'?'Δεν υπάρχουν ασκήσεις χωρίς 3D που να αναγνωρίζονται αυτόματα.':'No exercises without 3D could be matched automatically.'); return; }
+      if(!confirm(locale==='el' ? `Θα προταθεί 3D για ${todo.length} ασκήσεις ως ΠΡΟΧΕΙΡΟ. Δεν θα το βλέπουν οι πελάτες μέχρι να εγκρίνεις κάθε μία. Συνέχεια;` : `This will suggest 3D for ${todo.length} exercises as DRAFT. Clients will not see them until you approve each one. Continue?`)) return;
+      let fail = 0;
+      for(const x of todo){
+        const { error:err } = await supabase.from('exercises').update({anim_pattern:x.s.pat, anim_prop:x.s.prop, anim_status:'draft'}).eq('id', x.e.id);
+        if(err){ fail++; if(fail===1) alert((locale==='el'?'Σφάλμα: ':'Error: ')+err.message+(locale==='el'?'\nΤρέξε πρώτα το migration_exercise_3d.sql στο Supabase.':'\nRun migration_exercise_3d.sql in Supabase first.')); break; }
+      }
+      renderLibrary(main, isCoach);
+    });
   }
 
   const categories = [...new Set(exercises.map(e=>e.category).filter(Boolean))].sort();
@@ -3378,6 +3858,7 @@ async function renderLibrary(main, isCoach){
         </div>
         <div class="editExForm" style="display:none;"></div>` : ''}
         <div class="viewMode">
+        ${ex3dSlotHtml(ex, isCoach)}
         ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
         <p>${escapeHtml(desc||'')}</p>
         <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
@@ -3423,6 +3904,7 @@ async function renderLibrary(main, isCoach){
       const d = card.querySelector('.detail'); const c = card.querySelector('.caret');
       const wasOpen = d.style.display !== 'none';
       d.style.display = wasOpen ? 'none' : 'block'; c.textContent = wasOpen ? '▸' : '▾';
+      if(!wasOpen) ex3dMountAll(card);
       if(!wasOpen && isCoach){
         const box = card.querySelector('.autoEvidenceBox');
         if(evidenceAutoCache[ex.id]){
@@ -3481,6 +3963,7 @@ async function renderLibrary(main, isCoach){
           <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="ef_cues">${escapeHtml(ex.technique_cues||'')}</textarea></div>
           <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="ef_mistakes">${escapeHtml(ex.common_mistakes||'')}</textarea></div>
           ${execFormFields(ex,'ef_')}
+          ${ex3dFormFields(ex,'ef_')}
           <h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">${locale==='el'?'Προφίλ άσκησης (προαιρετικό)':'Exercise profile (optional)'}</h4>
           <div class="grid2">
             <div class="field"><label>${locale==='el'?'Περιοχή σώματος':'Body region'}</label><select class="ef_region">${exSelectOptions(EX_BODY_REGIONS, ex.body_region)}</select></div>
@@ -3500,6 +3983,7 @@ async function renderLibrary(main, isCoach){
           <button class="btn saveExEditBtn" type="button">${t('save',locale)}</button>
         `;
         attachGifPicker(editWrap.querySelector('.gifPickerSlot'), editWrap.querySelector('.ef_gif'));
+        ex3dBind(editWrap,'ef_',()=>({name_el:editWrap.querySelector('.ef_name_el').value, name_en:editWrap.querySelector('.ef_name_en').value, movement_pattern:editWrap.querySelector('.ef_pattern').value, equipment:editWrap.querySelector('.ef_equip').value, category:editWrap.querySelector('.ef_cat').value}));
         editWrap.querySelector('.saveExEditBtn').addEventListener('click', async ()=>{
           await supabase.from('exercises').update({
             name_el: editWrap.querySelector('.ef_name_el').value.trim(),
@@ -3513,6 +3997,7 @@ async function renderLibrary(main, isCoach){
             technique_cues: editWrap.querySelector('.ef_cues').value.trim() || null,
             common_mistakes: editWrap.querySelector('.ef_mistakes').value.trim() || null,
             ...execPayload(editWrap,'ef_',ex),
+            ...ex3dPayload(editWrap,'ef_',ex),
             body_region: editWrap.querySelector('.ef_region').value || null,
             difficulty_level: editWrap.querySelector('.ef_diff').value || null,
             equipment: editWrap.querySelector('.ef_equip').value || null,
@@ -3597,6 +4082,7 @@ async function renderNewExerciseForm(main, onDone){
       <div class="field"><label>${t('techniqueCues',locale)}</label><textarea class="f_cues"></textarea></div>
       <div class="field"><label>${t('commonMistakes',locale)}</label><textarea class="f_mistakes"></textarea></div>
       ${execFormFields(null,'f_')}
+      ${ex3dFormFields(null,'f_')}
       <h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 8px;">${locale==='el'?'Προφίλ άσκησης':'Exercise profile'}</h4>
       <div class="grid2">
         <div class="field"><label>${locale==='el'?'Περιοχή σώματος':'Body region'}</label><select class="f_region">${exSelectOptions(EX_BODY_REGIONS, '')}</select></div>
@@ -3623,6 +4109,7 @@ async function renderNewExerciseForm(main, onDone){
   });
   main.insertBefore(form, main.children[1] || null);
   attachGifPicker(form.querySelector('.gifPickerSlotNew'), form.querySelector('.f_gif'));
+  ex3dBind(form,'f_',()=>({name_el:form.querySelector('.f_name_el').value, name_en:form.querySelector('.f_name_en').value, movement_pattern:form.querySelector('.f_pattern').value, equipment:form.querySelector('.f_equip').value, category:form.querySelector('.f_cat').value}));
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     await supabase.from('exercises').insert({
@@ -3637,6 +4124,7 @@ async function renderNewExerciseForm(main, onDone){
       technique_cues: form.querySelector('.f_cues').value.trim() || null,
       common_mistakes: form.querySelector('.f_mistakes').value.trim() || null,
       ...execPayload(form,'f_',null),
+      ...ex3dPayload(form,'f_',null),
       body_region: form.querySelector('.f_region').value || null,
       difficulty_level: form.querySelector('.f_diff').value || null,
       equipment: form.querySelector('.f_equip').value || null,
@@ -6722,6 +7210,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       ${warm.length ? `<div style="margin-bottom:8px;"><button class="btn secondary warmToggleBtn" type="button" style="padding:3px 10px; font-size:11px; min-height:32px;">🔥 ${locale==='el'?'Προθέρμανση':'Warm-up'}</button>
         <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:10px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
       <div class="whyPanel" style="display:none; background:var(--tint-soft); border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
+        ${ex3dSlotHtml(ex, false)}
         ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.execution_steps ? `<p style="margin-bottom:6px; white-space:pre-line;"><strong>${t('executionSteps',locale)}:</strong> ${escapeHtml(ex.execution_steps)}</p>` : ''}
@@ -6741,6 +7230,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
       const p = card.querySelector('.whyPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
+      if(p.style.display==='block') ex3dMountAll(p);
     });
     attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, execution_steps: ex.execution_steps, technique_cues: ex.technique_cues, common_mistakes: ex.common_mistakes, body_region: ex.body_region, primary_muscles: ex.primary_muscles, goal_tags: ex.goal_tags, regression_text: ex.regression_text, progression_text: ex.progression_text, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title }, client.id);
     const warmBtn = card.querySelector('.warmToggleBtn');
