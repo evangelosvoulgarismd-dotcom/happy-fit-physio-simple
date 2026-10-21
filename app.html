@@ -4817,6 +4817,93 @@ async function renderCoachDashboard(main){
   renderList();
 }
 
+// ============================================================
+// Weekly client recap: a DRAFT built only from the client's own logs (no AI, no clinical judgement).
+// The coach reads and edits it, then copies it or sends it as a message. Nothing is sent automatically.
+// ============================================================
+function buildWeeklyRecap(opts){
+  const { name, logs, checkins, program, today } = opts;
+  const dayMs = 24*60*60*1000;
+  const t0 = new Date(today+'T00:00:00').getTime();
+  const inWindow = d => { const x = (t0 - new Date(d+'T00:00:00').getTime())/dayMs; return x>=0 && x<7; };
+  const before = d => (t0 - new Date(d+'T00:00:00').getTime())/dayMs >= 7;
+  let first = (name||'').trim().split(/\s+/)[0] || '';
+  if(/(ος|ης|ας|ός|ής|άς|ύς|ους)$/i.test(first)) first = '';   // masculine names need the vocative (Γιώργο, Νίκο): skip the name rather than get the grammar wrong
+  const facts = [];
+  const nm = l => (l.program_exercises?.exercises?.name_el) || '';
+  const week = (logs||[]).filter(l=>l.session_date && inWindow(l.session_date));
+  const sessions = new Set(week.map(l=>l.session_date)).size;
+  const target = program ? new Set((program.program_exercises||[]).map(pe=>pe.day_label||'Ημέρα 1')).size : 0;
+  const plural = (n,one,many)=> n===1 ? `1 ${one}` : `${n} ${many}`;
+  facts.push(`Προπονήσεις με καταγραφή τις τελευταίες 7 ημέρες: ${sessions}${target?` από ${target} ημέρες στο πρόγραμμα`:''}`);
+
+  // best load per exercise: this week vs everything before
+  const best = {};
+  (logs||[]).forEach(l=>{
+    const n = nm(l); const kg = Number(l.load_kg); if(!n || !(kg>0) || !l.session_date) return;
+    const b = best[n] || (best[n] = { cur:0, prev:0 });
+    if(inWindow(l.session_date)) b.cur = Math.max(b.cur, kg); else if(before(l.session_date)) b.prev = Math.max(b.prev, kg);
+  });
+  const ups = Object.entries(best).filter(([,b])=>b.cur>b.prev && b.prev>0).map(([n,b])=>({n, prev:b.prev, cur:b.cur, pct:(b.cur-b.prev)/b.prev})).sort((a,b)=>b.pct-a.pct).slice(0,3);
+  ups.forEach(u=>facts.push(`Νέο υψηλότερο φορτίο: ${u.n} ${u.prev}kg → ${u.cur}kg`));
+
+  const painRows = week.filter(l=>l.pain!=null && Number(l.pain)>=3);
+  const maxPain = week.reduce((m,l)=>Math.max(m, Number(l.pain)||0), 0);
+  const painNames = [...new Set(painRows.map(nm).filter(Boolean))].slice(0,2);
+  if(week.length) facts.push(`Μέγιστος πόνος που καταγράφηκε: ${maxPain}/10${painNames.length?` (${painNames.join(', ')})`:''}`);
+
+  const ck = (checkins||[]).find(c=>(t0-new Date(c.date+'T00:00:00').getTime())/dayMs <= 10 && (t0-new Date(c.date+'T00:00:00').getTime())>=0);
+  if(ck) facts.push(`Τελευταίο check-in (${ck.date}): ύπνος ${ck.avg_sleep}/10, ενέργεια ${ck.avg_energy}/10, adherence ${ck.adherence}%`);
+
+  const L = [];
+  L.push(first ? `Γεια σου ${first},` : 'Γεια σου,');
+  L.push('');
+  if(sessions===0){
+    L.push('Αυτή την εβδομάδα δεν είδα καταγραφές προπόνησης. Όλα καλά; Αν κάτι δυσκόλεψε (χρόνος, πόνος, κίνητρο), πες μου και προσαρμόζουμε το πρόγραμμα.');
+  } else {
+    L.push(target && sessions>=target ? `Ολοκλήρωσες όλες τις προπονήσεις της εβδομάδας (${sessions}). Μπράβο για τη συνέπεια.` : `Αυτή την εβδομάδα κατέγραψες ${plural(sessions,'προπόνηση','προπονήσεις')}${target?` από ${target} στο πρόγραμμα`:''}.`);
+    if(ups.length){ L.push(''); L.push('Πρόοδος στα φορτία:'); ups.forEach(u=>L.push(`- ${u.n}: ${u.prev}kg → ${u.cur}kg`)); }
+    if(painRows.length){ L.push(''); L.push(`Σημείωσες πόνο έως ${maxPain}/10${painNames.length?` σε: ${painNames.join(', ')}`:''}. Πες μου πώς είναι σήμερα, για να το προσαρμόσουμε αν χρειάζεται.`); }
+  }
+  if(ck){ L.push(''); L.push(`Στο check-in σου: ύπνος ${ck.avg_sleep}/10, ενέργεια ${ck.avg_energy}/10.`); }
+  L.push(''); L.push('Αν έχεις ερωτήσεις ή θες να αλλάξουμε κάτι, γράψε μου εδώ.');
+  return { text: L.join('\n'), facts };
+}
+
+async function renderRecapTab(body, client, checkins, programs){
+  body.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'
+    ? 'Πρόχειρο κείμενο φτιαγμένο μόνο από τις καταγραφές του πελάτη (προπονήσεις, φορτία, πόνος, check-in). Δεν είναι κλινική αξιολόγηση. Διάβασέ το, διόρθωσέ το και μετά αντίγραψέ το ή στείλε το ως μήνυμα. Δεν στέλνεται τίποτα αυτόματα.'
+    : 'A draft built only from the client\'s own logs. It is not a clinical assessment. Read and edit it, then copy it or send it as a message. Nothing is sent automatically.'}</p>`));
+  const holder = el('<div><p>…</p></div>'); body.appendChild(holder);
+  const since = new Date(Date.now()-70*24*60*60*1000).toISOString().slice(0,10);
+  const { data: logs, error } = await supabase.from('session_logs')
+    .select('session_date, load_kg, reps, pain, program_exercise_id, program_exercises(exercise_id, exercises(name_el))')
+    .eq('client_id', client.id).gte('session_date', since).order('session_date',{ascending:false}).limit(3000);
+  if(error){ holder.innerHTML = `<p class="errorTag">${escapeHtml(error.message)}</p>`; return; }
+  const rec = buildWeeklyRecap({ name: client.full_name, logs, checkins, program: (programs||[])[0], today: localDateStr(new Date()) });
+  holder.innerHTML = '';
+  const card = el(`<div class="card gold">
+    <div class="field"><label>${locale==='el'?'Κείμενο (επεξεργάσιμο)':'Text (editable)'}</label><textarea class="recapText" rows="12"></textarea></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn secondary recapCopy" type="button">${locale==='el'?'Αντιγραφή':'Copy'}</button>
+      <button class="btn recapSend" type="button">${locale==='el'?'Στείλε ως μήνυμα στον πελάτη':'Send as message to client'}</button>
+    </div>
+    <h4 style="font-size:12px; color:var(--ink-soft); margin:14px 0 6px;">${locale==='el'?'Τι δεδομένα χρησιμοποιήθηκαν (έλεγξέ τα)':'Data used (please check)'}</h4>
+    <ul class="recapFacts" style="margin:0 0 0 18px; font-size:12.5px; line-height:1.6;"></ul></div>`);
+  const ta = card.querySelector('.recapText'); ta.value = rec.text;
+  rec.facts.forEach(f=>card.querySelector('.recapFacts').appendChild(el(`<li>${escapeHtml(f)}</li>`)));
+  card.querySelector('.recapCopy').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(ta.value); toast(locale==='el'?'Αντιγράφηκε':'Copied'); }catch(e){ ta.select(); toast(locale==='el'?'Επίλεξε και αντίγραψε χειροκίνητα':'Select and copy manually'); } });
+  card.querySelector('.recapSend').addEventListener('click', async (e)=>{
+    const text = ta.value.trim(); if(!text) return;
+    if(!confirm(locale==='el' ? `Να σταλεί το μήνυμα στον/στην ${client.full_name};` : `Send this message to ${client.full_name}?`)) return;
+    e.target.disabled = true;
+    const { error: sErr } = await supabase.from('messages').insert({ client_id: client.id, sender_id: profile.id, sender_role: 'coach', body: text });
+    e.target.disabled = false;
+    toast(sErr ? (locale==='el'?'Σφάλμα αποστολής.':'Send error.') : (locale==='el'?'Στάλθηκε.':'Sent.'));
+  });
+  holder.appendChild(card);
+}
+
 async function renderClientDetail(main, forceRefresh){
   const client = selectedClient;
   let tab = renderClientDetail._tab || 'program';
@@ -4873,6 +4960,7 @@ async function renderClientDetail(main, forceRefresh){
     <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">📈 ${locale==='el'?'Πρόοδος':'Progress'}</button>
+    <button class="btn ${tab==='recap'?'':'secondary'}" data-t="recap">📝 ${locale==='el'?'Σύνοψη εβδομάδας':'Weekly recap'}</button>
     <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
     <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
     <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
@@ -4896,6 +4984,7 @@ async function renderClientDetail(main, forceRefresh){
   }
   else if(tab==='messages') await renderMessagesTab(body, client, 'coach');
   else if(tab==='progress') await renderProgressTab(body, client.id, checkins, readiness);
+  else if(tab==='recap') await renderRecapTab(body, client, checkins, programs);
   else if(tab==='reassess') await renderReassessmentTab(body, client, true);
   else if(tab==='photos') await renderPhotosTab(body, client, true);
   else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main, true));
