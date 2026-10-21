@@ -4231,6 +4231,7 @@ async function renderCoachDashboard(main){
   const clientIds = (clients||[]).map(c=>c.id);
   let paidThisPeriod = new Set(), paymentsTracked = false;
   const lastTrainingByClient = {};
+  const npsByClient = {}; const npsAll = [];   // monthly satisfaction answers (0-10), empty until migration_nps.sql is run
   let latestCheckinByClient = {}, programByClient = {}, checkinsByClient = {}, readinessByClient = {}, latestReadinessByClient = {}, intakeByClient = {}, aiFlaggedClientIds = new Set(), aiEscalationByClient = {}, severePainClientIds = new Set();
   if(clientIds.length){
     // Recent AI-flagged interactions (see attachAskAssistant / ask-assistant.ts) feed the
@@ -4277,6 +4278,11 @@ async function renderCoachDashboard(main){
       const { data: lastLog } = await supabase.from('session_logs').select('session_date').eq('client_id', c.id).order('session_date',{ascending:false}).limit(1).maybeSingle();
       if(lastLog?.session_date) lastTrainingByClient[c.id] = lastLog.session_date;
     }));
+    // Monthly satisfaction (0-10). Separate guarded query: if the column does not exist yet nothing else breaks.
+    try{
+      const { data: npsRows, error: npsErr } = await supabase.from('checkins').select('client_id,date,nps').in('client_id', clientIds).not('nps','is',null).order('date',{ascending:false});
+      if(!npsErr) (npsRows||[]).forEach(r=>{ npsAll.push(r); if(!npsByClient[r.client_id]) npsByClient[r.client_id] = r; });
+    }catch(e){}
     const { data: paysNow, error: paysErr } = await supabase.from('client_payments').select('client_id').eq('period', currentPeriod()).in('client_id', clientIds);
     if(!paysErr){ paymentsTracked = true; (paysNow||[]).forEach(r=>paidThisPeriod.add(r.client_id)); }
   }
@@ -4398,6 +4404,12 @@ async function renderCoachDashboard(main){
         list.push(locale==='el' ? 'Δεν έχει καταγράψει τίποτα ακόμα' : 'Has not logged anything yet');
       }
     }
+    if(st==='active' || st==='trial'){
+      const n = npsByClient[c.id];
+      if(n && Number(n.nps)<=6 && (Date.now()-new Date(n.date).getTime())/dayMs <= 45){
+        list.push(locale==='el' ? `Χαμηλή ικανοποίηση (${n.nps}/10): άνοιξε συζήτηση` : `Low satisfaction (${n.nps}/10): start a conversation`);
+      }
+    }
     // Payment is tracked per calendar month and marked by hand; flag from the 5th so a brand-new month isn't noise.
     if(paymentsTracked && st==='active' && c.monthly_price && !paidThisPeriod.has(c.id) && new Date().getDate()>=5){
       list.push(locale==='el' ? 'Δεν έχει σημειωθεί πληρωμή για τον μήνα' : 'No payment marked for this month');
@@ -4424,6 +4436,19 @@ async function renderCoachDashboard(main){
       });
     }
     main.appendChild(panel);
+  }
+
+  if(clients?.length && npsAll.length){
+    const cutoff = Date.now()-90*24*60*60*1000;
+    const recent = npsAll.filter(r=>new Date(r.date).getTime()>=cutoff);
+    if(recent.length){
+      const avg = (recent.reduce((a,r)=>a+Number(r.nps),0)/recent.length).toFixed(1);
+      const prom = recent.filter(r=>r.nps>=9).length, det = recent.filter(r=>r.nps<=6).length;
+      const score = Math.round(((prom-det)/recent.length)*100);
+      main.appendChild(el(`<div class="card" style="padding:10px 14px; margin-bottom:12px; font-size:12.5px;">📣 ${locale==='el'?'Ικανοποίηση πελατών (90 ημέρες)':'Client satisfaction (90 days)'}:
+        <strong class="mono">${avg}/10</strong> · NPS <strong class="mono">${score}</strong> · ${recent.length} ${locale==='el'?'απαντήσεις':'answers'}
+        ${recent.length<10 ? `<span style="color:var(--ink-soft);"> (${locale==='el'?'λίγες απαντήσεις, ένδειξη μόνο':'few answers, indicative only'})</span>`:''}</div>`));
+    }
   }
 
   if(clients?.length){
@@ -8550,6 +8575,32 @@ function renderCheckinForm(body, existing, clientId){
       row.querySelector('textarea').addEventListener('input', (e)=>{ state[k]=e.target.value; scheduleSave(); });
       textsGrid.appendChild(row);
     });
+
+    // Once a month: one satisfaction question (0-10). Saved with a separate update so a missing column never breaks the check-in.
+    const dayMsN = 24*60*60*1000;
+    const answeredRecently = existing.some(c=>c.nps!=null && (Date.now()-new Date(c.date).getTime())/dayMsN < 30 && c.date!==currentDate);
+    if(!answeredRecently){
+      const npsBox = el(`<div class="field" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+        <label>${locale==='el'?'Πόσο πιθανό είναι να προτείνεις τον coach σε φίλο; (0 = καθόλου, 10 = σίγουρα)':'How likely are you to recommend your coach to a friend? (0 = not at all, 10 = definitely)'}</label>
+        <div class="npsRow" style="display:flex; gap:4px; flex-wrap:wrap; margin:6px 0;">${Array.from({length:11},(_,i)=>`<button type="button" class="btn secondary npsBtn" data-v="${i}" style="padding:6px 0; min-width:34px;">${i}</button>`).join('')}</div>
+        <textarea class="npsComment" placeholder="${locale==='el'?'Τι θα το έκανε καλύτερο; (προαιρετικό)':'What would make it better? (optional)'}">${escapeHtml(existingForDate.nps_comment||'')}</textarea></div>`);
+      const markNps = (v)=>npsBox.querySelectorAll('.npsBtn').forEach(b=>b.classList.toggle('secondary', Number(b.dataset.v)!==v));
+      if(existingForDate.nps!=null) markNps(Number(existingForDate.nps));
+      let npsVal = existingForDate.nps!=null ? Number(existingForDate.nps) : null, npsTimer = null;
+      const saveNps = ()=>{
+        clearTimeout(npsTimer);
+        npsTimer = setTimeout(async ()=>{
+          if(npsVal==null) return;
+          await supabase.from('checkins').upsert({ ...state, client_id: clientId, date: currentDate }, { onConflict:'client_id,date' });
+          const { error } = await supabase.from('checkins').update({ nps: npsVal, nps_comment: npsBox.querySelector('.npsComment').value.trim() || null }).eq('client_id', clientId).eq('date', currentDate);
+          if(error) toast(locale==='el' ? 'Δεν αποθηκεύτηκε η ικανοποίηση (λείπει το migration_nps.sql)' : 'Satisfaction not saved (migration_nps.sql missing)', 4500);
+          else statusEl.textContent = t('saved',locale);
+        }, 500);
+      };
+      npsBox.querySelectorAll('.npsBtn').forEach(b=>b.addEventListener('click', ()=>{ npsVal = Number(b.dataset.v); markNps(npsVal); saveNps(); }));
+      npsBox.querySelector('.npsComment').addEventListener('input', saveNps);
+      card.insertBefore(npsBox, statusEl);
+    }
 
     function scheduleSave(){
       statusEl.textContent = locale==='el' ? 'Πληκτρολόγηση…' : 'Typing…';
