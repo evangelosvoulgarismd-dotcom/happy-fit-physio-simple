@@ -3191,6 +3191,53 @@ const EX_EQUIPMENT = [
   {el:'Μηχάνημα', en:'Machine'}, {el:'Τροχαλία', en:'Cable'}, {el:'Λάστιχα', en:'Bands'},
   {el:'Kettlebell', en:'Kettlebell'}, {el:'Cardio', en:'Cardio'}, {el:'Βοηθητικά', en:'Accessories (box, ball, dowel)'},
 ];
+
+// ---- "What equipment do I have" + automatic alternatives ----
+// Alternatives need no extra database column: they are the exercises with the same movement pattern (or the same
+// region and category when there is no pattern), ranked so that the ones the person can actually do come first.
+const MY_EQUIP_KEY = 'hfp_my_equip';
+function getMyEquip(){ try{ return new Set(JSON.parse(localStorage.getItem(MY_EQUIP_KEY)||'[]')); }catch(e){ return new Set(); } }
+function setMyEquip(set){ try{ localStorage.setItem(MY_EQUIP_KEY, JSON.stringify([...set])); }catch(e){} }
+function exDoable(ex, mine){ return !mine.size || !ex.equipment || ex.equipment==='Βάρος σώματος' || mine.has(ex.equipment); }
+function exAlternatives(ex, all, mine, limit){
+  const norm = v=>(v||'').toLowerCase().trim();
+  const p0 = norm(ex.movement_pattern);
+  const rank = {'Βασικό':1,'Ενδιάμεσο':2,'Προχωρημένο':3,'Εξειδικευμένο':4};
+  const scored = [];
+  (all||[]).forEach(c=>{
+    if(!c || c.id===ex.id) return;
+    const p1 = norm(c.movement_pattern);
+    const samePattern = p0 && p1 && (p0===p1 || p0.includes(p1) || p1.includes(p0));
+    const sameRegionCat = !p0 && c.body_region && c.body_region===ex.body_region && c.category && c.category===ex.category;
+    if(!samePattern && !sameRegionCat) return;
+    let sc = samePattern ? 6 : 3;
+    if(samePattern && p0===p1) sc += 1;
+    if(c.body_region && c.body_region===ex.body_region) sc += 2;
+    if(c.category && c.category===ex.category) sc += 1;
+    if(c.equipment !== ex.equipment) sc += 1;
+    if(exDoable(c, mine)) sc += 4;
+    sc -= Math.abs((rank[c.difficulty_level]||2) - (rank[ex.difficulty_level]||2));
+    scored.push({ c, sc });
+  });
+  scored.sort((a,b)=>b.sc-a.sc);
+  return scored.slice(0, limit||5).map(x=>x.c);
+}
+function exAltListHtml(ex, all){
+  const mine = getMyEquip();
+  const alts = exAlternatives(ex, all, mine, 5);
+  if(!alts.length) return `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Δεν βρέθηκε αντίστοιχη εναλλακτική στη βιβλιοθήκη.':'No matching alternative found in the library.'}</p>`;
+  return alts.map(a=>`<div style="display:flex; justify-content:space-between; gap:8px; align-items:center; font-size:12.5px; padding:4px 0; border-bottom:1px solid var(--line);">
+      <span>${escapeHtml(locale==='el' ? a.name_el : (a.name_en||a.name_el))}</span>
+      <span class="badge">${a.equipment ? '🏋️ '+escapeHtml(exLabel(EX_EQUIPMENT,a.equipment)) : ''}${exDoable(a,mine)?'':' · '+(locale==='el'?'χρειάζεται εξοπλισμό':'needs equipment')}</span></div>`).join('');
+}
+function exAltSectionHtml(ex, all){
+  return `<h4 style="font-size:12px; color:var(--ink-soft); margin:10px 0 6px;">🔁 ${locale==='el'?'Εναλλακτικές (ίδια κίνηση, άλλος εξοπλισμός)':'Alternatives (same movement, other equipment)'}</h4>${exAltListHtml(ex, all)}`;
+}
+let _altCatalog = null;
+function loadAltCatalog(){
+  if(!_altCatalog) _altCatalog = supabase.from('exercises').select('id,name_el,name_en,category,body_region,equipment,movement_pattern,difficulty_level').then(r=>r.data||[]);
+  return _altCatalog;
+}
 function exLabel(list, elValue){
   if(!elValue) return '';
   const hit = list.find(o=>o.el===elValue);
@@ -3753,7 +3800,22 @@ async function renderLibrary(main, isCoach){
   const chipsBar = el(`<div class="libChips" role="tablist" aria-label="${locale==='el'?'Κατηγορίες':'Categories'}"></div>`);
   main.appendChild(chipsBar);
   const countLine = el('<div class="libCount"></div>');
+  const equipBar = el(`<div class="libChips" style="margin:4px 0 8px;"></div>`);
+  main.appendChild(equipBar);
   main.appendChild(countLine);
+  function renderEquipBar(){
+    const mine = getMyEquip();
+    equipBar.innerHTML = `<span style="font-size:12px; margin-right:4px;">🏠 ${locale==='el'?'Τι εξοπλισμό έχω:':'My equipment:'}</span>` +
+      EX_EQUIPMENT.filter(o=>o.el!=='Βάρος σώματος').map(o=>`<button type="button" class="libChip${mine.has(o.el)?' on':''}" data-eq="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</button>`).join('') +
+      (mine.size ? `<button type="button" class="libChip" data-eq="__clear">✕ ${locale==='el'?'Καθαρισμός':'Clear'}</button>` : '');
+  }
+  equipBar.addEventListener('click', e=>{
+    const b = e.target.closest('[data-eq]'); if(!b) return;
+    const mine = getMyEquip();
+    if(b.dataset.eq==='__clear') mine.clear(); else if(mine.has(b.dataset.eq)) mine.delete(b.dataset.eq); else mine.add(b.dataset.eq);
+    setMyEquip(mine); limit = 40; renderEquipBar(); renderList();
+  });
+  renderEquipBar();
   function renderChips(){
     const items = [{k:'', l: locale==='el'?'Όλες':'All'}, {k:'__fav', l:'⭐ '+(locale==='el'?'Αγαπημένα':'Favourites')}];
     if(isCoach && noVisualCount) items.push({k:'__novis', l:'🎥 '+(locale==='el'?'Χωρίς βίντεο/GIF':'No video/GIF')+' ('+noVisualCount+')'});
@@ -3824,6 +3886,7 @@ async function renderLibrary(main, isCoach){
     if(goal) visible = visible.filter(e=>(e.goal_tags||'').split(',').map(s=>s.trim()).includes(goal));
     if(diff) visible = visible.filter(e=>e.difficulty_level===diff);
     if(equip) visible = visible.filter(e=>e.equipment===equip);
+    { const mine = getMyEquip(); if(mine.size) visible = visible.filter(e=>exDoable(e, mine)); }
     if(q) visible = visible.filter(e=>{
       const n1=(e.name_el||'').toLowerCase(), n2=(e.name_en||'').toLowerCase();
       return n1.includes(q) || n2.includes(q);
@@ -3879,6 +3942,7 @@ async function renderLibrary(main, isCoach){
         ${ex.technique_cues ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
         ${execViewHtml(ex)}
+        ${exAltSectionHtml(ex, exercises)}
         ${(ex.body_region || ex.primary_muscles || ex.movement_pattern || ex.goal_tags || ex.difficulty_level || ex.equipment) ? `
         <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${locale==='el'?'Προφίλ άσκησης':'Exercise profile'}</h4>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
@@ -7462,6 +7526,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<p style="margin-bottom:6px; color:var(--danger);"><strong>${t('commonMistakes',locale)}:</strong> ${escapeHtml(ex.common_mistakes)}</p>` : ''}
         ${execViewHtml(ex, true)}
+        <div class="altBox" style="margin-bottom:8px;"><button class="btn secondary altBtn" type="button" style="padding:4px 10px; font-size:11px;">🔁 ${locale==='el'?'Δεν έχω τον εξοπλισμό; Εναλλακτικές':'No equipment? Alternatives'}</button><div class="altList" style="display:none; margin-top:6px;"></div></div>
         ${(ex.body_region || ex.primary_muscles || ex.goal_tags) ? `<div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:6px;">
           ${ex.body_region ? `<span class="badge">📍 ${escapeHtml(exLabel(EX_BODY_REGIONS, ex.body_region))}</span>` : ''}
           ${ex.primary_muscles ? `<span class="badge">💪 ${escapeHtml(ex.primary_muscles)}</span>` : ''}
@@ -7472,6 +7537,13 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         ${!why && !ex.execution_steps && !ex.technique_cues && !ex.common_mistakes && !EXEC_FIELDS.some(f=>ex[f.k]) && !ex.video_url && !ex.gif_url && !ex.body_region && !ex.primary_muscles && !ex.goal_tags && !ex.regression_text && !ex.progression_text ? `<span style="color:var(--ink-soft);">—</span>` : ''}
       </div>
     </div>`);
+    card.querySelector('.altBtn')?.addEventListener('click', async (ev)=>{
+      const list = card.querySelector('.altList');
+      if(list.style.display==='block'){ list.style.display='none'; return; }
+      list.style.display='block'; list.innerHTML = '…';
+      try{ const all = await loadAltCatalog(); list.innerHTML = exAltListHtml(ex, all) + `<p style="font-size:11px; color:var(--ink-soft); margin:6px 0 0;">${locale==='el'?'Μπορείς να κάνεις μία από αυτές σήμερα και να το γράψεις στις σημειώσεις ή να το πεις στον coach σου.':'You can do one of these today and note it, or tell your coach.'}</p>`; }
+      catch(e){ list.innerHTML = '—'; }
+    });
     card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
       const p = card.querySelector('.whyPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
