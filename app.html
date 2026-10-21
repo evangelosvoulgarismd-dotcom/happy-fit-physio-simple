@@ -862,6 +862,18 @@ const STR = {
   printSummary:{el:'Εκτύπωση', en:'Print'},
   notFilled:{el:'— δεν συμπληρώθηκε —', en:'— not filled —'},
   clinicalClassification:{el:'Κλινική Ταξινόμηση & Αρχικός Έλεγχος', en:'Clinical Classification & Initial Screening'},
+  consentSection:{el:'Συναίνεση για δεδομένα υγείας', en:'Consent for health data'},
+  consentHealth:{el:'Συναίνεση στην επεξεργασία δεδομένων υγείας', en:'Consent to processing of health data'},
+  confirmAdult:{el:'Επιβεβαιώνω ότι είμαι άνω των 18 ετών', en:'I confirm I am over 18'},
+  parqSection:{el:'Έλεγχος ασφάλειας πριν την άσκηση', en:'Pre-exercise safety check'},
+  parq1:{el:'Σου έχει πει ποτέ γιατρός ότι έχεις καρδιακό πρόβλημα ή υψηλή πίεση;', en:'Has a doctor ever told you that you have a heart condition or high blood pressure?'},
+  parq2:{el:'Νιώθεις πόνο ή σφίξιμο στο στήθος όταν ασκείσαι ή στην καθημερινότητα;', en:'Do you feel chest pain or tightness during exercise or daily life?'},
+  parq3:{el:'Έχεις ζαλιστεί έντονα ή χάσει τις αισθήσεις σου τους τελευταίους 12 μήνες;', en:'Have you had severe dizziness or lost consciousness in the last 12 months?'},
+  parq4:{el:'Έχεις πρόβλημα σε οστό, άρθρωση ή μυ που χειροτερεύει με την άσκηση;', en:'Do you have a bone, joint or muscle problem that gets worse with exercise?'},
+  parq5:{el:'Παίρνεις φάρμακα για πίεση, καρδιά ή διαβήτη;', en:'Do you take medication for blood pressure, heart or diabetes?'},
+  parq6:{el:'Είσαι έγκυος ή γέννησες τους τελευταίους 6 μήνες;', en:'Are you pregnant or have you given birth in the last 6 months?'},
+  parq7:{el:'Υπάρχει άλλος λόγος για τον οποίο δεν θα έπρεπε να ασκηθείς χωρίς ιατρική συμβουλή;', en:'Is there any other reason you should not exercise without medical advice?'},
+  consentRequired:{el:'Χρειάζεται η συναίνεσή σου για να συνεχίσεις. Χωρίς αυτήν δεν μπορούμε να επεξεργαστούμε το ιστορικό υγείας σου.', en:'Your consent is needed to continue. Without it we cannot process your health history.'},
   primaryConcern:{el:'Κύριος λόγος προσέλευσης', en:'Primary reason for visit'},
   bodyRegion:{el:'Περιοχή που σε απασχολεί περισσότερο', en:'Main area of concern'},
   symptomDuration:{el:'Διάρκεια συμπτωμάτων', en:'Symptom duration'},
@@ -4814,7 +4826,16 @@ async function renderClientDetail(main, forceRefresh){
   }
 }
 
+const PARQ_KEYS = ['parq1','parq2','parq3','parq4','parq5','parq6','parq7'];
+const PARQ_OPTS = ['Όχι','Ναι','Δεν είμαι σίγουρος/η'];
+const CONSENT_YES = 'Ναι, συναινώ';
+function parqRiskPresent(d){ return !!d && PARQ_KEYS.some(k=>d[k]==='Ναι' || d[k]==='Δεν είμαι σίγουρος/η'); }
 const INTAKE_SECTIONS = [
+  { key:'consent', title:'consentSection', fields:[
+    ['consentHealth','select',[CONSENT_YES,'Όχι']],
+    ['confirmAdult','select',['Ναι, είμαι άνω των 18','Όχι']],
+  ]},
+  { key:'parq', title:'parqSection', fields: PARQ_KEYS.map(k=>[k,'select',PARQ_OPTS]) },
   { key:'classification', title:'clinicalClassification', fields:[
     ['primaryConcern','select',['Πόνος ή ενόχληση','Κάκωση ή τραυματισμός','Επιστροφή μετά από τραυματισμό','Πρόληψη','Βελτίωση φυσικής κατάστασης','Αύξηση δύναμης','Αθλητική απόδοση','Εγκυμοσύνη ή λοχεία','Άλλο']],
     ['bodyRegion','select',['Σπονδυλική στήλη','Ώμος και ωμική ζώνη','Αγκώνας και αντιβράχιο','Καρπός και χέρι','Ισχίο','Γόνατο','Ποδοκνημική και πόδι','Άσκηση για ηλικιωμένους','Υγεία της γυναίκας','Γενική φυσική κατάσταση']],
@@ -4930,7 +4951,7 @@ function renderBodyDiagram(container, state, onChange){
 function getClinicalRecommendation(state){
   const region = state.bodyRegion || '';
   const risk = state.redFlagScreen || '';
-  const riskPresent = risk === 'Ναι, υπάρχει κάτι ανησυχητικό' || risk === 'Δεν είμαι σίγουρος/η';
+  const riskPresent = risk === 'Ναι, υπάρχει κάτι ανησυχητικό' || risk === 'Δεν είμαι σίγουρος/η' || parqRiskPresent(state);
   const map = {
     'Σπονδυλική στήλη': ['Σπονδυλική στήλη','index.html#templates'],
     'Ώμος και ωμική ζώνη': ['Ώμος και ωμική ζώνη','index.html#templates'],
@@ -5011,6 +5032,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
   let timer = null;
   const allSteps = isCoach ? [...INTAKE_SECTIONS, COACH_ONLY_SECTION] : INTAKE_SECTIONS;
   let stepIndex = Math.min(state._step || 0, allSteps.length - 1);
+  if(!isCoach && state.consentHealth !== CONSENT_YES) stepIndex = 0;   // health data must not be collected before explicit consent
 
   const card = el(`<div class="clinicalCard">
     <div class="clinicalHeader">
@@ -5062,6 +5084,12 @@ function renderIntakeForm(body, client, existingData, isCoach){
     const secEl = el(`<div class="clinicalSection"><h4>${t(section.title,locale)}</h4><div class="grid2 fieldsGrid"></div></div>`);
     const fieldsGrid = secEl.querySelector('.fieldsGrid');
 
+    if(section.key==='consent'){
+      secEl.insertBefore(el(`<p style="font-size:13px; line-height:1.6; margin-bottom:12px;">${locale==='el'
+        ? 'Στις επόμενες ερωτήσεις θα καταγράψεις στοιχεία για την υγεία σου (τραυματισμοί, πόνος, φάρμακα, ιστορικό). Αυτά είναι <strong>δεδομένα ειδικής κατηγορίας</strong> (άρθρο 9 ΓΚΠΔ). Χρησιμοποιούνται μόνο για να προσαρμοστεί το πρόγραμμά σου και τα βλέπει ο coach σου. Δεν πωλούνται και δεν μοιράζονται για διαφήμιση. Μπορείς να ανακαλέσεις τη συναίνεση και να ζητήσεις διαγραφή όποτε θέλεις, επικοινωνώντας με τον coach. Η εφαρμογή δεν αποτελεί ιατρική διάγνωση ή θεραπεία.'
+        : 'The next questions record health information (injuries, pain, medication, history). This is <strong>special category data</strong> (GDPR Article 9). It is used only to tailor your program and is visible to your coach. It is not sold or shared for advertising. You can withdraw consent and ask for deletion at any time by contacting your coach. The app is not a medical diagnosis or treatment.'}</p>`), secEl.querySelector('.fieldsGrid'));
+      if(state.consentHealthAt) secEl.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Καταγράφηκε':'Recorded'}: ${escapeHtml(new Date(state.consentHealthAt).toLocaleString(locale==='el'?'el-GR':'en-GB'))}</p>`));
+    }
     if(section.key==='pain'){
       renderBodyDiagram(secEl, state, scheduleSave);
     }
@@ -5082,6 +5110,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
       }
       input.addEventListener(type==='select'?'change':'input', ()=>{
         state[key] = input.value;
+        if(key==='consentHealth') state.consentHealthAt = (input.value===CONSENT_YES) ? new Date().toISOString() : null;
         scheduleSave();
       });
       const fieldDiv = el(`<div class="field"><label>${t(key,locale)}</label></div>`);
@@ -5100,6 +5129,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
     if(stepIndex>0){ stepIndex--; state._step = stepIndex; scheduleSave(); renderStep(); }
   });
   nextBtn.addEventListener('click', ()=>{
+    if(!isCoach && allSteps[stepIndex].key==='consent' && (state.consentHealth !== CONSENT_YES || state.confirmAdult !== 'Ναι, είμαι άνω των 18')){ toast(t('consentRequired',locale), 4500); return; }
     if(stepIndex < allSteps.length-1){
       stepIndex++;
       state._step = stepIndex;
@@ -6361,7 +6391,7 @@ function buildPersonalizedDraft(intakeData, exercises){
   const region = (intakeData.bodyRegion || '').toLowerCase();
   const goal = intakeData.priorityGoal || intakeData.mainGoal || '';
   const risk = (intakeData.redFlagScreen || '').toLowerCase();
-  if(risk.includes('ναι') || risk.includes('σίγουρ')) return {items:[], phase:'Δεν δημιουργείται αυτόματα πρόταση', reason:'Απαιτείται κλινικός έλεγχος πριν από την επιλογή ασκήσεων.'};
+  if(risk.includes('ναι') || risk.includes('σίγουρ') || parqRiskPresent(intakeData)) return {items:[], phase:'Δεν δημιουργείται αυτόματα πρόταση', reason:'Απαιτείται κλινικός έλεγχος πριν από την επιλογή ασκήσεων.'};
 
   const regionTerms = {
     'σπονδυλική στήλη':['κορμός','σπονδυλ','μέση','ράχη','neck','back','bird dog','bridge','dead bug','row'],
