@@ -4796,7 +4796,7 @@ async function renderClientDetail(main, forceRefresh){
   else if(tab==='messages') await renderMessagesTab(body, client, 'coach');
   else if(tab==='progress') await renderProgressTab(body, client.id, checkins, readiness);
   else if(tab==='reassess') await renderReassessmentTab(body, client, true);
-  else if(tab==='photos') await renderPhotosTab(body, client);
+  else if(tab==='photos') await renderPhotosTab(body, client, true);
   else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main, true));
   else if(tab==='checkins'){
     renderCheckinForm(body, checkins, client.id);
@@ -5623,69 +5623,283 @@ function renderBusinessTab(body, client, onChanged){
   body.appendChild(card);
 }
 
-async function renderPhotosTab(body, client){
-  const { data: photos } = await supabase.from('progress_photos').select('*').eq('client_id', client.id).order('taken_at',{ascending:false});
+// ============================================================
+// Progress photos: guided client upload (consent, pose, resize) + coach editor (crop/rotate/grid/draw/blur) + before/after
+// ============================================================
+const PHOTO_POSES = [['front','Μπροστά','Front'],['side','Πλάι','Side'],['back','Πίσω','Back'],['other','Άλλο','Other']];
+function photoPoseLabel(k){ const p = PHOTO_POSES.find(x=>x[0]===k); return p ? (locale==='el'?p[1]:p[2]) : ''; }
+
+// Re-encode the image: fixes phone rotation, caps the size (saves storage) and drops EXIF/GPS data.
+async function photoPrepare(file, maxSide=1800){
+  try{
+    const bmp = await createImageBitmap(file, { imageOrientation:'from-image' });
+    const sc = Math.min(1, maxSide/Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width*sc); c.height = Math.round(bmp.height*sc);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(r=>c.toBlob(r,'image/jpeg',0.88));
+    if(blob) return { blob, ext:'jpg', type:'image/jpeg' };
+  }catch(e){ /* fall back to the original file */ }
+  return { blob:file, ext:(file.name.split('.').pop()||'jpg').toLowerCase(), type:file.type||'image/jpeg' };
+}
+async function photoInsertRow(row, extra){
+  let r = await supabase.from('progress_photos').insert({ ...row, ...extra });
+  // Until migration_progress_photos.sql is run the new columns do not exist: retry with the original columns only.
+  if(r.error && /column|schema cache/i.test(r.error.message||'')){
+    r = await supabase.from('progress_photos').insert(row);
+    if(!r.error) toast(L2('Αποθηκεύτηκε (χωρίς θέση/συγκατάθεση: τρέξε το migration_progress_photos.sql)','Saved (without pose/consent: run migration_progress_photos.sql)'), 4500);
+  }
+  return r;
+}
+function L2(a,b){ return locale==='el'?a:b; }
+async function photoLoadBitmap(storagePath){
+  const { data, error } = await supabase.storage.from('progress-photos').createSignedUrl(storagePath, 600);
+  if(error) throw error;
+  const blob = await (await fetch(data.signedUrl)).blob();
+  return await createImageBitmap(blob, { imageOrientation:'from-image' });
+}
+function photoBlobFromCanvas(c){ return new Promise(r=>c.toBlob(r,'image/jpeg',0.92)); }
+function photoDownload(canvas, name){
+  canvas.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }, 'image/png');
+}
+function photoOverlay(title){
+  const overlay = el(`<div class="modalOverlay"><div class="modalBox" style="max-width:920px; max-height:92vh;">
+    <button class="modalCloseBtn" type="button">&times;</button><h2 style="margin-bottom:10px;">${escapeHtml(title)}</h2><div class="phBody"></div></div></div>`);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('.modalCloseBtn').addEventListener('click', ()=>overlay.remove());
+  document.body.appendChild(overlay);
+  return { overlay, body: overlay.querySelector('.phBody') };
+}
+function photoDrawGrid(ctx, w, h){
+  ctx.save(); ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=Math.max(1, w/700); ctx.setLineDash([w/80, w/120]);
+  ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=2;
+  ctx.beginPath();
+  [1/3,2/3].forEach(f=>{ ctx.moveTo(w*f,0); ctx.lineTo(w*f,h); ctx.moveTo(0,h*f); ctx.lineTo(w,h*f); });
+  ctx.moveTo(w/2,0); ctx.lineTo(w/2,h);
+  ctx.stroke(); ctx.restore();
+}
+
+// ---------- Coach editor ----------
+async function openPhotoEditor(p, client, onSaved){
+  const { overlay, body } = photoOverlay(L2('Επεξεργασία φωτογραφίας','Edit photo'));
+  body.innerHTML = '<p>…</p>';
+  let bmp;
+  try{ bmp = await photoLoadBitmap(p.storage_path); }catch(err){ body.innerHTML = `<p style="color:var(--danger);">${escapeHtml(err.message||String(err))}</p>`; return; }
+  const sc0 = Math.min(1, 2000/Math.max(bmp.width, bmp.height));
+  let base = document.createElement('canvas'); base.width = Math.round(bmp.width*sc0); base.height = Math.round(bmp.height*sc0);
+  base.getContext('2d').drawImage(bmp, 0, 0, base.width, base.height);
+  const history = [];
+  const pushHist = ()=>{ const c=document.createElement('canvas'); c.width=base.width; c.height=base.height; c.getContext('2d').drawImage(base,0,0); history.push(c); if(history.length>15) history.shift(); };
+  body.innerHTML = `
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+      <button class="btn secondary tool" data-tool="crop" type="button">✂ ${L2('Κόψιμο','Crop')}</button>
+      <button class="btn secondary tool" data-tool="pen" type="button">✎ ${L2('Σχέδιο','Draw')}</button>
+      <button class="btn secondary tool" data-tool="line" type="button">／ ${L2('Γραμμή','Line')}</button>
+      <button class="btn secondary tool" data-tool="blur" type="button">▦ ${L2('Θόλωμα (πρόσωπο)','Blur (face)')}</button>
+      <button class="btn secondary" id="phRotL" type="button">⟲</button><button class="btn secondary" id="phRotR" type="button">⟳</button>
+      <button class="btn secondary" id="phUndo" type="button">↶ ${L2('Αναίρεση','Undo')}</button>
+      <input type="color" id="phColor" value="#ff3b30" title="${L2('Χρώμα','Color')}" style="width:36px; height:30px; padding:0;">
+      <label style="font-size:12px;"><input type="checkbox" id="phGrid" checked> ${L2('Πλέγμα','Grid')}</label>
+      <label style="font-size:12px;"><input type="checkbox" id="phGridBurn"> ${L2('Πλέγμα στην εξαγωγή','Grid in export')}</label>
+    </div>
+    <div id="phHint" style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;"></div>
+    <div style="text-align:center; background:var(--surface2); border-radius:8px; padding:6px;"><canvas id="phView" style="max-width:100%; max-height:62vh; touch-action:none; cursor:crosshair;"></canvas></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+      <button class="btn" id="phApplyCrop" type="button" style="display:none;">✓ ${L2('Εφαρμογή κοψίματος','Apply crop')}</button>
+      <button class="btn" id="phSave" type="button">${L2('Αποθήκευση ως νέα','Save as new')}</button>
+      <button class="btn secondary" id="phDl" type="button">⬇ PNG</button>
+    </div>`;
+  const view = body.querySelector('#phView'), vctx = view.getContext('2d');
+  const hint = body.querySelector('#phHint'); const hints = {
+    crop:L2('Σύρε ένα ορθογώνιο και πάτα «Εφαρμογή κοψίματος».','Drag a rectangle then press Apply crop.'),
+    pen:L2('Ζωγράφισε πάνω στη φωτογραφία.','Draw on the photo.'),
+    line:L2('Σύρε για να τραβήξεις ευθεία γραμμή (π.χ. άξονας ώμων ή λεκάνης).','Drag to draw a straight line (e.g. shoulder or pelvis axis).'),
+    blur:L2('Σύρε ένα ορθογώνιο πάνω στο πρόσωπο για θόλωμα.','Drag a rectangle over the face to blur it.') };
+  let tool = 'pen', drag = null, cropRect = null;
+  const setTool = (t_)=>{ tool = t_; cropRect = null; body.querySelector('#phApplyCrop').style.display = t_==='crop' ? '' : 'none';
+    body.querySelectorAll('.tool').forEach(b=>b.classList.toggle('secondary', b.dataset.tool!==t_)); hint.textContent = hints[t_]; render(); };
+  function render(){
+    view.width = base.width; view.height = base.height;
+    vctx.drawImage(base,0,0);
+    if(body.querySelector('#phGrid').checked) photoDrawGrid(vctx, view.width, view.height);
+    if(drag){
+      vctx.save(); vctx.strokeStyle = body.querySelector('#phColor').value; vctx.lineWidth = Math.max(2, view.width/300);
+      if(tool==='line'){ vctx.beginPath(); vctx.moveTo(drag.x0,drag.y0); vctx.lineTo(drag.x1,drag.y1); vctx.stroke(); }
+      if(tool==='pen' && drag.pts){ vctx.lineJoin='round'; vctx.lineCap='round'; vctx.beginPath(); drag.pts.forEach((q,i)=>i?vctx.lineTo(q[0],q[1]):vctx.moveTo(q[0],q[1])); vctx.stroke(); }
+      if(tool==='blur'||tool==='crop'){ vctx.setLineDash([8,6]); vctx.strokeRect(drag.x0,drag.y0,drag.x1-drag.x0,drag.y1-drag.y0); }
+      vctx.restore();
+    }
+    if(tool==='crop' && cropRect){ vctx.save(); vctx.strokeStyle='#fff'; vctx.lineWidth=Math.max(2,view.width/300); vctx.setLineDash([8,6]); vctx.strokeRect(cropRect.x,cropRect.y,cropRect.w,cropRect.h); vctx.restore(); }
+  }
+  const pos = (e)=>{ const r = view.getBoundingClientRect(); return [ (e.clientX-r.left)*view.width/r.width, (e.clientY-r.top)*view.height/r.height ]; };
+  view.addEventListener('pointerdown', (e)=>{ view.setPointerCapture(e.pointerId); const [x,y]=pos(e); drag={x0:x,y0:y,x1:x,y1:y,pts:[[x,y]]}; });
+  view.addEventListener('pointermove', (e)=>{ if(!drag) return; const [x,y]=pos(e); drag.x1=x; drag.y1=y; drag.pts.push([x,y]); render(); });
+  view.addEventListener('pointerup', ()=>{
+    if(!drag) return; const d = drag; drag = null;
+    const ctx = base.getContext('2d'); const x=Math.min(d.x0,d.x1), y=Math.min(d.y0,d.y1), w=Math.abs(d.x1-d.x0), h=Math.abs(d.y1-d.y0);
+    if(tool==='pen' && d.pts.length>1){ pushHist(); ctx.save(); ctx.strokeStyle=body.querySelector('#phColor').value; ctx.lineWidth=Math.max(2,base.width/300); ctx.lineJoin='round'; ctx.lineCap='round'; ctx.beginPath(); d.pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.stroke(); ctx.restore(); }
+    else if(tool==='line' && Math.hypot(d.x1-d.x0,d.y1-d.y0)>4){ pushHist(); ctx.save(); ctx.strokeStyle=body.querySelector('#phColor').value; ctx.lineWidth=Math.max(2,base.width/300); ctx.beginPath(); ctx.moveTo(d.x0,d.y0); ctx.lineTo(d.x1,d.y1); ctx.stroke(); ctx.restore(); }
+    else if(tool==='blur' && w>6 && h>6){
+      pushHist(); const bs = Math.max(10, Math.round(Math.max(w,h)/10)); const tmp = document.createElement('canvas');
+      tmp.width = Math.max(1,Math.round(w/bs)); tmp.height = Math.max(1,Math.round(h/bs));
+      tmp.getContext('2d').drawImage(base, x,y,w,h, 0,0,tmp.width,tmp.height);
+      ctx.save(); ctx.imageSmoothingEnabled=false; ctx.drawImage(tmp, 0,0,tmp.width,tmp.height, x,y,w,h); ctx.restore();
+    }
+    else if(tool==='crop' && w>10 && h>10){ cropRect = {x,y,w,h}; }
+    render();
+  });
+  body.querySelectorAll('.tool').forEach(b=>b.addEventListener('click', ()=>setTool(b.dataset.tool)));
+  body.querySelector('#phGrid').addEventListener('change', render);
+  body.querySelector('#phApplyCrop').addEventListener('click', ()=>{
+    if(!cropRect) return; pushHist(); const c = document.createElement('canvas'); c.width=Math.round(cropRect.w); c.height=Math.round(cropRect.h);
+    c.getContext('2d').drawImage(base, cropRect.x,cropRect.y,cropRect.w,cropRect.h, 0,0,c.width,c.height); base = c; cropRect = null; render();
+  });
+  const rotate = (dir)=>{ pushHist(); const c=document.createElement('canvas'); c.width=base.height; c.height=base.width; const x=c.getContext('2d'); x.translate(c.width/2,c.height/2); x.rotate(dir*Math.PI/2); x.drawImage(base,-base.width/2,-base.height/2); base=c; render(); };
+  body.querySelector('#phRotL').addEventListener('click', ()=>rotate(-1));
+  body.querySelector('#phRotR').addEventListener('click', ()=>rotate(1));
+  body.querySelector('#phUndo').addEventListener('click', ()=>{ const h = history.pop(); if(h){ base = h; cropRect = null; render(); } });
+  const exportCanvas = ()=>{ const c=document.createElement('canvas'); c.width=base.width; c.height=base.height; const x=c.getContext('2d'); x.drawImage(base,0,0); if(body.querySelector('#phGridBurn').checked) photoDrawGrid(x,c.width,c.height); return c; };
+  body.querySelector('#phDl').addEventListener('click', ()=>photoDownload(exportCanvas(), `progress_${p.taken_at||'photo'}.png`));
+  body.querySelector('#phSave').addEventListener('click', async (e)=>{
+    const btn = e.target; btn.disabled = true; btn.textContent = '…';
+    try{
+      const blob = await photoBlobFromCanvas(exportCanvas());
+      const path = `${client.id}/${Date.now()}_edit.jpg`;
+      const { error: upErr } = await supabase.storage.from('progress-photos').upload(path, blob, { contentType:'image/jpeg' });
+      if(upErr) throw upErr;
+      const { error: insErr } = await photoInsertRow(
+        { client_id: client.id, storage_path: path, notes: L2('Επεξεργασμένη','Edited') + (p.notes ? ' · '+p.notes : ''), taken_at: p.taken_at },
+        { pose: p.pose || null, consent_at: p.consent_at || null, is_edited: true, source_id: p.id });
+      if(insErr){ await supabase.storage.from('progress-photos').remove([path]); throw insErr; }
+      toast(t('saved',locale)); overlay.remove(); if(onSaved) onSaved();
+    }catch(err){ toast(L2('Σφάλμα: ','Error: ')+(err.message||err)); btn.disabled=false; btn.textContent=L2('Αποθήκευση ως νέα','Save as new'); }
+  });
+  pushHist(); history.pop(); setTool('pen');
+  if('reviewed_at' in p && !p.reviewed_at){ supabase.from('progress_photos').update({ reviewed_at:new Date().toISOString() }).eq('id', p.id).then(()=>{}); }
+}
+
+// ---------- Before / after ----------
+async function openPhotoCompare(a, b, client, isCoach, onSaved){
+  const { overlay, body } = photoOverlay(L2('Πριν / Μετά','Before / After'));
+  body.innerHTML = '<p>…</p>';
+  const [pa, pb] = [a, b].sort((x,y)=> (x.taken_at||'') < (y.taken_at||'') ? -1 : 1);
+  let ba, bb;
+  try{ [ba, bb] = await Promise.all([photoLoadBitmap(pa.storage_path), photoLoadBitmap(pb.storage_path)]); }
+  catch(err){ body.innerHTML = `<p style="color:var(--danger);">${escapeHtml(err.message||String(err))}</p>`; return; }
+  body.innerHTML = `<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+      <label style="font-size:12px;"><input type="checkbox" id="cmpGrid"> ${L2('Πλέγμα','Grid')}</label>
+      <label style="font-size:12px;"><input type="checkbox" id="cmpDate" checked> ${L2('Ημερομηνίες','Dates')}</label></div>
+    <div style="text-align:center; background:var(--surface2); border-radius:8px; padding:6px;"><canvas id="cmpView" style="max-width:100%; max-height:66vh;"></canvas></div>
+    <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+      ${isCoach ? `<button class="btn" id="cmpSave" type="button">${L2('Αποθήκευση ως νέα','Save as new')}</button>` : ''}
+      <button class="btn secondary" id="cmpDl" type="button">⬇ PNG</button></div>`;
+  const cv = body.querySelector('#cmpView');
+  function draw(){
+    const H = 1200, wa = Math.round(ba.width*H/ba.height), wb = Math.round(bb.width*H/bb.height), gap = 12, top = body.querySelector('#cmpDate').checked ? 70 : 0;
+    cv.width = wa+wb+gap; cv.height = H+top; const x = cv.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0,0,cv.width,cv.height);
+    x.drawImage(ba, 0, top, wa, H); x.drawImage(bb, wa+gap, top, wb, H);
+    if(body.querySelector('#cmpGrid').checked){ x.save(); x.translate(0,top); photoDrawGrid(x, wa, H); x.restore(); x.save(); x.translate(wa+gap,top); photoDrawGrid(x, wb, H); x.restore(); }
+    if(top){ x.fillStyle='#222'; x.font='bold 38px sans-serif'; x.textBaseline='middle';
+      x.fillText(`${L2('Πριν','Before')}  ${pa.taken_at||''}`, 16, top/2); x.fillText(`${L2('Μετά','After')}  ${pb.taken_at||''}`, wa+gap+16, top/2); }
+  }
+  draw();
+  body.querySelectorAll('input').forEach(i=>i.addEventListener('change', draw));
+  body.querySelector('#cmpDl').addEventListener('click', ()=>photoDownload(cv, `before_after_${pa.taken_at}_${pb.taken_at}.png`));
+  const sv = body.querySelector('#cmpSave');
+  if(sv) sv.addEventListener('click', async ()=>{
+    sv.disabled = true; sv.textContent = '…';
+    try{
+      const blob = await photoBlobFromCanvas(cv); const path = `${client.id}/${Date.now()}_compare.jpg`;
+      const { error: upErr } = await supabase.storage.from('progress-photos').upload(path, blob, { contentType:'image/jpeg' });
+      if(upErr) throw upErr;
+      const { error: insErr } = await photoInsertRow({ client_id: client.id, storage_path: path, notes: `${L2('Σύγκριση','Comparison')} ${pa.taken_at} → ${pb.taken_at}`, taken_at: pb.taken_at },
+        { pose: pb.pose || null, is_edited: true });
+      if(insErr){ await supabase.storage.from('progress-photos').remove([path]); throw insErr; }
+      toast(t('saved',locale)); overlay.remove(); if(onSaved) onSaved();
+    }catch(err){ toast(L2('Σφάλμα: ','Error: ')+(err.message||err)); sv.disabled=false; sv.textContent=L2('Αποθήκευση ως νέα','Save as new'); }
+  });
+}
+
+async function renderPhotosTab(body, client, isCoach){
+  const { data: photos } = await supabase.from('progress_photos').select('*').eq('client_id', client.id).order('taken_at',{ascending:false}).order('created_at',{ascending:false});
+  const refresh = async ()=>{ body.innerHTML = ''; await renderPhotosTab(body, client, isCoach); };
+
+  const guide = el(`<details class="card" style="margin-bottom:12px;"><summary style="cursor:pointer; font-weight:600;">${L2('Οδηγός για σωστές φωτογραφίες προόδου','How to take good progress photos')}</summary>
+    <ul style="margin:10px 0 0 18px; line-height:1.6; font-size:13px;">
+      <li>${L2('3 λήψεις: μπροστά, πλάι, πίσω. Χέρια χαλαρά στα πλάγια.','3 shots: front, side, back. Arms relaxed at your sides.')}</li>
+      <li>${L2('Ίδιο σημείο, ίδιο φως, ίδια απόσταση (2-3 μέτρα), κάμερα στο ύψος της λεκάνης.','Same spot, same light, same distance (2-3 m), camera at hip height.')}</li>
+      <li>${L2('Ίδια ώρα (ιδανικά πρωί) και ίδια ρούχα, π.χ. σορτς και αθλητικό μπουστάκι ή γυμνός κορμός.','Same time of day (ideally morning), same clothes, e.g. shorts and a sports bra or bare torso.')}</li>
+      <li>${L2('Χωρίς φίλτρα και χωρίς σφιγμένους μύες. Όρθια, φυσική στάση.','No filters, no flexing. Stand upright and natural.')}</li>
+      <li>${L2('Κάθε 2-4 εβδομάδες αρκεί. Το πρόσωπο δεν χρειάζεται να φαίνεται: ο coach μπορεί να το θολώσει.','Every 2-4 weeks is enough. Your face does not need to show: your coach can blur it.')}</li></ul></details>`);
+  body.appendChild(guide);
 
   const uploadForm = el(`<form class="card gold" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
     <div class="field" style="margin-bottom:0;"><label>${t('uploadPhoto',locale)}</label><input type="file" class="photoFile" accept="image/*" required></div>
-    <div class="field" style="width:160px; margin-bottom:0;"><label>${locale==='el'?'Ημερομηνία':'Date'}</label><input type="date" class="photoDate" value="${localDateStr(new Date())}"></div>
-    <div class="field" style="min-width:160px; margin-bottom:0;"><label>${locale==='el'?'Σημείωση (προαιρετικό)':'Note (optional)'}</label><input class="photoNote"></div>
+    <div class="field" style="width:130px; margin-bottom:0;"><label>${L2('Θέση','Pose')}</label><select class="photoPose">${PHOTO_POSES.map(q=>`<option value="${q[0]}">${locale==='el'?q[1]:q[2]}</option>`).join('')}</select></div>
+    <div class="field" style="width:160px; margin-bottom:0;"><label>${L2('Ημερομηνία','Date')}</label><input type="date" class="photoDate" value="${localDateStr(new Date())}"></div>
+    <div class="field" style="min-width:160px; margin-bottom:0;"><label>${L2('Σημείωση (προαιρετικό)','Note (optional)')}</label><input class="photoNote"></div>
+    <label style="flex-basis:100%; font-size:12px; line-height:1.4;"><input type="checkbox" class="photoConsent" required> ${L2('Συναινώ να αποθηκευτεί η φωτογραφία μου στην εφαρμογή και να τη βλέπει ο coach μου, για παρακολούθηση της προόδου. Μπορώ να τη διαγράψω όποτε θέλω.','I consent to this photo being stored in the app and viewed by my coach to track my progress. I can delete it at any time.')}</label>
     <button class="btn" type="submit">${t('save',locale)}</button>
   </form>`);
   uploadForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const fileInput = uploadForm.querySelector('.photoFile');
-    const file = fileInput.files[0];
+    const file = uploadForm.querySelector('.photoFile').files[0];
     if(!file) return;
     const btn = uploadForm.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = '…';
     try{
-      const ext = file.name.split('.').pop();
-      const path = `${client.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('progress-photos').upload(path, file);
+      const prep = await photoPrepare(file);
+      const path = `${client.id}/${Date.now()}.${prep.ext}`;
+      const { error: upErr } = await supabase.storage.from('progress-photos').upload(path, prep.blob, { contentType: prep.type });
       if(upErr) throw upErr;
-      const { error: insErr } = await supabase.from('progress_photos').insert({
-        client_id: client.id, storage_path: path,
-        notes: uploadForm.querySelector('.photoNote').value.trim() || null,
-        taken_at: uploadForm.querySelector('.photoDate').value,
-      });
-      if(insErr){
-        await supabase.storage.from('progress-photos').remove([path]); // rollback orphaned file
-        throw insErr;
-      }
-      toast(t('saved',locale));
-      body.innerHTML = '';
-      await renderPhotosTab(body, client);
+      const { error: insErr } = await photoInsertRow(
+        { client_id: client.id, storage_path: path, notes: uploadForm.querySelector('.photoNote').value.trim() || null, taken_at: uploadForm.querySelector('.photoDate').value },
+        { pose: uploadForm.querySelector('.photoPose').value, consent_at: new Date().toISOString(), is_edited: false });
+      if(insErr){ await supabase.storage.from('progress-photos').remove([path]); throw insErr; } // rollback orphaned file
+      toast(t('saved',locale)); await refresh();
     }catch(err){
-      toast((locale==='el' ? 'Σφάλμα: ' : 'Error: ') + (err.message || err));
+      toast(L2('Σφάλμα: ','Error: ') + (err.message || err));
       btn.disabled = false; btn.textContent = t('save',locale);
     }
   });
   body.appendChild(uploadForm);
 
-  if(!photos?.length){
-    body.appendChild(el(`<p>${t('noPhotos',locale)}</p>`));
-    return;
-  }
+  if(!photos?.length){ body.appendChild(el(`<p>${t('noPhotos',locale)}</p>`)); return; }
+
+  const selected = new Set();
+  const cmpBar = el(`<div style="display:flex; gap:8px; align-items:center; margin:6px 0 12px;"><button class="btn secondary cmpBtn" type="button" disabled>${L2('Σύγκριση πριν/μετά','Compare before/after')}</button><span style="font-size:12px; color:var(--ink-soft);">${L2('Επίλεξε 2 φωτογραφίες','Select 2 photos')}</span></div>`);
+  const cmpBtn = cmpBar.querySelector('.cmpBtn');
+  cmpBtn.addEventListener('click', ()=>{ const [x,y] = photos.filter(p=>selected.has(p.id)); openPhotoCompare(x, y, client, isCoach, refresh); });
+  body.appendChild(cmpBar);
 
   const grid = el('<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;"></div>');
   // One batched round-trip for every photo's signed URL instead of one request per photo.
   const signedResults = await Promise.all(photos.map(p=>supabase.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600)));
   photos.forEach((p, i)=>{
     const { data: signed, error: signErr } = signedResults[i];
+    const isNew = isCoach && ('reviewed_at' in p) && !p.reviewed_at && !p.is_edited;
     const card = el(`<div class="card" style="padding:8px;">
       ${signed?.signedUrl
         ? `<img src="${signed.signedUrl}" style="width:100%; height:140px; object-fit:cover; border-radius:6px; display:block;">`
-        : `<div style="width:100%; height:140px; border-radius:6px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--danger); text-align:center; padding:8px;">${locale==='el'?'Σφάλμα φόρτωσης':'Load error'}${signErr?': '+escapeHtml(signErr.message):''}</div>`}
-      <div class="mono" style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${p.taken_at}</div>
+        : `<div style="width:100%; height:140px; border-radius:6px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--danger); text-align:center; padding:8px;">${L2('Σφάλμα φόρτωσης','Load error')}${signErr?': '+escapeHtml(signErr.message):''}</div>`}
+      <div class="mono" style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${p.taken_at}${p.pose ? ' · '+photoPoseLabel(p.pose) : ''}${isNew ? ' <strong style="color:var(--gold, #b8860b);">● '+L2('Νέα','New')+'</strong>' : ''}${p.is_edited ? ' · '+L2('επεξεργ.','edited') : ''}</div>
       ${p.notes ? `<div style="font-size:12px; margin-top:2px;">${escapeHtml(p.notes)}</div>` : ''}
-      <button class="btn danger delPhotoBtn" type="button" style="margin-top:6px; padding:3px 10px; font-size:11px;">🗑</button>
-    </div>`);
+      <div style="display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap:wrap;">
+        <label style="font-size:11px;"><input type="checkbox" class="selPhoto"> ${L2('Επιλογή','Select')}</label>
+        ${isCoach ? `<button class="btn secondary editPhotoBtn" type="button" style="padding:3px 10px; font-size:11px;">✏</button>` : ''}
+        <button class="btn danger delPhotoBtn" type="button" style="padding:3px 10px; font-size:11px;">🗑</button>
+      </div></div>`);
+    card.querySelector('.selPhoto').addEventListener('change', (e)=>{
+      if(e.target.checked){ if(selected.size>=2){ e.target.checked=false; toast(L2('Μέχρι 2 φωτογραφίες','Max 2 photos')); return; } selected.add(p.id); } else selected.delete(p.id);
+      cmpBtn.disabled = selected.size!==2;
+    });
+    const ed = card.querySelector('.editPhotoBtn');
+    if(ed) ed.addEventListener('click', ()=>openPhotoEditor(p, client, refresh));
     card.querySelector('.delPhotoBtn').addEventListener('click', async ()=>{
+      if(!confirm(L2('Διαγραφή της φωτογραφίας;','Delete this photo?'))) return;
       await supabase.storage.from('progress-photos').remove([p.storage_path]);
       await supabase.from('progress_photos').delete().eq('id', p.id);
-      body.innerHTML = '';
-      await renderPhotosTab(body, client);
+      await refresh();
     });
     grid.appendChild(card);
   });
@@ -7698,7 +7912,7 @@ async function renderClientDashboard(main){
   } else if(tab==='safety'){
     renderSafetyCenterTab(body, todayReadiness);
   } else if(tab==='photos'){
-    await renderPhotosTab(body, profile);
+    await renderPhotosTab(body, profile, false);
   } else if(tab==='refer'){
     renderReferFriendTab(body);
   } else if(tab==='testimonial'){
