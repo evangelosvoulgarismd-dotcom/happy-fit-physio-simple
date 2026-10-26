@@ -55,6 +55,8 @@
   .cbn-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--ink-soft); font-family:inherit; font-size:10.5px; padding:4px 2px; cursor:pointer; }
   .cbn-btn .cbn-ico { font-size:19px; line-height:1; }
   .cbn-btn.active { color:var(--red-text); font-weight:700; }
+  .cbn-btn{position:relative;} .chatDot{position:absolute; top:0; left:calc(50% + 6px); min-width:16px; height:16px; padding:0 4px; box-sizing:border-box; border-radius:8px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:16px; text-align:center;}
+  .inlineBadge{display:inline-block; margin-left:6px; min-width:16px; height:16px; padding:0 5px; box-sizing:border-box; border-radius:8px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:16px; text-align:center;}
   .cbn-btn.cbn-central .cbn-ico { background:var(--red); color:#fff; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:2px; box-shadow:0 3px 8px rgba(196,32,31,0.35); }
   .cbn-btn.cbn-central { color:var(--red); }
   .profileMenu { display:flex; flex-direction:column; gap:8px; }
@@ -281,7 +283,7 @@
   #menuToggleBtn{display:none; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #themeBtn{background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
-  #notifBell .dot{position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:var(--gold); display:none;}
+  #notifBell .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
   #notifBell .dot.show{display:block;}
   .notifPanel{position:absolute; top:56px; right:14px; width:300px; max-height:400px; overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:0 10px 30px rgba(36,20,19,0.25); z-index:200; padding:12px;}
   .notifPanel .notifItem{padding:8px 0; border-bottom:1px solid var(--line); font-size:12px;}
@@ -1180,6 +1182,70 @@ function showLegalModal(key){
 }
 
 
+
+// ---- Massage appointment request for people who do NOT have an account (shown on the sign-in screen) ----
+// Stores one row in massage_inquiries (see migration_massage_inquiries.sql). No health details are collected here.
+function openMassageInquiryModal(){
+  const el_ = locale==='el';
+  const today = localDateStr(new Date());
+  const overlay = el(`<div class="modalOverlay"><div class="modalBox" style="max-width:520px;">
+    <button class="modalCloseBtn" type="button">&times;</button>
+    <h2>💆 ${el_?'Ραντεβού μασάζ':'Massage appointment'}</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin:4px 0 12px;">${el_?'Κατ\' οίκον θεραπευτική μάλαξη χαλάρωσης και ανάρρωσης, Αθήνα και Σαντορίνη.':'In-home relaxation and recovery massage, Athens and Santorini.'} <strong>${t('massagePrice',locale)}</strong></p>
+    <form class="miForm">
+      <div class="field"><label>${el_?'Ονοματεπώνυμο':'Full name'} *</label><input class="mi_name" required maxlength="120" autocomplete="name"></div>
+      <div class="grid2">
+        <div class="field"><label>${el_?'Τηλέφωνο':'Phone'} *</label><input class="mi_phone" type="tel" required maxlength="40" autocomplete="tel"></div>
+        <div class="field"><label>Email</label><input class="mi_email" type="email" maxlength="160" autocomplete="email"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>${el_?'Περιοχή':'Area'} *</label><select class="mi_area" required><option value="">—</option><option>${el_?'Αθήνα':'Athens'}</option><option>${el_?'Σαντορίνη':'Santorini'}</option></select></div>
+        <div class="field"><label>${t('massageType',locale)}</label><select class="mi_type"><option>Relaxation</option><option>Deep Tissue</option><option>Recovery</option><option>Travel Recovery</option><option>Couple</option><option>Compression Therapy</option></select></div>
+      </div>
+      <div class="field"><label>${el_?'Διεύθυνση ή κατάλυμα (π.χ. όνομα βίλας)':'Address or accommodation (e.g. villa name)'} *</label><input class="mi_addr" required maxlength="200"></div>
+      <div class="grid2">
+        <div class="field"><label>${t('preferredDate',locale)} *</label><input class="mi_date" type="date" min="${today}" required></div>
+        <div class="field"><label>${t('preferredTime',locale)}</label><input class="mi_time" type="time"></div>
+      </div>
+      <div class="field"><label>${el_?'Σχόλια (προαιρετικά)':'Notes (optional)'}</label><textarea class="mi_notes" rows="2" maxlength="500" placeholder="${el_?'π.χ. πόσα άτομα, ώρα που βολεύει. Μην γράψεις ιατρικά στοιχεία εδώ, θα τα πούμε πριν το ραντεβού.':'e.g. number of people, convenient times. Please do not write medical details here, we will talk before the appointment.'}"></textarea></div>
+      <input class="mi_hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">
+      <div class="field" style="flex-direction:row; align-items:flex-start; gap:8px;">
+        <input type="checkbox" class="mi_consent" style="width:auto; margin-top:3px;" required>
+        <label style="margin:0; font-size:12px; line-height:1.5;">${el_?'Συναινώ να χρησιμοποιηθούν τα στοιχεία μου μόνο για να επικοινωνήσουν μαζί μου σχετικά με αυτό το αίτημα. Δες την <a data-legal="privacy" style="color:var(--red-text); cursor:pointer;">Πολιτική Απορρήτου</a>.':'I consent to my details being used only to contact me about this request. See the <a data-legal="privacy" style="color:var(--red-text); cursor:pointer;">Privacy Policy</a>.'}</label>
+      </div>
+      <p class="miErr" style="color:var(--danger); font-size:12px; min-height:16px; margin:0 0 6px;"></p>
+      <button class="btn" type="submit" style="width:100%;">${t('requestMassage',locale)}</button>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin:8px 0 0;">${el_?'Αυτό είναι αίτημα, όχι κλεισμένο ραντεβού. Το ραντεβού ισχύει όταν σου το επιβεβαιώσουμε.':'This is a request, not a confirmed booking. The appointment is valid once we confirm it.'}</p>
+    </form>
+  </div></div>`);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.remove(); });
+  overlay.querySelector('.modalCloseBtn').addEventListener('click', ()=>overlay.remove());
+  overlay.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', (e)=>{ e.preventDefault(); showLegalModal(a.dataset.legal); }));
+  const form = overlay.querySelector('.miForm');
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const err = overlay.querySelector('.miErr'); err.textContent = '';
+    const v = c => form.querySelector(c).value.trim();
+    if(v('.mi_hp')){ overlay.remove(); return; }   // bots fill the hidden field
+    if(!form.querySelector('.mi_consent').checked){ err.textContent = el_?'Χρειάζεται η συναίνεσή σου.':'Your consent is required.'; return; }
+    const btn = form.querySelector('button[type=submit]'); btn.disabled = true;
+    const { error } = await supabase.from('massage_inquiries').insert({
+      full_name: v('.mi_name'), phone: v('.mi_phone'), email: v('.mi_email') || null,
+      area: v('.mi_area'), address: v('.mi_addr'), massage_type: v('.mi_type'),
+      preferred_date: form.querySelector('.mi_date').value || null, preferred_time: form.querySelector('.mi_time').value || null,
+      notes: v('.mi_notes') || null, consent_at: new Date().toISOString(),
+    });
+    if(error){
+      btn.disabled = false;
+      err.textContent = el_?'Δεν στάλθηκε. Δοκίμασε ξανά ή γράψε μας στο Instagram.':'Could not send. Try again or message us on Instagram.';
+      return;
+    }
+    overlay.querySelector('.modalBox').innerHTML = `<button class="modalCloseBtn" type="button">&times;</button><h2>✓ ${el_?'Το αίτημά σου στάλθηκε':'Your request was sent'}</h2><p style="font-size:14px; margin-top:8px;">${t('massageRequestSent',locale)}</p><button class="btn" type="button" style="margin-top:14px;">${el_?'Εντάξει':'OK'}</button>`;
+    overlay.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>overlay.remove()));
+  });
+  document.body.appendChild(overlay);
+}
+
 function renderAuth(){
   const app = document.getElementById('app');
   app.innerHTML = '';
@@ -1213,11 +1279,17 @@ function renderAuth(){
       <div id="authError"></div>
       <button class="btn" type="submit" style="width:100%; margin-top:6px;">${t('signup',locale)}</button>
     </form>
+    <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line); text-align:center;">
+      <p style="font-size:12px; color:var(--ink-soft); margin:0 0 8px;">${locale==='el'?'Δεν έχεις λογαριασμό; Ζήτα ραντεβού μασάζ χωρίς εγγραφή.':'No account? Request a massage appointment without signing up.'}</p>
+      <button class="btn secondary" type="button" id="massageInquiryBtn" style="width:100%;">💆 ${t('requestMassage',locale)}</button>
+    </div>
     <div class="trustBadges" style="margin-top:16px;">
       <span class="badge">🔒 GDPR</span><span class="badge">🇪🇺 EU hosting</span><span class="badge">🎓 Physiotherapy student-led</span>
     </div>
   </div></div>`);
   app.appendChild(wrap);
+  wrap.querySelector('#massageInquiryBtn').addEventListener('click', openMassageInquiryModal);
+  try{ if(new URLSearchParams(location.search).get('massage')==='1' && !renderAuth._opened){ renderAuth._opened = true; openMassageInquiryModal(); } }catch(e){}
   wrap.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', (e)=>{ e.preventDefault(); showLegalModal(a.dataset.legal); }));
 
   function syncFields(){
@@ -1314,6 +1386,78 @@ function renderAuth(){
 // ============================================================
 // SHELL (sidebar + main)
 // ============================================================
+// ---------- Notifications: bell with unread count, in-app toasts, optional device push ----------
+// Unread = items newer than the last time this person opened the bell on this device (kept in localStorage).
+// Nothing here needs a new column. Items that need a table that is not created yet are skipped silently.
+function notifSeenKey(){ return 'hfp_notif_seen_' + (profile?.id||'x'); }
+function notifSeenGet(){ try{ return localStorage.getItem(notifSeenKey()) || ''; }catch(e){ return ''; } }
+function notifSeenSet(iso){ try{ localStorage.setItem(notifSeenKey(), iso); }catch(e){} }
+function chatSeenKey(clientId){ return 'hfp_chat_seen_' + (profile?.id||'x') + '_' + clientId; }
+function chatSeenGet(clientId){ try{ return localStorage.getItem(chatSeenKey(clientId)) || ''; }catch(e){ return ''; } }
+function chatSeenSet(clientId){ try{ localStorage.setItem(chatSeenKey(clientId), new Date().toISOString()); }catch(e){} }
+async function chatUnreadCount(clientId, viewerRole){
+  try{
+    const since = chatSeenGet(clientId) || '1970-01-01T00:00:00Z';
+    const other = viewerRole==='coach' ? 'client' : 'coach';
+    const { count, error } = await supabase.from('messages').select('id', { count:'exact', head:true }).eq('client_id', clientId).eq('sender_role', other).gt('created_at', since);
+    return error ? 0 : (count||0);
+  }catch(e){ return 0; }
+}
+const NOTIF_STATUS_EL = { confirmed:'επιβεβαιώθηκε', cancelled:'ακυρώθηκε', pending:'εκκρεμεί', done:'ολοκληρώθηκε' };
+async function fetchNotifItems(isCoach){
+  const el_ = locale==='el';
+  const items = [];
+  const rows = r => (r && !r.error && r.data) ? r.data : [];
+  if(isCoach){
+    const isOwner = profile.role==='owner';
+    const q = [
+      supabase.from('leads').select('full_name,created_at').eq('converted', false).order('created_at',{ascending:false}).limit(5),
+      supabase.from('messages').select('body,created_at,client_id,clients(full_name)').eq('sender_role','client').order('created_at',{ascending:false}).limit(8),
+      supabase.from('availability_slots').select('start_at,created_at,clients(full_name)').not('booked_by','is',null).order('created_at',{ascending:false}).limit(5),
+      supabase.from('massage_requests').select('created_at,preferred_date,preferred_time,massage_type,status,clients(full_name)').eq('status','pending').order('created_at',{ascending:false}).limit(8),
+      isOwner ? supabase.from('massage_inquiries').select('created_at,full_name,area,preferred_date,status').eq('status','new').order('created_at',{ascending:false}).limit(8) : Promise.resolve({data:[]}),
+    ];
+    const [leads, msgs, slots, mreq, minq] = (await Promise.all(q.map(p=>Promise.resolve(p).catch(()=>({data:[]}))))).map(rows);
+    leads.forEach(l=>items.push({ t:l.created_at, ico:'📥', text:`${l.full_name} (${el_?'νέο ενδιαφέρον':'new lead'})`, go:'leads' }));
+    msgs.forEach(m=>items.push({ t:m.created_at, ico:'💬', text:`${m.clients?.full_name||''}: ${(m.body||'').slice(0,50)}`, go:'chat', clientId:m.client_id }));
+    slots.forEach(s=>items.push({ t:s.created_at, ico:'🗓️', text:`${s.clients?.full_name||''} · ${new Date(s.start_at).toLocaleDateString(el_?'el-GR':'en-GB')}` }));
+    mreq.forEach(r=>items.push({ t:r.created_at, ico:'💆', text:`${r.clients?.full_name||''} ${el_?'ζητά μασάζ':'requests a massage'} · ${r.preferred_date||''} ${r.preferred_time||''}`.trim() }));
+    minq.forEach(r=>items.push({ t:r.created_at, ico:'💆', text:`${r.full_name} ${el_?'ζητά ραντεβού μασάζ':'requests a massage appointment'}${r.area?' · '+r.area:''} · ${r.preferred_date||''}`.trim(), go:'leads' }));
+  } else {
+    const [msgs, mreq] = (await Promise.all([
+      supabase.from('messages').select('body,created_at').eq('client_id', profile.id).eq('sender_role','coach').order('created_at',{ascending:false}).limit(8),
+      supabase.from('massage_requests').select('*').eq('client_id', profile.id).in('status',['confirmed','cancelled']).order('created_at',{ascending:false}).limit(5),
+    ].map(p=>Promise.resolve(p).catch(()=>({data:[]}))))).map(rows);
+    msgs.forEach(m=>items.push({ t:m.created_at, ico:'💬', text:(m.body||'').slice(0,70), go:'chat' }));
+    mreq.forEach(r=>items.push({ t:r.updated_at||r.created_at, ico:'💆', text:`${el_?'Το αίτημα μασάζ για':'Your massage request for'} ${r.preferred_date||''} ${el_?NOTIF_STATUS_EL[r.status]||r.status:r.status}` }));
+  }
+  items.sort((a,b)=> new Date(b.t) - new Date(a.t));
+  return items.slice(0, 10);
+}
+function notifUnread(items){
+  const seen = notifSeenGet();
+  return items.filter(i=>!i.info && (!seen || new Date(i.t) > new Date(seen)));
+}
+function setNotifDot(n){
+  const dot = document.getElementById('notifDot'); if(!dot) return;
+  dot.classList.toggle('show', n>0);
+  dot.textContent = n>0 ? (n>9 ? '9+' : String(n)) : '';
+  const bell = document.getElementById('notifBell');
+  if(bell) bell.setAttribute('aria-label', (locale==='el'?'Ειδοποιήσεις':'Notifications') + (n>0 ? ` (${n} ${locale==='el'?'νέες':'new'})` : ''));
+}
+async function goToNotif(i, isCoach){
+  try{
+    document.querySelector('.notifPanel')?.remove();
+    if(i.go==='leads'){ view = 'leads'; selectedClient = null; }
+    else if(i.go==='chat'){
+      if(isCoach && i.clientId){
+        const { data: c } = await supabase.from('clients').select('*').eq('id', i.clientId).maybeSingle();
+        if(c){ view = 'dashboard'; selectedClient = c; renderClientDetail._tab = 'messages'; }
+      } else if(!isCoach){ renderClientDashboard._tab = 'messages'; }
+    }
+    renderShell();
+  }catch(e){}
+}
 async function renderNotifPanel(anchorEl, isCoach){
   const panel = el(`<div class="notifPanel"><p style="font-size:12px; color:var(--ink-soft);">${t('loading',locale)}</p></div>`);
   document.body.appendChild(panel);
@@ -1328,35 +1472,78 @@ async function renderNotifPanel(anchorEl, isCoach){
     });
   }, 0);
 
-  let items = [];
-  if(isCoach){
-    const [{ data: leads }, { data: msgs }, { data: slots }] = await Promise.all([
-      supabase.from('leads').select('full_name,created_at').eq('converted', false).order('created_at',{ascending:false}).limit(5),
-      supabase.from('messages').select('body,created_at,client_id,clients(full_name)').eq('sender_role','client').order('created_at',{ascending:false}).limit(5),
-      supabase.from('availability_slots').select('start_at,created_at,clients(full_name)').not('booked_by','is',null).order('created_at',{ascending:false}).limit(5),
-    ]);
-    (leads||[]).forEach(l=>items.push({ t: l.created_at, text: `📥 ${l.full_name} (${locale==='el'?'νέο ενδιαφέρον':'new lead'})` }));
-    (msgs||[]).forEach(m=>items.push({ t: m.created_at, text: `💬 ${m.clients?.full_name||''}: ${(m.body||'').slice(0,40)}` }));
-    (slots||[]).forEach(s=>items.push({ t: s.created_at, text: `🗓️ ${s.clients?.full_name||''} · ${new Date(s.start_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}` }));
-    if(profile.role === 'coach'){
-      const { data: ownClients } = await supabase.from('clients').select('status').eq('coach_id', profile.id);
-      const activeCount = (ownClients||[]).filter(c=>(c.status||'trial')==='active').length;
-      const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
-      const feeText = locale==='el'
-        ? `💶 Τρέχουσα εκτίμηση χρέωσης συνεργασίας: ${activeCount} ενεργοί πελάτες = ${euro(partnerFee(activeCount))}`
-        : `💶 Current partnership fee estimate: ${activeCount} active clients = ${euro(partnerFee(activeCount))}`;
-      items.push({ t: new Date().toISOString(), text: feeText });
-    }
-  } else {
-    const { data: msgs } = await supabase.from('messages').select('body,created_at').eq('sender_role','coach').order('created_at',{ascending:false}).limit(8);
-    (msgs||[]).forEach(m=>items.push({ t: m.created_at, text: `💬 ${(m.body||'').slice(0,60)}` }));
+  let items = await fetchNotifItems(isCoach);
+  const unreadSet = new Set(notifUnread(items));
+  if(isCoach && profile.role === 'coach'){
+    const { data: ownClients } = await supabase.from('clients').select('status').eq('coach_id', profile.id);
+    const activeCount = (ownClients||[]).filter(c=>(c.status||'trial')==='active').length;
+    const euro = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n||0);
+    items.push({ t: new Date().toISOString(), ico:'💶', info:true, text: locale==='el'
+      ? `Τρέχουσα εκτίμηση χρέωσης συνεργασίας: ${activeCount} ενεργοί πελάτες = ${euro(partnerFee(activeCount))}`
+      : `Current partnership fee estimate: ${activeCount} active clients = ${euro(partnerFee(activeCount))}` });
   }
-  items.sort((a,b)=> new Date(b.t) - new Date(a.t));
-  items = items.slice(0, 8);
-
   panel.innerHTML = items.length
-    ? items.map(i=>`<div class="notifItem">${escapeHtml(i.text)}<div class="mono" style="font-size:10px; color:var(--ink-soft); margin-top:2px;">${new Date(i.t).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div></div>`).join('')
+    ? items.map((i,idx)=>`<div class="notifItem" data-i="${idx}" style="${i.go?'cursor:pointer;':''}${unreadSet.has(i)?' font-weight:700;':''}">${unreadSet.has(i)?'<span style="color:var(--red-text);">● </span>':''}${i.ico||''} ${escapeHtml(i.text)}<div class="mono" style="font-size:10px; color:var(--ink-soft); margin-top:2px; font-weight:400;">${new Date(i.t).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div></div>`).join('')
     : `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Καμία πρόσφατη ειδοποίηση.':'No recent notifications.'}</p>`;
+  panel.querySelectorAll('.notifItem[data-i]').forEach(n=>n.addEventListener('click', ()=>{ const it = items[Number(n.dataset.i)]; if(it && it.go) goToNotif(it, isCoach); }));
+  notifSeenSet(new Date().toISOString());
+  setNotifDot(0);
+}
+// Background watcher: refreshes the count every minute and when the tab is shown again, and shows a toast
+// (plus a system notification if the person allowed it) when something new arrives while the app is open.
+let _notifTimer = null, _notifChannel = null, _notifLastNewest = null, _notifVis = null;
+function startNotifWatcher(isCoach){
+  if(_notifTimer){ clearInterval(_notifTimer); _notifTimer = null; }
+  if(_notifVis){ document.removeEventListener('visibilitychange', _notifVis); _notifVis = null; }
+  if(_notifChannel){ try{ supabase.removeChannel(_notifChannel); }catch(e){} _notifChannel = null; }
+  _notifLastNewest = null;
+  let busy = false;
+  const poll = async ()=>{
+    if(busy || !profile) return; busy = true;
+    try{
+      const items = (await fetchNotifItems(isCoach)).filter(i=>!i.info);
+      const unread = notifUnread(items);
+      if(!document.querySelector('.notifPanel')) setNotifDot(unread.length);
+      refreshClientChatBadges();
+      const newest = items[0]?.t || null;
+      if(_notifLastNewest && newest && new Date(newest) > new Date(_notifLastNewest)){
+        const fresh = items.filter(i=>new Date(i.t) > new Date(_notifLastNewest))[0];
+        if(fresh){
+          toast(`${fresh.ico||'🔔'} ${fresh.text}`, 5000);
+          try{ if('Notification' in window && Notification.permission==='granted' && document.visibilityState!=='visible') new Notification('Happy Fit Physio', { body: fresh.text }); }catch(e){}
+        }
+      }
+      if(newest) _notifLastNewest = newest;
+    }catch(e){}
+    busy = false;
+  };
+  poll();
+  _notifTimer = setInterval(()=>{ if(document.visibilityState==='visible') poll(); }, 60000);
+  _notifVis = ()=>{ if(document.visibilityState==='visible') poll(); };
+  document.addEventListener('visibilitychange', _notifVis);
+  try{
+    if(typeof supabase.channel === 'function'){
+      let ch = supabase.channel('hfp-notif-' + profile.id);
+      ['messages','massage_requests','massage_inquiries','leads'].forEach(tb=>{ ch = ch.on('postgres_changes', { event:'*', schema:'public', table:tb }, ()=>poll()); });
+      _notifChannel = ch.subscribe();
+    }
+  }catch(e){}
+}
+
+// Unread-chat badges for the client (bottom Profile tab, Profile menu row, chat card). Called after each render and by the watcher.
+async function refreshClientChatBadges(){
+  try{
+    if(!profile || profile.role!=='client') return;
+    const n = await chatUnreadCount(profile.id, 'client');
+    const put = (host, cls, pos)=>{
+      if(!host) return;
+      host.querySelectorAll('.'+cls).forEach(x=>x.remove());
+      if(n>0){ const b = document.createElement('span'); b.className = cls; b.textContent = n>9?'9+':String(n); host.appendChild(b); }
+    };
+    put(document.querySelector('.cbn-btn[data-t="profile"]'), 'chatDot');
+    put(document.querySelector('.profileMenuRow[data-chat="1"] span:nth-child(2)'), 'inlineBadge');
+    put(document.querySelector('.openChatLink'), 'inlineBadge');
+  }catch(e){}
 }
 
 // Loading state that never blanks a screen the user is already looking at (no flash, no scroll jump):
@@ -1412,6 +1599,7 @@ function renderShell(){
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='packages'?'active':''}" data-v="packages">💆 ${t('packages',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='sops'?'active':''}" data-v="sops">📖 ${locale==='el'?'Διαδικασίες':'Procedures'}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='groupclasses'?'active':''}" data-v="groupclasses">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button><button class="navBtn ${view==='directory'?'active':''}" data-v="directory">🌐 ${locale==='el'?'Κατάλογος':'Directory'}</button>` : ''}
       ${isOwner ? `<button class="navBtn ${view==='partners'?'active':''}" data-v="partners">👥 ${t('partners',locale)}</button>` : ''}
       </div>
@@ -1484,6 +1672,7 @@ function renderShell(){
     if(existing){ existing.remove(); return; }
     renderNotifPanel(shell.querySelector('#notifBell'), isCoach);
   });
+  startNotifWatcher(isCoach);
   shell.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', ()=>showLegalModal(a.dataset.legal)));
 
   const main = shell.querySelector('#main');
@@ -1526,6 +1715,7 @@ function renderMainView(main, isCoach, isOwner){
   else if(view==='leads' && isCoach) renderLeadsView(main);
   else if(view==='packages' && isCoach) renderPackagesView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
+  else if(view==='sops' && isCoach) renderSopsView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(view==='groupclasses' && isCoach) renderGroupClassesView(main);
   else if(view==='projection' && isCoach) renderProjectionView(main);
@@ -1561,7 +1751,7 @@ let evidenceAutoCache = {};
 function youtubeEmbedUrl(url){
   if(!url) return null;
   const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/);
-  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+  return m ? `https://www.youtube-nocookie.com/embed/${m[1]}` : null;   // privacy-enhanced domain: no tracking cookies until the video is played
 }
 async function fetchEuropePMC(query){
   const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}&format=json&pageSize=5&sort=P_PDATE_D%20desc`;
@@ -1719,6 +1909,54 @@ async function renderPackagesView(main){
   main.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-top:14px;">${el_?'Οι τιμές είναι καταγραφή για εσένα, όχι τιμολόγιο ή απόδειξη.':'Prices are a record for you, not an invoice or receipt.'}</p>`));
 }
 
+
+// Owner view: massage requests from people without an account (table massage_inquiries). Shown at the top of the Leads screen.
+async function renderMassageInquiriesBox(main){
+  if(profile.role!=='owner') return;
+  const { data, error } = await supabase.from('massage_inquiries').select('*').order('created_at',{ascending:false}).limit(100);
+  if(error || !data) return;   // table not created yet: stay silent
+  const el_ = locale==='el';
+  const ST = { new: el_?'Νέο':'New', confirmed: el_?'Επιβεβαιώθηκε':'Confirmed', done: el_?'Ολοκληρώθηκε':'Done', cancelled: el_?'Ακυρώθηκε':'Cancelled' };
+  const open = data.filter(r=>r.status==='new' || !r.status);
+  const wrap = el(`<details class="card gold" style="margin-bottom:16px;" ${open.length?'open':''}>
+    <summary style="cursor:pointer; font-weight:700;">💆 ${el_?'Αιτήματα μασάζ (χωρίς λογαριασμό)':'Massage requests (no account)'} <span class="badge">${open.length} ${el_?'νέα':'new'}</span> <span class="badge mono">${data.length} ${el_?'σύνολο':'total'}</span></summary>
+    <div class="miList" style="margin-top:10px;"></div>
+  </details>`);
+  const list = wrap.querySelector('.miList');
+  if(!data.length) list.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft);">${el_?'Κανένα αίτημα ακόμα. Ο σύνδεσμος για να το μοιράζεσαι: ':'No requests yet. Link to share: '}<span class="mono">${escapeHtml(location.origin+location.pathname)}?massage=1</span></p>`;
+  data.forEach(r=>{
+    const digits = (r.phone||'').replace(/[^\d+]/g,'');
+    const wa = digits ? 'https://wa.me/'+digits.replace(/^\+/,'').replace(/^00/,'').replace(/^(?=[26]\d{9}$)/,'30') : '';
+    const card = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
+      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:center;">
+        <strong>${escapeHtml(r.full_name)}</strong>
+        <select class="miStatus" style="padding:5px 8px; font-size:12px; border-radius:6px; border:1px solid var(--line);">${Object.keys(ST).map(k=>`<option value="${k}" ${((r.status||'new')===k)?'selected':''}>${ST[k]}</option>`).join('')}</select>
+      </div>
+      <div style="font-size:12.5px; margin-top:4px;" class="mono">${escapeHtml(r.preferred_date||'—')} ${escapeHtml(r.preferred_time||'')} · ${escapeHtml(r.area||'')} · ${escapeHtml(r.massage_type||'')}</div>
+      <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">📍 ${escapeHtml(r.address||'')}</div>
+      ${r.notes ? `<div style="font-size:12.5px; margin-top:2px;">${escapeHtml(r.notes)}</div>` : ''}
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+        ${r.phone ? `<a class="btn secondary" style="padding:5px 12px; font-size:12px;" href="tel:${escapeHtml(digits)}">📞 ${escapeHtml(r.phone)}</a>` : ''}
+        ${wa ? `<a class="btn secondary" style="padding:5px 12px; font-size:12px;" href="${escapeHtml(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+        ${r.email ? `<a class="btn secondary" style="padding:5px 12px; font-size:12px;" href="mailto:${escapeHtml(r.email)}">✉️ Email</a>` : ''}
+        <button class="btn danger miDel" type="button" style="padding:5px 12px; font-size:12px;">🗑</button>
+      </div>
+      <div class="mono" style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${new Date(r.created_at).toLocaleString(el_?'el-GR':'en-GB')}</div>
+    </div>`);
+    card.querySelector('.miStatus').addEventListener('change', async (e)=>{
+      const { error: uErr } = await supabase.from('massage_inquiries').update({ status: e.target.value }).eq('id', r.id);
+      if(!uErr){ toast(t('saved',locale)); }
+    });
+    card.querySelector('.miDel').addEventListener('click', async ()=>{
+      if(!confirm(el_?'Διαγραφή του αιτήματος; Δεν επαναφέρεται.':'Delete this request? This cannot be undone.')) return;
+      const { error: dErr } = await supabase.from('massage_inquiries').delete().eq('id', r.id);
+      if(!dErr){ card.remove(); toast(el_?'Διαγράφηκε':'Deleted'); }
+    });
+    list.appendChild(card);
+  });
+  main.appendChild(wrap);
+}
+
 async function renderLeadsView(main){
   showLoading(main);
   const { data: leadsRaw } = await supabase.from('leads').select('*').order('created_at',{ascending:false});
@@ -1745,6 +1983,7 @@ async function renderLeadsView(main){
     ${leads?.length ? `<button class="btn secondary" id="csvBtn">⬇ ${t('downloadCsv',locale)}</button>` : ''}
   </div>`);
   main.appendChild(header);
+  await renderMassageInquiriesBox(main);
 
   if(!allLeads?.length){
     main.appendChild(el(`<p>${t('noLeads',locale)}</p>`));
@@ -3780,6 +4019,7 @@ async function renderLibrary(main, isCoach){
   const selStyle = 'padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;';
   const toolbar = el(`<div class="card" style="margin-bottom:14px; padding:12px 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
     <input class="libSearchInput" placeholder="${locale==='el'?'🔍 Αναζήτηση άσκησης...':'🔍 Search exercise...'}" style="flex:1; min-width:160px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
+    <select class="libGroupSelect" aria-label="${locale==='el'?'Ομαδοποίηση':'Group by'}" style="${selStyle}"><option value="category">${locale==='el'?'Ομάδες: Κατηγορία':'Group: Category'}</option><option value="region">${locale==='el'?'Ομάδες: Περιοχή σώματος':'Group: Body region'}</option><option value="level">${locale==='el'?'Ομάδες: Επίπεδο':'Group: Level'}</option><option value="equipment">${locale==='el'?'Ομάδες: Εξοπλισμός':'Group: Equipment'}</option><option value="none">${locale==='el'?'Χωρίς ομάδες':'No groups'}</option></select>
     <button class="btn secondary libFilterToggle" type="button" style="padding:7px 12px; font-size:12px;">⚙ ${locale==='el'?'Φίλτρα':'Filters'}<span class="libFilterCount"></span></button>
     <div class="libFilters" style="display:none; flex-basis:100%; gap:8px; flex-wrap:wrap;">
     <select class="libRegionSelect" style="${selStyle}"><option value="">${locale==='el'?'Περιοχή σώματος':'Body region'}</option>${EX_BODY_REGIONS.map(o=>`<option value="${escapeHtml(o.el)}">${escapeHtml(locale==='el'?o.el:o.en)}</option>`).join('')}</select>
@@ -3897,10 +4137,33 @@ async function renderLibrary(main, isCoach){
     countLine.textContent = (locale==='el' ? visible.length+' ασκήσεις' : visible.length+' exercises');
     if(!visible.length){ listBox.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${locale==='el'?'Καμία αντιστοιχία.':'No matches.'}</p>`)); return; }
 
+    const gMode = toolbar.querySelector('.libGroupSelect')?.value || 'category';
+    const gKey = ex=>{
+      if(gMode==='region') return ex.body_region ? exLabel(EX_BODY_REGIONS, ex.body_region) : (locale==='el'?'Χωρίς περιοχή':'No region');
+      if(gMode==='level') return ex.difficulty_level ? exLabel(EX_DIFFICULTIES, ex.difficulty_level) : (locale==='el'?'Χωρίς επίπεδο':'No level');
+      if(gMode==='equipment') return ex.equipment ? exLabel(EX_EQUIPMENT, ex.equipment) : (locale==='el'?'Χωρίς εξοπλισμό':'No equipment');
+      return ex.category || '—';
+    };
+    const gOrder = ex=>{
+      if(gMode==='level') return EX_DIFFICULTIES.findIndex(o=>o.el===ex.difficulty_level);
+      if(gMode==='region') return EX_BODY_REGIONS.findIndex(o=>o.el===ex.body_region);
+      if(gMode==='equipment') return EX_EQUIPMENT.findIndex(o=>o.el===ex.equipment);
+      return 0;
+    };
+    if(gMode!=='none'){
+      visible = visible.map((e,i)=>({e,i})).sort((a,b)=>{
+        const oa=gOrder(a.e), ob=gOrder(b.e);
+        if(gMode!=='category' && oa!==ob) return (oa<0?99:oa)-(ob<0?99:ob);
+        const ka=gKey(a.e), kb=gKey(b.e);
+        return ka.localeCompare(kb,'el') || ((a.e.name_el||'').localeCompare(b.e.name_el||'','el')) || (a.i-b.i);
+      }).map(x=>x.e);
+    }
+    const groupCounts = {};
+    visible.forEach(e=>{ const k=gKey(e); groupCounts[k]=(groupCounts[k]||0)+1; });
     const shown = visible.slice(0, limit);
     let lastCat = null;
     shown.forEach(ex=>{
-    if(!cat && chip!=='__fav' && chip!=='__novis' && ex.category!==lastCat){ lastCat = ex.category; listBox.appendChild(el(`<h4 class="libGroup">${escapeHtml(ex.category||'—')}</h4>`)); }
+    if(gMode!=='none' && chip!=='__fav' && chip!=='__novis' && gKey(ex)!==lastCat){ lastCat = gKey(ex); listBox.appendChild(el(`<h4 class="libGroup">${escapeHtml(lastCat)} <span class="mono" style="font-weight:400; color:var(--ink-soft);">(${groupCounts[lastCat]})</span></h4>`)); }
     const name = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
     const desc = locale==='el' ? ex.description_el : (ex.description_en || ex.description_el);
     const why = locale==='el' ? ex.why_rationale_el : (ex.why_rationale_en || ex.why_rationale_el);
@@ -4101,9 +4364,10 @@ async function renderLibrary(main, isCoach){
 
   let libTimer; toolbar.querySelector('.libSearchInput').addEventListener('input', ()=>{ clearTimeout(libTimer); libTimer=setTimeout(()=>{ limit=40; renderList(); }, 120); });
   toolbar.querySelector('.libFilterToggle').addEventListener('click', ()=>{ const f=toolbar.querySelector('.libFilters'); f.style.display = f.style.display==='none' ? 'flex' : 'none'; });
-  ['.libRegionSelect','.libGoalSelect','.libDiffSelect','.libEquipSelect'].forEach(sel=>{
+  ['.libRegionSelect','.libGoalSelect','.libDiffSelect','.libEquipSelect','.libGroupSelect'].forEach(sel=>{
     toolbar.querySelector(sel).addEventListener('change', ()=>{ limit=40; renderList(); });
   });
+  { const gs = toolbar.querySelector('.libGroupSelect'); try{ const v=localStorage.getItem('hfp_lib_group'); if(v) gs.value=v; }catch(e){} gs.addEventListener('change', ()=>{ try{ localStorage.setItem('hfp_lib_group', gs.value); }catch(e){} }); }
   renderList();
 }
 
@@ -4904,6 +5168,167 @@ async function renderRecapTab(body, client, checkins, programs){
   holder.appendChild(card);
 }
 
+// ============================================================
+// SOP library: the coach's own procedures in one place (private to the coach).
+// ============================================================
+const SOP_CATEGORIES = ['Πελάτες','Κλινικά και ασφάλεια','Δεδομένα και απόρρητο','Επιχείρηση'];
+const SOP_STARTERS = [
+ { category:'Πελάτες', title:'Πρώτη επαφή με νέο ενδιαφερόμενο', body:
+`ΠΡΟΣΧΕΔΙΟ: προσαρμόστε το στον δικό σας τρόπο.
+
+Στόχος: απάντηση το πολύ μέσα σε 24 ώρες (εργάσιμες).
+
+1. Απάντησε με το όνομά του και ευχαρίστησε για το ενδιαφέρον.
+2. Ρώτα 4 πράγματα: στόχος, τυχόν πόνος ή τραυματισμός, εμπειρία στην άσκηση, διαθεσιμότητα.
+3. Αν αναφέρει πόνο που επιμένει, νευρολογικά συμπτώματα ή πρόσφατο τραυματισμό, δες τη διαδικασία "Πότε παραπέμπω σε γιατρό" πριν προτείνεις οτιδήποτε.
+4. Πρότεινε σύντομη γνωριμία (κλήση ή συνάντηση) και δώσε 2 συγκεκριμένες ώρες.
+5. Στο app: βάλε το στάδιο "Επικοινώνησα" και ημερομηνία "Επόμενη επαφή" (συνήθως +2 ημέρες).
+6. Αν δεν απαντήσει σε 2 ημέρες, ένα φιλικό μήνυμα υπενθύμισης. Αν όχι ούτε μετά, στάδιο "Χάθηκε" χωρίς πίεση.` },
+ { category:'Πελάτες', title:'Έναρξη νέου πελάτη (onboarding)', body:
+`ΠΡΟΣΧΕΔΙΟ: προσαρμόστε το στον δικό σας τρόπο.
+
+1. Στείλε κωδικό πρόσκλησης και πες του να κάνει εγγραφή.
+2. Ο πελάτης συμπληρώνει το "Ιστορικό & Στόχοι": πρώτα η συναίνεση για δεδομένα υγείας, μετά ο έλεγχος ασφάλειας.
+3. Διάβασε τις απαντήσεις. Αν υπάρχει "Ναι" ή "Δεν είμαι σίγουρος/η" στον έλεγχο ασφάλειας, ΔΕΝ ξεκινάς πρόγραμμα. Ζήτα ιατρική γνωμάτευση ή αξιολόγηση από αδειούχο επαγγελματία υγείας.
+4. Κλείσε κλήση 20-30 λεπτών: στόχοι, διαθέσιμος εξοπλισμός, πρόγραμμα της εβδομάδας.
+5. Φτιάξε το πρόγραμμα και ένα ρεαλιστικό πρώτο μήνα (λίγες ασκήσεις, μικρά φορτία).
+6. Εξήγησε πώς καταγράφει προπονήσεις και πότε κάνει check-in.
+7. Φωτογραφίες προόδου: προαιρετικές, με ξεχωριστή συναίνεση.` },
+ { category:'Κλινικά και ασφάλεια', title:'Πότε παραπέμπω σε γιατρό', body:
+`ΠΡΟΣΧΕΔΙΟ: ενδεικτική λίστα. Έλεγξέ τη με τον υπεύθυνο επαγγελματία υγείας και με τις οδηγίες που ακολουθείς. Δεν αντικαθιστά κλινική κρίση.
+
+Σταματάς την άσκηση και ζητάς άμεση ιατρική αξιολόγηση (112 αν είναι επείγον) όταν:
+- πόνος ή σφίξιμο στο στήθος, δύσπνοια χωρίς εξήγηση, λιποθυμία
+- μούδιασμα στην περιοχή του καβάλου, απώλεια ελέγχου εντέρου ή κύστης, αυξανόμενη αδυναμία στα πόδια
+- αιφνίδιος έντονος πόνος μετά από πτώση ή χτύπημα, ορατή παραμόρφωση
+- πόνος με πυρετό ή γενικό αίσθημα αδιαθεσίας
+- πρήξιμο και πόνος στη γάμπα, μόνο στο ένα πόδι
+
+Ζητάς γνώμη γιατρού ή φυσικοθεραπευτή (όχι επείγον) όταν:
+- ο πόνος επιμένει ή χειροτερεύει παρά την ανάπαυση και την προσαρμογή
+- πόνος που ξυπνά τη νύχτα
+- ανεξήγητη απώλεια βάρους
+- νέο νευρολογικό σύμπτωμα (μούδιασμα, μυρμήγκιασμα) που δεν υποχωρεί
+
+Τι κάνεις: σταμάτα το πρόγραμμα για την περιοχή, κράτα σημείωση (τι, πότε, τι αναφέρει ο πελάτης), πες του καθαρά ότι χρειάζεται αξιολόγηση και μην προσπαθήσεις διάγνωση.` },
+ { category:'Κλινικά και ασφάλεια', title:'Πόνος ή πρόβλημα κατά την άσκηση', body:
+`ΠΡΟΣΧΕΔΙΟ: προσαρμόστε το.
+
+1. Ο πελάτης σταματά την άσκηση όταν υπάρχει οξύς πόνος, μούδιασμα ή ζάλη.
+2. Καταγράφει πόνο και άσκηση στο log. Πόνος ≥5/10 εμφανίζεται κόκκινος στο πάνελ προσοχής.
+3. Επικοινωνείς μέσα στην ίδια ή την επόμενη εργάσιμη μέρα.
+4. Ρώτα: πότε ξεκίνησε, τι το χειροτερεύει, αν υπάρχει μούδιασμα ή πρήξιμο.
+5. Αν υπάρχει κάτι από τη διαδικασία "Πότε παραπέμπω σε γιατρό", ακολούθησέ την.
+6. Αλλιώς: αφαίρεσε ή αντικατάστησε την άσκηση (δες τις εναλλακτικές στη βιβλιοθήκη), μείωσε φορτίο και ξαναέλεγξε σε 48-72 ώρες.
+7. Γράψε σύντομη σημείωση στην καρτέλα του πελάτη.` },
+ { category:'Πελάτες', title:'Πελάτης που σταμάτησε να καταγράφει', body:
+`ΠΡΟΣΧΕΔΙΟ: προσαρμόστε το.
+
+- Ημέρα 7 (το app το δείχνει στο πάνελ "Χρειάζεται προσοχή"): φιλικό μήνυμα, χωρίς κατηγορία. "Δεν είδα καταγραφές αυτή την εβδομάδα, όλα καλά;"
+- Ημέρα 14: σύντομη κλήση. Ρώτα τι δυσκόλεψε: χρόνος, πόνος, κίνητρο, πρόγραμμα.
+- Προσάρμοσε το πρόγραμμα (λιγότερες ημέρες, πιο εύκολο ξεκίνημα) αν χρειάζεται.
+- Ημέρα 21: τελευταίο μήνυμα με σαφή επιλογή: συνεχίζουμε με νέο πλάνο ή κάνουμε παύση.
+- Σημείωσε το αποτέλεσμα στην καρτέλα του.` },
+ { category:'Επιχείρηση', title:'Εβδομαδιαίος έλεγχος (15 λεπτά)', body:
+`ΠΡΟΣΧΕΔΙΟ: προσαρμόστε το.
+
+1. Άνοιξε "Πελάτες": διάβασε το πάνελ "Χρειάζεται προσοχή".
+2. Για κάθε πελάτη στο πάνελ: μήνυμα ή κλήση. Πρώτα όσοι έχουν πόνο.
+3. Δες τα νέα check-in και την ικανοποίηση (κάρτα 0-10).
+4. Για τους ενεργούς πελάτες: καρτέλα "Σύνοψη εβδομάδας", διόρθωση, αποστολή.
+5. Δες τα Leads: όποιο έχει "Επόμενη επαφή" μέχρι σήμερα.
+6. Πληρωμές του μήνα: σημείωσε όσες έχουν γίνει.` },
+ { category:'Δεδομένα και απόρρητο', title:'Αίτημα διαγραφής δεδομένων ή ανάκλησης συναίνεσης', body:
+`ΠΡΟΣΧΕΔΙΟ: ελέγξτε το με νομικό ή σύμβουλο GDPR πριν το χρησιμοποιήσετε.
+
+1. Καταγράφεις το αίτημα (ημερομηνία, τι ζητά).
+2. Επιβεβαίωσε την ταυτότητά του (από το email με το οποίο εγγράφηκε).
+3. Απάντησε χωρίς καθυστέρηση και το πολύ μέσα σε ένα μήνα.
+4. Διαγραφή: καρτέλα πελάτη, διαγραφή. Έλεγξε ότι φεύγουν και οι φωτογραφίες προόδου.
+5. Αν δεν μπορείς να διαγράψεις κάτι (π.χ. υποχρέωση τήρησης λογιστικών στοιχείων), εξήγησέ του τι κρατάς και γιατί.
+6. Επιβεβαίωσε γραπτά ότι ολοκληρώθηκε.` },
+ { category:'Δεδομένα και απόρρητο', title:'Φωτογραφίες προόδου: χρήση και προστασία', body:
+`ΠΡΟΣΧΕΔΙΟ: προσαρμόστε το.
+
+- Ζητάς φωτογραφίες μόνο όταν βοηθούν στον στόχο του πελάτη, και πάντα προαιρετικά.
+- Ο πελάτης τσεκάρει συναίνεση σε κάθε ανέβασμα και μπορεί να διαγράψει όποτε θέλει.
+- Θόλωσε το πρόσωπο στον editor όταν φτιάχνεις σύγκριση πριν/μετά.
+- Ποτέ δεν δημοσιεύεται φωτογραφία πελάτη σε social ή site χωρίς ξεχωριστή, γραπτή άδεια για αυτή τη χρήση.
+- Δεν στέλνονται φωτογραφίες μέσω email ή chat εκτός εφαρμογής.
+- Λήψη PNG από τον editor μόνο όταν χρειάζεται, και σβήσιμο από τη συσκευή μετά.` },
+];
+
+async function renderSopsView(main){
+  main.innerHTML = '';
+  main.appendChild(el(`<h2 style="margin-bottom:6px;">📖 ${locale==='el'?'Διαδικασίες (SOP)':'Procedures (SOP)'}</h2>`));
+  main.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">${locale==='el'?'Οι δικές σου διαδικασίες σε ένα μέρος. Τις βλέπεις μόνο εσύ.':'Your own procedures in one place. Only you can see them.'}</p>`));
+  const holder = el('<div><p>…</p></div>'); main.appendChild(holder);
+  const { data: rows, error } = await supabase.from('sops').select('*').order('category').order('title');
+  if(error){
+    holder.innerHTML = `<div class="card"><p class="errorTag">${/does not exist|relation|schema cache/i.test(error.message||'') ? (locale==='el'?'Λείπει ο πίνακας. Τρέξε πρώτα το migration_sops.sql στο Supabase.':'Table missing. Run migration_sops.sql in Supabase first.') : escapeHtml(error.message)}</p></div>`;
+    return;
+  }
+  holder.innerHTML = '';
+  const bar = el(`<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+    <input class="sopSearch" placeholder="${locale==='el'?'Αναζήτηση…':'Search…'}" style="flex:1; min-width:160px;">
+    <button class="btn sopNew" type="button">+ ${locale==='el'?'Νέα διαδικασία':'New procedure'}</button>
+    <button class="btn secondary sopStarters" type="button">${locale==='el'?'Φόρτωσε προτεινόμενες (προσχέδια)':'Load suggested (drafts)'}</button></div>`);
+  holder.appendChild(bar);
+  const formBox = el('<div></div>'); holder.appendChild(formBox);
+  const listBox = el('<div></div>'); holder.appendChild(listBox);
+  const refresh = ()=>renderSopsView(main);
+
+  function editForm(sop){
+    const f = el(`<div class="card gold" style="margin-bottom:12px;">
+      <div class="field"><label>${locale==='el'?'Τίτλος':'Title'}</label><input class="sTitle" value="${escapeHtml(sop?.title||'')}"></div>
+      <div class="field"><label>${locale==='el'?'Κατηγορία':'Category'}</label><input class="sCat" list="sopCats" value="${escapeHtml(sop?.category||SOP_CATEGORIES[0])}"><datalist id="sopCats">${SOP_CATEGORIES.map(c=>`<option value="${escapeHtml(c)}">`).join('')}</datalist></div>
+      <div class="field"><label>${locale==='el'?'Βήματα / κείμενο':'Steps / text'}</label><textarea class="sBody" rows="12">${escapeHtml(sop?.body||'')}</textarea></div>
+      <div style="display:flex; gap:8px;"><button class="btn sSave" type="button">${t('save',locale)}</button><button class="btn secondary sCancel" type="button">${locale==='el'?'Άκυρο':'Cancel'}</button></div></div>`);
+    f.querySelector('.sCancel').addEventListener('click', ()=>{ formBox.innerHTML=''; });
+    f.querySelector('.sSave').addEventListener('click', async ()=>{
+      const title = f.querySelector('.sTitle').value.trim(); if(!title){ toast(locale==='el'?'Χρειάζεται τίτλος':'Title required'); return; }
+      const payload = { title, category: f.querySelector('.sCat').value.trim() || null, body: f.querySelector('.sBody').value, updated_at: new Date().toISOString() };
+      const { error: e2 } = sop ? await supabase.from('sops').update(payload).eq('id', sop.id) : await supabase.from('sops').insert({ ...payload, coach_id: profile.id });
+      if(e2){ toast((locale==='el'?'Σφάλμα: ':'Error: ')+e2.message); return; }
+      toast(t('saved',locale)); refresh();
+    });
+    formBox.innerHTML = ''; formBox.appendChild(f); f.scrollIntoView({ behavior: SCROLL_BEHAVIOR(), block:'center' });
+  }
+
+  function renderList(){
+    const q = (bar.querySelector('.sopSearch').value||'').trim().toLowerCase();
+    const vis = (rows||[]).filter(r=>!q || (r.title||'').toLowerCase().includes(q) || (r.body||'').toLowerCase().includes(q));
+    listBox.innerHTML = '';
+    if(!vis.length){ listBox.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${(rows||[]).length ? (locale==='el'?'Καμία αντιστοιχία.':'No matches.') : (locale==='el'?'Δεν έχεις ακόμα διαδικασίες. Πάτα «Νέα διαδικασία» ή φόρτωσε τα προτεινόμενα προσχέδια.':'No procedures yet. Press New procedure or load the suggested drafts.')}</p>`)); return; }
+    let last = null;
+    vis.forEach(r=>{
+      if(r.category!==last){ last = r.category; listBox.appendChild(el(`<h4 class="libGroup">${escapeHtml(r.category||'-')}</h4>`)); }
+      const card = el(`<div class="card"><div class="clickable" style="display:flex; justify-content:space-between; gap:10px; align-items:center;"><strong>${escapeHtml(r.title)}</strong><span class="caret">▸</span></div>
+        <div class="sopDetail" style="display:none; margin-top:10px;"><div style="white-space:pre-wrap; font-size:13px; line-height:1.55;">${escapeHtml(r.body||'')}</div>
+        <div style="display:flex; gap:8px; margin-top:10px;"><button class="btn secondary sEdit" type="button" style="padding:5px 12px; font-size:11px;">✏️ ${locale==='el'?'Επεξεργασία':'Edit'}</button><button class="btn danger sDel" type="button" style="padding:5px 12px; font-size:11px;">🗑 ${t('delete',locale)}</button></div></div></div>`);
+      card.querySelector('.clickable').addEventListener('click', ()=>{ const d = card.querySelector('.sopDetail'); d.style.display = d.style.display==='none' ? 'block' : 'none'; });
+      card.querySelector('.sEdit').addEventListener('click', ()=>editForm(r));
+      card.querySelector('.sDel').addEventListener('click', async ()=>{
+        if(!confirm(locale==='el' ? `Διαγραφή της διαδικασίας "${r.title}";` : `Delete "${r.title}"?`)) return;
+        await supabase.from('sops').delete().eq('id', r.id); refresh();
+      });
+      listBox.appendChild(card);
+    });
+  }
+  bar.querySelector('.sopSearch').addEventListener('input', renderList);
+  bar.querySelector('.sopNew').addEventListener('click', ()=>editForm(null));
+  bar.querySelector('.sopStarters').addEventListener('click', async (e)=>{
+    const have = new Set((rows||[]).map(r=>(r.title||'').toLowerCase()));
+    const add = SOP_STARTERS.filter(s=>!have.has(s.title.toLowerCase())).map(s=>({ ...s, coach_id: profile.id }));
+    if(!add.length){ toast(locale==='el'?'Τα έχεις ήδη φορτώσει.':'Already loaded.'); return; }
+    e.target.disabled = true;
+    const { error: e3 } = await supabase.from('sops').insert(add);
+    if(e3){ toast((locale==='el'?'Σφάλμα: ':'Error: ')+e3.message); e.target.disabled=false; return; }
+    toast(locale==='el' ? `Προστέθηκαν ${add.length} προσχέδια. Διάβασέ τα και προσάρμοσέ τα.` : `${add.length} drafts added. Review and adapt them.`, 4000); refresh();
+  });
+  renderList();
+}
+
 async function renderClientDetail(main, forceRefresh){
   const client = selectedClient;
   let tab = renderClientDetail._tab || 'program';
@@ -4953,10 +5378,11 @@ async function renderClientDetail(main, forceRefresh){
   // Order follows how often a coach actually uses each tab during a normal session:
   // daily work (program/live/messages) first, then monitoring data, then occasional
   // service extras, then one-time/admin setup (business, intake) last.
+  const unreadChat = tab==='messages' ? 0 : await chatUnreadCount(client.id, 'coach');
   const tabs = el(`<div style="display:flex; gap:8px; margin:16px 0; flex-wrap:wrap;">
     <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
     <button class="btn ${tab==='live'?'':'secondary'}" data-t="live">${t('liveSession',locale)}</button>
-    <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}</button>
+    <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}${unreadChat>0?`<span class="inlineBadge">${unreadChat>9?'9+':unreadChat}</span>`:''}</button>
     <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
     <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
     <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">📈 ${locale==='el'?'Πρόοδος':'Progress'}</button>
@@ -6415,6 +6841,8 @@ async function renderMessagesTab(body, client, viewerRole){
     });
   }
   body.appendChild(listWrap);
+  chatSeenSet(client.id);
+  setTimeout(()=>{ if(viewerRole==='client') refreshClientChatBadges(); }, 0);
 
   const form = el(`<form style="display:flex; gap:8px; margin-top:10px;">
     <input class="msgInput" placeholder="${t('writeMessage',locale)}" style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid var(--line);" required>
@@ -6444,6 +6872,23 @@ async function renderMessagesTab(body, client, viewerRole){
   }
   body.appendChild(form);
   listWrap.scrollTop = listWrap.scrollHeight;
+  // Live refresh: while this chat is open, check every 15 s for a newer message and redraw (keeps the typed draft).
+  const lastTs = msgs?.length ? msgs[msgs.length-1].created_at : null;
+  const liveTimer = setInterval(async ()=>{
+    if(!listWrap.isConnected){ clearInterval(liveTimer); return; }
+    if(document.visibilityState!=='visible') return;
+    try{
+      const { data: last } = await supabase.from('messages').select('created_at').eq('client_id', client.id).order('created_at',{ascending:false}).limit(1);
+      const newest = last?.[0]?.created_at || null;
+      if(newest && newest !== lastTs){
+        clearInterval(liveTimer);
+        const draft = form.querySelector('.msgInput')?.value || '';
+        body.innerHTML = '';
+        await renderMessagesTab(body, client, viewerRole);
+        const inp = body.querySelector('.msgInput'); if(inp && draft) inp.value = draft;
+      }
+    }catch(e){}
+  }, 15000);
 }
 
 function renderHistTable(body, rows, cols){
@@ -6626,6 +7071,92 @@ function renderPersonalizedDraft(body, client, intakeData, exercises, onCreated)
   body.appendChild(card);
 }
 
+
+// ---- Balanced distribution of a program's exercises across days ----
+const EX_SLOTS = [
+  {k:'lower', el:'Κάτω σώμα', en:'Lower body', ic:'🦵'},
+  {k:'push',  el:'Ώθηση',     en:'Push',       ic:'🫸'},
+  {k:'pull',  el:'Έλξη',      en:'Pull',       ic:'🫷'},
+  {k:'core',  el:'Κορμός',    en:'Core',       ic:'🎯'},
+  {k:'other', el:'Άλλο',      en:'Other',      ic:'🔸'},
+];
+function exSlot(ex){
+  if(!ex) return 'other';
+  const pat = (ex.movement_pattern||'').toLowerCase();
+  const reg = ex.body_region || '';
+  if(/squat|hinge|lunge|deadlift|step|bridge|thrust|καθιστ|σκύψ|εξαγωγ/.test(pat) || ['Πόδι','Ισχίο','Γόνατο','Ποδοκνημική'].includes(reg)) return 'lower';
+  if(/pull|row|curl|έλξη|κωπηλ/.test(pat)) return 'pull';
+  if(/push|press|dip|extension|ώθηση|πιέσεις/.test(pat)) return 'push';
+  if(['Κορμός','Σπονδυλική στήλη'].includes(reg) || /core|plank|rotation|anti|carry/.test(pat)) return 'core';
+  if(reg==='Πλάτη') return 'pull';
+  if(['Στήθος','Ώμος'].includes(reg)) return 'push';
+  if(reg==='Χέρι' || reg==='Αγκώνας και καρπός') return 'pull';
+  return 'other';
+}
+// pes: program_exercises (with .exercises). mode: 'full' | 'upperlower' | 'ppl'. Returns [{pe, day}] in final order.
+function planDistribution(pes, nDays, mode){
+  const order = ['lower','push','pull','core','other'];
+  const days = Array.from({length:nDays}, ()=>[]);
+  const load = i => days[i].reduce((s,x)=>s+(x.pe.target_sets||3),0);
+  const base = pes.slice().sort((a,b)=>(a.sort_order??0)-(b.sort_order??0));
+  const kindOfDay = i=>{
+    if(mode==='upperlower') return i%2===0 ? 'upper' : 'lower';
+    if(mode==='ppl') return ['push','pull','lower'][i%3];
+    return 'all';
+  };
+  const allowed = slot=>{
+    const all = days.map((_,i)=>i);
+    if(mode==='full') return all;
+    let pick;
+    if(mode==='upperlower') pick = slot==='lower' ? all.filter(i=>kindOfDay(i)==='lower') : (slot==='push'||slot==='pull') ? all.filter(i=>kindOfDay(i)==='upper') : all;
+    else pick = slot==='push' ? all.filter(i=>kindOfDay(i)==='push') : slot==='pull' ? all.filter(i=>kindOfDay(i)==='pull') : slot==='lower' ? all.filter(i=>kindOfDay(i)==='lower') : all;
+    return pick.length ? pick : all;
+  };
+  order.forEach(slot=>{
+    base.filter(pe=>exSlot(pe.exercises)===slot).forEach(pe=>{
+      const ok = allowed(slot);
+      let best = ok[0];
+      ok.forEach(i=>{
+        const bi = days[best].length*100 + load(best), ci = days[i].length*100 + load(i);
+        // fewest exercises first, then lowest set volume, then earliest day
+        if(ci < bi) best = i;
+      });
+      days[best].push({pe, slot});
+    });
+  });
+  const out = [];
+  days.forEach((arr,i)=>{
+    arr.sort((a,b)=>order.indexOf(a.slot)-order.indexOf(b.slot) || ((a.pe.sort_order??0)-(b.pe.sort_order??0)));
+    arr.forEach(x=>out.push({pe:x.pe, day:i+1, slot:x.slot}));
+  });
+  return out;
+}
+function dayBalanceHtml(rows){
+  // rows: [{day, slot, sets}]
+  const dayNums = [...new Set(rows.map(r=>r.day))].sort((a,b)=>a-b);
+  const el_ = locale==='el';
+  const perDay = dayNums.map(d=>{
+    const rs = rows.filter(r=>r.day===d);
+    const counts = {}; rs.forEach(r=>{ counts[r.slot]=(counts[r.slot]||0)+1; });
+    return {d, n:rs.length, sets:rs.reduce((s,r)=>s+r.sets,0), counts};
+  });
+  const warns = [];
+  perDay.forEach(x=>{
+    if(x.n>8) warns.push(el_?`Ημέρα ${x.d}: ${x.n} ασκήσεις, αρκετά πολλές για μία προπόνηση`:`Day ${x.d}: ${x.n} exercises, quite a lot for one session`);
+    if(x.sets>28) warns.push(el_?`Ημέρα ${x.d}: ${x.sets} σετ συνολικά, υψηλός όγκος`:`Day ${x.d}: ${x.sets} total sets, high volume`);
+  });
+  const totalBy = {}; rows.forEach(r=>{ totalBy[r.slot]=(totalBy[r.slot]||0)+r.sets; });
+  const push=totalBy.push||0, pull=totalBy.pull||0;
+  if(pull===0 && push>0) warns.push(el_?'Δεν υπάρχει καμία άσκηση έλξης (πλάτη). Προτείνεται ισορροπία με την ώθηση.':'No pulling exercises. A balance with pushing is recommended.');
+  else if(push>0 && pull>0 && push/pull>1.5) warns.push(el_?`Περισσότερη ώθηση (${push} σετ) από έλξη (${pull} σετ). Συνήθως στοχεύουμε τουλάχιστον 1:1.`:`More pushing (${push} sets) than pulling (${pull}). We usually aim for at least 1:1.`);
+  if(!(totalBy.lower>0) && rows.length>3) warns.push(el_?'Δεν υπάρχει άσκηση κάτω σώματος.':'No lower-body exercise.');
+  const table = perDay.map(x=>`<div style="display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); font-size:12px; flex-wrap:wrap;">
+    <strong>${el_?'Ημέρα':'Day'} ${x.d}</strong>
+    <span>${EX_SLOTS.filter(s=>x.counts[s.k]).map(s=>`${s.ic} ${el_?s.el:s.en} ×${x.counts[s.k]}`).join(' · ')||'-'}</span>
+    <span class="mono" style="color:var(--ink-soft);">${x.n} ${el_?'ασκ.':'ex.'} · ${x.sets} ${el_?'σετ':'sets'}</span></div>`).join('');
+  return table + (warns.length ? `<div style="margin-top:8px; font-size:12px; color:var(--danger);">${warns.map(w=>'⚠ '+escapeHtml(w)).join('<br>')}</div>` : `<div style="margin-top:8px; font-size:12px; color:var(--ok);">✓ ${el_?'Καλή ισορροπία':'Well balanced'}</div>`);
+}
+
 async function renderProgramTab(body, client, program, exercises, onChanged, intakeData){
   if(!program){
     const { data: templates } = await supabase.from('program_templates').select('*, program_template_exercises(*)').eq('coach_id', profile.id);
@@ -6781,6 +7312,49 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     onChanged();
   });
   body.appendChild(quickBox);
+
+  // Balance panel: shows how exercises are spread across days and can redistribute them evenly.
+  if((program.program_exercises||[]).length >= 2){
+    const pes0 = program.program_exercises;
+    const curRows = pes0.map(pe=>({day: parseInt((pe.day_label||'Ημέρα 1').match(/\d+/)?.[0]||'1',10), slot: exSlot(pe.exercises), sets: pe.target_sets||3}));
+    const nCur = Math.max(1, new Set(curRows.map(r=>r.day)).size);
+    const balBox = el(`<details class="card" style="margin-bottom:12px;">
+      <summary style="cursor:pointer; font-weight:700; font-size:12.5px;">⚖ ${locale==='el'?'Κατανομή ασκήσεων ανά ημέρα':'Exercise distribution per day'}</summary>
+      <div class="balNow" style="margin:10px 0;">${dayBalanceHtml(curRows)}</div>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin:8px 0;">${locale==='el'?'Μοιράζει αυτόματα τις ασκήσεις που έχεις ήδη βάλει σε ημέρες, ισορροπημένα ανά κίνηση (κάτω σώμα, ώθηση, έλξη, κορμός). Τα σετ, οι επαναλήψεις και τα φορτία δεν αλλάζουν. Είναι πρόταση: δες την προεπισκόπηση και διόρθωσε μετά ό,τι θες.':'Spreads the exercises you already added across days, balanced by movement. Sets, reps and loads do not change. It is a suggestion: check the preview and adjust afterwards.'}</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="width:100px; margin-bottom:0;"><label>${locale==='el'?'Ημέρες/εβδ.':'Days/week'}</label><select class="balDays">${[2,3,4,5,6].map(n=>`<option value="${n}" ${n===Math.min(6,Math.max(2,nCur))?'selected':''}>${n}</option>`).join('')}</select></div>
+        <div class="field" style="min-width:200px; margin-bottom:0;"><label>${locale==='el'?'Τύπος':'Split'}</label><select class="balMode">
+          <option value="full">${locale==='el'?'Ολόκληρο σώμα κάθε μέρα':'Full body each day'}</option>
+          <option value="upperlower">${locale==='el'?'Πάνω / Κάτω εναλλάξ':'Upper / Lower alternating'}</option>
+          <option value="ppl">${locale==='el'?'Ώθηση / Έλξη / Πόδια':'Push / Pull / Legs'}</option></select></div>
+        <button class="btn secondary balPreview" type="button">${locale==='el'?'Προεπισκόπηση':'Preview'}</button>
+        <button class="btn balApply" type="button" disabled>${locale==='el'?'Εφαρμογή':'Apply'}</button>
+      </div>
+      <div class="balPrev" style="margin-top:10px;"></div>
+    </details>`);
+    let plan = null;
+    balBox.querySelector('.balPreview').addEventListener('click', ()=>{
+      const n = Number(balBox.querySelector('.balDays').value), mode = balBox.querySelector('.balMode').value;
+      if(pes0.length < n){ toast(locale==='el'?`Έχεις μόνο ${pes0.length} ασκήσεις για ${n} ημέρες.`:`Only ${pes0.length} exercises for ${n} days.`); return; }
+      plan = planDistribution(pes0, n, mode);
+      const nameOf = pe=> locale==='el' ? pe.exercises.name_el : (pe.exercises.name_en||pe.exercises.name_el);
+      const byDay = {}; plan.forEach(x=>{ (byDay[x.day]=byDay[x.day]||[]).push(x); });
+      balBox.querySelector('.balPrev').innerHTML = dayBalanceHtml(plan.map(x=>({day:x.day, slot:x.slot, sets:x.pe.target_sets||3}))) +
+        Object.keys(byDay).map(d=>`<div style="margin-top:8px; font-size:12px;"><strong>${locale==='el'?'Ημέρα':'Day'} ${d}</strong><br>${byDay[d].map(x=>escapeHtml(nameOf(x.pe))).join(' · ')}</div>`).join('');
+      balBox.querySelector('.balApply').disabled = false;
+    });
+    balBox.querySelector('.balApply').addEventListener('click', async ()=>{
+      if(!plan) return;
+      if(!confirm(locale==='el'?'Θα αλλάξει η ημέρα και η σειρά των ασκήσεων. Συνέχεια;':'This changes the day and order of the exercises. Continue?')) return;
+      const results = await Promise.all(plan.map((x,i)=>supabase.from('program_exercises').update({ day_label: 'Ημέρα '+x.day, sort_order: i }).eq('id', x.pe.id)));
+      const bad = results.find(r=>r.error);
+      if(bad){ toast(bad.error.message); return; }
+      toast(locale==='el'?'✓ Η κατανομή εφαρμόστηκε':'✓ Distribution applied');
+      onChanged();
+    });
+    body.appendChild(balBox);
+  }
 
   const grouped = {};
   (program.program_exercises||[]).forEach(pe=>{
@@ -7213,6 +7787,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
   </div>`);
   chatCard.querySelector('.openChatLink').addEventListener('click', ()=>{ renderClientDashboard._tab='messages'; renderClientDashboard(body.closest('#main')); });
   grid.appendChild(chatCard);
+  setTimeout(refreshClientChatBadges, 0);
 
   wrap.appendChild(grid);
 
@@ -7634,7 +8209,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:10px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
       <div class="whyPanel" style="display:none; background:var(--tint-soft); border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex3dSlotHtml(ex, false)}
-        ${ex.video_url ? `<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
+        ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.execution_steps ? `<p style="margin-bottom:6px; white-space:pre-line;"><strong>${t('executionSteps',locale)}:</strong> ${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
@@ -7953,6 +8528,7 @@ async function renderClientDashboard(main){
   </div>`);
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.t; renderClientDashboard(main); }));
   main.appendChild(tabs);
+  setTimeout(refreshClientChatBadges, 0);
 
   const body = el('<div style="padding-bottom:90px;"></div>');
   main.appendChild(body);
@@ -8014,12 +8590,13 @@ async function renderClientDashboard(main){
       body.appendChild(el(`<div class="profileOptLabel" style="margin-top:16px;">${g.title}</div>`));
       const menu = el('<div class="profileMenu"></div>');
       g.items.forEach(item=>{
-        const row = el(`<button class="profileMenuRow"><span class="cbn-ico">${item.ico}</span><span>${item.label}</span><span class="profileMenuArrow">›</span></button>`);
+        const row = el(`<button class="profileMenuRow" ${item.t==='messages'?'data-chat="1"':''}><span class="cbn-ico">${item.ico}</span><span>${item.label}</span><span class="profileMenuArrow">›</span></button>`);
         row.addEventListener('click', ()=>{ renderClientDashboard._tab = item.t; renderClientDashboard(main); });
         menu.appendChild(row);
       });
       body.appendChild(menu);
     });
+    setTimeout(refreshClientChatBadges, 0);
 
     // Account-level actions — same functions the sidebar/hamburger menu already uses,
     // just reachable directly from Profile too since that's where a client looks for them.
