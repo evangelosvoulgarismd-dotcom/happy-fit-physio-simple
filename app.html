@@ -281,6 +281,8 @@
   .profileMenuRow.logoutP{background:var(--red); border-color:var(--red); color:#fff; font-weight:700; justify-content:center;}
   .profileMenuRow.logoutP span{flex:0 1 auto !important;}
   #menuToggleBtn{display:none; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
+  .massageForm .mfGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;} .massageForm .mfWide{grid-column:1/-1;} .massageForm .field{margin-bottom:0;} .massageForm textarea{width:100%; box-sizing:border-box; padding:9px 12px; border-radius:6px; border:1px solid var(--line); font:inherit; resize:vertical;}
+  @media (max-width:520px){ .massageForm .mfGrid{grid-template-columns:1fr;} }
   #notifBell{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #themeBtn{background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
@@ -401,6 +403,7 @@
   .loadingP{ opacity:0; animation:loadIn .2s ease .3s forwards; }
   #main{ transition:opacity .2s ease; }
   #main.busy{ opacity:.6; pointer-events:none; transition-delay:.15s; }
+  @media (max-width:760px){ #toast{ left:12px !important; right:12px !important; bottom:calc(78px + env(safe-area-inset-bottom)) !important; max-width:none !important; text-align:center; } }
   #toast{ transform:translateY(8px); transition:opacity .25s ease, transform .35s var(--ease-out) !important; }
   #toast[style*="opacity: 1"]{ transform:none; }
   /* bars scroll over content as translucent material */
@@ -1022,7 +1025,7 @@ function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'
 function uidCode(){ return crypto.randomUUID().slice(0,8).toUpperCase(); }
 function toast(msg, ms){
   let tEl = document.getElementById('toast');
-  if(!tEl){ tEl = el('<div id="toast" style="position:fixed;bottom:20px;right:20px;background:var(--toast-bg);color:#fff;padding:10px 16px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .25s;"></div>'); document.body.appendChild(tEl); }
+  if(!tEl){ tEl = el('<div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:20px;max-width:min(92vw,380px);z-index:10000;pointer-events:none;background:var(--toast-bg);color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;line-height:1.35;opacity:0;transition:opacity .25s;"></div>'); document.body.appendChild(tEl); }
   tEl.textContent = msg; tEl.style.opacity = '1';
   clearTimeout(toast._h); toast._h = setTimeout(()=>tEl.style.opacity='0', ms || 1800);
 }
@@ -1461,15 +1464,24 @@ async function goToNotif(i, isCoach){
 async function renderNotifPanel(anchorEl, isCoach){
   const panel = el(`<div class="notifPanel"><p style="font-size:12px; color:var(--ink-soft);">${t('loading',locale)}</p></div>`);
   document.body.appendChild(panel);
-  const rect = anchorEl.getBoundingClientRect();
-  panel.style.top = (rect.bottom + window.scrollY + 6) + 'px';
-  panel.style.right = (window.innerWidth - rect.right) + 'px';
-  panel.style.position = 'absolute';
-
+  // On phones the stylesheet pins the panel (position:fixed) inside the screen; only desktop positions it by hand.
+  if(window.innerWidth > 760){
+    const rect = anchorEl.getBoundingClientRect();
+    panel.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+    panel.style.right = (window.innerWidth - rect.right) + 'px';
+    panel.style.position = 'absolute';
+  }
+  // iPhone does not send 'click' for taps on non-interactive areas, so listen for the touch itself.
+  const closer = (e)=>{
+    if(!document.body.contains(panel)){ cleanup(); return; }
+    if(panel.contains(e.target) || anchorEl.contains(e.target)) return;
+    panel.remove(); cleanup();
+  };
+  const cleanup = ()=>{ document.removeEventListener('pointerdown', closer, true); document.removeEventListener('touchstart', closer, true); document.removeEventListener('click', closer, true); };
   setTimeout(()=>{
-    document.addEventListener('click', function closeOnce(e){
-      if(!panel.contains(e.target)){ panel.remove(); document.removeEventListener('click', closeOnce); }
-    });
+    document.addEventListener('pointerdown', closer, true);
+    document.addEventListener('touchstart', closer, true);
+    document.addEventListener('click', closer, true);
   }, 0);
 
   let items = await fetchNotifItems(isCoach);
@@ -1482,9 +1494,11 @@ async function renderNotifPanel(anchorEl, isCoach){
       ? `Τρέχουσα εκτίμηση χρέωσης συνεργασίας: ${activeCount} ενεργοί πελάτες = ${euro(partnerFee(activeCount))}`
       : `Current partnership fee estimate: ${activeCount} active clients = ${euro(partnerFee(activeCount))}` });
   }
-  panel.innerHTML = items.length
+  const closeBtn = `<div style="display:flex; justify-content:flex-end; margin:-4px -4px 4px 0;"><button type="button" class="notifClose" aria-label="${locale==='el'?'Κλείσιμο':'Close'}" style="background:transparent; border:0; color:var(--ink-soft); font-size:18px; line-height:1; padding:6px 10px; cursor:pointer;">×</button></div>`;
+  panel.innerHTML = closeBtn + (items.length
     ? items.map((i,idx)=>`<div class="notifItem" data-i="${idx}" style="${i.go?'cursor:pointer;':''}${unreadSet.has(i)?' font-weight:700;':''}">${unreadSet.has(i)?'<span style="color:var(--red-text);">● </span>':''}${i.ico||''} ${escapeHtml(i.text)}<div class="mono" style="font-size:10px; color:var(--ink-soft); margin-top:2px; font-weight:400;">${new Date(i.t).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div></div>`).join('')
-    : `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Καμία πρόσφατη ειδοποίηση.':'No recent notifications.'}</p>`;
+    : `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Καμία πρόσφατη ειδοποίηση.':'No recent notifications.'}</p>`);
+  panel.querySelector('.notifClose')?.addEventListener('click', ()=>{ panel.remove(); cleanup(); });
   panel.querySelectorAll('.notifItem[data-i]').forEach(n=>n.addEventListener('click', ()=>{ const it = items[Number(n.dataset.i)]; if(it && it.go) goToNotif(it, isCoach); }));
   notifSeenSet(new Date().toISOString());
   setNotifDot(0);
@@ -1497,11 +1511,15 @@ function startNotifWatcher(isCoach){
   if(_notifVis){ document.removeEventListener('visibilitychange', _notifVis); _notifVis = null; }
   if(_notifChannel){ try{ supabase.removeChannel(_notifChannel); }catch(e){} _notifChannel = null; }
   _notifLastNewest = null;
-  let busy = false;
+  let busy = false, busySince = 0, pollAgain = false, debounce = null;
+  const withTimeout = (p, ms)=> Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))]);
   const poll = async ()=>{
-    if(busy || !profile) return; busy = true;
+    if(!profile) return;
+    // After the iPhone app sleeps, a request can hang forever. Never let one stuck poll block all later ones.
+    if(busy && Date.now() - busySince < 15000){ pollAgain = true; return; }
+    busy = true; busySince = Date.now(); pollAgain = false;
     try{
-      const items = (await fetchNotifItems(isCoach)).filter(i=>!i.info);
+      const items = (await withTimeout(fetchNotifItems(isCoach), 12000)).filter(i=>!i.info);
       const unread = notifUnread(items);
       if(!document.querySelector('.notifPanel')) setNotifDot(unread.length);
       refreshClientChatBadges();
@@ -1509,25 +1527,34 @@ function startNotifWatcher(isCoach){
       if(_notifLastNewest && newest && new Date(newest) > new Date(_notifLastNewest)){
         const fresh = items.filter(i=>new Date(i.t) > new Date(_notifLastNewest))[0];
         if(fresh){
-          toast(`${fresh.ico||'🔔'} ${fresh.text}`, 5000);
-          try{ if('Notification' in window && Notification.permission==='granted' && document.visibilityState!=='visible') new Notification('Happy Fit Physio', { body: fresh.text }); }catch(e){}
+          toast(`${fresh.ico||'🔔'} ${fresh.text}`, 7000);
         }
       }
       if(newest) _notifLastNewest = newest;
     }catch(e){}
     busy = false;
+    if(pollAgain){ pollAgain = false; clearTimeout(debounce); debounce = setTimeout(poll, 800); }
   };
+  const pollSoon = ()=>{ clearTimeout(debounce); debounce = setTimeout(poll, 600); };
   poll();
   _notifTimer = setInterval(()=>{ if(document.visibilityState==='visible') poll(); }, 60000);
-  _notifVis = ()=>{ if(document.visibilityState==='visible') poll(); };
+  _notifVis = ()=>{
+    if(document.visibilityState!=='visible') return;
+    poll();
+    // the live connection is usually dead after the phone slept; reconnect it
+    try{ if(_notifChannel && typeof supabase.channel==='function'){ supabase.removeChannel(_notifChannel); _notifChannel = null; connectChannel(); } }catch(e){}
+  };
   document.addEventListener('visibilitychange', _notifVis);
-  try{
-    if(typeof supabase.channel === 'function'){
-      let ch = supabase.channel('hfp-notif-' + profile.id);
-      ['messages','massage_requests','massage_inquiries','leads'].forEach(tb=>{ ch = ch.on('postgres_changes', { event:'*', schema:'public', table:tb }, ()=>poll()); });
-      _notifChannel = ch.subscribe();
-    }
-  }catch(e){}
+  function connectChannel(){
+    try{
+      if(typeof supabase.channel === 'function'){
+        let ch = supabase.channel('hfp-notif-' + profile.id + '-' + Date.now());
+        ['messages','massage_requests','massage_inquiries','leads'].forEach(tb=>{ ch = ch.on('postgres_changes', { event:'*', schema:'public', table:tb }, ()=>pollSoon()); });
+        _notifChannel = ch.subscribe();
+      }
+    }catch(e){}
+  }
+  connectChannel();
 }
 
 // Unread-chat badges for the client (bottom Profile tab, Profile menu row, chat card). Called after each render and by the watcher.
@@ -6737,44 +6764,74 @@ async function renderMassageTab(body, person, isCoach, clientRow){
 
   // Client view
   const coachId = clientRow?.coach_id;
-  body.appendChild(el(`<div class="card gold" style="margin-bottom:14px;"><strong>${t('massage',locale)}</strong> <span class="badge mono">${t('massagePrice',locale)}</span><p style="font-size:12.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Κατ\' οίκον θεραπευτική μάλαξη χαλάρωσης & ανάρρωσης.':'In-home relaxation & recovery massage.'}</p></div>`));
+  const el_ = locale==='el';
+  const STAT = { pending:el_?'Εκκρεμεί':'Pending', confirmed:el_?'Επιβεβαιώθηκε':'Confirmed', cancelled:el_?'Ακυρώθηκε':'Cancelled', done:el_?'Ολοκληρώθηκε':'Done' };
+  const STAT_COL = { confirmed:'var(--ok)', cancelled:'var(--danger)', done:'var(--ink-soft)', pending:'var(--ink-soft)' };
+  body.appendChild(el(`<div class="card gold" style="margin-bottom:14px;"><strong>${t('massage',locale)}</strong> <span class="badge mono">${t('massagePrice',locale)}</span><p style="font-size:12.5px; color:var(--ink-soft); margin-top:6px;">${el_?'Κατ\' οίκον θεραπευτική μάλαξη χαλάρωσης & ανάρρωσης. Στέλνεις το αίτημα και σου επιβεβαιώνουμε την ώρα. Θα λάβεις ειδοποίηση όταν επιβεβαιωθεί.':'In-home relaxation & recovery massage. Send a request and we confirm the time. You will be notified when it is confirmed.'}</p></div>`));
 
-  const form = el(`<form class="card" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-    <div class="field" style="width:150px; margin-bottom:0;"><label>${t('preferredDate',locale)}</label><input class="m_date" type="date" required></div>
-    <div class="field" style="width:120px; margin-bottom:0;"><label>${t('preferredTime',locale)}</label><input class="m_time" type="time"></div>
-    <div class="field" style="min-width:160px; margin-bottom:0;"><label>${t('massageType',locale)}</label>
-      <select class="m_type"><option>Relaxation</option><option>Deep Tissue</option><option>Recovery</option><option>Travel Recovery</option><option>Couple</option><option>Compression Therapy</option></select>
+  const { data: myRequests } = await supabase.from('massage_requests').select('*').eq('client_id', person.id).order('created_at',{ascending:false});
+  const last = (myRequests||[])[0] || null;
+  const lastLoc = last?.location || '';
+  const lastArea = /^Σαντορίνη|^Santorini/.test(lastLoc) ? 'Σαντορίνη' : 'Αθήνα';
+  const lastAddr = lastLoc.replace(/^(Αθήνα|Σαντορίνη|Athens|Santorini)\s*·\s*/,'');
+  const tomorrow = new Date(Date.now()+86400000).toISOString().slice(0,10);
+
+  const form = el(`<form class="card massageForm">
+    <div class="mfGrid">
+      <div class="field"><label>${t('preferredDate',locale)} *</label><input class="m_date" type="date" required min="${tomorrow}"></div>
+      <div class="field"><label>${t('preferredTime',locale)} *</label><input class="m_time" type="time" required></div>
+      <div class="field"><label>${t('massageType',locale)}</label>
+        <select class="m_type"><option>Relaxation</option><option>Deep Tissue</option><option>Recovery</option><option>Travel Recovery</option><option>Couple</option><option>Compression Therapy</option></select></div>
+      <div class="field"><label>${el_?'Περιοχή':'Area'}</label>
+        <select class="m_area"><option value="Αθήνα" ${lastArea==='Αθήνα'?'selected':''}>${el_?'Αθήνα':'Athens'}</option><option value="Σαντορίνη" ${lastArea==='Σαντορίνη'?'selected':''}>${el_?'Σαντορίνη':'Santorini'}</option></select></div>
+      <div class="field mfWide"><label>${t('massageLocation',locale)} *</label><input class="m_loc" required maxlength="200" value="${escapeHtml(lastAddr)}" placeholder="${el_?'Διεύθυνση, όροφος, ξενοδοχείο/βίλα':'Address, floor, hotel/villa'}"></div>
+      <div class="field mfWide"><label>${el_?'Σημειώσεις (π.χ. τραυματισμοί, περιοχή που θες να δουλευτεί)':'Notes (e.g. injuries, areas to focus on)'}</label><textarea class="m_notes" rows="3" maxlength="500"></textarea></div>
     </div>
-    <div class="field" style="min-width:180px; flex:1; margin-bottom:0;"><label>${t('massageLocation',locale)}</label><input class="m_loc" placeholder="${locale==='el'?'Διεύθυνση':'Address'}"></div>
-    <div class="field" style="min-width:180px; flex:1; margin-bottom:0;"><label>${locale==='el'?'Σημειώσεις':'Notes'}</label><input class="m_notes"></div>
+    <p class="small" style="font-size:11.5px; color:var(--ink-soft); margin:2px 0 10px;">${el_?'Αν έχεις πυρετό, φλεγμονή, πρόσφατο τραύμα ή διάγνωση που σε προβληματίζει, γράψ\' το στις σημειώσεις ώστε να το συζητήσουμε πριν το ραντεβού.':'If you have a fever, inflammation, a recent injury or a diagnosis that concerns you, note it above so we can discuss it before the appointment.'}</p>
     <button class="btn" type="submit">${t('requestMassage',locale)}</button>
   </form>`);
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    if(!coachId){ toast(locale==='el'?'Σφάλμα: δεν βρέθηκε coach.':'Error: coach not found.'); return; }
+    if(!coachId){ toast(el_?'Σφάλμα: δεν βρέθηκε coach.':'Error: coach not found.'); return; }
+    const date = form.querySelector('.m_date').value;
+    if(date < tomorrow){ toast(el_?'Διάλεξε μελλοντική ημερομηνία.':'Pick a future date.'); return; }
+    const btn = form.querySelector('button[type=submit]'); btn.disabled = true;
+    const area = form.querySelector('.m_area').value;
     const { error } = await supabase.from('massage_requests').insert({
       client_id: person.id, coach_id: coachId,
-      preferred_date: form.querySelector('.m_date').value,
+      preferred_date: date,
       preferred_time: form.querySelector('.m_time').value || null,
       massage_type: form.querySelector('.m_type').value,
-      location: form.querySelector('.m_loc').value.trim() || null,
+      location: area + ' · ' + form.querySelector('.m_loc').value.trim(),
       notes: form.querySelector('.m_notes').value.trim() || null,
       duration_min: 60,
     });
-    if(error){ toast(locale==='el'?'Σφάλμα αποστολής.':'Send error.'); return; }
-    toast(t('massageRequestSent',locale));
-    form.reset();
+    btn.disabled = false;
+    if(error){ toast(el_?'Σφάλμα αποστολής. Δοκίμασε ξανά.':'Send error. Try again.'); return; }
+    toast(t('massageRequestSent',locale), 4500);
+    body.innerHTML = '';
+    await renderMassageTab(body, person, false, clientRow);
   });
   body.appendChild(form);
 
-  const { data: myRequests } = await supabase.from('massage_requests').select('*').eq('client_id', person.id).order('created_at',{ascending:false});
   if(myRequests?.length){
-    body.appendChild(el(`<h4 style="margin:16px 0 8px; font-size:12px; color:var(--ink-soft);">${locale==='el'?'Τα αιτήματά μου':'My requests'}</h4>`));
+    body.appendChild(el(`<h4 style="margin:16px 0 8px; font-size:12px; color:var(--ink-soft);">${el_?'Τα αιτήματά μου':'My requests'}</h4>`));
     myRequests.forEach(r=>{
-      body.appendChild(el(`<div class="card" style="padding:10px 14px; margin-bottom:6px; display:flex; justify-content:space-between; font-size:12.5px;">
-        <span class="mono">${r.preferred_date} ${r.preferred_time||''}</span>
-        <span class="badge" style="color:${r.status==='confirmed'?'var(--ok)':(r.status==='cancelled'?'var(--danger)':'var(--ink-soft)')};">${escapeHtml(r.status)}</span>
-      </div>`));
+      const card = el(`<div class="card" style="padding:10px 14px; margin-bottom:6px; font-size:12.5px;">
+        <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+          <span class="mono">${escapeHtml(r.preferred_date||'')} ${escapeHtml((r.preferred_time||'').slice(0,5))}</span>
+          <span class="badge" style="color:${STAT_COL[r.status]||'var(--ink-soft)'};">${escapeHtml(STAT[r.status]||r.status)}</span>
+        </div>
+        <div style="color:var(--ink-soft); margin-top:4px;">${escapeHtml(r.massage_type||'')}${r.location?' · '+escapeHtml(r.location):''}</div>
+        ${r.status==='pending'?`<button type="button" class="btn secondary cancelReq" style="margin-top:8px; padding:5px 12px; font-size:11px;">${el_?'Ακύρωση αιτήματος':'Cancel request'}</button>`:''}
+      </div>`);
+      card.querySelector('.cancelReq')?.addEventListener('click', async ()=>{
+        if(!confirm(el_?'Να ακυρωθεί αυτό το αίτημα;':'Cancel this request?')) return;
+        const { error } = await supabase.from('massage_requests').update({ status:'cancelled' }).eq('id', r.id).eq('client_id', person.id);
+        if(error){ toast(el_?'Δεν μπόρεσε να ακυρωθεί. Στείλε μας μήνυμα.':'Could not cancel. Send us a message.'); return; }
+        body.innerHTML=''; await renderMassageTab(body, person, false, clientRow);
+      });
+      body.appendChild(card);
     });
   }
 }
