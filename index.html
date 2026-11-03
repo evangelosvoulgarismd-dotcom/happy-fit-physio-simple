@@ -611,8 +611,6 @@
         <li><strong>Confirmation and reminder</strong> of the time from me on Instagram, so you don't have to chase anything.</li>
         <li><strong>Book with one message</strong> on Instagram. I reply within 24 hours.</li>
       </ul>
-      <p style="font-size:14px; font-weight:700; color:var(--gold);" data-lang-el>Εγγύηση ικανοποίησης: αν η πρώτη συνεδρία δεν σε ικανοποιήσει, δεν την πληρώνεις.</p>
-      <p style="font-size:14px; font-weight:700; color:var(--gold);" data-lang-en>Satisfaction guarantee: if the first session doesn't satisfy you, you don't pay for it.</p>
       <div style="margin:14px 0 4px; padding:14px 16px; border:1px solid var(--line); border-radius:12px;">
         <div style="font-size:12px; letter-spacing:.12em; text-transform:uppercase; font-weight:800; color:var(--ink-soft); margin-bottom:8px;"><span data-lang-el>Τι γίνεται μετά</span><span data-lang-en>What happens next</span></div>
         <ol data-lang-el style="margin:0; padding-left:18px; font-size:14px; line-height:1.7;"><li>Μου στέλνεις ένα μήνυμα στο Instagram. Απαντώ μέσα σε 24 ώρες.</li><li>Συμφωνούμε ώρα. Σου στέλνω επιβεβαίωση και υπενθύμιση.</li><li>Έρχομαι: 10' αξιολόγηση, μάλαξη ή Recovery, και 2 ασκήσεις για το σπίτι.</li></ol>
@@ -1034,7 +1032,7 @@
         const gift = (giftOn() && o.k==='p4') ? '<br><span data-lang-el>Δώρο εκκίνησης: 30\' compression boots, έως 30/11/2026.</span><span data-lang-en>Launch gift: 30\' compression boots, until 30/11/2026.</span>' : '';
         const pl = place()==='Αθήνα' ? ['Αθήνα','Athens'] : ['Σαντορίνη','Santorini'];
         box.innerHTML = '<b><span data-lang-el>'+o.el+'</span><span data-lang-en>'+o.en+'</span></b> · <span data-lang-el>'+pl[0]+'</span><span data-lang-en>'+pl[1]+'</span> · <b>'+o.price+'€</b>'
-          + '<br><span data-lang-el>Εγγύηση ικανοποίησης στην πρώτη συνεδρία. Απαντώ μέσα σε 24 ώρες για να κλείσουμε ώρα.</span><span data-lang-en>Satisfaction guarantee on the first session. I reply within 24 hours to set a time.</span>' + gift;
+          + '<br><span data-lang-el>Απαντώ μέσα σε 24 ώρες για να κλείσουμε ώρα.</span><span data-lang-en>I reply within 24 hours to set a time.</span>' + gift;
       }
       function renderChips(keep){
         const box = document.getElementById('cqSvc'); const list = CQ[place()];
@@ -1439,7 +1437,6 @@
         <h4>Ραντεβού διά ζώσης (μάλαξη, recovery)</h4>
         <p><strong>Προκαταβολή:</strong> για να κλείσει το ραντεβού ζητείται προκαταβολή 50% της τιμής. Το ραντεβού θεωρείται κλεισμένο όταν εισπραχθεί η προκαταβολή και το επιβεβαιώσουμε.</p>
         <p><strong>Ακύρωση:</strong> μπορείς να ακυρώσεις ή να αλλάξεις ώρα έως 24 ώρες πριν το ραντεβού και η προκαταβολή επιστρέφεται ή μεταφέρεται στη νέα ώρα. Αν η ακύρωση γίνει μέσα σε 24 ώρες ή δεν παρουσιαστείς, χρεώνεται το 100% της τιμής του ραντεβού.</p>
-        <p><strong>Εγγύηση ικανοποίησης πρώτης συνεδρίας:</strong> αν η πρώτη σου συνεδρία δεν σε ικανοποιήσει, ενημέρωσέ μας με μήνυμα μέσα στις 24 ώρες από τη συνεδρία, γράφοντας τον λόγο, και δεν πληρώνεις τη συνεδρία (επιστρέφεται η προκαταβολή και δεν χρεώνεται το υπόλοιπο). Ισχύει μία φορά ανά πελάτη, μόνο για την πρώτη συνεδρία που πραγματοποιήθηκε, και δεν καλύπτει ακυρώσεις εντός 24 ωρών ή μη παρουσίαση.</p>
         <h4>Τεχνικό πρόβλημα</h4><p>Αν χρεωθήκατε λόγω τεχνικού σφάλματος, επικοινωνήστε άμεσα μαζί μας για πλήρη επιστροφή.</p>
         <h4>Επικοινωνία</h4><p>Για οποιοδήποτε αίτημα επιστροφής, απευθυνθείτε στον coach σας.</p>`,
         en:`<p>Online coaching is a service, not a physical product. The refund policy varies depending on the type of purchase.</p>
@@ -1448,7 +1445,6 @@
         <h4>In-person appointments (massage, recovery)</h4>
         <p><strong>Deposit:</strong> a 50% deposit is required to book. The appointment is booked once the deposit is received and we confirm it.</p>
         <p><strong>Cancellation:</strong> you can cancel or reschedule up to 24 hours before the appointment, and the deposit is refunded or moved to the new time. If you cancel within 24 hours or do not show up, 100% of the appointment price is charged.</p>
-        <p><strong>First-session satisfaction guarantee:</strong> if your first session does not satisfy you, message us within 24 hours of the session stating the reason, and you do not pay for it (the deposit is refunded and the balance is not charged). It applies once per client, to the first session that took place, and does not cover cancellations within 24 hours or no-shows.</p>
         <h4>Technical Issue</h4><p>If you were charged due to a technical error, contact us immediately for a full refund.</p>
         <h4>Contact</h4><p>For any refund request, please contact your coach.</p>`} },
     };
