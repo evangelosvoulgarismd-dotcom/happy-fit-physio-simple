@@ -2222,12 +2222,7 @@ async function renderTemplatesView(main){
       <div class="detail" style="display:none; margin-top:12px;">
         <div class="exList"></div>
         <form class="addExToTpl" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;">
-          <div class="field" style="min-width:220px; flex:1; margin-bottom:0; position:relative;">
-            <label>${locale==='el'?'Άσκηση (πληκτρολόγησε για αναζήτηση)':'Exercise (type to search)'}</label>
-            <input class="tplExSearch" autocomplete="off" placeholder="${locale==='el'?'π.χ. καθίσματα...':'e.g. squat...'}">
-            <input type="hidden" class="tplExSelect">
-            <div class="tplExResults" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:20; background:var(--panel); border:1px solid var(--line); border-radius:8px; max-height:220px; overflow-y:auto; box-shadow:0 8px 20px rgba(36,20,19,.15);"></div>
-          </div>
+          ${exPickerMarkup()}
           <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="tplSets" type="number" value="3"></div>
           <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="tplReps" value="8-10"></div>
           <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="tplLoad"></div>
@@ -2299,28 +2294,9 @@ async function renderTemplatesView(main){
       d.style.display = open ? 'none' : 'block'; c.textContent = open ? '▸' : '▾';
     });
 
-    // Searchable exercise picker
-    const searchInput = card.querySelector('.tplExSearch');
-    const hiddenSelect = card.querySelector('.tplExSelect');
-    const resultsBox = card.querySelector('.tplExResults');
-    searchInput.addEventListener('input', ()=>{
-      const q = searchInput.value.trim().toLowerCase();
-      hiddenSelect.value = '';
-      if(!q){ resultsBox.style.display = 'none'; return; }
-      const matches = exercises.filter(ex => (ex.name_el||'').toLowerCase().includes(q) || (ex.name_en||'').toLowerCase().includes(q) || (ex.category||'').toLowerCase().includes(q)).slice(0, 20);
-      resultsBox.innerHTML = matches.map(ex => `<div class="exMatchRow" data-id="${ex.id}" data-name="${escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el))}" style="padding:8px 10px; cursor:pointer; border-bottom:1px solid var(--line); font-size:13px;">${escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el))} <span class="mono" style="color:var(--ink-soft); font-size:11px;">${escapeHtml(ex.category||'')}</span></div>`).join('') || `<div style="padding:10px; color:var(--ink-soft); font-size:12px;">${locale==='el'?'Καμία άσκηση':'No exercises'}</div>`;
-      resultsBox.style.display = 'block';
-      resultsBox.querySelectorAll('.exMatchRow').forEach(row=>{
-        row.addEventListener('click', ()=>{
-          hiddenSelect.value = row.dataset.id;
-          searchInput.value = row.dataset.name;
-          resultsBox.style.display = 'none';
-        });
-        row.addEventListener('mouseenter', ()=>row.style.background='var(--bg)');
-        row.addEventListener('mouseleave', ()=>row.style.background='');
-      });
-    });
-    document.addEventListener('click', (e)=>{ if(!card.contains(e.target)) resultsBox.style.display='none'; });
+    // Sectioned exercise picker (shared with the program builder)
+    const picker = exPickerWire(card.querySelector('.addExToTpl'), exercises, {});
+    const hiddenSelect = card.querySelector('.exSelect');
 
     card.querySelector('.addExToTpl').addEventListener('submit', async (e)=>{
       e.preventDefault();
@@ -2335,10 +2311,9 @@ async function renderTemplatesView(main){
         sort_order: maxOrder + 1,
       }).select('*, exercises(*)').single();
       if(inserted){ tpl.program_template_exercises = [...(tpl.program_template_exercises||[]), inserted]; renderExList(); }
-      searchInput.value = ''; hiddenSelect.value = '';
+      picker.reset();
       card.querySelector('.tplReps').value = '8-10';
       card.querySelector('.tplLoad').value = '';
-      searchInput.focus();
     });
 
     card.querySelector('.delTplBtn').addEventListener('click', async ()=>{
@@ -3480,6 +3455,7 @@ const EX_GOALS = [
 const EX_DIFFICULTIES = [
   {el:'Βασικό', en:'Basic'}, {el:'Ενδιάμεσο', en:'Intermediate'}, {el:'Προχωρημένο', en:'Advanced'}, {el:'Εξειδικευμένο', en:'Specialized'},
 ];
+const EX_EQ_ICON = {'Βάρος σώματος':'🧍','Αλτήρες':'🏋️','Μπάρα':'🏋️','Μηχάνημα':'🏢','Τροχαλία':'🔗','Λάστιχα':'🎗️','Kettlebell':'🔔','Cardio':'🏃','Βοηθητικά':'⚽'};
 const EX_EQUIPMENT = [
   {el:'Βάρος σώματος', en:'Bodyweight'}, {el:'Αλτήρες', en:'Dumbbells'}, {el:'Μπάρα', en:'Barbell'},
   {el:'Μηχάνημα', en:'Machine'}, {el:'Τροχαλία', en:'Cable'}, {el:'Λάστιχα', en:'Bands'},
@@ -5382,6 +5358,81 @@ async function renderSopsView(main){
     toast(locale==='el' ? `Προστέθηκαν ${add.length} προσχέδια. Διάβασέ τα και προσάρμοσέ τα.` : `${add.length} drafts added. Review and adapt them.`, 4000); refresh();
   });
   renderList();
+}
+
+// Shared sectioned exercise picker (program builder and templates)
+function exPickerMarkup(){ return `<div class="field" style="min-width:100%; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
+      <input type="hidden" class="exSelect">
+      <button type="button" class="btn secondary exPickBtn" style="width:100%; text-align:left; justify-content:space-between; display:flex;"><span class="exPickLabel">${locale==='el'?'Διάλεξε άσκηση…':'Choose an exercise…'}</span><span>▾</span></button>
+      <div class="exPickPanel" style="display:none; margin-top:8px; border:1px solid var(--line); border-radius:8px; padding:10px; background:var(--panel);">
+        <input class="exPickQ" type="search" placeholder="${locale==='el'?'Αναζήτηση (π.χ. squat, γλουτιαίοι, λάστιχο)':'Search (e.g. squat, glutes, band)'}" aria-label="${locale==='el'?'Αναζήτηση άσκησης':'Search exercise'}" style="width:100%; margin-bottom:8px;">
+        <div class="exPickChips" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;"></div>
+        <select class="exPickRegion" aria-label="${locale==='el'?'Περιοχή σώματος':'Body region'}" style="width:100%; margin-bottom:8px;"></select>
+        <div class="exPickList" style="max-height:52vh; overflow:auto;"></div>
+      </div>
+    </div>`; }
+function exPickerWire(root, list, opts){
+    const L = (a,b)=>locale==='el'?a:b;
+    const hid = root.querySelector('.exSelect'), openBtn = root.querySelector('.exPickBtn'), lbl = root.querySelector('.exPickLabel');
+    const defaultLabel = lbl.textContent;
+    const risky = (opts && opts.risky) || new Map(), recommended = (opts && opts.recommended) || new Set();
+    const panel = root.querySelector('.exPickPanel'), qIn = panel.querySelector('.exPickQ'), regSel = panel.querySelector('.exPickRegion');
+    const chipsBox = panel.querySelector('.exPickChips'), listBox = panel.querySelector('.exPickList');
+    let equipSel = '';
+    const nm = ex => locale==='el' ? ex.name_el : (ex.name_en||ex.name_el);
+    const eqKey = ex => ex.equipment || '__none';
+    const EQ_ICON = {'Βάρος σώματος':'🧍','Αλτήρες':'🏋️','Μπάρα':'🏋️','Μηχάνημα':'🏢','Τροχαλία':'🔗','Λάστιχα':'🎗️','Kettlebell':'🔔','Cardio':'🏃','Βοηθητικά':'⚽','__none':'•'};
+    const eqName = k => k==='__none' ? L('Χωρίς ένδειξη','Not tagged')
+      : k==='Βάρος σώματος' ? L('Χωρίς εξοπλισμό (βάρος σώματος)','No equipment (bodyweight)')
+      : k==='Μηχάνημα' ? L('Μηχανήματα γυμναστηρίου','Gym machines')
+      : k==='Τροχαλία' ? L('Τροχαλία (cable)','Cable') : exLabel(EX_EQUIPMENT, k);
+    const regOrder = EX_BODY_REGIONS.map(r=>r.el);
+    const regName = v => v ? exLabel(EX_BODY_REGIONS, v) : L('Άλλες','Other');
+    const regs = regOrder.filter(r=>list.some(e=>e.body_region===r));
+    regSel.innerHTML = `<option value="">${L('Όλες οι περιοχές','All regions')}</option>` + regs.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(regName(r))}</option>`).join('');
+    function base(skipEquip){
+      const q = qIn.value.trim().toLowerCase(), rg = regSel.value;
+      return list.filter(ex=>{
+        if(rg && ex.body_region!==rg) return false;
+        if(!skipEquip && equipSel && eqKey(ex)!==equipSel) return false;
+        if(q && !((ex.name_el||'')+' '+(ex.name_en||'')+' '+(ex.category||'')).toLowerCase().includes(q)) return false;
+        return true;
+      });
+    }
+    function renderChips(){
+      const pool = base(true), counts = {};
+      pool.forEach(ex=>{ const k = eqKey(ex); counts[k] = (counts[k]||0)+1; });
+      const order = [...EX_EQUIPMENT.map(e=>e.el), '__none'].filter(k=>counts[k]);
+      const mk = (k, text, n)=>`<button type="button" class="btn ${equipSel===k?'':'secondary'}" data-eq="${escapeHtml(k)}" style="padding:5px 10px; font-size:11.5px;">${text} <span style="opacity:.7;">${n}</span></button>`;
+      chipsBox.innerHTML = mk('', L('Όλες','All'), pool.length) + order.map(k=>mk(k, (EQ_ICON[k]||'')+' '+escapeHtml(eqName(k)), counts[k])).join('');
+    }
+    function renderList(){
+      const items = base(false), filtered = !!(qIn.value.trim() || equipSel || regSel.value);
+      if(!items.length){ listBox.innerHTML = `<p style="color:var(--ink-soft); font-size:12.5px;">${L('Καμία άσκηση με αυτά τα φίλτρα.','No exercises match these filters.')}</p>`; return; }
+      const groups = new Map();
+      items.forEach(ex=>{ const g = ex.body_region || ''; if(!groups.has(g)) groups.set(g, []); groups.get(g).push(ex); });
+      const keys = [...groups.keys()].sort((a,b)=>{ const ia = a?regOrder.indexOf(a):999, ib = b?regOrder.indexOf(b):999; return ia-ib; });
+      listBox.innerHTML = keys.map(g=>{
+        const rows = groups.get(g).map(ex=>{
+          const pre = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
+          const meta = [ex.equipment ? (EQ_ICON[ex.equipment]||'')+' '+eqName(ex.equipment).replace(/ \(.*\)$/,'') : '', ex.difficulty_level ? exLabel(EX_DIFFICULTIES, ex.difficulty_level) : ''].filter(Boolean).join(' · ');
+          return `<button type="button" class="exPickRow" data-id="${ex.id}" style="display:block; width:100%; text-align:left; padding:9px 8px; border:0; border-bottom:1px solid var(--line); background:transparent; color:inherit; cursor:pointer; font-size:13px;">${pre}${escapeHtml(nm(ex))}${meta?`<span style="display:block; font-size:11px; color:var(--ink-soft);">${escapeHtml(meta)}</span>`:''}</button>`;
+        }).join('');
+        return `<details ${filtered?'open':''} style="margin-bottom:6px;"><summary style="cursor:pointer; font-weight:700; font-size:12.5px; padding:6px 2px;">${escapeHtml(regName(g))} <span style="color:var(--ink-soft); font-weight:400;">(${groups.get(g).length})</span></summary>${rows}</details>`;
+      }).join('');
+    }
+    const refresh = ()=>{ renderChips(); renderList(); };
+    openBtn.addEventListener('click', ()=>{ const open = panel.style.display==='none'; panel.style.display = open ? 'block' : 'none'; if(open){ refresh(); } });
+    qIn.addEventListener('input', refresh);
+    regSel.addEventListener('change', refresh);
+    chipsBox.addEventListener('click', e=>{ const b = e.target.closest('[data-eq]'); if(!b) return; equipSel = b.dataset.eq; refresh(); });
+    listBox.addEventListener('click', e=>{
+      const b = e.target.closest('.exPickRow'); if(!b) return;
+      const ex = list.find(x=>String(x.id)===b.dataset.id); if(!ex) return;
+      hid.value = ex.id; lbl.textContent = nm(ex); panel.style.display = 'none';
+    });
+  
+    return { reset(){ hid.value=''; lbl.textContent = defaultLabel; panel.style.display='none'; qIn.value=''; } };
 }
 
 // ============================================================
@@ -7508,16 +7559,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   const dayNums = dayLabels.map(d=>parseInt(d.match(/\d+/)?.[0]||'0',10));
   const nextDayLabel = dayLabels.length ? `${locale==='el'?'Ημέρα':'Day'} ${Math.max(0,...dayNums)+1}` : `${locale==='el'?'Ημέρα':'Day'} 1`;
 
-  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">    <div class="field" style="min-width:100%; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
-      <input type="hidden" class="exSelect">
-      <button type="button" class="btn secondary exPickBtn" style="width:100%; text-align:left; justify-content:space-between; display:flex;"><span class="exPickLabel">${locale==='el'?'Διάλεξε άσκηση…':'Choose an exercise…'}</span><span>▾</span></button>
-      <div class="exPickPanel" style="display:none; margin-top:8px; border:1px solid var(--line); border-radius:8px; padding:10px; background:var(--panel);">
-        <input class="exPickQ" type="search" placeholder="${locale==='el'?'Αναζήτηση (π.χ. squat, γλουτιαίοι, λάστιχο)':'Search (e.g. squat, glutes, band)'}" aria-label="${locale==='el'?'Αναζήτηση άσκησης':'Search exercise'}" style="width:100%; margin-bottom:8px;">
-        <div class="exPickChips" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;"></div>
-        <select class="exPickRegion" aria-label="${locale==='el'?'Περιοχή σώματος':'Body region'}" style="width:100%; margin-bottom:8px;"></select>
-        <div class="exPickList" style="max-height:52vh; overflow:auto;"></div>
-      </div>
-    </div>
+  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">    ${exPickerMarkup()}
     <div class="field" style="width:110px; margin-bottom:0;"><label>${locale==='el'?'Ημέρα':'Day'}</label><input class="exDay" list="dayList" value="${escapeHtml(nextDayLabel)}"></div>
     <datalist id="dayList">${dayLabels.map(d=>`<option value="${escapeHtml(d)}">`).join('')}</datalist>
     <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="exSets" type="number" value="3"></div>
@@ -7527,67 +7569,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     <button class="btn" type="submit">+ ${locale==='el'?'Προσθήκη':'Add'}</button>
   </form>`);
 
-  // Sectioned exercise picker: equipment chips (bodyweight, bands, dumbbells, barbell, gym machines...), body region,
-  // search, and results grouped into collapsible sections. Writes the chosen id to the hidden .exSelect input.
-  (function wireExPicker(){
-    const L = (a,b)=>locale==='el'?a:b;
-    const hid = addForm.querySelector('.exSelect'), openBtn = addForm.querySelector('.exPickBtn'), lbl = addForm.querySelector('.exPickLabel');
-    const panel = addForm.querySelector('.exPickPanel'), qIn = panel.querySelector('.exPickQ'), regSel = panel.querySelector('.exPickRegion');
-    const chipsBox = panel.querySelector('.exPickChips'), listBox = panel.querySelector('.exPickList');
-    let equipSel = '';
-    const nm = ex => locale==='el' ? ex.name_el : (ex.name_en||ex.name_el);
-    const eqKey = ex => ex.equipment || '__none';
-    const EQ_ICON = {'Βάρος σώματος':'🧍','Αλτήρες':'🏋️','Μπάρα':'🏋️','Μηχάνημα':'🏢','Τροχαλία':'🔗','Λάστιχα':'🎗️','Kettlebell':'🔔','Cardio':'🏃','Βοηθητικά':'⚽','__none':'•'};
-    const eqName = k => k==='__none' ? L('Χωρίς ένδειξη','Not tagged')
-      : k==='Βάρος σώματος' ? L('Χωρίς εξοπλισμό (βάρος σώματος)','No equipment (bodyweight)')
-      : k==='Μηχάνημα' ? L('Μηχανήματα γυμναστηρίου','Gym machines')
-      : k==='Τροχαλία' ? L('Τροχαλία (cable)','Cable') : exLabel(EX_EQUIPMENT, k);
-    const regOrder = EX_BODY_REGIONS.map(r=>r.el);
-    const regName = v => v ? exLabel(EX_BODY_REGIONS, v) : L('Άλλες','Other');
-    const regs = regOrder.filter(r=>sortedExercises.some(e=>e.body_region===r));
-    regSel.innerHTML = `<option value="">${L('Όλες οι περιοχές','All regions')}</option>` + regs.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(regName(r))}</option>`).join('');
-    function base(skipEquip){
-      const q = qIn.value.trim().toLowerCase(), rg = regSel.value;
-      return sortedExercises.filter(ex=>{
-        if(rg && ex.body_region!==rg) return false;
-        if(!skipEquip && equipSel && eqKey(ex)!==equipSel) return false;
-        if(q && !((ex.name_el||'')+' '+(ex.name_en||'')+' '+(ex.category||'')).toLowerCase().includes(q)) return false;
-        return true;
-      });
-    }
-    function renderChips(){
-      const pool = base(true), counts = {};
-      pool.forEach(ex=>{ const k = eqKey(ex); counts[k] = (counts[k]||0)+1; });
-      const order = [...EX_EQUIPMENT.map(e=>e.el), '__none'].filter(k=>counts[k]);
-      const mk = (k, text, n)=>`<button type="button" class="btn ${equipSel===k?'':'secondary'}" data-eq="${escapeHtml(k)}" style="padding:5px 10px; font-size:11.5px;">${text} <span style="opacity:.7;">${n}</span></button>`;
-      chipsBox.innerHTML = mk('', L('Όλες','All'), pool.length) + order.map(k=>mk(k, (EQ_ICON[k]||'')+' '+escapeHtml(eqName(k)), counts[k])).join('');
-    }
-    function renderList(){
-      const items = base(false), filtered = !!(qIn.value.trim() || equipSel || regSel.value);
-      if(!items.length){ listBox.innerHTML = `<p style="color:var(--ink-soft); font-size:12.5px;">${L('Καμία άσκηση με αυτά τα φίλτρα.','No exercises match these filters.')}</p>`; return; }
-      const groups = new Map();
-      items.forEach(ex=>{ const g = ex.body_region || ''; if(!groups.has(g)) groups.set(g, []); groups.get(g).push(ex); });
-      const keys = [...groups.keys()].sort((a,b)=>{ const ia = a?regOrder.indexOf(a):999, ib = b?regOrder.indexOf(b):999; return ia-ib; });
-      listBox.innerHTML = keys.map(g=>{
-        const rows = groups.get(g).map(ex=>{
-          const pre = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
-          const meta = [ex.equipment ? (EQ_ICON[ex.equipment]||'')+' '+eqName(ex.equipment).replace(/ \(.*\)$/,'') : '', ex.difficulty_level ? exLabel(EX_DIFFICULTIES, ex.difficulty_level) : ''].filter(Boolean).join(' · ');
-          return `<button type="button" class="exPickRow" data-id="${ex.id}" style="display:block; width:100%; text-align:left; padding:9px 8px; border:0; border-bottom:1px solid var(--line); background:transparent; color:inherit; cursor:pointer; font-size:13px;">${pre}${escapeHtml(nm(ex))}${meta?`<span style="display:block; font-size:11px; color:var(--ink-soft);">${escapeHtml(meta)}</span>`:''}</button>`;
-        }).join('');
-        return `<details ${filtered?'open':''} style="margin-bottom:6px;"><summary style="cursor:pointer; font-weight:700; font-size:12.5px; padding:6px 2px;">${escapeHtml(regName(g))} <span style="color:var(--ink-soft); font-weight:400;">(${groups.get(g).length})</span></summary>${rows}</details>`;
-      }).join('');
-    }
-    const refresh = ()=>{ renderChips(); renderList(); };
-    openBtn.addEventListener('click', ()=>{ const open = panel.style.display==='none'; panel.style.display = open ? 'block' : 'none'; if(open){ refresh(); } });
-    qIn.addEventListener('input', refresh);
-    regSel.addEventListener('change', refresh);
-    chipsBox.addEventListener('click', e=>{ const b = e.target.closest('[data-eq]'); if(!b) return; equipSel = b.dataset.eq; refresh(); });
-    listBox.addEventListener('click', e=>{
-      const b = e.target.closest('.exPickRow'); if(!b) return;
-      const ex = sortedExercises.find(x=>String(x.id)===b.dataset.id); if(!ex) return;
-      hid.value = ex.id; lbl.textContent = nm(ex); panel.style.display = 'none';
-    });
-  })();
+  exPickerWire(addForm, sortedExercises, { risky, recommended });
   addForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const exercise_id = addForm.querySelector('.exSelect').value;
@@ -7695,7 +7677,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
         <div style="flex:1;">
-          <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>${pe.superset_group ? ` <span class="badge">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}
+          <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>${pe.superset_group ? ` <span class="badge">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}${pe.exercises.equipment ? ` <span class="badge">${EX_EQ_ICON[pe.exercises.equipment]||'🏋️'} ${escapeHtml(exLabel(EX_EQUIPMENT, pe.exercises.equipment))}</span>` : ''}
           <div class="mono peView" style="font-size:12px; color:var(--ink-soft);">${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
           ${pe.change_reason ? `<div style="font-size:11px; color:var(--red-text); margin-top:4px;">💡 ${escapeHtml(pe.change_reason)}</div>` : ''}
         </div>
@@ -8507,6 +8489,10 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     exercisesWrap.innerHTML = '';
     const dayExercises = currentDayExercises();
     updateSessionProgress();
+    if(dayExercises.length){
+      const eqToday = [...new Set(dayExercises.map(pe=>pe.exercises && pe.exercises.equipment).filter(e=>e && e!=='Βάρος σώματος'))];
+      exercisesWrap.appendChild(el(`<div style="font-size:12.5px; margin-bottom:12px; padding:8px 10px; border-radius:8px; background:var(--tint-soft);">🧰 <strong>${locale==='el'?'Για σήμερα χρειάζεσαι':'Today you need'}:</strong> ${eqToday.length ? eqToday.map(e=>`${EX_EQ_ICON[e]||'🏋️'} ${escapeHtml(exLabel(EX_EQUIPMENT, e))}`).join(' · ') : (locale==='el'?'κανένα εξοπλισμό, μόνο το σώμα σου':'no equipment, just your body')} <span style="color:var(--ink-soft);">· ${dayExercises.length} ${locale==='el'?'ασκήσεις':'exercises'}</span></div>`));
+    }
     dayExercises.forEach(pe=>{
     const ex = pe.exercises;
     const exName = locale==='el' ? ex.name_el : (ex.name_en || ex.name_el);
@@ -8525,7 +8511,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         <span><strong>${escapeHtml(exName)}</strong>${pe.superset_group ? ` <span class="badge" title="${locale==='el'?'Εναλλάξ με τις άλλες ασκήσεις του ίδιου superset':'Alternate with the other exercises in this superset'}">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}</span>
         <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:11px; flex-shrink:0;">ℹ️ ${t('why',locale)}</button>
       </div>
-      <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${locale==='el'?'Στόχος':'Target'}: ${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
+      <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; line-height:1.6;">🎯 <strong>${pe.target_sets}</strong> ${locale==='el'?'σετ':'sets'} × <strong>${escapeHtml(pe.target_reps||'')}</strong> ${locale==='el'?'επαναλήψεις':'reps'} · ${pe.target_load ? (locale==='el'?'φορτίο':'load')+': <strong>'+escapeHtml(pe.target_load)+'</strong>' : (locale==='el'?'φορτίο: το επιλέγεις εσύ':'load: your choice')}${ex.equipment ? ` · <span class="badge">${EX_EQ_ICON[ex.equipment]||'🏋️'} ${escapeHtml(exLabel(EX_EQUIPMENT, ex.equipment))}</span>` : ''}</div>
       ${tracker ? `<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; margin-bottom:10px;">
         ${tracker.lastSession ? `<span>📊 ${locale==='el'?'Προηγούμενη':'Previous'}: <strong class="mono">${tracker.lastSession.load_kg}kg × ${tracker.lastSession.reps}</strong> <span style="color:var(--ink-soft);">(${tracker.lastSession.session_date})</span></span>` : ''}
         ${tracker.pr ? `<span>🏆 PR: <strong class="mono">${tracker.pr.load_kg}kg × ${tracker.pr.reps}</strong></span>` : ''}
