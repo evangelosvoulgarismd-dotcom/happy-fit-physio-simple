@@ -7508,12 +7508,15 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   const dayNums = dayLabels.map(d=>parseInt(d.match(/\d+/)?.[0]||'0',10));
   const nextDayLabel = dayLabels.length ? `${locale==='el'?'Ημέρα':'Day'} ${Math.max(0,...dayNums)+1}` : `${locale==='el'?'Ημέρα':'Day'} 1`;
 
-  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">    <div class="field" style="min-width:220px; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
-      <select class="exSelect" required><option value="">—</option>${sortedExercises.map(ex=>{
-        const label = escapeHtml(locale==='el'?ex.name_el:(ex.name_en||ex.name_el));
-        const prefix = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
-        return `<option value="${ex.id}">${prefix}${label}</option>`;
-      }).join('')}</select>
+  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">    <div class="field" style="min-width:100%; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
+      <input type="hidden" class="exSelect">
+      <button type="button" class="btn secondary exPickBtn" style="width:100%; text-align:left; justify-content:space-between; display:flex;"><span class="exPickLabel">${locale==='el'?'Διάλεξε άσκηση…':'Choose an exercise…'}</span><span>▾</span></button>
+      <div class="exPickPanel" style="display:none; margin-top:8px; border:1px solid var(--line); border-radius:8px; padding:10px; background:var(--panel);">
+        <input class="exPickQ" type="search" placeholder="${locale==='el'?'Αναζήτηση (π.χ. squat, γλουτιαίοι, λάστιχο)':'Search (e.g. squat, glutes, band)'}" aria-label="${locale==='el'?'Αναζήτηση άσκησης':'Search exercise'}" style="width:100%; margin-bottom:8px;">
+        <div class="exPickChips" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;"></div>
+        <select class="exPickRegion" aria-label="${locale==='el'?'Περιοχή σώματος':'Body region'}" style="width:100%; margin-bottom:8px;"></select>
+        <div class="exPickList" style="max-height:52vh; overflow:auto;"></div>
+      </div>
     </div>
     <div class="field" style="width:110px; margin-bottom:0;"><label>${locale==='el'?'Ημέρα':'Day'}</label><input class="exDay" list="dayList" value="${escapeHtml(nextDayLabel)}"></div>
     <datalist id="dayList">${dayLabels.map(d=>`<option value="${escapeHtml(d)}">`).join('')}</datalist>
@@ -7523,10 +7526,72 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     <div class="field" style="width:80px; margin-bottom:0;"><label title="${locale==='el'?'Ίδιο γράμμα = εναλλάξ (superset)':'Same letter = alternating (superset)'}">Superset</label><input class="exSuper" maxlength="1" placeholder="A"></div>
     <button class="btn" type="submit">+ ${locale==='el'?'Προσθήκη':'Add'}</button>
   </form>`);
+
+  // Sectioned exercise picker: equipment chips (bodyweight, bands, dumbbells, barbell, gym machines...), body region,
+  // search, and results grouped into collapsible sections. Writes the chosen id to the hidden .exSelect input.
+  (function wireExPicker(){
+    const L = (a,b)=>locale==='el'?a:b;
+    const hid = addForm.querySelector('.exSelect'), openBtn = addForm.querySelector('.exPickBtn'), lbl = addForm.querySelector('.exPickLabel');
+    const panel = addForm.querySelector('.exPickPanel'), qIn = panel.querySelector('.exPickQ'), regSel = panel.querySelector('.exPickRegion');
+    const chipsBox = panel.querySelector('.exPickChips'), listBox = panel.querySelector('.exPickList');
+    let equipSel = '';
+    const nm = ex => locale==='el' ? ex.name_el : (ex.name_en||ex.name_el);
+    const eqKey = ex => ex.equipment || '__none';
+    const EQ_ICON = {'Βάρος σώματος':'🧍','Αλτήρες':'🏋️','Μπάρα':'🏋️','Μηχάνημα':'🏢','Τροχαλία':'🔗','Λάστιχα':'🎗️','Kettlebell':'🔔','Cardio':'🏃','Βοηθητικά':'⚽','__none':'•'};
+    const eqName = k => k==='__none' ? L('Χωρίς ένδειξη','Not tagged')
+      : k==='Βάρος σώματος' ? L('Χωρίς εξοπλισμό (βάρος σώματος)','No equipment (bodyweight)')
+      : k==='Μηχάνημα' ? L('Μηχανήματα γυμναστηρίου','Gym machines')
+      : k==='Τροχαλία' ? L('Τροχαλία (cable)','Cable') : exLabel(EX_EQUIPMENT, k);
+    const regOrder = EX_BODY_REGIONS.map(r=>r.el);
+    const regName = v => v ? exLabel(EX_BODY_REGIONS, v) : L('Άλλες','Other');
+    const regs = regOrder.filter(r=>sortedExercises.some(e=>e.body_region===r));
+    regSel.innerHTML = `<option value="">${L('Όλες οι περιοχές','All regions')}</option>` + regs.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(regName(r))}</option>`).join('');
+    function base(skipEquip){
+      const q = qIn.value.trim().toLowerCase(), rg = regSel.value;
+      return sortedExercises.filter(ex=>{
+        if(rg && ex.body_region!==rg) return false;
+        if(!skipEquip && equipSel && eqKey(ex)!==equipSel) return false;
+        if(q && !((ex.name_el||'')+' '+(ex.name_en||'')+' '+(ex.category||'')).toLowerCase().includes(q)) return false;
+        return true;
+      });
+    }
+    function renderChips(){
+      const pool = base(true), counts = {};
+      pool.forEach(ex=>{ const k = eqKey(ex); counts[k] = (counts[k]||0)+1; });
+      const order = [...EX_EQUIPMENT.map(e=>e.el), '__none'].filter(k=>counts[k]);
+      const mk = (k, text, n)=>`<button type="button" class="btn ${equipSel===k?'':'secondary'}" data-eq="${escapeHtml(k)}" style="padding:5px 10px; font-size:11.5px;">${text} <span style="opacity:.7;">${n}</span></button>`;
+      chipsBox.innerHTML = mk('', L('Όλες','All'), pool.length) + order.map(k=>mk(k, (EQ_ICON[k]||'')+' '+escapeHtml(eqName(k)), counts[k])).join('');
+    }
+    function renderList(){
+      const items = base(false), filtered = !!(qIn.value.trim() || equipSel || regSel.value);
+      if(!items.length){ listBox.innerHTML = `<p style="color:var(--ink-soft); font-size:12.5px;">${L('Καμία άσκηση με αυτά τα φίλτρα.','No exercises match these filters.')}</p>`; return; }
+      const groups = new Map();
+      items.forEach(ex=>{ const g = ex.body_region || ''; if(!groups.has(g)) groups.set(g, []); groups.get(g).push(ex); });
+      const keys = [...groups.keys()].sort((a,b)=>{ const ia = a?regOrder.indexOf(a):999, ib = b?regOrder.indexOf(b):999; return ia-ib; });
+      listBox.innerHTML = keys.map(g=>{
+        const rows = groups.get(g).map(ex=>{
+          const pre = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
+          const meta = [ex.equipment ? (EQ_ICON[ex.equipment]||'')+' '+eqName(ex.equipment).replace(/ \(.*\)$/,'') : '', ex.difficulty_level ? exLabel(EX_DIFFICULTIES, ex.difficulty_level) : ''].filter(Boolean).join(' · ');
+          return `<button type="button" class="exPickRow" data-id="${ex.id}" style="display:block; width:100%; text-align:left; padding:9px 8px; border:0; border-bottom:1px solid var(--line); background:transparent; color:inherit; cursor:pointer; font-size:13px;">${pre}${escapeHtml(nm(ex))}${meta?`<span style="display:block; font-size:11px; color:var(--ink-soft);">${escapeHtml(meta)}</span>`:''}</button>`;
+        }).join('');
+        return `<details ${filtered?'open':''} style="margin-bottom:6px;"><summary style="cursor:pointer; font-weight:700; font-size:12.5px; padding:6px 2px;">${escapeHtml(regName(g))} <span style="color:var(--ink-soft); font-weight:400;">(${groups.get(g).length})</span></summary>${rows}</details>`;
+      }).join('');
+    }
+    const refresh = ()=>{ renderChips(); renderList(); };
+    openBtn.addEventListener('click', ()=>{ const open = panel.style.display==='none'; panel.style.display = open ? 'block' : 'none'; if(open){ refresh(); } });
+    qIn.addEventListener('input', refresh);
+    regSel.addEventListener('change', refresh);
+    chipsBox.addEventListener('click', e=>{ const b = e.target.closest('[data-eq]'); if(!b) return; equipSel = b.dataset.eq; refresh(); });
+    listBox.addEventListener('click', e=>{
+      const b = e.target.closest('.exPickRow'); if(!b) return;
+      const ex = sortedExercises.find(x=>String(x.id)===b.dataset.id); if(!ex) return;
+      hid.value = ex.id; lbl.textContent = nm(ex); panel.style.display = 'none';
+    });
+  })();
   addForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const exercise_id = addForm.querySelector('.exSelect').value;
-    if(!exercise_id) return;
+    if(!exercise_id){ toast(locale==='el'?'Διάλεξε άσκηση πρώτα.':'Choose an exercise first.'); return; }
     const superVal = addForm.querySelector('.exSuper').value.trim().toUpperCase();
     const { error: insErr } = await supabase.from('program_exercises').insert({
       program_id: program.id, exercise_id,
