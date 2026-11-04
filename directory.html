@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Βρες προπονητή ή event · Happy Fit Physio</title>
   <meta name="description" content="Κατάλογος επαγγελματιών και events από το δίκτυο συνεργατών του Happy Fit Physio. Ζήτα επικοινωνία ή κλείσε θέση σε event." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800&family=Fraunces:ital,wght@0,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <style>
     :root { --ink:#f5f5f5; --ink-soft:#9a9a9a; --bg:#0b0b0b; --panel:#121212; --panel2:#181818; --line:#242424; --red:#e50914; --ok:#3ecf8e; --danger:#ff4d4d; }
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -110,11 +109,12 @@
 
     <div class="foot" id="foot"></div>
   </main>
+  <p style="text-align:center; font-size:13px; margin:24px 16px 32px;"><a href="index.html#privacy" style="color:inherit; text-decoration:underline;">Πολιτική Απορρήτου · Privacy Policy</a></p>
 
   <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="box" id="box"></div></div>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { createClient } from './supabase.js';
     const supabase = createClient('https://hxbpuamzisdldwbuumda.supabase.co', 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH');
 
     const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -499,6 +499,23 @@ function hfpIconize(root){
   if(document.body) run(); else document.addEventListener('DOMContentLoaded', run);
 })();
 
+</script>
+<script>
+// Accessibility helpers: keyboard access for legal links, skip link, landmark
+(function(){
+  function fix(root){
+    (root.querySelectorAll?root.querySelectorAll('a[data-legal]:not([href])'):[]).forEach(function(a){
+      if(a.__a11y) return; a.__a11y=1;
+      a.setAttribute('role','button'); a.setAttribute('tabindex','0');
+      a.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); a.click(); } });
+    });
+  }
+  function init(){
+    fix(document);
+    new MutationObserver(function(m){ m.forEach(function(r){ r.addedNodes.forEach(function(n){ if(n.nodeType===1) fix(n.matches&&n.matches('a[data-legal]')?n.parentNode:n); }); }); }).observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
 </script>
 </body>
 </html>

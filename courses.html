@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Τα Μαθήματά μου · Happy Fit Physio</title>
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
   :root{
     --ink:#f5f5f5; --ink-soft:#9a9a9a; --bg:#0b0b0b; --panel:#121212; --line:#242424; --red:#e50914;
@@ -55,7 +55,7 @@
   </div>
 
 <script type="module">
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  import { createClient } from './supabase.js';
   const supabase = createClient(
     'https://hxbpuamzisdldwbuumda.supabase.co',
     'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH'
