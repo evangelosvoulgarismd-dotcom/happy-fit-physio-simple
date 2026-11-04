@@ -209,7 +209,7 @@
     #brandMark svg{width:26px; height:26px;}
     #sidebar h1{font-size:13px; text-align:left;}
     #sidebar .tagline{display:none;}
-    #notifBell{margin-left:auto;}
+#chatTopBtn{margin-left:auto;} #chatTopBtn + #notifBell{margin-left:6px;} #notifBell{margin-left:auto;}
     .navBtn{padding:7px 10px; font-size:12px; border-left:none; border-bottom:3px solid transparent;}
     .navBtn.active{border-left:none; border-bottom-color:var(--gold);}
     /* Settings/export/logout + legal links + social icons: same weight as the nav links,
@@ -281,10 +281,12 @@
   #menuToggleBtn{display:none; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   .massageForm .mfGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;} .massageForm .mfWide{grid-column:1/-1;} .massageForm .field{margin-bottom:0;} .massageForm textarea{width:100%; box-sizing:border-box; padding:9px 12px; border-radius:6px; border:1px solid var(--line); font:inherit; resize:vertical;}
   @media (max-width:520px){ .massageForm .mfGrid{grid-template-columns:1fr;} }
-  #notifBell{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
+  #notifBell, #chatTopBtn{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #themeBtn{background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
+  #chatTopBtn .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
   #notifBell .dot.show{display:block;}
+  #chatTopBtn .dot.show{display:block;}
   .notifPanel{position:absolute; top:56px; right:14px; width:300px; max-height:400px; overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:0 10px 30px rgba(36,20,19,0.25); z-index:200; padding:12px;}
   .notifPanel .notifItem{padding:8px 0; border-bottom:1px solid var(--line); font-size:12px;}
   .notifPanel .notifItem:last-child{border-bottom:none;}
@@ -308,7 +310,7 @@
     #brandMark { min-width:0; flex:1 1 auto; overflow:hidden; }
     #brandMark img { width:40px !important; height:40px !important; flex:0 0 40px; }
     #brandMark h1, #brandMark .brandName { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #menuToggleBtn, #notifBell { width:42px; height:42px; min-width:42px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+    #menuToggleBtn, #notifBell, #chatTopBtn { width:42px; height:42px; min-width:42px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
     #sidebarBottom .optRow, #sidebarBottom .navBtn{ min-height:44px; }
     .navBtnsWrap { width:100%; max-height:calc(100dvh - 145px); overflow:auto; -webkit-overflow-scrolling:touch; }
     .navBtnsWrap .navBtn { min-height:44px; padding:10px 12px; }
@@ -357,14 +359,14 @@
   @media (max-width:380px){
     #sidebar { padding-left:8px; padding-right:8px; gap:5px; }
     #brandMark img { width:34px !important; height:34px !important; flex-basis:34px; }
-    #menuToggleBtn, #notifBell { width:38px; height:38px; min-width:38px; }
+    #menuToggleBtn, #notifBell, #chatTopBtn { width:38px; height:38px; min-width:38px; }
     #main { padding-left:9px; padding-right:9px; }
     .statCard .num { font-size:20px; }
     .bottomTab .lbl { font-size:8.5px; }
   }
 
   /* Reduce accidental selection/zoom while keeping form usability */
-  button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell { user-select:none; }
+  button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell, #chatTopBtn { user-select:none; }
 
   /* ── Press feedback + accessibility preferences ── */
   .btn:active{transform:scale(.97);}
@@ -446,7 +448,7 @@
   #sidebarFooter a{ color:var(--ink-soft); }
   .optLabel{ color:var(--ink-soft); }
   .optGroup .optRow, .langToggle button{ color:var(--nav-ink); }
-  #notifBell, #menuToggleBtn{ background:var(--nav-on-bg); color:var(--ink); border:1px solid var(--hair); border-radius:999px; }
+  #notifBell, #chatTopBtn, #menuToggleBtn{ background:var(--nav-on-bg); color:var(--ink); border:1px solid var(--hair); border-radius:999px; }
 
   /* cards: large radius, hairline border, no red edge */
   .card, .statCard, .clinicalCard, .chartWrap{ border:1px solid var(--line); border-left:1px solid var(--line); border-radius:var(--r-card); box-shadow:none; }
@@ -1593,7 +1595,8 @@ async function refreshClientChatBadges(){
       host.querySelectorAll('.'+cls).forEach(x=>x.remove());
       if(n>0){ const b = document.createElement('span'); b.className = cls; b.textContent = n>9?'9+':String(n); host.appendChild(b); }
     };
-    put(document.querySelector('.cbn-btn[data-t="profile"]'), 'chatDot');
+    put(document.querySelector('.cbn-btn[data-t="messages"]'), 'chatDot');
+    const td = document.getElementById('chatTopDot'); if(td){ td.textContent = n>9?'9+':String(n); td.classList.toggle('show', n>0); }
     put(document.querySelector('.profileMenuRow[data-chat="1"] span:nth-child(2)'), 'inlineBadge');
     put(document.querySelector('.openChatLink'), 'inlineBadge');
   }catch(e){}
@@ -1698,7 +1701,7 @@ function renderShell(){
     ${isCoach ? `<nav id="bottomTabBar">
       <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${t('clients',locale)}</span></button>
       <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
-      <button class="bottomTab ${view==='leads'?'active':''}" data-v="leads"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>
+      <button class="bottomTab ${view==='studio'?'active':''}" data-v="studio"><span class="ico">🧭</span><span class="lbl">Studio</span></button>
       <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
     </nav>` : ''}
   </div>`);
@@ -1720,6 +1723,8 @@ function renderShell(){
   });
   shell.querySelectorAll('#themeToggle .optRow').forEach(b=>b.addEventListener('click', ()=>applyTheme(b.dataset.th)));
   applyTheme(document.documentElement.getAttribute('data-theme')||'dark');
+  const chatTop = shell.querySelector('#chatTopBtn');
+  if(chatTop) chatTop.addEventListener('click', ()=>{ renderClientDashboard._tab = 'messages'; renderClientDashboard._reuse = false; switchView('dashboard'); });
   shell.querySelector('#notifBell').addEventListener('click', (e)=>{
     e.stopPropagation();
     const existing = document.querySelector('.notifPanel');
@@ -8843,13 +8848,13 @@ async function renderClientDashboard(main){
 
   main.innerHTML = '';
   destroyCharts(); // clear any chart from the previously-shown tab before this one builds its own
-  const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer','safety','testimonial'];
-  const inProfileGroup = profileGroup.includes(tab) && tab!=='massage';
+  const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer','safety','testimonial','progress'];
+  const inProfileGroup = profileGroup.includes(tab) && tab!=='massage' && tab!=='messages';
   const tabs = el(`<div class="clientBottomNav">
     <button class="cbn-btn ${tab==='today'?'active':''}" data-t="today"><span class="cbn-ico">🏠</span><span>${locale==='el'?'Αρχική':'Home'}</span></button>
     <button class="cbn-btn ${tab==='program'?'active':''}" data-t="program"><span class="cbn-ico">🏋️</span><span>${t('program',locale)}</span></button>
     <button class="cbn-btn cbn-central ${tab==='readiness'?'active':''}" data-t="readiness"><span class="cbn-ico">＋</span><span>${locale==='el'?'Σήμερα':'Today'}</span></button>
-    <button class="cbn-btn ${tab==='progress'?'active':''}" data-t="progress"><span class="cbn-ico">📈</span><span>${t('progress',locale)}</span></button>
+    <button class="cbn-btn ${tab==='messages'?'active':''}" data-t="messages"><span class="cbn-ico">💬</span><span>${t('messages',locale)}</span></button>
     <button class="cbn-btn ${tab==='massage'?'active':''}" data-t="massage"><span class="cbn-ico">💆</span><span>${locale==='el'?'Μάλαξη':'Massage'}</span></button>
     <button class="cbn-btn ${tab==='profile'||inProfileGroup?'active':''}" data-t="profile"><span class="cbn-ico">👤</span><span>${locale==='el'?'Προφίλ':'Profile'}</span></button>
   </div>`);
@@ -8897,6 +8902,7 @@ async function renderClientDashboard(main){
     // Menu grouped by purpose instead of one long flat list
     const profileGroups = [
       { title: locale==='el'?'Η υγεία και η πρόοδός μου':'My health and progress', items: [
+        { t:'progress', ico:'📈', label:t('progress',locale) },
         { t:'intake', ico:'📋', label:t('intake',locale) },
         { t:'safety', ico:'🛡️', label: locale==='el'?'Ασφάλεια':'Safety' },
         { t:'nutrition', ico:'🍽️', label:t('nutrition',locale) },
