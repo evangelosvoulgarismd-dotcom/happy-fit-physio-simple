@@ -528,6 +528,13 @@
     .modalBox::before{ content:''; display:block; width:38px; height:5px; border-radius:3px; background:var(--line); margin:-14px auto 14px; }
   }
   @media (prefers-reduced-motion: reduce){ .modalBox{ animation:none !important; } }
+
+  /* Coach / Manager switch */
+  .modeSwitch{ display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--nav-on-bg, rgba(0,0,0,.06)); margin:0 0 10px; }
+  .modeSwitch button{ flex:1; border:none; background:transparent; color:var(--ink-soft); font-family:inherit; font-size:12px; font-weight:700; padding:8px 6px; border-radius:9px; cursor:pointer; transition:background-color .2s ease, color .2s ease, transform .28s var(--ease-out); }
+  .modeSwitch button:active{ transform:scale(.96); transition-duration:.06s; }
+  .modeSwitch button.active{ background:var(--panel); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.15); }
+  @media (prefers-reduced-motion: reduce){ .modeSwitch button:active{ transform:none; } }
 </style>
 </head>
 <body>
@@ -983,6 +990,10 @@ function t(k, loc){ return STR[k]?.[loc] || STR[k]?.el || k; }
 
 // ---------- Global state ----------
 let session = null, profile = null, locale = 'el', view = 'dashboard', selectedClient = null;
+// Coach/Manager mode: the same account, two workspaces. Coach = clients and training; Manager = business tools.
+let managerMode = false; try{ managerMode = localStorage.getItem('hfp_mgr')==='1'; }catch(e){}
+const MODE_COACH_ONLY = ['dashboard','library','templates','availability','groupclasses'];
+const MODE_MANAGER_ONLY = ['business','leads','packages','sops','studio','partners','projection','courses','directory'];
 
 function el(html){ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstChild; }
 // ── Line icons (same style as the website icons): replace emoji for display only. ──
@@ -1700,6 +1711,7 @@ function switchView(v){
 function renderShell(){
   const isOwner = profile.role === 'owner';
   const isCoach = profile.role === 'coach' || isOwner;
+  if(isCoach && managerMode && view==='dashboard' && !selectedClient) view = 'business';
   const app = document.getElementById('app');
   app.innerHTML = '';
   const shell = el(`<div id="shell">
@@ -1712,6 +1724,7 @@ function renderShell(){
       <button id="menuToggleBtn" aria-label="${locale==='el'?'Άνοιγμα μενού':'Open menu'}">☰</button>
       <button id="notifBell" aria-label="${locale==='el'?'Ειδοποιήσεις':'Notifications'}">🔔<span class="dot" id="notifDot"></span></button>
       <div class="navBtnsWrap" id="navBtnsWrap">
+      ${isCoach ? `<div class="modeSwitch" role="group" aria-label="${locale==='el'?'Λειτουργία':'Mode'}"><button type="button" data-mode="coach">🏋️ Coach</button><button type="button" data-mode="manager">🧭 Manager</button></div>` : ''}
       <button class="navBtn ${view==='dashboard'?'active':''}" data-v="dashboard">${isCoach ? t('clients',locale) : t('dashboard',locale)}</button>
       <button class="navBtn ${view==='library'?'active':''}" data-v="library">${t('exerciseLibrary',locale)}</button>
       ${isCoach ? `<button class="navBtn ${view==='business'?'active':''}" data-v="business">📊 ${locale==='el'?'Επιχείρηση':'Business'}</button>` : ''}
@@ -1764,7 +1777,10 @@ function renderShell(){
     ${isCoach ? `<nav id="bottomTabBar">
       <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${t('clients',locale)}</span></button>
       <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
+      <button class="bottomTab ${view==='business'?'active':''}" data-v="business" style="display:none;"><span class="ico">📊</span><span class="lbl">${locale==='el'?'Επιχείρηση':'Business'}</span></button>
+      <button class="bottomTab ${view==='leads'?'active':''}" data-v="leads" style="display:none;"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>
       <button class="bottomTab ${view==='studio'?'active':''}" data-v="studio"><span class="ico">🧭</span><span class="lbl">Studio</span></button>
+      <button class="bottomTab" id="bottomModeBtn"><span class="ico">🔁</span><span class="lbl"></span></button>
       <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
     </nav>` : ''}
   </div>`);
@@ -1794,6 +1810,30 @@ function renderShell(){
     if(existing){ existing.remove(); return; }
     renderNotifPanel(shell.querySelector('#notifBell'), isCoach);
   });
+  if(isCoach){
+    const applyMode = ()=>{
+      shell.querySelectorAll('.navBtn[data-v], .bottomTab[data-v]').forEach(b=>{
+        const v = b.dataset.v;
+        const hide = managerMode ? MODE_COACH_ONLY.includes(v) : MODE_MANAGER_ONLY.includes(v) && b.classList.contains('bottomTab') && v!=='studio';
+        // sidebar: show everything in its own mode; the phone bottom bar keeps Studio in both modes
+        const hideNav = b.classList.contains('navBtn') ? (managerMode ? MODE_COACH_ONLY.includes(v) : MODE_MANAGER_ONLY.includes(v)) : hide;
+        b.style.display = hideNav ? 'none' : '';
+      });
+      shell.querySelectorAll('.modeSwitch button').forEach(b=>b.classList.toggle('active', (b.dataset.mode==='manager')===managerMode));
+      const mb = shell.querySelector('#bottomModeBtn');
+      if(mb){ mb.querySelector('.lbl').textContent = managerMode ? '🏋️ Coach' : '🧭 Manager'; mb.querySelector('.ico').textContent = '🔁'; }
+    };
+    const setMode = (m)=>{
+      managerMode = (m==='manager');
+      try{ localStorage.setItem('hfp_mgr', managerMode?'1':'0'); }catch(e){}
+      applyMode();
+      switchView(managerMode ? 'business' : 'dashboard');
+    };
+    shell.querySelectorAll('.modeSwitch button').forEach(b=>b.addEventListener('click', ()=>{ if((b.dataset.mode==='manager')!==managerMode) setMode(b.dataset.mode); }));
+    const mbtn = shell.querySelector('#bottomModeBtn');
+    if(mbtn) mbtn.addEventListener('click', ()=>setMode(managerMode?'coach':'manager'));
+    applyMode();
+  }
   startNotifWatcher(isCoach);
   shell.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', ()=>showLegalModal(a.dataset.legal)));
 
@@ -4083,7 +4123,7 @@ async function renderLibrary(main, isCoach){
   main.innerHTML = '';
   const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
     <h2>${t('exerciseLibrary',locale)}</h2>
-    ${isCoach ? `<span style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary" id="exportExBtn" style="font-size:12px;">⬇ ${locale==='el'?'Εξαγωγή ασκήσεων':'Export exercises'}</button><button class="btn secondary" id="bulk3dBtn" style="font-size:12px;">🧊 ${locale==='el'?'Πρόταση 3D για όλες':'Suggest 3D for all'}</button><button class="btn" id="newExBtn">${t('newExercise',locale)}</button></span>` : ''}
+    ${isCoach ? `<span style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary" id="exportExBtn" style="font-size:12px;">⬇ ${locale==='el'?'Εξαγωγή ασκήσεων':'Export exercises'}</button><button class="btn secondary" id="bulk3dBtn" style="font-size:12px;">🧊 ${locale==='el'?'Πρόταση 3D για όλες':'Suggest 3D for all'}</button><button class="btn secondary" id="aiTagBtn" style="font-size:12px;">🤖 ${locale==='el'?'Συμπλήρωση με AI':'Fill with AI'}</button><button class="btn" id="newExBtn">${t('newExercise',locale)}</button></span>` : ''}
   </div>`);
   main.appendChild(header);
 
@@ -4100,6 +4140,51 @@ async function renderLibrary(main, isCoach){
       const blob = new Blob([JSON.stringify(rows,null,1)], {type:'application/json'});
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'happyfit_exercises_'+new Date().toISOString().slice(0,10)+'.json';
       document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    });
+    // AI fills only the EMPTY equipment / region / level fields. Nothing is saved until the coach ticks and applies.
+    header.querySelector('#aiTagBtn').addEventListener('click', async ()=>{
+      const el_ = locale==='el';
+      const btn = header.querySelector('#aiTagBtn'); const label = btn.textContent;
+      btn.disabled = true; btn.textContent = '⏳ …';
+      let res;
+      try{ res = await supabase.functions.invoke('tag-exercises', { body: {} }); }catch(e){ res = { error:e }; }
+      btn.disabled = false; btn.textContent = label;
+      const d = res && res.data;
+      if(!d || d.error || res.error){
+        toast(el_ ? (d?.error==='rate_limited' ? 'Πολλά αιτήματα, δοκίμασε σε λίγο.' : 'Η συμπλήρωση με AI δεν είναι διαθέσιμη (έχει γίνει deploy η tag-exercises;).') : 'AI fill unavailable.');
+        return;
+      }
+      const sug = d.suggestions || [];
+      if(!sug.length){ toast(el_ ? (d.checked ? 'Το AI δεν βρήκε με ασφάλεια κάτι να συμπληρώσει.' : 'Όλες οι ασκήσεις έχουν ήδη εξοπλισμό, περιοχή και επίπεδο.') : 'Nothing to fill.'); return; }
+      const nameOf = id => (exercises.find(e=>e.id===id)||{}).name_el || '';
+      const rows = sug.map((x, i)=>`<label style="display:flex; gap:8px; align-items:flex-start; padding:7px 0; border-bottom:1px solid var(--line); font-size:12.5px;">
+          <input type="checkbox" class="aiTagChk" data-i="${i}" checked style="margin-top:3px;">
+          <span><strong>${escapeHtml(x.name || nameOf(x.id))}</strong><br><span style="color:var(--ink-soft);">${[x.equipment?'🧰 '+escapeHtml(x.equipment):'', x.body_region?'📍 '+escapeHtml(x.body_region):'', x.difficulty_level?'📶 '+escapeHtml(x.difficulty_level):''].filter(Boolean).join(' · ')}</span></span></label>`).join('');
+      const overlay = el(`<div class="modalOverlay"><div class="modalBox" style="max-width:640px;">
+        <button class="modalCloseBtn" type="button">&times;</button>
+        <h2>🤖 ${el_?'Προτάσεις AI για τη βιβλιοθήκη':'AI suggestions for the library'}</h2>
+        <p style="font-size:12px; color:var(--ink-soft);">${el_?`Συμπληρώνονται μόνο πεδία που είναι κενά. Έλεγξε και ξετσέκαρε ό,τι δεν συμφωνείς. Δεν αποθηκεύεται τίποτα μέχρι να πατήσεις Εφαρμογή. (${sug.length} ασκήσεις)`:`Only empty fields are filled. Review and untick what you disagree with. Nothing is saved until you press Apply. (${sug.length} exercises)`}</p>
+        <div>${rows}</div>
+        <div style="display:flex; gap:8px; margin-top:14px;"><button class="btn aiTagApply" type="button">${el_?'Εφαρμογή επιλεγμένων':'Apply selected'}</button><button class="btn secondary aiTagCancel" type="button">${el_?'Άκυρο':'Cancel'}</button></div>
+      </div></div>`);
+      overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+      overlay.querySelector('.modalCloseBtn').addEventListener('click', ()=>overlay.remove());
+      overlay.querySelector('.aiTagCancel').addEventListener('click', ()=>overlay.remove());
+      overlay.querySelector('.aiTagApply').addEventListener('click', async ()=>{
+        const picked = [...overlay.querySelectorAll('.aiTagChk')].filter(c=>c.checked).map(c=>sug[Number(c.dataset.i)]);
+        if(!picked.length){ overlay.remove(); return; }
+        const ab = overlay.querySelector('.aiTagApply'); ab.disabled = true; ab.textContent = '⏳ …';
+        let fail = 0;
+        for(const x of picked){
+          const patch = {}; ['equipment','body_region','difficulty_level'].forEach(k=>{ if(x[k]) patch[k]=x[k]; });
+          const { error:err } = await supabase.from('exercises').update(patch).eq('id', x.id);
+          if(err) fail++;
+        }
+        overlay.remove();
+        toast(el_ ? (fail ? `Αποθηκεύτηκαν ${picked.length-fail}, απέτυχαν ${fail}` : `Αποθηκεύτηκαν ${picked.length} ασκήσεις`) : `${picked.length-fail} saved`);
+        renderLibrary(main, isCoach);
+      });
+      document.body.appendChild(overlay);
     });
     header.querySelector('#bulk3dBtn').addEventListener('click', async ()=>{
       const todo = exercises.map(e=>({e, s:(e.anim_pattern?null:ex3dSuggest(e))})).filter(x=>x.s);
@@ -4772,6 +4857,11 @@ async function renderCoachDashboard(main){
       if(n && Number(n.nps)<=6 && (Date.now()-new Date(n.date).getTime())/dayMs <= 45){
         list.push(locale==='el' ? `Χαμηλή ικανοποίηση (${n.nps}/10): άνοιξε συζήτηση` : `Low satisfaction (${n.nps}/10): start a conversation`);
       }
+    }
+    // Onboarding: a new client (2 to 30 days old) with no first call logged. Only once migration_onboarding.sql has run.
+    if((st==='active' || st==='trial') && ('onboarding_call_at' in c) && !c.onboarding_call_at && c.created_at){
+      const ageD = (Date.now()-new Date(c.created_at).getTime())/dayMs;
+      if(ageD>=2 && ageD<=30) list.push(locale==='el' ? 'Δεν έχει γίνει αρχική κλήση (πέρασαν 48 ώρες)' : 'No first call logged (48 hours passed)');
     }
     // Payment is tracked per calendar month and marked by hand; flag from the 5th so a brand-new month isn't noise.
     if(paymentsTracked && st==='active' && c.monthly_price && !paidThisPeriod.has(c.id) && new Date().getDate()>=5){
@@ -5515,7 +5605,7 @@ async function renderStudioView(main){
   main.appendChild(el(`<h2 style="margin-bottom:6px;">🧭 Studio</h2>`));
   main.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">${L('Ο προσωπικός σου χώρος για στόχους, περιεχόμενο και οικονομικά. Τον βλέπεις μόνο εσύ· οι πελάτες δεν έχουν πρόσβαση.','Your private space for goals, content and finances. Only you can see it; clients have no access.')}</p>`));
   const tabs = el('<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;"></div>');
-  [['tasks',L('🎯 Στόχοι & Tasks','🎯 Goals & Tasks')],['content',L('🎬 Περιεχόμενο','🎬 Content')],['money',L('💶 Οικονομικά','💶 Finance')]].forEach(([k,lbl])=>{
+  [['tasks',L('🎯 Στόχοι & Tasks','🎯 Goals & Tasks')],['meetings',L('📞 Meetings','📞 Meetings')],['content',L('🎬 Περιεχόμενο','🎬 Content')],['top',L('🏆 Top','🏆 Top')],['stories',L('📸 Stories','📸 Stories')],['money',L('💶 Οικονομικά','💶 Finance')]].forEach(([k,lbl])=>{
     const b = el(`<button class="btn ${tab===k?'':'secondary'}" type="button">${lbl}</button>`);
     b.addEventListener('click', ()=>{ renderStudioView._tab = k; renderStudioView(main); });
     tabs.appendChild(b);
@@ -5615,10 +5705,48 @@ async function renderStudioView(main){
       { k:'status', label:L('Κατάσταση','Status'), type:'select', options:STAT },
       { k:'hook', label:'Hook', type:'textarea' },
       { k:'notes', label:L('Σημειώσεις','Notes'), type:'textarea' },
+      { k:'views', label:L('Προβολές (μετά τη δημοσίευση)','Views (after posting)'), type:'number' },
+      { k:'likes', label:L('Likes','Likes'), type:'number' },
+      { k:'saves', label:L('Αποθηκεύσεις','Saves'), type:'number' },
     ];
     const HF = [ { k:'text', label:'Hook', type:'textarea' }, { k:'topic', label:L('Θέμα','Topic') } ];
     holder.appendChild(newBtn(L('Νέο περιεχόμενο','New content'), ()=>openForm('content', CF, null, { platform:'Instagram', status:'idea', date:today }, ['title'])));
     holder.appendChild(newBtn(L('Νέο hook','New hook'), ()=>openForm('hook', HF, null, null, ['text'])));
+    holder.appendChild(newBtn('🤖 '+L('Ιδέες με AI','Ideas with AI'), ()=>{
+      const panel = el(`<div class="card gold" style="margin-bottom:12px;">
+        <div class="field"><label>${L('Θέμα (π.χ. πόνος στο γόνατο στο squat)','Topic (e.g. knee pain in squats)')}</label><input class="gTopic" maxlength="300"></div>
+        <div class="field"><label>${L('Πλατφόρμα','Platform')}</label><select class="gPlat"><option>Instagram</option><option>TikTok</option><option>YouTube</option></select></div>
+        <div style="display:flex; gap:8px;"><button class="btn gGo" type="button">${L('Δημιούργησε ιδέες','Generate ideas')}</button><button class="btn secondary gX" type="button">${L('Κλείσιμο','Close')}</button></div>
+        <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${L('Το AI προτείνει μόνο διατυπώσεις. Έλεγξε ότι δεν υπάρχουν ιατρικοί ισχυρισμοί ή υποσχέσεις αποτελέσματος πριν δημοσιεύσεις.','The AI only suggests wording. Check there are no medical claims or promised results before posting.')}</p>
+        <div class="gOut" style="margin-top:10px;"></div></div>`);
+      panel.querySelector('.gX').addEventListener('click', ()=>{ formBox.innerHTML=''; });
+      panel.querySelector('.gGo').addEventListener('click', async (e)=>{
+        const topic = panel.querySelector('.gTopic').value.trim();
+        if(!topic){ toast(L('Γράψε πρώτα ένα θέμα','Write a topic first')); return; }
+        const btn = e.target; btn.disabled = true; const lab = btn.textContent; btn.textContent = '⏳ …';
+        let res; try{ res = await supabase.functions.invoke('content-ideas', { body:{ topic, platform: panel.querySelector('.gPlat').value, count:5 } }); }catch(err){ res = { error:err }; }
+        btn.disabled = false; btn.textContent = lab;
+        const d = res && res.data;
+        if(!d || d.error || res.error){ toast(L(d?.error==='rate_limited' ? 'Πολλά αιτήματα, δοκίμασε σε λίγο.' : 'Το AI δεν είναι διαθέσιμο (έχει γίνει deploy η content-ideas;).', 'AI unavailable.'), 3500); return; }
+        const out = panel.querySelector('.gOut'); out.innerHTML = '';
+        if(!(d.ideas||[]).length){ out.appendChild(empty(L('Δεν βγήκαν ιδέες, δοκίμασε άλλη διατύπωση.','No ideas, try another wording.'))); return; }
+        d.ideas.forEach(i=>{
+          const c = el(`<div style="border-top:1px solid var(--line); padding:8px 0;"><div style="font-size:13.5px; font-weight:700;">“${escapeHtml(i.hook)}”</div>
+            <div style="font-size:12px; color:var(--ink-soft); margin:3px 0 6px;">${escapeHtml(i.angle||'')}</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary iHook" type="button" style="padding:5px 12px; font-size:11px;">${L('Σώσε hook','Save hook')}</button><button class="btn secondary iPlan" type="button" style="padding:5px 12px; font-size:11px;">${L('Στο πλάνο','Add to plan')}</button></div></div>`);
+          const save = async (kind, data, btnEl)=>{
+            btnEl.disabled = true;
+            const { error: e5 } = await supabase.from('studio_items').insert({ kind, owner_id: profile.id, data, updated_at:new Date().toISOString() });
+            if(e5){ toast(L('Σφάλμα: ','Error: ')+e5.message); btnEl.disabled = false; return; }
+            toast(t('saved',locale)); btnEl.textContent = '✓';
+          };
+          c.querySelector('.iHook').addEventListener('click', ev=>save('hook', { text:i.hook, topic }, ev.target));
+          c.querySelector('.iPlan').addEventListener('click', ev=>save('content', { title:i.hook.slice(0,80), hook:i.hook, notes:i.angle||'', platform:panel.querySelector('.gPlat').value, status:'idea', date:today }, ev.target));
+          out.appendChild(c);
+        });
+      });
+      formBox.innerHTML=''; formBox.appendChild(panel); panel.scrollIntoView({ behavior: SCROLL_BEHAVIOR(), block:'center' });
+    }));
     holder.appendChild(formBox); holder.appendChild(listBox);
     const items = byKind('content').sort((a,b)=>String(a.data.date||'9999').localeCompare(String(b.data.date||'9999')));
     listBox.appendChild(el(`<h4 class="libGroup">${L('Πλάνο περιεχομένου','Content plan')}</h4>`));
@@ -5640,6 +5768,75 @@ async function renderStudioView(main){
         <div style="display:flex; gap:8px; margin-top:8px;"><button class="btn secondary hCopy" type="button" style="padding:5px 12px; font-size:11px;">${L('Αντιγραφή','Copy')}</button></div></div>`);
       card.querySelector('.hCopy').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(r.data.text||''); toast(L('Αντιγράφηκε','Copied')); }catch(_){ toast(L('Δεν έγινε αντιγραφή','Could not copy')); } });
       card.appendChild(actionBtns(r, ()=>openForm('hook', HF, r, null, ['text'])));
+      listBox.appendChild(card);
+    });
+  }
+
+  const safeUrl = u => /^https?:\/\//i.test(String(u||'').trim()) ? String(u).trim() : '';
+
+  if(tab==='meetings'){
+    const MTF = [
+      { k:'title', label:L('Τίτλος κλήσης','Call title') },
+      { k:'with', label:L('Με ποιον','With whom') },
+      { k:'date', label:L('Ημερομηνία','Date'), type:'date' },
+      { k:'time', label:L('Ώρα','Time'), type:'time' },
+      { k:'link', label:L('Link κλήσης (Meet, Zoom ή άλλο, https://...)','Call link (Meet, Zoom, https://...)') },
+      { k:'notes', label:L('Σημειώσεις','Notes'), type:'textarea' },
+    ];
+    holder.appendChild(newBtn(L('Νέα κλήση','New call'), ()=>openForm('meeting', MTF, null, { date:today }, ['title'])));
+    holder.appendChild(formBox); holder.appendChild(listBox);
+    const items = byKind('meeting').sort((a,b)=>(String(a.data.date||'9999')+String(a.data.time||'')).localeCompare(String(b.data.date||'9999')+String(b.data.time||'')));
+    const upcoming = items.filter(r=>String(r.data.date||'9999')>=today), past = items.filter(r=>String(r.data.date||'9999')<today).reverse();
+    const draw = (arr, title)=>{
+      listBox.appendChild(el(`<h4 class="libGroup">${title}</h4>`));
+      if(!arr.length) listBox.appendChild(empty(L('Καμία.','None.')));
+      arr.forEach(r=>{
+        const d = r.data, link = safeUrl(d.link);
+        const card = el(`<div class="card"><div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;"><strong>📞 ${escapeHtml(d.title||'')}</strong><span style="font-size:12px;">${escapeHtml(d.date||'')} ${escapeHtml(d.time||'')}</span></div>
+          ${d.with?`<div style="font-size:12px; color:var(--ink-soft);">${L('Με','With')}: ${escapeHtml(d.with)}</div>`:''}
+          ${d.notes?`<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(d.notes)}</div>`:''}
+          ${link?`<div style="display:flex; gap:8px; margin-top:8px;"><a class="btn" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" style="padding:5px 12px; font-size:11px; text-decoration:none;">${L('Άνοιγμα','Open')}</a><button class="btn secondary mCopy" type="button" style="padding:5px 12px; font-size:11px;">${L('Copy Link','Copy Link')}</button></div>`:''}</div>`);
+        const cb = card.querySelector('.mCopy');
+        if(cb) cb.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(link); toast(L('Αντιγράφηκε','Copied')); }catch(_){ toast(L('Δεν έγινε αντιγραφή','Could not copy')); } });
+        card.appendChild(actionBtns(r, ()=>openForm('meeting', MTF, r, null, ['title'])));
+        listBox.appendChild(card);
+      });
+    };
+    draw(upcoming, L('Επόμενες','Upcoming')); draw(past, L('Παλιότερες','Past'));
+  }
+
+  if(tab==='top'){
+    const posted = byKind('content').filter(r=>Number(r.data.views)>0 || Number(r.data.likes)>0 || Number(r.data.saves)>0);
+    const score = d => (Number(d.views)||0) + 5*(Number(d.saves)||0) + 2*(Number(d.likes)||0);
+    posted.sort((a,b)=>score(b.data)-score(a.data));
+    holder.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">${L('Τα posts με τα καλύτερα νούμερα. Βαθμός = προβολές + 2×likes + 5×αποθηκεύσεις. Συμπλήρωσε τα νούμερα στο tab Περιεχόμενο, με επεξεργασία του post.','Posts with the best numbers. Score = views + 2×likes + 5×saves. Fill in the numbers in the Content tab by editing a post.')}</p>`));
+    holder.appendChild(listBox);
+    if(!posted.length) listBox.appendChild(empty(L('Δεν έχεις ακόμα νούμερα. Άνοιξε ένα post στο Περιεχόμενο και βάλε προβολές, likes, αποθηκεύσεις.','No numbers yet. Edit a post in Content and add views, likes, saves.')));
+    posted.slice(0,15).forEach((r,i)=>{
+      const d = r.data;
+      listBox.appendChild(el(`<div class="card"><div style="display:flex; justify-content:space-between; gap:10px;"><strong>${i+1}. ${escapeHtml(d.title||'')}</strong><span class="mono" style="font-size:12px;">${score(d).toLocaleString('el-GR')}</span></div>
+        <div style="font-size:11.5px; color:var(--ink-soft);">${escapeHtml(d.platform||'')} · ${escapeHtml(d.date||'')} · 👁 ${Number(d.views)||0} · ❤️ ${Number(d.likes)||0} · 🔖 ${Number(d.saves)||0}</div>
+        ${d.hook?`<div style="font-size:12.5px; margin-top:4px;">“${escapeHtml(d.hook)}”</div>`:''}</div>`));
+    });
+  }
+
+  if(tab==='stories'){
+    const SF = [
+      { k:'title', label:L('Τίτλος / θέμα story','Story title / topic') },
+      { k:'date', label:L('Ημερομηνία','Date'), type:'date' },
+      { k:'link', label:L('Link (προαιρετικό, https://...)','Link (optional, https://...)') },
+      { k:'notes', label:L('Σημειώσεις / τι δούλεψε','Notes / what worked'), type:'textarea' },
+    ];
+    holder.appendChild(newBtn(L('Νέα story','New story'), ()=>openForm('story', SF, null, { date:today }, ['title'])));
+    holder.appendChild(formBox); holder.appendChild(listBox);
+    const items = byKind('story').sort((a,b)=>String(b.data.date||'').localeCompare(String(a.data.date||'')));
+    if(!items.length) listBox.appendChild(empty(L('Το αρχείο σου είναι άδειο. Κράτα εδώ τις stories που θες να ξαναχρησιμοποιήσεις.','Your archive is empty. Keep the stories you want to reuse here.')));
+    items.forEach(r=>{
+      const d = r.data, link = safeUrl(d.link);
+      const card = el(`<div class="card"><div style="display:flex; justify-content:space-between; gap:10px;"><strong>📸 ${escapeHtml(d.title||'')}</strong><span style="font-size:12px;">${escapeHtml(d.date||'')}</span></div>
+        ${d.notes?`<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(d.notes)}</div>`:''}
+        ${link?`<div style="margin-top:6px;"><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;">${L('Άνοιγμα link','Open link')}</a></div>`:''}</div>`);
+      card.appendChild(actionBtns(r, ()=>openForm('story', SF, r, null, ['title'])));
       listBox.appendChild(card);
     });
   }
@@ -5707,6 +5904,39 @@ async function renderClientDetail(main, forceRefresh){
   main.appendChild(back);
   const detailTitle = el(`<h2 style="margin-top:14px; margin-bottom:6px; display:flex; align-items:center;">${avatarPlaceholder(client.full_name, client.id, true)}<span>${escapeHtml(client.full_name)}</span></h2>`);
   main.appendChild(detailTitle); hydrateAvatars(detailTitle);
+
+  // Onboarding checklist for a new client: steps tick themselves from real data, except the first call
+  // which the coach marks by hand (clients.onboarding_call_at, see migration_onboarding.sql).
+  {
+    const el_ = locale==='el';
+    const ageD = client.created_at ? (Date.now()-new Date(client.created_at).getTime())/86400000 : 999;
+    const hasCol = ('onboarding_call_at' in client);
+    const steps = [
+      { done: !!intakeRow, label: el_?'Ιστορικό και στόχοι συμπληρώθηκαν':'Intake completed' },
+      { done: !!program, label: el_?'Πρόγραμμα φτιάχτηκε':'Program created' },
+      { done: !!client.onboarding_call_at, label: el_?'Αρχική κλήση έγινε':'First call done', manual:true },
+      { done: (checkins?.length||0)>0 || (readiness?.length||0)>0, label: el_?'Πρώτη καταγραφή από τον ασκούμενο':'First log from the client' },
+    ];
+    if(ageD<=45 && steps.some(x=>!x.done)){
+      const late = hasCol && !client.onboarding_call_at && ageD>=2;
+      const box = el(`<div class="card" style="margin:6px 0 14px; padding:12px 14px;">
+        <div style="font-weight:700; font-size:13px; margin-bottom:8px;">🚀 ${el_?'Onboarding νέου πελάτη':'New client onboarding'}</div>
+        ${steps.map(x=>`<div style="font-size:12.5px; padding:2px 0;">${x.done?'✅':'⬜'} ${escapeHtml(x.label)}</div>`).join('')}
+        ${late ? `<div style="font-size:11.5px; color:var(--danger); margin-top:6px;">${el_?'Πέρασαν 48 ώρες χωρίς αρχική κλήση.':'48 hours passed without a first call.'}</div>` : ''}
+        ${!client.onboarding_call_at ? `<button class="btn secondary onbCallBtn" type="button" style="margin-top:8px; font-size:12px; padding:7px 12px;">${el_?'✓ Η αρχική κλήση έγινε':'✓ First call done'}</button>` : ''}
+      </div>`);
+      const cb = box.querySelector('.onbCallBtn');
+      if(cb) cb.addEventListener('click', async ()=>{
+        if(!hasCol){ toast(el_?'Τρέξε πρώτα το migration_onboarding.sql στο Supabase.':'Run migration_onboarding.sql in Supabase first.', 3500); return; }
+        const now = new Date().toISOString();
+        const { error } = await supabase.from('clients').update({ onboarding_call_at: now }).eq('id', client.id);
+        if(error){ toast(error.message); return; }
+        client.onboarding_call_at = now;
+        renderClientDetail(main);
+      });
+      main.appendChild(box);
+    }
+  }
 
   // Quick status strip — same readiness-score formula used everywhere else in the app —
   // so a coach gets an at-a-glance read before picking a tab, instead of digging for it.
