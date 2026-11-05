@@ -384,11 +384,12 @@
   /* ── Fluid feel (Apple-style): instant press feedback, springy easing, translucent chrome ── */
   :root{ --ease-out:cubic-bezier(.22,1,.36,1); }
   html{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
-  button, a, select, summary, label, .card, .navBtn, .bottomTab, .clientCard, .optRow, .leadChip{ touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  button, a, select, summary, label, .card, .navBtn, .bottomTab, .cbn-btn, .clientCard, .optRow, .leadChip, .exPickRow{ touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   h1,h2{ letter-spacing:-.015em; }
   /* press feedback happens on touch-down and lets go with a soft spring */
-  .btn, .navBtn, .bottomTab, .clientCard, .optRow, .profileMenuRow, .setDone{ transition:transform .28s var(--ease-out), background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, opacity .2s ease; }
-  .btn:active, .bottomTab:active, .optRow:active, .profileMenuRow:active, .setDone:active{ transform:scale(.96); transition-duration:.06s; }
+  .btn, .navBtn, .bottomTab, .cbn-btn, .clientCard, .optRow, .profileMenuRow, .setDone, .exPickRow, .exPickBtn, .leadChip{ transition:transform .28s var(--ease-out), background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, opacity .2s ease; }
+  .btn:active, .bottomTab:active, .cbn-btn:active, .optRow:active, .profileMenuRow:active, .setDone:active, .exPickBtn:active, .leadChip:active{ transform:scale(.96); transition-duration:.06s; }
+  .exPickRow:active{ transform:scale(.985); transition-duration:.06s; }
   .clientCard:active{ transform:scale(.985); transition-duration:.06s; }
   .btn{ -webkit-user-select:none; user-select:none; }
   .btn:disabled{ opacity:.55; }
@@ -420,7 +421,7 @@
   html{ overscroll-behavior-y:contain; }
   @media (prefers-reduced-motion: reduce){
     #main.viewEnter > *{ animation:none; }
-    .btn:active, .bottomTab:active, .optRow:active, .profileMenuRow:active, .setDone:active, .clientCard:active{ transform:none; }
+    .btn:active, .bottomTab:active, .cbn-btn:active, .optRow:active, .profileMenuRow:active, .setDone:active, .exPickBtn:active, .exPickRow:active, .leadChip:active, .clientCard:active{ transform:none; }
     #toast{ transform:none; }
   }
   @media (prefers-reduced-transparency: reduce){
@@ -7601,17 +7602,46 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     <p style="font-size:11.5px; color:var(--ink-soft); margin:8px 0;">${locale==='el'?'Μία άσκηση ανά γραμμή: όνομα, σετ×επαναλήψεις, @φορτίο, προαιρετικά ss:A για superset. Γραμμή «Ημέρα 2:» αλλάζει ημέρα.':'One exercise per line: name, sets×reps, @load, optional ss:A for a superset. A line like "Day 2:" switches day.'}</p>
     <textarea class="qtText" rows="5" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:12px;" placeholder="Ημέρα 1:&#10;Squat 3x8-10 @40kg ss:A&#10;Γέφυρα γλουτών 3x12 ss:A&#10;Πλάκα 3x30"></textarea>
     <div class="qtPreview" style="margin:8px 0; font-size:12px;"></div>
-    <div style="display:flex; gap:8px;"><button class="btn secondary qtCheck" type="button">${locale==='el'?'Έλεγχος':'Check'}</button><button class="btn qtAdd" type="button" disabled>${locale==='el'?'Προσθήκη':'Add'}</button></div>
+    <div style="display:flex; gap:8px;"><button class="btn secondary qtCheck" type="button">${locale==='el'?'Έλεγχος':'Check'}</button><button class="btn secondary qtAi" type="button">🤖 ${locale==='el'?'Ανάλυση με AI':'Analyze with AI'}</button><button class="btn qtAdd" type="button" disabled>${locale==='el'?'Προσθήκη':'Add'}</button></div>
   </details>`);
   let qtValid = [];
-  quickBox.querySelector('.qtCheck').addEventListener('click', ()=>{
-    const rows = parseProgramText(quickBox.querySelector('.qtText').value, exercises, nextDayLabel);
+  function qtRender(rows, note){
     qtValid = rows.filter(r=>r.exercise);
     const prev = quickBox.querySelector('.qtPreview');
-    prev.innerHTML = rows.length ? rows.map(r=> r.exercise
+    prev.innerHTML = (note ? `<div style="color:var(--ink-soft); margin-bottom:6px;">🤖 ${escapeHtml(note)}</div>` : '') + (rows.length ? rows.map(r=> r.exercise
       ? `<div>✓ ${risky.get(r.exercise.id)?'⚠ ':''}<strong>${escapeHtml(locale==='el'?r.exercise.name_el:(r.exercise.name_en||r.exercise.name_el))}</strong> <span class="mono">· ${escapeHtml(r.day)} · ${r.sets} × ${escapeHtml(r.reps)}${r.load?' @ '+escapeHtml(r.load):''}${r.superset?' · 🔗'+escapeHtml(r.superset):''}</span></div>`
-      : `<div style="color:var(--danger);">✗ ${escapeHtml(r.raw)} <span style="font-size:11px;">(${escapeHtml(r.error)})</span></div>`).join('') : '—';
+      : `<div style="color:var(--danger);">✗ ${escapeHtml(r.raw)} <span style="font-size:11px;">(${escapeHtml(r.error)})</span></div>`).join('') : '—');
     quickBox.querySelector('.qtAdd').disabled = !qtValid.length;
+  }
+  quickBox.querySelector('.qtCheck').addEventListener('click', ()=>{
+    qtRender(parseProgramText(quickBox.querySelector('.qtText').value, exercises, nextDayLabel));
+  });
+  // AI draft: the model only picks exercises that exist in the library; the coach still reviews the preview.
+  quickBox.querySelector('.qtAi').addEventListener('click', async ()=>{
+    const text = quickBox.querySelector('.qtText').value.trim();
+    if(!text){ toast(locale==='el' ? 'Γράψε πρώτα τι θέλεις (π.χ. «3 ημέρες, ολόκληρο σώμα, λάστιχα»)' : 'Write what you want first'); return; }
+    const btn = quickBox.querySelector('.qtAi');
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = '⏳ …';
+    try{
+      const { data, error } = await supabase.functions.invoke('draft-program', { body: { text } });
+      if(error || !data || data.error){
+        const code = data?.error || '';
+        toast(locale==='el'
+          ? (code==='rate_limited' ? 'Πολλά αιτήματα, δοκίμασε σε λίγο.' : code==='empty_library' ? 'Η βιβλιοθήκη ασκήσεων είναι άδεια.' : 'Η ανάλυση AI δεν είναι διαθέσιμη. Χρησιμοποίησε «Έλεγχος».')
+          : 'AI analysis unavailable. Use Check.');
+        return;
+      }
+      const byId = new Map(exercises.map(e=>[e.id, e]));
+      const rows = (data.rows||[]).map((r, i)=>{
+        const exercise = byId.get(r.exercise_id) || null;
+        return { lineNo:i+1, raw:r.exercise_id, day:`Ημέρα ${r.day}`, sets:r.sets, reps:r.reps, load:r.load||'', superset:r.superset||null, exercise, error: exercise?null:'Δεν βρέθηκε στη βιβλιοθήκη' };
+      });
+      (data.unmatched||[]).forEach(u=> rows.push({ raw:u, error: locale==='el'?'Δεν αντιστοιχίστηκε σε άσκηση της βιβλιοθήκης':'No matching library exercise', exercise:null }));
+      qtRender(rows, data.notes);
+    }catch(e){
+      toast(locale==='el' ? 'Η ανάλυση AI δεν είναι διαθέσιμη. Χρησιμοποίησε «Έλεγχος».' : 'AI analysis unavailable. Use Check.');
+    }finally{ btn.disabled = false; btn.textContent = label; }
   });
   quickBox.querySelector('.qtAdd').addEventListener('click', async ()=>{
     if(!qtValid.length) return;
