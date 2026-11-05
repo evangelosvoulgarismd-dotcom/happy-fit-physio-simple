@@ -557,7 +557,7 @@
     #sidebar .tagline{ display:none; }
     .navBtnsWrap{ flex-direction:row !important; flex:1 1 auto; align-items:center; gap:4px; overflow-x:auto; scrollbar-width:none; min-width:0; }
     .navBtnsWrap::-webkit-scrollbar{ display:none; }
-    .navBtnsWrap .navBtn{ flex:0 0 auto; white-space:nowrap; padding:8px 14px; font-size:13px; }
+    .navBtnsWrap .navBtn{ flex:0 0 auto; white-space:nowrap; padding:8px 11px; font-size:12.5px; }
     .navBtnsWrap .modeSwitch{ flex:0 0 auto; margin:0 8px 0 0; }
     #notifBell{ margin-left:0; flex:0 0 auto; }
     #brandMark{ order:0; } .navBtnsWrap{ order:1; } #notifBell{ order:2; } #menuToggleBtn{ display:inline-flex; flex:0 0 auto; order:3; margin-left:0; }
@@ -2628,7 +2628,7 @@ async function renderDirectoryView(main){
   main.appendChild(reqBox);
 
   // ---- Events ----
-  const evBox = el(`<div class="card"><h3 style="font-size:15px; margin-bottom:4px;">🗓️ Events</h3>
+  const evBox = el(`<div class="card"><h3 style="font-size:15px; margin-bottom:4px;">🗓️ ${L('Εκδηλώσεις','Events')}</h3>
     <p style="font-size:11.5px; color:var(--ink-soft); margin-bottom:12px;">${L('Τα events εμφανίζονται δημόσια μόνο όταν το προφίλ σου είναι δημοσιευμένο. Η πληρωμή γίνεται απευθείας με εσένα, εκτός πλατφόρμας.','Events appear publicly only while your profile is published. Payment is made directly with you, outside the platform.')}</p>
     <form class="evForm">
       <div class="grid2">
@@ -5234,7 +5234,7 @@ async function renderCoachDashboard(main){
           <th>${locale==='el'?'Κατάσταση':'Status'}</th>
           <th>${locale==='el'?'Ασκούμενος':'Client'}</th>
           <th>${locale==='el'?'Στόχος':'Goal'}</th>
-          <th>Readiness</th>
+          <th>${locale==='el'?'Ετοιμότητα':'Readiness'}</th>
           <th>${t('pain',locale)}</th>
           <th>${locale==='el'?'Ύπνος':'Sleep'}</th>
           <th>${locale==='el'?'Συνέπεια':'Adherence'}</th>
@@ -5707,7 +5707,7 @@ async function renderStudioView(main){
   main.appendChild(el(`<h2 style="margin-bottom:6px;">🧭 Studio</h2>`));
   main.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">${L('Ο προσωπικός σου χώρος για στόχους, περιεχόμενο και οικονομικά. Τον βλέπεις μόνο εσύ· οι πελάτες δεν έχουν πρόσβαση.','Your private space for goals, content and finances. Only you can see it; clients have no access.')}</p>`));
   const tabs = el('<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;"></div>');
-  [['tasks',L('🎯 Στόχοι & Tasks','🎯 Goals & Tasks')],['meetings',L('📞 Meetings','📞 Meetings')],['content',L('🎬 Περιεχόμενο','🎬 Content')],['top',L('🏆 Top','🏆 Top')],['stories',L('📸 Stories','📸 Stories')],['money',L('💶 Οικονομικά','💶 Finance')]].forEach(([k,lbl])=>{
+  [['tasks',L('🎯 Στόχοι & Tasks','🎯 Goals & Tasks')],['meetings',L('📞 Συναντήσεις','📞 Meetings')],['content',L('🎬 Περιεχόμενο','🎬 Content')],['top',L('🏆 Κορυφαία','🏆 Top')],['stories',L('📸 Stories','📸 Stories')],['money',L('💶 Οικονομικά','💶 Finance')]].forEach(([k,lbl])=>{
     const b = el(`<button class="btn ${tab===k?'':'secondary'}" type="button">${lbl}</button>`);
     b.addEventListener('click', ()=>{ renderStudioView._tab = k; renderStudioView(main); });
     tabs.appendChild(b);
@@ -6098,8 +6098,8 @@ async function renderClientDetail(main, forceRefresh){
   else if(tab==='business') renderBusinessTab(body, client, ()=>renderClientDetail(main, true));
   else if(tab==='checkins'){
     renderCheckinForm(body, checkins, client.id);
-    renderTrendChart(body, locale==='el'?'Adherence % & Ενέργεια ανά check-in':'Adherence % & Energy per check-in', checkins, 'date', [
-      {key:'adherence', label:'Adherence %'}, {key:'avg_energy', label:locale==='el'?'Ενέργεια':'Energy'},
+    renderTrendChart(body, locale==='el'?'Συνέπεια % & Ενέργεια ανά check-in':'Adherence % & Energy per check-in', checkins, 'date', [
+      {key:'adherence', label:locale==='el'?'Συνέπεια %':'Adherence %'}, {key:'avg_energy', label:locale==='el'?'Ενέργεια':'Energy'},
     ]);
     renderHistTable(body, checkins, ['date','sessions_completed','avg_sleep','avg_energy','pain_level','adherence']);
   }
@@ -6490,7 +6490,7 @@ async function renderReassessmentTab(body, client, isCoach){
   if(isCoach && (readiness?.length || checkins?.length)){
     body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Δες τις τάσεις πριν αποφασίσεις':'Review trends before deciding'}</p>`));
     if(readiness?.length) renderTrendChart(body, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [{key:'pain', label:locale==='el'?'Πόνος':'Pain', color:'#c4201f'}]);
-    if(checkins?.length) renderTrendChart(body, locale==='el'?'Συνέπεια %':'Adherence %', checkins, 'date', [{key:'adherence', label:'Adherence %', color:'#8f1615'}]);
+    if(checkins?.length) renderTrendChart(body, locale==='el'?'Συνέπεια %':'Adherence %', checkins, 'date', [{key:'adherence', label:locale==='el'?'Συνέπεια %':'Adherence %', color:'#8f1615'}]);
   }
 
   // Re-rate the client's own PSFS activities as part of this reassessment (same up to
@@ -7602,9 +7602,11 @@ async function renderMessagesTab(body, client, viewerRole){
   }, 15000);
 }
 
+const HIST_LBL = {date:['Ημερομηνία','Date'], sessions_completed:['Προπονήσεις','Sessions completed'], avg_sleep:['Μέσος ύπνος','Avg sleep'], avg_energy:['Μέση ενέργεια','Avg energy'], pain_level:['Πόνος','Pain level'], adherence:['Συνέπεια %','Adherence %'], sleep:['Ύπνος','Sleep'], energy:['Ενέργεια','Energy'], stress:['Στρες','Stress'], pain:['Πόνος','Pain'], perceived_capacity:['Αντιληπτή ικανότητα','Perceived capacity']};
+const histLbl = c => (HIST_LBL[c] ? HIST_LBL[c][locale==='el'?0:1] : c);
 function renderHistTable(body, rows, cols){
   if(!rows?.length){ body.appendChild(el(`<p>—</p>`)); return; }
-  const table = el(`<table class="hist"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>
+  const table = el(`<table class="hist"><thead><tr>${cols.map(c=>`<th>${histLbl(c)}</th>`).join('')}</tr></thead><tbody>
     ${rows.map(r=>`<tr>${cols.map(c=>`<td class="mono">${r[c]??''}</td>`).join('')}</tr>`).join('')}
   </tbody></table>`);
   body.appendChild(el('<div class="card tableScroll"></div>')).appendChild(table);
@@ -9897,8 +9899,8 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   ]);
 
   // ADHERENCE
-  renderTrendChart(detailPanels.adherence, 'Adherence %', checkins, 'date', [
-    {key:'adherence', label:'Adherence %'},
+  renderTrendChart(detailPanels.adherence, locale==='el'?'Συνέπεια %':'Adherence %', checkins, 'date', [
+    {key:'adherence', label:locale==='el'?'Συνέπεια %':'Adherence %'},
   ]);
   renderHistTable(detailPanels.adherence, checkins, ['date','sessions_completed','adherence']);
 }
@@ -9962,7 +9964,7 @@ function renderCheckinForm(body, existing, clientId){
     ['avg_stress', {el:'Στρες', en:'Stress'}, 0,10], ['avg_energy', {el:'Ενέργεια', en:'Energy'}, 0,10],
     ['avg_soreness', {el:'Πιάσιμο', en:'Soreness'}, 0,10], ['avg_motivation', {el:'Κίνητρο', en:'Motivation'}, 0,10],
     ['pain_level', {el:'Πόνος', en:'Pain'}, 0,10], ['difficulty', {el:'Δυσκολία', en:'Difficulty'}, 0,10],
-    ['adherence', {el:'Adherence %', en:'Adherence %'}, 0,100],
+    ['adherence', {el:'Συνέπεια %', en:'Adherence %'}, 0,100],
   ];
   const textLabels = {
     problem_exercise: {el:'Άσκηση που δημιούργησε πρόβλημα', en:'Exercise that caused a problem'},
