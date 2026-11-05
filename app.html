@@ -2346,9 +2346,9 @@ async function renderTemplatesView(main){
 
   header.querySelector('#newTplBtn').addEventListener('click', ()=>{
     const form = el(`<form class="card gold">
-      <div class="field"><label>${locale==='el'?'Τίτλος προτύπου':'Template title'}</label><input class="tpl_title" required placeholder="π.χ. Επιστροφή στη δραστηριότητα, Ποδόσφαιρο"></div>
+      <div class="field"><label>${locale==='el'?'Τίτλος προτύπου':'Template title'}</label><input class="tpl_title" required placeholder="${locale==='el'?'π.χ. Επιστροφή στη δραστηριότητα, Ποδόσφαιρο':'e.g. Return to activity, Football'}"></div>
       <div class="grid2">
-        <div class="field"><label>${t('sport',locale)}</label><input class="tpl_sport" placeholder="π.χ. Ποδόσφαιρο"></div>
+        <div class="field"><label>${t('sport',locale)}</label><input class="tpl_sport" placeholder="${locale==='el'?'π.χ. Ποδόσφαιρο':'e.g. Football'}"></div>
         <div class="field"><label>${t('pathway',locale)}</label>
           <select class="tpl_pathway">
             <option value="">—</option>
@@ -2363,7 +2363,7 @@ async function renderTemplatesView(main){
       await supabase.from('program_templates').insert({
         coach_id: profile.id,
         title: form.querySelector('.tpl_title').value.trim(),
-        sport: form.querySelector('.tpl_sport').value.trim() || null,
+        sport: unTerm(form.querySelector('.tpl_sport').value) || null,
         pathway: form.querySelector('.tpl_pathway').value || null,
       });
       renderTemplatesView(main);
@@ -2981,6 +2981,7 @@ async function renderGroupClassesView(main){
 
 // Stored values such as pathway/sport/location are saved in Greek; show them in the active language.
 const TERM_EN = {"Όχι":"No","Ναι":"Yes","Δεν είμαι σίγουρος/η":"I am not sure","Ναι, συναινώ":"Yes, I consent","Ναι, είμαι άνω των 18":"Yes, I am over 18","Πόνος ή ενόχληση":"Pain or discomfort","Κάκωση ή τραυματισμός":"Injury","Επιστροφή μετά από τραυματισμό":"Return after injury","Βελτίωση φυσικής κατάστασης":"Improve fitness","Αύξηση δύναμης":"Increase strength","Αθλητική απόδοση":"Sports performance","Εγκυμοσύνη ή λοχεία":"Pregnancy or postpartum","Άλλο":"Other","Σπονδυλική στήλη":"Spine","Ώμος και ωμική ζώνη":"Shoulder and shoulder girdle","Αγκώνας και αντιβράχιο":"Elbow and forearm","Καρπός και χέρι":"Wrist and hand","Ισχίο":"Hip","Γόνατο":"Knee","Ποδοκνημική και πόδι":"Ankle and foot","Άσκηση για ηλικιωμένους":"Exercise for older adults","Υγεία της γυναίκας":"Women's health","Χωρίς συμπτώματα":"No symptoms","Λιγότερο από 2 εβδομάδες":"Less than 2 weeks","2–6 εβδομάδες":"2–6 weeks","Πάνω από 6 εβδομάδες":"More than 6 weeks","Επαναλαμβανόμενο πρόβλημα":"Recurring problem","Όχι, δεν αναφέρω κάτι ανησυχητικό":"No, I report nothing concerning","Ναι, υπάρχει κάτι ανησυχητικό":"Yes, there is something concerning","Μείωση συμπτωμάτων":"Reduce symptoms","Βελτίωση λειτουργικότητας":"Improve function","Βελτίωση κινητικότητας":"Improve mobility","Επιστροφή στην καθημερινότητα":"Return to daily life","Επιστροφή στην άθληση":"Return to sport","Πολύ καλή":"Very good","Καλή":"Good","Μέτρια":"Fair","Κακή":"Poor","Πολύ κακή":"Very poor","Χαμηλό":"Low","Μέτριο":"Moderate","Υψηλό":"High","Πολύ υψηλό":"Very high","Μυϊκή ανάπτυξη":"Muscle growth","Απώλεια λίπους":"Fat loss","Μείωση ενοχλήσεων":"Reduce discomfort","Επιστροφή μετά τραυματισμό":"Return after injury",'Πρόληψη τραυματισμού':'Injury prevention','Ενδυνάμωση':'Strengthening','Επιστροφή στη δραστηριότητα':'Return to activity','Αποκατάσταση':'Rehabilitation','Απόδοση':'Performance','Γυμναστήριο':'Gym','Σπίτι':'Home','Εξωτερικός χώρος':'Outdoors','Μικτό':'Mixed','Ποδόσφαιρο':'Football','Τένις':'Tennis','Κολύμβηση':'Swimming','Γενική φυσική κατάσταση':'General fitness','Μπάσκετ':'Basketball','Βόλεϊ':'Volleyball','Τρέξιμο':'Running','Ποδηλασία':'Cycling'};
+const unTerm = v => { const x=String(v||'').trim(); const k=Object.keys(TERM_EN).find(g=>TERM_EN[g].toLowerCase()===x.toLowerCase()); return k||x; };
 const trTerm = v => {
   if(typeof locale!=='undefined' && locale==='el') return v;
   if(TERM_EN[v]) return TERM_EN[v];
@@ -6823,10 +6824,8 @@ function renderBusinessTab(body, client, onChanged){
     <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--red-text); margin-bottom:10px;">${t('clientProfile',locale)}</h4>
     <div class="grid2">
       <div class="field"><label>${t('sport',locale)}</label>
-        <input class="f_sport" list="sportList" value="${escapeHtml(client.sport||'')}" placeholder="${locale==='el'?'π.χ. Ποδόσφαιρο':'e.g. Football'}">
-        <datalist id="sportList">
-          <option value="Τρέξιμο"><option value="Ποδόσφαιρο"><option value="Μπάσκετ"><option value="Βόλεϊ">
-          <option value="Τένις"><option value="Κολύμβηση"><option value="Γενική φυσική κατάσταση">
+        <input class="f_sport" list="sportList" value="${escapeHtml(trTerm(client.sport||''))}" placeholder="${locale==='el'?'π.χ. Ποδόσφαιρο':'e.g. Football'}">
+        <datalist id="sportList">${['Τρέξιμο','Ποδόσφαιρο','Μπάσκετ','Βόλεϊ','Τένις','Κολύμβηση','Γενική φυσική κατάσταση'].map(v=>`<option value="${trTerm(v)}">`).join('')}
         </datalist>
       </div>
       <div class="field"><label>${t('pathway',locale)}</label>
@@ -6849,11 +6848,11 @@ function renderBusinessTab(body, client, onChanged){
     clearTimeout(profileTimer);
     profileTimer = setTimeout(async ()=>{
       await supabase.from('clients').update({
-        sport: profileCard.querySelector('.f_sport').value.trim() || null,
+        sport: unTerm(profileCard.querySelector('.f_sport').value) || null,
         pathway: profileCard.querySelector('.f_pathway').value || null,
       }).eq('id', client.id);
       profileStatusEl.textContent = t('saved',locale);
-      client.sport = profileCard.querySelector('.f_sport').value.trim();
+      client.sport = unTerm(profileCard.querySelector('.f_sport').value);
       client.pathway = profileCard.querySelector('.f_pathway').value;
     }, 600);
   }
