@@ -519,6 +519,15 @@
 .libGroup{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin:16px 2px 8px}
 .libSub{font-size:12px; color:var(--ink-soft); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .favBtn{background:none; border:0; font-size:20px; line-height:1; color:var(--gold, #e2a233); cursor:pointer; min-width:40px; min-height:40px; padding:0}
+
+  /* phones: dialogs rise from the bottom as sheets (see the drag-to-dismiss script) */
+  @keyframes sheetUp{from{transform:translateY(100%);}to{transform:none;}}
+  @media (max-width: 760px){
+    .modalOverlay{ align-items:flex-end; padding:0; }
+    .modalBox{ border-radius:26px 26px 0 0 !important; max-height:90vh; padding-bottom:calc(24px + env(safe-area-inset-bottom)); animation:sheetUp .34s var(--ease-out); overscroll-behavior:contain; }
+    .modalBox::before{ content:''; display:block; width:38px; height:5px; border-radius:3px; background:var(--line); margin:-14px auto 14px; }
+  }
+  @media (prefers-reduced-motion: reduce){ .modalBox{ animation:none !important; } }
 </style>
 </head>
 <body>
@@ -543,6 +552,47 @@ setTimeout(function(){
 <!-- Supabase client via CDN, no npm/build step needed -->
 <script type="module">
 const SCROLL_BEHAVIOR = () => (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
+// Phone sheets: drag a dialog down to dismiss. It follows the finger 1:1, then either leaves in the
+// direction of the throw or springs back. Only starts when the sheet is scrolled to the top.
+(function(){
+  const mq = window.matchMedia('(max-width: 760px)');
+  let box=null, ov=null, startY=0, dy=0, lastY=0, lastT=0, vel=0, active=false;
+  document.addEventListener('touchstart', e=>{
+    box=null;
+    if(!mq.matches || e.touches.length!==1) return;
+    const b = e.target.closest && e.target.closest('.modalBox');
+    if(!b || b.scrollTop>0) return;
+    box=b; ov=b.parentElement; startY=lastY=e.touches[0].clientY; lastT=performance.now(); dy=0; vel=0; active=false;
+  }, {passive:true});
+  document.addEventListener('touchmove', e=>{
+    if(!box) return;
+    const y=e.touches[0].clientY, now=performance.now();
+    dy=y-startY;
+    if(!active){
+      if(dy>10 && box.scrollTop<=0) active=true;
+      else { if(dy<-10) box=null; return; }
+    }
+    if(e.cancelable) e.preventDefault();
+    vel = (y-lastY)/Math.max(1, now-lastT)*1000; lastY=y; lastT=now;
+    const d=Math.max(0,dy);
+    box.style.animation='none'; box.style.transition='none'; box.style.transform='translateY('+d+'px)';
+    ov.style.opacity = String(1-Math.min(.7, d/(box.offsetHeight*1.2)));
+  }, {passive:false});
+  document.addEventListener('touchend', ()=>{
+    if(!box || !active){ box=null; return; }
+    const b=box, o=ov; box=null; active=false;
+    const projected = Math.max(0,dy) + (vel/1000)*0.99/(1-0.99);
+    if(projected > Math.min(140, b.offsetHeight*0.3)){
+      b.style.transition='transform .28s cubic-bezier(.22,1,.36,1)'; o.style.transition='opacity .28s ease';
+      b.style.transform='translateY('+b.offsetHeight+'px)'; o.style.opacity='0';
+      setTimeout(()=>o.remove(), 280);
+    } else {
+      b.style.transition='transform .35s cubic-bezier(.22,1,.36,1)'; o.style.transition='opacity .35s ease';
+      b.style.transform='translateY(0)'; o.style.opacity='1';
+      setTimeout(()=>{ b.style.transition=''; b.style.transform=''; b.style.animation=''; o.style.transition=''; o.style.opacity=''; }, 360);
+    }
+  }, {passive:true});
+})();
 import { createClient } from './supabase.js';
 
 // ============================================================
