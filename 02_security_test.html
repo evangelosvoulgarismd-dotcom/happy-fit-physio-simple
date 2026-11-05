@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Happy Fit Physio · Security test</title>
+<style>
+ body{font:15px/1.5 system-ui,sans-serif;max-width:860px;margin:24px auto;padding:0 16px;color:#1c1c1c;background:#faf7f3}
+ h1{font-size:22px} h2{font-size:16px;margin-top:22px} label{display:block;font-size:12.5px;margin-top:8px}
+ input{width:100%;padding:8px;border:1px solid #bbb;border-radius:6px;box-sizing:border-box}
+ .row{display:grid;grid-template-columns:1fr 1fr;gap:10px} button{margin-top:14px;padding:10px 16px;border:0;border-radius:6px;background:#c4201f;color:#fff;font-weight:700;cursor:pointer}
+ button.sec{background:#444} table{border-collapse:collapse;width:100%;margin-top:14px;font-size:13px} td,th{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+ .PASS{background:#e3f0e6}.FAIL{background:#fbdcdc;font-weight:700}.INFO{background:#fff2d9}.SKIP{background:#eee}
+ .warn{background:#fff2d9;padding:10px;border-radius:6px;font-size:13px}
+</style></head><body>
+<h1>Happy Fit Physio: τεστ ασφάλειας (τοπικό)</h1>
+<p class="warn"><strong>Πριν τρέξεις:</strong> χρησιμοποίησε ΜΟΝΟ δοκιμαστικούς λογαριασμούς (όχι πραγματικούς πελάτες). Άνοιξε αυτό το αρχείο με διπλό κλικ από τον υπολογιστή σου, μην το ανεβάσεις στο GitHub. Οι κωδικοί γράφονται μόνο εδώ, δεν αποθηκεύονται πουθενά και δεν περνούν από εμένα. Το τεστ προσπαθεί να "επιτεθεί" στα δεδομένα των δοκιμαστικών λογαριασμών (π.χ. να αλλάξει ρόλο).</p>
+<h2>Σύνδεση project</h2>
+<div class="row"><div><label>Supabase URL</label><input id="url" value="https://hxbpuamzisdldwbuumda.supabase.co"></div>
+<div><label>Publishable (anon) key</label><input id="key" value="sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH"></div></div>
+<h2>Δοκιμαστικοί λογαριασμοί</h2>
+<div class="row"><div><label>Πελάτης Α, email</label><input id="ae" type="email" autocomplete="off"></div><div><label>Πελάτης Α, κωδικός</label><input id="ap" type="password" autocomplete="off"></div>
+<div><label>Πελάτης Β, email (άλλος πελάτης, ίδιου ή άλλου coach)</label><input id="be" type="email" autocomplete="off"></div><div><label>Πελάτης Β, κωδικός</label><input id="bp" type="password" autocomplete="off"></div>
+<div><label>Coach Γ, email (προαιρετικό, δοκιμαστικός συνεργάτης)</label><input id="ce" type="email" autocomplete="off"></div><div><label>Coach Γ, κωδικός</label><input id="cp" type="password" autocomplete="off"></div></div>
+<label><input type="checkbox" id="ok" style="width:auto"> Επιβεβαιώνω ότι οι λογαριασμοί είναι δοκιμαστικοί</label>
+<button id="run">Τρέξε τα τεστ</button> <button class="sec" id="dl" disabled>Κατέβασε αποδεικτικό (JSON)</button>
+<table id="out"><thead><tr><th>#</th><th>Τεστ</th><th>Αποτέλεσμα</th><th>Λεπτομέρεια</th></tr></thead><tbody></tbody></table>
+<p id="sum"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const results = []; let n = 0;
+function add(name, status, detail){ n++; results.push({n, name, status, detail, at:new Date().toISOString()});
+  const tr = document.createElement('tr'); tr.className = status;
+  [n, name, status, detail||''].forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+  $('out').tBodies[0].appendChild(tr); }
+const mk = () => supabase.createClient($('url').value.trim(), $('key').value.trim(), { auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false } });
+const ownerCols = ['client_id','profile_id','user_id'];
+const HEALTH = ['clients','client_intake','checkins','readiness_logs','session_logs','messages','progress_photos','psfs_entries','nutrition_logs','nutrition_targets','reassessments','client_payments','massage_requests','ai_coach_interactions','ai_coach_summaries','session_feedback','client_testimonials','consents','push_subscriptions','client_reminder_settings','course_enrollments','group_class_bookings','profiles'];
+const rowsOf = r => (r.data||[]);
+async function login(email, pass){ const c = mk(); const { data, error } = await c.auth.signInWithPassword({ email, password: pass }); if(error) return { error }; return { c, user: data.user }; }
+
+async function anonTests(){
+  const c = mk();
+  for(const t of HEALTH){
+    const r = await c.from(t).select('*').limit(5);
+    const cnt = rowsOf(r).length;
+    add('Ανώνυμος διαβάζει '+t, cnt===0 ? 'PASS':'FAIL', r.error ? 'απορρίφθηκε: '+r.error.message : (cnt? cnt+' γραμμές ορατές χωρίς σύνδεση' : '0 γραμμές'));
+  }
+  for(const t of ['leads','massage_inquiries','directory_requests','invite_codes','coach_invite_codes','client_payments','partner_charges']){
+    const r = await c.from(t).select('*').limit(5); const cnt = rowsOf(r).length;
+    add('Ανώνυμος διαβάζει '+t+(t.includes('invite')?' (απαρίθμηση κωδικών)':''), cnt===0?'PASS':'FAIL', r.error?'απορρίφθηκε: '+r.error.message:(cnt?cnt+' γραμμές ορατές':'0 γραμμές'));
+  }
+  const rpc = await c.rpc('list_my_enrollments', { p_email: 'nobody-'+Date.now()+'@example.invalid' });
+  add('RPC list_my_enrollments με τυχαίο email', (rpc.data||[]).length===0?'PASS':'FAIL', rpc.error?rpc.error.message:'γραμμές: '+(rpc.data||[]).length);
+  try{
+    const res = await fetch($('url').value.trim()+'/functions/v1/ask-assistant',{method:'POST',headers:{'Content-Type':'application/json',apikey:$('key').value.trim(),Authorization:'Bearer '+$('key').value.trim()},body:JSON.stringify({})});
+    add('Edge function ask-assistant χωρίς σύνδεση χρήστη', res.status===401?'PASS':'FAIL', 'HTTP '+res.status+(res.status===400?' (δεν ζητά σύνδεση: ανοιχτή σε οποιονδήποτε)':''));
+    const res2 = await fetch($('url').value.trim()+'/functions/v1/analyze-food-photo',{method:'POST',headers:{'Content-Type':'application/json',apikey:$('key').value.trim(),Authorization:'Bearer '+$('key').value.trim()},body:JSON.stringify({})});
+    add('Edge function analyze-food-photo χωρίς σύνδεση χρήστη', res2.status===401?'PASS':'FAIL', 'HTTP '+res2.status);
+  }catch(e){ add('Edge functions', 'INFO', 'δεν έγινε κλήση: '+e.message); }
+}
+
+async function isolationFor(label, me, other){
+  const { c, user } = me;
+  for(const t of HEALTH){
+    const r = await c.from(t).select('*').limit(300);
+    if(r.error){ add(label+' διαβάζει '+t, 'INFO', 'σφάλμα: '+r.error.message); continue; }
+    const rows = rowsOf(r); let bad = 0;
+    rows.forEach(x=>{ const col = ownerCols.find(k=>k in x); const id = col ? x[col] : (t==='clients'||t==='profiles' ? x.id : null);
+      if(id!==null && id!==undefined && id!==user.id) bad++; });
+    add(label+' διαβάζει '+t, bad===0?'PASS':'FAIL', bad===0 ? rows.length+' γραμμές, όλες δικές του' : bad+' γραμμές ΑΛΛΩΝ ορατές από '+rows.length);
+  }
+  if(other){
+    const r = await c.from('clients').select('id').eq('id', other.user.id);
+    add(label+' ζητά ρητά τον πελάτη Β', rowsOf(r).length===0?'PASS':'FAIL', rowsOf(r).length?'βρέθηκε':'δεν βρέθηκε');
+    const st = await c.storage.from('progress-photos').list(other.user.id, { limit: 5 });
+    add(label+' βλέπει φωτογραφίες του Β (storage)', (st.data||[]).length===0?'PASS':'FAIL', st.error?'απορρίφθηκε: '+st.error.message:(st.data||[]).length+' αρχεία');
+  }
+  const r2 = await c.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  const before = r2.data && r2.data.role;
+  const up = await c.from('profiles').update({ role:'owner' }).eq('id', user.id).select('role');
+  const r3 = await c.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  const after = r3.data && r3.data.role;
+  const escalated = after==='owner' && before!=='owner';
+  add(label+' προσπαθεί να γίνει owner', escalated?'FAIL':'PASS', 'πριν: '+before+', μετά: '+after+(up.error?' (σφάλμα: '+up.error.message+')':''));
+  if(escalated){ await c.from('profiles').update({ role: before }).eq('id', user.id); }
+  const r4 = await c.from('clients').select('coach_id').eq('id', user.id).maybeSingle();
+  if(r4.data){
+    const up2 = await c.from('clients').update({ coach_id: user.id }).eq('id', user.id).select('coach_id');
+    const r5 = await c.from('clients').select('coach_id').eq('id', user.id).maybeSingle();
+    const changed = r5.data && r5.data.coach_id !== r4.data.coach_id;
+    add(label+' αλλάζει μόνος του coach_id', changed?'FAIL':'PASS', changed?'άλλαξε (πρέπει να επιστραφεί χειροκίνητα)':'δεν άλλαξε');
+    if(changed){ await c.from('clients').update({ coach_id: r4.data.coach_id }).eq('id', user.id); }
+  }
+}
+
+async function crossWrite(a, b){
+  const snap = await b.c.from('clients').select('full_name').eq('id', b.user.id).maybeSingle();
+  const orig = snap.data && snap.data.full_name;
+  const up = await a.c.from('clients').update({ full_name:'__sectest__' }).eq('id', b.user.id).select('id');
+  add('Ο Α αλλάζει τα στοιχεία του Β', (up.data||[]).length===0?'PASS':'FAIL', up.error?'απορρίφθηκε: '+up.error.message:((up.data||[]).length+' γραμμές άλλαξαν'));
+  if((up.data||[]).length) await b.c.from('clients').update({ full_name: orig }).eq('id', b.user.id);
+  const ins = await a.c.from('messages').insert({ client_id: b.user.id, sender_id: a.user.id, sender_role:'client', body:'__sectest__' }).select('id');
+  add('Ο Α στέλνει μήνυμα στη συνομιλία του Β', (ins.data||[]).length===0?'PASS':'FAIL', ins.error?'απορρίφθηκε: '+ins.error.message:'το μήνυμα γράφτηκε (σβήστο χειροκίνητα)');
+}
+
+$('run').addEventListener('click', async ()=>{
+  if(!$('ok').checked){ alert('Τσέκαρε ότι οι λογαριασμοί είναι δοκιμαστικοί.'); return; }
+  $('out').tBodies[0].innerHTML=''; results.length=0; n=0; $('sum').textContent='Τρέχει…'; $('run').disabled=true;
+  try{
+    await anonTests();
+    const A = $('ae').value && await login($('ae').value.trim(), $('ap').value);
+    const B = $('be').value && await login($('be').value.trim(), $('bp').value);
+    const C = $('ce').value && await login($('ce').value.trim(), $('cp').value);
+    if(A && A.error) add('Σύνδεση Α','INFO',A.error.message);
+    if(B && B.error) add('Σύνδεση Β','INFO',B.error.message);
+    if(C && C.error) add('Σύνδεση Γ','INFO',C.error.message);
+    const a = A && !A.error ? A : null, b = B && !B.error ? B : null, c = C && !C.error ? C : null;
+    if(a) await isolationFor('Πελάτης Α', a, b);
+    if(b) await isolationFor('Πελάτης Β', b, a);
+    if(a && b) await crossWrite(a, b);
+    if(c){
+      for(const t of ['clients','client_intake','messages','checkins']){
+        const r = await c.c.from(t).select('*').limit(300);
+        if(r.error){ add('Coach Γ διαβάζει '+t,'INFO',r.error.message); continue; }
+        const rows = rowsOf(r);
+        const foreign = rows.filter(x=> t==='clients' ? (x.coach_id && x.coach_id!==c.user.id) : false).length;
+        add('Coach Γ διαβάζει '+t, foreign===0?'PASS':'FAIL', t==='clients' ? rows.length+' πελάτες, '+foreign+' ΑΛΛΟΥ coach' : rows.length+' γραμμές (έλεγξε χειροκίνητα ότι είναι μόνο των πελατών του)');
+      }
+    }
+  }catch(e){ add('Σφάλμα εκτέλεσης','INFO',String(e)); }
+  const f = results.filter(r=>r.status==='FAIL').length, p = results.filter(r=>r.status==='PASS').length, i = results.filter(r=>r.status==='INFO').length;
+  $('sum').textContent = 'PASS: '+p+' · FAIL: '+f+' · INFO: '+i+(f? '  → Στείλε μου τον πίνακα για να φτιάξω τις διορθώσεις.':'');
+  $('run').disabled=false; $('dl').disabled=false;
+});
+$('dl').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify({ generated:new Date().toISOString(), project:$('url').value, results }, null, 2)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'hfp-security-evidence-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+});
+</script></body></html>
