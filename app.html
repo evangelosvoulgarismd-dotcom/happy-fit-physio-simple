@@ -535,6 +535,17 @@
   .modeSwitch button:active{ transform:scale(.96); transition-duration:.06s; }
   .modeSwitch button.active{ background:var(--panel); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.15); }
   @media (prefers-reduced-motion: reduce){ .modeSwitch button:active{ transform:none; } }
+
+  /* Library: always-visible filter rows with counts, two-column list on wide screens */
+  .libFRow{ margin-bottom:6px; }
+  .libFLabel{ display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin:6px 2px 4px; }
+  .libN{ font-size:11px; opacity:.6; margin-left:2px; }
+  .libChip.on .libN{ opacity:.85; }
+  @media (min-width: 760px){ .libChipsWrap{ flex-wrap:wrap; overflow:visible; } }
+  @media (min-width: 980px){
+    .libList{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; align-items:start; }
+    .libList > .libGroup, .libList > p{ grid-column:1 / -1; }
+  }
 </style>
 </head>
 <body>
@@ -4286,7 +4297,7 @@ async function renderLibrary(main, isCoach){
     });
   }
 
-  const listBox = el('<div></div>');
+  const listBox = el('<div class="libList"></div>');
   main.appendChild(listBox);
 
   function thumbFor(ex){
@@ -4295,6 +4306,54 @@ async function renderLibrary(main, isCoach){
     return `<div style="width:52px; height:52px; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; color:var(--ink-soft);">—</div>`;
   }
 
+  // Filters: one shared test used by the list AND by the chip counts (so a chip never promises results that aren't there).
+  const FDIMS = [
+    { sel:'.libRegionSelect', icon:'📍', label:locale==='el'?'Περιοχή':'Region', opts:EX_BODY_REGIONS, vals:e=>[e.body_region] },
+    { sel:'.libEquipSelect',  icon:'🏋️', label:locale==='el'?'Εξοπλισμός':'Equipment', opts:EX_EQUIPMENT, vals:e=>[e.equipment] },
+    { sel:'.libDiffSelect',   icon:'📶', label:locale==='el'?'Επίπεδο':'Level', opts:EX_DIFFICULTIES, vals:e=>[e.difficulty_level] },
+    { sel:'.libGoalSelect',   icon:'🎯', label:locale==='el'?'Στόχος':'Goal', opts:EX_GOALS, vals:e=>(e.goal_tags||'').split(',').map(x=>x.trim()) },
+  ];
+  function passes(e, skipSel){
+    const q = (toolbar.querySelector('.libSearchInput').value||'').trim().toLowerCase();
+    const cat = (chip && chip[0]!=='_') ? chip : '';
+    if(cat && e.category!==cat) return false;
+    if(chip==='__fav' && !favs.has(e.id)) return false;
+    if(chip==='__novis' && (e.gif_url || e.video_url)) return false;
+    for(const d of FDIMS){
+      if(d.sel===skipSel) continue;
+      const v = toolbar.querySelector(d.sel)?.value || '';
+      if(v && !d.vals(e).includes(v)) return false;
+    }
+    { const mine = getMyEquip(); if(mine.size && !exDoable(e, mine)) return false; }
+    if(q){ const n1=(e.name_el||'').toLowerCase(), n2=(e.name_en||'').toLowerCase(); if(!n1.includes(q) && !n2.includes(q)) return false; }
+    return true;
+  }
+  const filterBar = el('<div class="card libFilterBar" style="margin-bottom:12px; padding:10px 12px;"></div>');
+  toolbar.after(filterBar);
+  function renderFilterBar(){
+    const rows = FDIMS.map(d=>{
+      const cur = toolbar.querySelector(d.sel)?.value || '';
+      const base = exercises.filter(e=>passes(e, d.sel));
+      const chips = d.opts.map(o=>({o, n: base.filter(e=>d.vals(e).includes(o.el)).length})).filter(x=>x.n>0 || x.o.el===cur);
+      if(!chips.length) return '';
+      return `<div class="libFRow"><span class="libFLabel">${d.icon} ${d.label}</span><div class="libChips libChipsWrap">${chips.map(x=>`<button type="button" class="libChip${x.o.el===cur?' on':''}" data-sel="${d.sel}" data-val="${escapeHtml(x.o.el)}">${escapeHtml(locale==='el'?x.o.el:x.o.en)} <span class="libN">${x.n}</span></button>`).join('')}</div></div>`;
+    }).join('');
+    const active = FDIMS.filter(d=>toolbar.querySelector(d.sel)?.value).length + ((chip && chip!=='') ? 1 : 0) + ((toolbar.querySelector('.libSearchInput').value||'').trim() ? 1 : 0);
+    filterBar.innerHTML = rows + (active ? `<button type="button" class="btn secondary libClearAll" style="margin-top:6px; padding:6px 12px; font-size:12px;">✕ ${locale==='el'?'Καθαρισμός όλων των φίλτρων':'Clear all filters'}</button>` : '');
+  }
+  filterBar.addEventListener('click', e=>{
+    const b = e.target.closest('.libChip'); 
+    if(b){
+      const sel = toolbar.querySelector(b.dataset.sel);
+      sel.value = (sel.value===b.dataset.val) ? '' : b.dataset.val;
+      limit = 40; renderList(); return;
+    }
+    if(e.target.closest('.libClearAll')){
+      FDIMS.forEach(d=>{ const s2 = toolbar.querySelector(d.sel); if(s2) s2.value=''; });
+      toolbar.querySelector('.libSearchInput').value=''; chip=''; try{ const m=getMyEquip(); m.clear(); setMyEquip(m); }catch(_){}
+      limit = 40; renderChips(); renderEquipBar(); renderList();
+    }
+  });
   function renderList(){
     const q = (toolbar.querySelector('.libSearchInput').value||'').trim().toLowerCase();
     const cat = (chip && chip[0]!=='_') ? chip : '';
@@ -4302,23 +4361,12 @@ async function renderLibrary(main, isCoach){
     const goal = toolbar.querySelector('.libGoalSelect')?.value || '';
     const diff = toolbar.querySelector('.libDiffSelect')?.value || '';
     const equip = toolbar.querySelector('.libEquipSelect')?.value || '';
-    let visible = exercises;
-    if(cat) visible = visible.filter(e=>e.category===cat);
-    if(chip==='__fav') visible = visible.filter(e=>favs.has(e.id));
-    if(chip==='__novis') visible = visible.filter(e=>!e.gif_url && !e.video_url);
-    if(region) visible = visible.filter(e=>e.body_region===region);
-    if(goal) visible = visible.filter(e=>(e.goal_tags||'').split(',').map(s=>s.trim()).includes(goal));
-    if(diff) visible = visible.filter(e=>e.difficulty_level===diff);
-    if(equip) visible = visible.filter(e=>e.equipment===equip);
-    { const mine = getMyEquip(); if(mine.size) visible = visible.filter(e=>exDoable(e, mine)); }
-    if(q) visible = visible.filter(e=>{
-      const n1=(e.name_el||'').toLowerCase(), n2=(e.name_en||'').toLowerCase();
-      return n1.includes(q) || n2.includes(q);
-    });
+    let visible = exercises.filter(e=>passes(e, null));
     listBox.innerHTML = '';
     const activeFilters = [region,goal,diff,equip].filter(Boolean).length;
     const fc = toolbar.querySelector('.libFilterCount'); if(fc) fc.textContent = activeFilters ? ' ('+activeFilters+')' : '';
     countLine.textContent = (locale==='el' ? visible.length+' ασκήσεις' : visible.length+' exercises');
+    renderFilterBar();
     if(!visible.length){ listBox.appendChild(el(`<p style="color:var(--ink-soft); font-size:13px;">${locale==='el'?'Καμία αντιστοιχία.':'No matches.'}</p>`)); return; }
 
     const gMode = toolbar.querySelector('.libGroupSelect')?.value || 'category';
@@ -4547,7 +4595,7 @@ async function renderLibrary(main, isCoach){
   }
 
   let libTimer; toolbar.querySelector('.libSearchInput').addEventListener('input', ()=>{ clearTimeout(libTimer); libTimer=setTimeout(()=>{ limit=40; renderList(); }, 120); });
-  toolbar.querySelector('.libFilterToggle').addEventListener('click', ()=>{ const f=toolbar.querySelector('.libFilters'); f.style.display = f.style.display==='none' ? 'flex' : 'none'; });
+  toolbar.querySelector('.libFilterToggle').addEventListener('click', ()=>{ filterBar.style.display = filterBar.style.display==='none' ? '' : 'none'; });
   ['.libRegionSelect','.libGoalSelect','.libDiffSelect','.libEquipSelect','.libGroupSelect'].forEach(sel=>{
     toolbar.querySelector(sel).addEventListener('change', ()=>{ limit=40; renderList(); });
   });
