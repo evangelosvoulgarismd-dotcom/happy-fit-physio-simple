@@ -1090,6 +1090,18 @@ function hfpIconize(root){
 
 function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function uidCode(){ return crypto.randomUUID().slice(0,8).toUpperCase(); }
+// Toast with an Undo button. The action is only really run after the wait, so Undo is a plain cancel
+// and nothing has to be restored in the database. Leaving the page runs it straight away.
+function undoableAction(msg, run, onUndo, ms){
+  let done = false;
+  const tEl = el(`<div role="status" aria-live="polite" style="position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:380px;margin:0 auto;z-index:10001;background:var(--toast-bg);color:#fff;padding:11px 14px;border-radius:14px;font-size:13px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.25);"><span></span><button type="button" style="background:none;border:none;color:#fff;font-weight:800;font-size:13px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:4px 2px;">${locale==='el'?'Αναίρεση':'Undo'}</button></div>`);
+  tEl.firstChild.textContent = msg;
+  const finish = ()=>{ if(done) return; done = true; clearTimeout(h); window.removeEventListener('pagehide', finish); tEl.remove(); run(); };
+  const h = setTimeout(finish, ms || 6000);
+  window.addEventListener('pagehide', finish);
+  tEl.querySelector('button').addEventListener('click', ()=>{ if(done) return; done = true; clearTimeout(h); window.removeEventListener('pagehide', finish); tEl.remove(); if(onUndo) onUndo(); });
+  document.body.appendChild(tEl);
+}
 function toast(msg, ms){
   let tEl = document.getElementById('toast');
   if(!tEl){ tEl = el('<div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:20px;max-width:min(92vw,380px);z-index:10000;pointer-events:none;background:var(--toast-bg);color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;line-height:1.35;opacity:0;transition:opacity .25s;"></div>'); document.body.appendChild(tEl); }
@@ -7810,9 +7822,12 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       onChanged();
     });
     card.querySelector('.delPeBtn').addEventListener('click', async ()=>{
-      if(!confirm(locale==='el' ? 'Αφαίρεση αυτής της άσκησης από το πρόγραμμα;' : 'Remove this exercise from the program?')) return;
-      await supabase.from('program_exercises').delete().eq('id', pe.id);
-      onChanged();
+      card.style.display = 'none';
+      undoableAction(
+        locale==='el' ? 'Η άσκηση αφαιρέθηκε από το πρόγραμμα' : 'Exercise removed from the program',
+        async ()=>{ await supabase.from('program_exercises').delete().eq('id', pe.id); onChanged(); },
+        ()=>{ card.style.display = ''; }
+      );
     });
     body.appendChild(card);
   });
