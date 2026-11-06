@@ -1783,6 +1783,7 @@ function renderShell(){
       ${isCoach ? `<button class="navBtn ${view==='leads'?'active':''}" data-v="leads">📥 ${t('leads',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='packages'?'active':''}" data-v="packages">💆 ${t('packages',locale)}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='templates'?'active':''}" data-v="templates">📋 ${t('templates',locale)}</button>` : ''}
+      ${isCoach ? `<button class="navBtn ${view==='community'?'active':''}" data-v="community">💬 ${locale==='el'?'Κοινότητα':'Community'}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='sops'?'active':''}" data-v="sops">📖 ${locale==='el'?'Διαδικασίες':'Procedures'}</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='studio'?'active':''}" data-v="studio">🧭 Studio</button>` : ''}
       ${isCoach ? `<button class="navBtn ${view==='availability'?'active':''}" data-v="availability">🗓️ ${t('availability',locale)}</button><button class="navBtn ${view==='groupclasses'?'active':''}" data-v="groupclasses">🧑‍🤝‍🧑 ${t('groupClasses',locale)}</button><button class="navBtn ${view==='projection'?'active':''}" data-v="projection">💶 ${t('projection',locale)}</button><button class="navBtn ${view==='courses'?'active':''}" data-v="courses">📚 ${locale==='el'?'Μαθήματα':'Courses'}</button><button class="navBtn ${view==='directory'?'active':''}" data-v="directory">🌐 ${locale==='el'?'Κατάλογος':'Directory'}</button>` : ''}
@@ -1937,6 +1938,7 @@ function renderMainView(main, isCoach, isOwner){
   else if(view==='packages' && isCoach) renderPackagesView(main);
   else if(view==='templates' && isCoach) renderTemplatesView(main);
   else if(view==='sops' && isCoach) renderSopsView(main);
+  else if(view==='community' && isCoach) renderCommunityView(main);
   else if(view==='studio' && isCoach) renderStudioView(main);
   else if(view==='availability' && isCoach) renderAvailabilityView(main);
   else if(view==='groupclasses' && isCoach) renderGroupClassesView(main);
@@ -7337,6 +7339,77 @@ async function metricsCardForClient(wrap, clientId){
   wrap.appendChild(card); return card;
 }
 
+
+// ── Community (free): coach announcements + opt-in client posts, reactions, moderation ───────────
+async function renderCommunity(box, groupId, isCoach){
+  const el_ = locale==='el';
+  box.innerHTML='';
+  const myFirst = String(profile.full_name||'').trim().split(/\s+/)[0] || (isCoach?'Coach':'Member');
+  const [{ data: posts, error }, { data: mem }] = await Promise.all([
+    supabase.from('community_posts').select('*').eq('group_id', groupId).order('pinned',{ascending:false}).order('created_at',{ascending:false}).limit(40),
+    isCoach ? Promise.resolve({data:null}) : supabase.from('community_members').select('client_id').eq('client_id', profile.id).maybeSingle()
+  ]);
+  if(error){ box.appendChild(el(`<div class="card"><p style="font-size:13px;">${el_?'Η κοινότητα δεν είναι ακόμα ενεργή. Τρέξε το migration_community.sql στο Supabase.':'Community is not enabled yet. Run migration_community.sql in Supabase.'}</p></div>`)); return; }
+  const isMember = isCoach || !!mem;
+  const ids = (posts||[]).map(p=>p.id);
+  const { data: reacts } = ids.length ? await supabase.from('community_reactions').select('*').in('post_id', ids) : { data: [] };
+  const rBy = {}; (reacts||[]).forEach(r=>{ (rBy[r.post_id] ||= []).push(r); });
+  const refresh = ()=>renderCommunity(box, groupId, isCoach);
+
+  if(!isCoach){
+    box.appendChild(el(isMember
+      ? `<div class="card" style="padding:10px 14px; margin-bottom:10px; font-size:12px; color:var(--ink-soft);">${el_?'Συμμετέχεις στην κοινότητα. Οι άλλοι βλέπουν μόνο το μικρό σου όνομα. Μην μοιράζεσαι ιατρικά σου δεδομένα.':'You have joined the community. Others see only your first name. Do not share medical details.'} <button class="btn secondary cmLeave" style="padding:3px 10px; font-size:11px; margin-left:6px;">${el_?'Αποχώρηση':'Leave'}</button></div>`
+      : `<div class="card" style="padding:12px 14px; margin-bottom:10px;"><p style="font-size:13px; margin:0 0 8px;">${el_?'Μπορείς να δεις τις ανακοινώσεις του coach. Αν θέλεις να γράφεις και να βλέπεις αναρτήσεις άλλων πελατών, πρέπει να συναινέσεις: θα εμφανίζεται μόνο το μικρό σου όνομα και δεν πρέπει να μοιράζεσαι ιατρικά δεδομένα. Μπορείς να αποχωρήσεις οποιαδήποτε στιγμή.':'You can read the coach announcements. To post and see other clients\' posts you need to opt in: only your first name is shown and you should not share medical details. You can leave any time.'}</p><button class="btn cmJoin" style="padding:6px 14px;">${el_?'Συμμετέχω':'Join'}</button></div>`));
+    box.querySelector('.cmLeave')?.addEventListener('click', async ()=>{ await supabase.from('community_members').delete().eq('client_id', profile.id); refresh(); });
+    box.querySelector('.cmJoin')?.addEventListener('click', async ()=>{ const { error:e } = await supabase.from('community_members').insert({ client_id: profile.id, coach_id: groupId }); if(e) toast(e.message,'error'); else refresh(); });
+  }
+  if(isMember){
+    const f = el(`<form class="card" style="padding:10px 14px; margin-bottom:12px;"><textarea name="b" maxlength="1000" rows="2" placeholder="${isCoach?(el_?'Ανακοίνωση προς τους πελάτες…':'Announcement to clients…'):(el_?'Γράψε κάτι στην κοινότητα…':'Write something to the community…')}" style="width:100%;"></textarea>
+      <div style="display:flex; gap:8px; align-items:center; margin-top:6px;"><button class="btn" type="submit" style="padding:5px 14px;">${el_?'Ανάρτηση':'Post'}</button><span class="cmMsg" style="font-size:12px; color:var(--ink-soft);"></span></div></form>`);
+    f.addEventListener('submit', async (e)=>{
+      e.preventDefault(); const b = f.querySelector('textarea').value.trim(); if(!b) return;
+      const { error:e2 } = await supabase.from('community_posts').insert({ group_id: groupId, author_id: profile.id, author_role: isCoach?'coach':'client', author_name: myFirst.slice(0,40), body: b });
+      if(e2) f.querySelector('.cmMsg').textContent = e2.message; else refresh();
+    });
+    box.appendChild(f);
+  }
+  if(!posts?.length){ box.appendChild(el(`<p style="font-size:13px; color:var(--ink-soft);">${el_?'Δεν υπάρχουν αναρτήσεις ακόμα.':'No posts yet.'}</p>`)); return; }
+  posts.forEach(p=>{
+    const mine = p.author_id===profile.id; const rs = rBy[p.id]||[];
+    const rbtn = ['👍','❤️','💪'].map(em=>{ const n = rs.filter(r=>r.emoji===em).length; const on = rs.some(r=>r.emoji===em && r.user_id===profile.id);
+      return `<button class="btn ${on?'':'secondary'} cmReact" data-e="${em}" style="padding:2px 9px; font-size:12px;">${em} ${n||''}</button>`; }).join(' ');
+    const card = el(`<div class="card" style="padding:10px 14px; margin-bottom:8px; ${p.pinned?'border-left:3px solid var(--brand,#c4201f);':''}">
+      <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">${p.pinned?'📌 ':''}<strong>${escapeHtml(p.author_name)}</strong>${p.author_role==='coach'?' · Coach':''} · ${escapeHtml(new Date(p.created_at).toLocaleDateString(el_?'el-GR':'en-GB'))}</div>
+      <div style="font-size:14px; white-space:pre-wrap;">${escapeHtml(p.body)}</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; align-items:center;">${rbtn}
+        ${isCoach?`<button class="btn secondary cmPin" style="padding:2px 9px; font-size:11px;">${p.pinned?(el_?'Ξεκαρφίτσωμα':'Unpin'):(el_?'Καρφίτσωμα':'Pin')}</button>`:''}
+        ${(mine||isCoach)?`<button class="btn secondary cmDel" style="padding:2px 9px; font-size:11px;">${el_?'Διαγραφή':'Delete'}</button>`:''}</div></div>`);
+    card.querySelectorAll('.cmReact').forEach(b=>b.addEventListener('click', async ()=>{
+      const em = b.dataset.e; const on = rs.some(r=>r.emoji===em && r.user_id===profile.id);
+      if(on) await supabase.from('community_reactions').delete().eq('post_id', p.id).eq('user_id', profile.id).eq('emoji', em);
+      else await supabase.from('community_reactions').insert({ post_id:p.id, user_id:profile.id, emoji:em });
+      refresh(); }));
+    card.querySelector('.cmPin')?.addEventListener('click', async ()=>{ await supabase.from('community_posts').update({ pinned: !p.pinned }).eq('id', p.id); refresh(); });
+    card.querySelector('.cmDel')?.addEventListener('click', async ()=>{ if(!confirm(el_?'Διαγραφή ανάρτησης;':'Delete this post?')) return; await supabase.from('community_posts').delete().eq('id', p.id); refresh(); });
+    box.appendChild(card);
+  });
+}
+async function renderCommunityView(main){
+  main.innerHTML='';
+  main.appendChild(el(`<h2 style="margin-bottom:6px;">💬 ${locale==='el'?'Κοινότητα':'Community'}</h2>`));
+  main.appendChild(el(`<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">${locale==='el'?'Ανακοινώσεις προς τους πελάτες σου. Οι πελάτες που συναινούν μπορούν να γράφουν κι αυτοί (με μικρό όνομα). Μπορείς να διαγράψεις οποιαδήποτε ανάρτηση.':'Announcements to your clients. Clients who opt in can post too (first name only). You can delete any post.'}</p>`));
+  const box = el('<div></div>'); main.appendChild(box); await renderCommunity(box, profile.id, true);
+}
+async function communityCardForClient(wrap){
+  const { data: me } = await supabase.from('clients').select('coach_id').eq('id', profile.id).maybeSingle();
+  const coachId = me?.coach_id; if(!coachId) return;
+  const el_ = locale==='el';
+  const det = el(`<details class="card" style="padding:10px 14px; margin-bottom:12px;"><summary style="cursor:pointer; font-weight:600; font-size:13px;">💬 ${el_?'Κοινότητα':'Community'}</summary><div class="cmBox" style="margin-top:10px;"></div></details>`);
+  wrap.appendChild(det);
+  let loaded=false;
+  det.addEventListener('toggle', ()=>{ if(det.open && !loaded){ loaded=true; renderCommunity(det.querySelector('.cmBox'), coachId, false).catch(()=>{}); } });
+}
+
 async function renderPhotosTab(body, client, isCoach){
   const { data: photos } = await supabase.from('progress_photos').select('*').eq('client_id', client.id).order('taken_at',{ascending:false}).order('created_at',{ascending:false});
   const refresh = async ()=>{ body.innerHTML = ''; await renderPhotosTab(body, client, isCoach); };
@@ -8623,7 +8696,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
   if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._startDay = heroDay; renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
   wrap.appendChild(workoutCard);
-  { const hbSlot = el('<div></div>'); wrap.appendChild(hbSlot); habitsCardForClient(hbSlot, profile.id).catch(()=>{}); const mxSlot = el('<div></div>'); wrap.appendChild(mxSlot); metricsCardForClient(mxSlot, profile.id).catch(()=>{}); }
+  { const hbSlot = el('<div></div>'); wrap.appendChild(hbSlot); habitsCardForClient(hbSlot, profile.id).catch(()=>{}); const mxSlot = el('<div></div>'); wrap.appendChild(mxSlot); metricsCardForClient(mxSlot, profile.id).catch(()=>{}); const cmSlot = el('<div></div>'); wrap.appendChild(cmSlot); communityCardForClient(cmSlot).catch(()=>{}); }
 
   // Smaller cards below the day card: today's readiness details, gentle nudge, level
   if(todayReadiness){
