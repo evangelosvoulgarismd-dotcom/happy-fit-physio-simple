@@ -4940,9 +4940,17 @@ async function renderCoachDashboard(main){
 
   // Follow-up signals for the coach's business, kept apart from computeAlerts on purpose: they are not
   // clinical, so they must not push a client's clinical status dot to amber/red.
-  const opsByClient = {};
+  const opsByClient = {}, draftsByClient = {};
+  const firstName_ = c => String(c.full_name||'').trim().split(/\s+/)[0] || '';
+  const DRAFTS = {
+    quiet: c => locale==='el' ? `Γεια σου ${firstName_(c)}! Δεν είδα καταγραφές τις τελευταίες μέρες, όλα καλά; Αν κάτι δυσκόλεψε (χρόνος, πόνος, κίνητρο), πες μου να προσαρμόσουμε το πρόγραμμα.` : `Hi ${firstName_(c)}! I have not seen any logs the last few days, is everything ok? If something got in the way (time, pain, motivation), let me know and we will adjust the program.`,
+    nps: c => locale==='el' ? `Γεια σου ${firstName_(c)}, θα ήθελα να ακούσω τι θα μπορούσα να κάνω καλύτερα για σένα. Έχεις 5 λεπτά για μια σύντομη κλήση;` : `Hi ${firstName_(c)}, I would like to hear what I could do better for you. Do you have 5 minutes for a short call?`,
+    onboarding: c => locale==='el' ? `Γεια σου ${firstName_(c)}, καλώς ήρθες! Να κλείσουμε μια σύντομη αρχική κλήση για στόχους και ιστορικό; Πότε σε βολεύει;` : `Hi ${firstName_(c)}, welcome! Shall we book a short first call about your goals and history? When suits you?`,
+    payment: c => locale==='el' ? `Γεια σου ${firstName_(c)}, μια φιλική υπενθύμιση για τη συνδρομή του μήνα. Αν έχει ήδη γίνει, αγνόησέ το. Ευχαριστώ!` : `Hi ${firstName_(c)}, a friendly reminder about this month's subscription. If it is already done, please ignore this. Thank you!`,
+  };
   (clients||[]).forEach(c=>{
     const list = [];
+    const drafts = draftsByClient[c.id] = [];
     const st = c.status || 'trial';
     const dayMs = 24*60*60*1000;
     if(st==='active' || st==='trial'){
@@ -4954,25 +4962,25 @@ async function renderCoachDashboard(main){
       const ageDays = c.created_at ? (Date.now()-new Date(c.created_at).getTime())/dayMs : 99;
       if(last!=null){
         const d = Math.floor((Date.now()-last)/dayMs);
-        if(d>=7) list.push(locale==='el' ? `Καμία προπόνηση ή καταγραφή εδώ και ${d} ημέρες` : `No training or log for ${d} days`);
+        if(d>=7){ list.push(locale==='el' ? `Καμία προπόνηση ή καταγραφή εδώ και ${d} ημέρες` : `No training or log for ${d} days`); drafts.push({ k:'quiet', label: locale==='el'?'Υπενθύμιση καταγραφής':'Check-in nudge' }); }
       } else if(ageDays>=7){
-        list.push(locale==='el' ? 'Δεν έχει καταγράψει τίποτα ακόμα' : 'Has not logged anything yet');
+        list.push(locale==='el' ? 'Δεν έχει καταγράψει τίποτα ακόμα' : 'Has not logged anything yet'); drafts.push({ k:'quiet', label: locale==='el'?'Υπενθύμιση καταγραφής':'Check-in nudge' });
       }
     }
     if(st==='active' || st==='trial'){
       const n = npsByClient[c.id];
       if(n && Number(n.nps)<=6 && (Date.now()-new Date(n.date).getTime())/dayMs <= 45){
-        list.push(locale==='el' ? `Χαμηλή ικανοποίηση (${n.nps}/10): άνοιξε συζήτηση` : `Low satisfaction (${n.nps}/10): start a conversation`);
+        list.push(locale==='el' ? `Χαμηλή ικανοποίηση (${n.nps}/10): άνοιξε συζήτηση` : `Low satisfaction (${n.nps}/10): start a conversation`); drafts.push({ k:'nps', label: locale==='el'?'Πρόσκληση σε κλήση':'Call invitation' });
       }
     }
     // Onboarding: a new client (2 to 30 days old) with no first call logged. Only once migration_onboarding.sql has run.
     if((st==='active' || st==='trial') && ('onboarding_call_at' in c) && !c.onboarding_call_at && c.created_at){
       const ageD = (Date.now()-new Date(c.created_at).getTime())/dayMs;
-      if(ageD>=2 && ageD<=30) list.push(locale==='el' ? 'Δεν έχει γίνει αρχική κλήση (πέρασαν 48 ώρες)' : 'No first call logged (48 hours passed)');
+      if(ageD>=2 && ageD<=30){ list.push(locale==='el' ? 'Δεν έχει γίνει αρχική κλήση (πέρασαν 48 ώρες)' : 'No first call logged (48 hours passed)'); drafts.push({ k:'onboarding', label: locale==='el'?'Πρόσκληση αρχικής κλήσης':'First call invitation' }); }
     }
     // Payment is tracked per calendar month and marked by hand; flag from the 5th so a brand-new month isn't noise.
     if(paymentsTracked && st==='active' && c.monthly_price && !paidThisPeriod.has(c.id) && new Date().getDate()>=5){
-      list.push(locale==='el' ? 'Δεν έχει σημειωθεί πληρωμή για τον μήνα' : 'No payment marked for this month');
+      list.push(locale==='el' ? 'Δεν έχει σημειωθεί πληρωμή για τον μήνα' : 'No payment marked for this month'); drafts.push({ k:'payment', label: locale==='el'?'Υπενθύμιση πληρωμής':'Payment reminder' });
     }
     opsByClient[c.id] = list;
   });
@@ -4990,7 +4998,13 @@ async function renderCoachDashboard(main){
           <strong style="font-size:13px;">${escapeHtml(c.full_name)}</strong>
           <div style="font-size:11px; color:var(--danger); margin-top:2px;">${alertsByClient[c.id].map(a=>`⚠ ${escapeHtml(a)}`).join(' · ')}</div>
           ${(opsByClient[c.id]||[]).length ? `<div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">${opsByClient[c.id].map(a=>`• ${escapeHtml(a)}`).join(' · ')}</div>` : ''}
+          ${(draftsByClient[c.id]||[]).length ? `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">${draftsByClient[c.id].map(d=>`<button type="button" class="btn secondary draftBtn" data-k="${d.k}" style="padding:3px 10px; font-size:11px;">✉ ${escapeHtml(d.label)}</button>`).join('')}</div>` : ''}
         </div>`);
+        row.querySelectorAll('.draftBtn').forEach(b=>b.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          renderMessagesTab._draft = { clientId: c.id, text: DRAFTS[b.dataset.k](c) };
+          selectedClient = c; renderClientDetail._tab='messages'; renderShell();
+        }));
         row.addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='checkins'; renderShell(); });
         panel.appendChild(row);
       });
@@ -6075,6 +6089,7 @@ async function renderClientDetail(main, forceRefresh){
     <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">📈 ${locale==='el'?'Πρόοδος':'Progress'}</button>
     <button class="btn ${tab==='recap'?'':'secondary'}" data-t="recap">📝 ${locale==='el'?'Σύνοψη εβδομάδας':'Weekly recap'}</button>
     <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
+    <button class="btn ${tab==='habits'?'':'secondary'}" data-t="habits">✅ ${locale==='el'?'Συνήθειες':'Habits'}</button>
     <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
     <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
     <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
@@ -6089,6 +6104,7 @@ async function renderClientDetail(main, forceRefresh){
 
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
   else if(tab==='nutrition') await renderNutritionTab(body, client, true);
+  else if(tab==='habits') await renderHabitsTab(body, client);
   else if(tab==='massage') await renderMassageTab(body, client, true);
   else if(tab==='program') { await renderAdjustmentSuggestion(body, client.id); if(program) await renderExercisePainFlags(body, client.id, program); await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null); }
   else if(tab==='live'){
@@ -7139,6 +7155,95 @@ async function openPhotoCompare(a, b, client, isCoach, onSaved){
   });
 }
 
+
+// ── Habits: daily habits set by the coach, ticked by the client ─────────────────────────
+const HABIT_PRESETS = [
+  {ico:'🚶', el:'Βήματα 8.000', en:'8,000 steps'}, {ico:'💧', el:'Νερό 2 λίτρα', en:'Water 2 litres'},
+  {ico:'😴', el:'Ύπνος 7+ ώρες', en:'Sleep 7+ hours'}, {ico:'🧘', el:'Διατάσεις 10 λεπτά', en:'Stretching 10 min'},
+  {ico:'🥩', el:'Πρωτεΐνη σε κάθε γεύμα', en:'Protein with every meal'}, {ico:'📵', el:'Χωρίς οθόνη πριν τον ύπνο', en:'No screens before bed'},
+];
+function habitRecentDays(n){ const t = localDateStr(new Date()); const out=[]; for(let i=n-1;i>=0;i--) out.push(addDaysStr(t,-i)); return out; }
+
+async function renderHabitsTab(body, client){
+  const el_ = locale==='el';
+  body.innerHTML='';
+  const days = habitRecentDays(14);
+  const [{ data: habits, error }, { data: logs }] = await Promise.all([
+    supabase.from('client_habits').select('*').eq('client_id', client.id).order('sort_order').order('created_at'),
+    supabase.from('habit_logs').select('habit_id,log_date').eq('client_id', client.id).gte('log_date', days[0]),
+  ]);
+  if(error){ body.appendChild(el(`<div class="card"><p style="font-size:13px;">${el_?'Οι συνήθειες δεν είναι ακόμα ενεργές. Τρέξε το migration_habits.sql στο Supabase.':'Habits are not enabled yet. Run migration_habits.sql in Supabase.'}</p></div>`)); return; }
+  const done = new Set((logs||[]).map(l=>l.habit_id+'|'+l.log_date));
+  const list = habits||[];
+  const card = el(`<div class="card"><h3 style="margin-bottom:4px;">✅ ${el_?'Συνήθειες':'Habits'}</h3>
+    <p style="font-size:12px; color:var(--ink-soft); margin:0 0 12px;">${el_?'2 με 4 καθημερινές συνήθειες. Ο πελάτης τις τικάρει στην αρχική του. Εδώ βλέπεις τις τελευταίες 14 ημέρες.':'2 to 4 daily habits. The client ticks them on their home screen. Here you see the last 14 days.'}</p>
+    <div class="hbList"></div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 8px;">${HABIT_PRESETS.map((h,i)=>`<button type="button" class="libChip hbPreset" data-i="${i}">${h.ico} ${escapeHtml(el_?h.el:h.en)}</button>`).join('')}</div>
+    <form class="hbForm" style="display:flex; gap:8px;"><input class="hbName" maxlength="60" placeholder="${el_?'Δική σου συνήθεια...':'Your own habit...'}" style="flex:1;"><button class="btn" type="submit">${el_?'Προσθήκη':'Add'}</button></form></div>`);
+  const listBox = card.querySelector('.hbList');
+  if(!list.length) listBox.innerHTML = `<p style="font-size:13px; color:var(--ink-soft);">${el_?'Δεν έχεις ορίσει συνήθειες ακόμα.':'No habits set yet.'}</p>`;
+  list.forEach(h=>{
+    const doneCount = days.filter(d=>done.has(h.id+'|'+d)).length;
+    const last7 = days.slice(-7).filter(d=>done.has(h.id+'|'+d)).length;
+    const dots = days.map(d=>`<i title="${d}" style="display:inline-block; width:12px; height:12px; border-radius:4px; margin-right:3px; background:${done.has(h.id+'|'+d)?'var(--ok)':'var(--line)'};"></i>`).join('');
+    const row = el(`<div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); ${h.active?'':'opacity:.5;'}">
+      <span style="font-size:20px;">${escapeHtml(h.icon||'✅')}</span>
+      <div style="flex:1; min-width:0;"><strong>${escapeHtml(h.name)}</strong><div style="margin-top:4px;">${dots}</div>
+        <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">${el_?'Τελευταίες 7 ημέρες':'Last 7 days'}: <strong class="mono">${last7}/7</strong> · ${el_?'14 ημέρες':'14 days'}: <span class="mono">${doneCount}/14</span></div></div>
+      <button type="button" class="btn secondary hbToggle" style="padding:4px 10px; font-size:11px;">${h.active?(el_?'Παύση':'Pause'):(el_?'Ενεργοποίηση':'Resume')}</button>
+      <button type="button" class="btn secondary hbDel" style="padding:4px 10px; font-size:11px;" aria-label="${el_?'Διαγραφή':'Delete'}">✕</button></div>`);
+    row.querySelector('.hbToggle').addEventListener('click', async ()=>{ await supabase.from('client_habits').update({ active: !h.active }).eq('id', h.id); renderHabitsTab(body, client); });
+    row.querySelector('.hbDel').addEventListener('click', async ()=>{
+      if(!confirm(el_?'Διαγραφή της συνήθειας και του ιστορικού της;':'Delete this habit and its history?')) return;
+      await supabase.from('client_habits').delete().eq('id', h.id); renderHabitsTab(body, client); });
+    listBox.appendChild(row);
+  });
+  async function add(name, icon){
+    name = (name||'').trim(); if(!name) return;
+    if(list.filter(h=>h.active).length >= 6){ toast(el_?'Μέχρι 6 ενεργές συνήθειες.':'Up to 6 active habits.'); return; }
+    const { error: e2 } = await supabase.from('client_habits').insert({ client_id: client.id, name, icon: icon||'✅', sort_order: list.length });
+    if(e2){ toast((el_?'Δεν αποθηκεύτηκε: ':'Not saved: ')+e2.message, 4000); return; }
+    renderHabitsTab(body, client);
+  }
+  card.querySelectorAll('.hbPreset').forEach(b=>b.addEventListener('click', ()=>{ const h=HABIT_PRESETS[Number(b.dataset.i)]; add(el_?h.el:h.en, h.ico); }));
+  card.querySelector('.hbForm').addEventListener('submit', e=>{ e.preventDefault(); add(card.querySelector('.hbName').value, '✅'); });
+  body.appendChild(card);
+}
+
+async function habitsCardForClient(wrap, clientId){
+  const el_ = locale==='el';
+  const today = localDateStr(new Date());
+  const days = habitRecentDays(7);
+  const [{ data: habits, error }, { data: logs }] = await Promise.all([
+    supabase.from('client_habits').select('id,name,icon').eq('client_id', clientId).eq('active', true).order('sort_order').order('created_at'),
+    supabase.from('habit_logs').select('habit_id,log_date').eq('client_id', clientId).gte('log_date', days[0]),
+  ]);
+  if(error || !(habits||[]).length) return null;
+  const done = new Set((logs||[]).map(l=>l.habit_id+'|'+l.log_date));
+  const card = el(`<div class="card" style="padding:12px 14px; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+    <h3 style="font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;">${el_?'Σημερινές συνήθειες':"Today's habits"}</h3><span class="mono hbCount" style="font-size:12px;"></span></div><div class="hbRows"></div></div>`);
+  const rows = card.querySelector('.hbRows');
+  function count(){ card.querySelector('.hbCount').textContent = habits.filter(h=>done.has(h.id+'|'+today)).length+' / '+habits.length; }
+  habits.forEach(h=>{
+    const week = days.map(d=>`<i style="display:inline-block; width:8px; height:8px; border-radius:3px; margin-right:2px; background:${done.has(h.id+'|'+d)?'var(--ok)':'var(--line)'};"></i>`).join('');
+    const row = el(`<button type="button" class="hbRow" aria-pressed="${done.has(h.id+'|'+today)}" style="display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:10px 0; background:none; border:0; border-bottom:1px solid var(--line); color:inherit; cursor:pointer; font:inherit;">
+      <span class="hbBox" style="width:26px; height:26px; border-radius:8px; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-weight:800; flex:0 0 auto;"></span>
+      <span style="flex:1; min-width:0;">${escapeHtml(h.icon||'✅')} ${escapeHtml(h.name)}</span><span>${week}</span></button>`);
+    const paint = ()=>{ const on = done.has(h.id+'|'+today); row.setAttribute('aria-pressed', on); const b=row.querySelector('.hbBox'); b.textContent = on?'✓':''; b.style.background = on?'var(--ok)':'transparent'; b.style.borderColor = on?'var(--ok)':'var(--line)'; b.style.color = on?'#fff':'inherit'; };
+    paint();
+    row.addEventListener('click', async ()=>{
+      const key = h.id+'|'+today, was = done.has(key);
+      if(was) done.delete(key); else done.add(key); paint(); count();
+      const res = was
+        ? await supabase.from('habit_logs').delete().eq('habit_id', h.id).eq('log_date', today)
+        : await supabase.from('habit_logs').insert({ habit_id: h.id, client_id: clientId, log_date: today });
+      if(res.error){ if(was) done.add(key); else done.delete(key); paint(); count(); toast(el_?'Δεν αποθηκεύτηκε. Δοκίμασε ξανά.':'Not saved. Try again.'); }
+    });
+    rows.appendChild(row);
+  });
+  count(); wrap.appendChild(card); return card;
+}
+
 async function renderPhotosTab(body, client, isCoach){
   const { data: photos } = await supabase.from('progress_photos').select('*').eq('client_id', client.id).order('taken_at',{ascending:false}).order('created_at',{ascending:false});
   const refresh = async ()=>{ body.innerHTML = ''; await renderPhotosTab(body, client, isCoach); };
@@ -7564,6 +7669,7 @@ async function renderMessagesTab(body, client, viewerRole){
     <input class="msgInput" placeholder="${t('writeMessage',locale)}" style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid var(--line);" required>
     <button class="btn" type="submit">${t('sendMessage',locale)}</button>
   </form>`);
+  { const dr = renderMessagesTab._draft; if(dr && viewerRole==='coach' && dr.clientId===client.id){ form.querySelector('.msgInput').value = dr.text; renderMessagesTab._draft = null; } }
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const input = form.querySelector('.msgInput');
@@ -8424,6 +8530,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
   if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._startDay = heroDay; renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
   wrap.appendChild(workoutCard);
+  { const hbSlot = el('<div></div>'); wrap.appendChild(hbSlot); habitsCardForClient(hbSlot, profile.id).catch(()=>{}); }
 
   // Smaller cards below the day card: today's readiness details, gentle nudge, level
   if(todayReadiness){
