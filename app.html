@@ -6090,6 +6090,7 @@ async function renderClientDetail(main, forceRefresh){
     <button class="btn ${tab==='recap'?'':'secondary'}" data-t="recap">📝 ${locale==='el'?'Σύνοψη εβδομάδας':'Weekly recap'}</button>
     <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
     <button class="btn ${tab==='habits'?'':'secondary'}" data-t="habits">✅ ${locale==='el'?'Συνήθειες':'Habits'}</button>
+    <button class="btn ${tab==='metrics'?'':'secondary'}" data-t="metrics">📲 ${locale==='el'?'Μετρήσεις':'Metrics'}</button>
     <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
     <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
     <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
@@ -6105,6 +6106,7 @@ async function renderClientDetail(main, forceRefresh){
   if(tab==='intake') renderIntakeForm(body, client, intakeRow?.data || null, true);
   else if(tab==='nutrition') await renderNutritionTab(body, client, true);
   else if(tab==='habits') await renderHabitsTab(body, client);
+  else if(tab==='metrics') await renderMetricsTab(body, client);
   else if(tab==='massage') await renderMassageTab(body, client, true);
   else if(tab==='program') { await renderAdjustmentSuggestion(body, client.id); if(program) await renderExercisePainFlags(body, client.id, program); await renderProgramTab(body, client, program, exercises, ()=>renderClientDetail(main, true), intakeRow?.data || null); }
   else if(tab==='live'){
@@ -7242,6 +7244,97 @@ async function habitsCardForClient(wrap, clientId){
     rows.appendChild(row);
   });
   count(); wrap.appendChild(card); return card;
+}
+
+
+// ── Metrics (free "wearables"): manual entry and CSV import; no paid API ──────────────────────────
+const METRIC_COLS = ['steps','sleep_hours','resting_hr','weight_kg'];
+function metricParseNum(v){ const n = parseFloat(String(v??'').replace(',','.').replace(/[^0-9.\-]/g,'')); return Number.isFinite(n) ? n : null; }
+function metricParseDate(v){
+  const x = String(v||'').trim(); if(!x) return null;
+  let m = x.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = x.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/); if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return null;
+}
+function metricsFromCsv(text){
+  const lines = String(text||'').replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) return [];
+  const delim = (lines[0].match(/;/g)||[]).length > (lines[0].match(/,/g)||[]).length ? ';' : ',';
+  const split = l => l.split(delim).map(c=>c.trim().replace(/^"|"$/g,''));
+  const head = split(lines[0]).map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,''));
+  const find = (...names) => head.findIndex(h=>names.includes(h));
+  const iD = find('date','day','startdate','ημερομηνια'), iS = find('steps','stepcount','βηματα'),
+        iSl = find('sleep','sleephours','sleepduration','υπνος'), iH = find('restinghr','restingheartrate','rhr','heartrate','hr','σφυγμοι'),
+        iW = find('weight','weightkg','bodymass','βαρος');
+  if(iD<0) return [];
+  const out = [];
+  lines.slice(1,401).forEach(l=>{
+    const c = split(l); const d = metricParseDate(c[iD]); if(!d) return;
+    const row = { metric_date:d };
+    if(iS>=0){ const v=metricParseNum(String(c[iS]).replace(/[.,](?=\d{3}(\D|$))/g,'')); if(v!=null && v>=0 && v<=100000) row.steps=Math.round(v); }
+    if(iSl>=0){ let v=metricParseNum(c[iSl]); if(v!=null){ if(v>24) v=v/60; if(v>=0&&v<=24) row.sleep_hours=Math.round(v*10)/10; } }
+    if(iH>=0){ const v=metricParseNum(c[iH]); if(v!=null && v>=25 && v<=220) row.resting_hr=Math.round(v); }
+    if(iW>=0){ const v=metricParseNum(c[iW]); if(v!=null && v>=20 && v<=400) row.weight_kg=Math.round(v*10)/10; }
+    if(Object.keys(row).length>1) out.push(row);
+  });
+  return out;
+}
+
+async function renderMetricsTab(body, client){
+  const el_ = locale==='el';
+  body.innerHTML='';
+  const since = addDaysStr(localDateStr(new Date()), -29);
+  const { data: rows, error } = await supabase.from('client_metrics').select('*').eq('client_id', client.id).gte('metric_date', since).order('metric_date', { ascending:false });
+  if(error){ body.appendChild(el(`<div class="card"><p style="font-size:13px;">${el_?'Οι μετρήσεις δεν είναι ακόμα ενεργές. Τρέξε το migration_metrics.sql στο Supabase.':'Metrics are not enabled yet. Run migration_metrics.sql in Supabase.'}</p></div>`)); return; }
+  if(!rows?.length){ body.appendChild(el(`<div class="card"><h3>📲 ${el_?'Μετρήσεις':'Metrics'}</h3><p style="font-size:13px; color:var(--ink-soft);">${el_?'Ο πελάτης δεν έχει καταχωρήσει μετρήσεις ακόμα (βήματα, ύπνος, σφυγμοί, βάρος).':'The client has not logged any metrics yet (steps, sleep, heart rate, weight).'}</p></div>`)); return; }
+  const avg = k => { const v = rows.map(r=>r[k]).filter(x=>x!=null).map(Number); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length) : null; };
+  const stat = (lbl, v, unit, dec=0) => `<div style="flex:1; min-width:110px;"><div style="font-size:11px; color:var(--ink-soft);">${lbl}</div><div class="mono" style="font-size:18px; font-weight:700;">${v==null?'—':v.toFixed(dec)} <span style="font-size:11px; font-weight:500;">${unit}</span></div></div>`;
+  body.appendChild(el(`<div class="card"><h3 style="margin-bottom:8px;">📲 ${el_?'Μετρήσεις, μέσοι όροι 30 ημερών':'Metrics, 30-day averages'}</h3>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">${stat(el_?'Βήματα':'Steps', avg('steps'), '')}${stat(el_?'Ύπνος':'Sleep', avg('sleep_hours'), el_?'ώρες':'h', 1)}${stat(el_?'Σφυγμοί ηρεμίας':'Resting HR', avg('resting_hr'), 'bpm')}${stat(el_?'Βάρος':'Weight', avg('weight_kg'), 'kg', 1)}</div>
+    <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${el_?'Καταχωρούνται από τον πελάτη (χειροκίνητα ή CSV). Δεν αποτελούν διάγνωση.':'Entered by the client (manual or CSV). Not a diagnosis.'}</p></div>`));
+  const chartBox = el('<div></div>'); body.appendChild(chartBox);
+  if(rows.some(r=>r.steps!=null)) renderTrendChart(chartBox, el_?'Βήματα':'Steps', rows, 'metric_date', [{key:'steps', label:el_?'Βήματα':'Steps', color:'#c4201f'}]);
+  if(rows.some(r=>r.sleep_hours!=null)) renderTrendChart(chartBox, el_?'Ύπνος (ώρες)':'Sleep (hours)', rows, 'metric_date', [{key:'sleep_hours', label:el_?'Ύπνος':'Sleep', color:'#8f1615'}]);
+}
+
+async function metricsCardForClient(wrap, clientId){
+  const el_ = locale==='el';
+  const today = localDateStr(new Date());
+  const { data: rows, error } = await supabase.from('client_metrics').select('*').eq('client_id', clientId).gte('metric_date', addDaysStr(today,-6)).order('metric_date', { ascending:false });
+  if(error) return null;
+  const cur = (rows||[]).find(r=>r.metric_date===today) || {};
+  const card = el(`<div class="card" style="padding:12px 14px; margin-bottom:12px;">
+    <h3 style="font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">📲 ${el_?'Σημερινές μετρήσεις':"Today's metrics"}</h3>
+    <form class="mxForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px;">
+      <label style="font-size:11px;">${el_?'Βήματα':'Steps'}<input name="steps" type="number" min="0" max="100000" inputmode="numeric" value="${cur.steps??''}"></label>
+      <label style="font-size:11px;">${el_?'Ύπνος (ώρες)':'Sleep (hours)'}<input name="sleep_hours" type="number" min="0" max="24" step="0.1" inputmode="decimal" value="${cur.sleep_hours??''}"></label>
+      <label style="font-size:11px;">${el_?'Σφυγμοί ηρεμίας':'Resting HR'}<input name="resting_hr" type="number" min="25" max="220" inputmode="numeric" value="${cur.resting_hr??''}"></label>
+      <label style="font-size:11px;">${el_?'Βάρος (kg)':'Weight (kg)'}<input name="weight_kg" type="number" min="20" max="400" step="0.1" inputmode="decimal" value="${cur.weight_kg??''}"></label>
+      <div style="grid-column:1/-1; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><button class="btn" type="submit" style="padding:6px 14px;">${el_?'Αποθήκευση':'Save'}</button>
+        <label class="btn secondary" style="padding:6px 14px; cursor:pointer; margin:0;">${el_?'Εισαγωγή CSV':'Import CSV'}<input class="mxCsv" type="file" accept=".csv,text/csv" style="display:none;"></label>
+        <span class="mxMsg" style="font-size:12px; color:var(--ink-soft);"></span></div>
+    </form>
+    <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${el_?'Από ρολόι ή εφαρμογή υγείας μπορείς να εξάγεις CSV με στήλες: date, steps, sleep, resting_hr, weight. Ο coach βλέπει μόνο αυτές τις τιμές.':'From your watch or health app you can export a CSV with columns: date, steps, sleep, resting_hr, weight. Your coach sees only these values.'}</p></div>`);
+  const msg = card.querySelector('.mxMsg');
+  card.querySelector('.mxForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const f = new FormData(e.target); const row = { client_id: clientId, metric_date: today, source:'manual' };
+    METRIC_COLS.forEach(k=>{ const v = metricParseNum(f.get(k)); if(v!=null) row[k] = (k==='sleep_hours'||k==='weight_kg') ? Math.round(v*10)/10 : Math.round(v); });
+    if(Object.keys(row).length<=3){ msg.textContent = el_?'Γράψε τουλάχιστον μία τιμή.':'Enter at least one value.'; return; }
+    const { error: e2 } = await supabase.from('client_metrics').upsert(row, { onConflict:'client_id,metric_date' });
+    msg.textContent = e2 ? (el_?'Δεν αποθηκεύτηκε: ':'Not saved: ')+e2.message : (el_?'Αποθηκεύτηκε ✓':'Saved ✓');
+  });
+  card.querySelector('.mxCsv').addEventListener('change', async (e)=>{
+    const file = e.target.files?.[0]; if(!file) return;
+    if(file.size > 500*1024){ msg.textContent = el_?'Το αρχείο είναι πολύ μεγάλο (μέχρι 500 KB).':'File too large (max 500 KB).'; return; }
+    const parsed = metricsFromCsv(await file.text());
+    if(!parsed.length){ msg.textContent = el_?'Δεν βρέθηκαν έγκυρες γραμμές. Χρειάζεται στήλη date.':'No valid rows found. A date column is required.'; return; }
+    const rowsUp = parsed.map(r=>({ ...r, client_id: clientId, source:'csv' }));
+    const { error: e3 } = await supabase.from('client_metrics').upsert(rowsUp, { onConflict:'client_id,metric_date' });
+    msg.textContent = e3 ? (el_?'Δεν αποθηκεύτηκε: ':'Not saved: ')+e3.message : (el_?`Εισήχθησαν ${rowsUp.length} ημέρες ✓`:`Imported ${rowsUp.length} days ✓`);
+    e.target.value='';
+  });
+  wrap.appendChild(card); return card;
 }
 
 async function renderPhotosTab(body, client, isCoach){
@@ -8530,7 +8623,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
   const startBtn = workoutCard.querySelector('.startWorkoutBtn');
   if(startBtn) startBtn.addEventListener('click', ()=>{ renderClientDashboard._startDay = heroDay; renderClientDashboard._tab='program'; renderClientDashboard(body.closest('#main')); });
   wrap.appendChild(workoutCard);
-  { const hbSlot = el('<div></div>'); wrap.appendChild(hbSlot); habitsCardForClient(hbSlot, profile.id).catch(()=>{}); }
+  { const hbSlot = el('<div></div>'); wrap.appendChild(hbSlot); habitsCardForClient(hbSlot, profile.id).catch(()=>{}); const mxSlot = el('<div></div>'); wrap.appendChild(mxSlot); metricsCardForClient(mxSlot, profile.id).catch(()=>{}); }
 
   // Smaller cards below the day card: today's readiness details, gentle nudge, level
   if(todayReadiness){
