@@ -3174,10 +3174,18 @@ function partnerFeeBandsText(euro){
 }
 
 const PLANS = {
-  start:{ label:'START', el:'Εξατομικευμένο πρόγραμμα, καταγραφή προόδου, αναθεώρηση κάθε 4 εβδομάδες, απάντηση σε ερωτήσεις εντός 2 εργάσιμων.', en:'Personalized program, progress tracking, review every 4 weeks, reply to questions within 2 working days.' },
-  growth:{ label:'GROWTH', el:'Ό,τι στο START, με εβδομαδιαίο check-in και γραπτή ανατροφοδότηση, επανεκτίμηση κάθε 4 εβδομάδες, 1 βιντεοκλήση τον μήνα, απάντηση εντός 24 ωρών (εργάσιμες).', en:'Everything in START, with weekly check-in and written feedback, reassessment every 4 weeks, 1 video call per month, reply within 24 hours (working days).' },
-  performance:{ label:'PERFORMANCE', el:'Ό,τι στο GROWTH, με επανεκτίμηση κάθε 2 εβδομάδες, 2 βιντεοκλήσεις τον μήνα, απάντηση την ίδια μέρα (εργάσιμες) και προτεραιότητα στα ραντεβού.', en:'Everything in GROWTH, with reassessment every 2 weeks, 2 video calls per month, same-day reply (working days) and priority on appointments.' },
+  start:{ label:'START', price:59, calls:0, weekly:false, replyH:48,
+    el:'Εξατομικευμένο πρόγραμμα, καταγραφή προπονήσεων, πόνου και προόδου, αναθεώρηση προγράμματος κάθε 4 εβδομάδες, μηνύματα μόνο μέσα στην εφαρμογή με απάντηση εντός 2 εργάσιμων. Χωρίς βιντεοκλήσεις και χωρίς εβδομαδιαίο check-in.',
+    en:'Personalized program, workout, pain and progress logging, program review every 4 weeks, in-app messages only with a reply within 2 working days. No video calls and no weekly check-in.' },
+  growth:{ label:'GROWTH', price:99, calls:1, weekly:true, replyH:24,
+    el:'Ό,τι στο START, με 1 βιντεοκλήση τον μήνα, εβδομαδιαίο check-in με γραπτή ανατροφοδότηση, προσαρμογή προγράμματος όποτε χρειάζεται και απάντηση εντός 24 ωρών (εργάσιμες).',
+    en:'Everything in START, with 1 video call per month, a weekly check-in with written feedback, program adjustments whenever needed and a reply within 24 hours (working days).' },
+  performance:{ label:'PERFORMANCE', price:149, calls:2, weekly:true, replyH:10,
+    el:'Ό,τι στο GROWTH, με 2 βιντεοκλήσεις τον μήνα, επανεκτίμηση και αναπροσαρμογή κάθε 2 εβδομάδες, απάντηση την ίδια μέρα (για μηνύματα πριν τις 18:00) και προτεραιότητα στη διαθεσιμότητα ραντεβού.',
+    en:'Everything in GROWTH, with 2 video calls per month, reassessment and adjustment every 2 weeks, same-day reply (for messages before 18:00) and priority on appointment availability.' },
 };
+function planOf(key){ return key && PLANS[key] ? PLANS[key] : null; }
+function planReplyText(key){ return key==='start' ? (locale==='el'?'εντός 2 εργάσιμων ημερών':'within 2 working days') : key==='growth' ? (locale==='el'?'εντός 24 ωρών (εργάσιμες)':'within 24 hours (working days)') : key==='performance' ? (locale==='el'?'την ίδια μέρα (μηνύματα πριν τις 18:00)':'same day (messages before 18:00)') : ''; }
 function periodLabel(period){ return new Date(period + '-15').toLocaleDateString(locale==='el'?'el-GR':'en-GB', { month:'long', year:'numeric' }); }
 function currentPeriod(){ return localDateStr(new Date()).slice(0,7); } // 'YYYY-MM', local calendar month
 
@@ -6932,6 +6940,8 @@ function renderBusinessTab(body, client, onChanged){
     const { error } = await supabase.from('clients').update({ plan: e.target.value || null }).eq('id', client.id);
     if(error){ toast((locale==='el'?'Σφάλμα: ':'Error: ') + error.message); return; }
     client.plan = e.target.value || null;
+    const pf = card.querySelector('.f_price');
+    if(client.plan && PLANS[client.plan] && pf && !pf.value){ pf.value = PLANS[client.plan].price; pf.dispatchEvent(new Event('input',{bubbles:true})); }
     toast(t('saved',locale));
   });
   let timer = null;
@@ -7772,6 +7782,22 @@ async function renderMessagesTab(body, client, viewerRole){
     <button class="btn secondary refreshMsgBtn" type="button" style="padding:5px 12px; font-size:11px;">🔄 ${locale==='el'?'Ανανέωση':'Refresh'}</button>
   </div>`);
   body.appendChild(headerRow);
+  { // Package reply-time note (client) / reply-time check (coach)
+    const noteBox = el('<div></div>'); body.appendChild(noteBox);
+    (async ()=>{
+      const { data: pr, error: pe } = await supabase.from('clients').select('plan').eq('id', client.id).maybeSingle();
+      const pl = pe ? null : planOf(pr?.plan); if(!pl) return;
+      const key = pr.plan; const el_ = locale==='el';
+      if(viewerRole==='coach'){
+        const { data: lm } = await supabase.from('messages').select('sender_role,created_at').eq('client_id', client.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+        const hrs = lm && lm.sender_role!=='coach' ? (Date.now()-new Date(lm.created_at).getTime())/3600000 : 0;
+        const late = hrs > pl.replyH;
+        noteBox.innerHTML = `<div style="font-size:12px; margin-bottom:8px; ${late?'color:var(--danger);':'color:var(--ink-soft);'}">${late?'⏰ ':''}${pl.label}: ${el_?'απάντηση':'reply'} ${planReplyText(key)}${late?(el_?' · ο πελάτης περιμένει '+Math.floor(hrs)+' ώρες':' · client waiting '+Math.floor(hrs)+' h'):''}</div>`;
+      } else {
+        noteBox.innerHTML = `<div style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${pl.label}: ${el_?'απάντηση από τον coach':'coach reply'} ${planReplyText(key)}.</div>`;
+      }
+    })().catch(()=>{});
+  }
   headerRow.querySelector('.refreshMsgBtn').addEventListener('click', async ()=>{
     body.innerHTML = '';
     await renderMessagesTab(body, client, viewerRole);
@@ -9701,9 +9727,14 @@ async function renderClientDashboard(main){
     await renderMassageTab(body, profile, false, clientRow);
   } else if(tab==='calls'){
     const card = el('<div class="card gold"></div>');
-    if(clientRow?.zoom_link){
+    const { data: callPlanRow } = await supabase.from('clients').select('plan').eq('id', profile.id).maybeSingle();
+    const callPlan = planOf(callPlanRow?.plan);
+    if(callPlan && callPlan.calls===0){
+      card.innerHTML = `<p style="margin:0 0 6px;">🔒 ${locale==='el'?'Οι βιντεοκλήσεις περιλαμβάνονται στα πακέτα GROWTH (1 τον μήνα) και PERFORMANCE (2 τον μήνα).':'Video calls are included in GROWTH (1 per month) and PERFORMANCE (2 per month).'}</p><p style="margin:0; font-size:12.5px; color:var(--ink-soft);">${locale==='el'?'Για αναβάθμιση γράψε στον coach από τα μηνύματα.':'To upgrade, message your coach.'}</p>`;
+    } else if(clientRow?.zoom_link){
       const nextCallStr = clientRow.next_call_at ? new Date(clientRow.next_call_at).toLocaleString(locale==='el'?'el-GR':'en-GB') : null;
       card.innerHTML = `
+        ${callPlan ? `<p style="font-size:12px; color:var(--ink-soft); margin:0 0 8px;">${locale==='el'?'Περιλαμβάνονται':'Included'}: ${callPlan.calls} ${locale==='el'?'βιντεοκλήση/εις τον μήνα':'video call(s) per month'}</p>` : ''}
         ${nextCallStr ? `<p style="margin-bottom:14px;">${t('yourBookedCall',locale)}: <strong class="mono">${nextCallStr}</strong></p>` : ''}
         <a class="btn" href="${escapeHtml(clientRow.zoom_link)}" target="_blank" rel="noreferrer">📹 ${t('joinCall',locale)} ↗</a>
       `;
@@ -9712,8 +9743,10 @@ async function renderClientDashboard(main){
     }
     body.appendChild(card);
 
-    body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">${t('availability',locale)}</h3>`));
-    if(!openSlots.length){
+    const callsLocked = !!(callPlan && callPlan.calls===0);
+    if(!callsLocked) body.appendChild(el(`<h3 style="margin:18px 0 8px; font-size:13px; color:var(--ink-soft);">${t('availability',locale)}</h3>`));
+    if(callsLocked){ /* slots hidden for START */ }
+    else if(!openSlots.length){
       body.appendChild(el(`<p>${t('noSlots',locale)}</p>`));
     } else {
       openSlots.forEach(s=>{
