@@ -33,21 +33,25 @@
   .backLink{display:inline-block; margin-bottom:20px; color:var(--ink-soft); font-size:12.5px; text-decoration:none; cursor:pointer;}
   .backLink:hover{color:var(--ink);}
   .empty{color:var(--ink-soft); font-size:13px; text-align:center; padding:40px 0;}
+  .langSwitch{display:flex; gap:2px; background:rgba(255,255,255,0.06); border-radius:6px; padding:3px; width:max-content; margin-left:auto; margin-bottom:14px;}
+  .langSwitch button{background:transparent; border:none; color:var(--ink-soft); font-size:11px; font-weight:700; padding:7px 11px; min-height:34px; border-radius:4px; cursor:pointer; font-family:inherit;}
+  .langSwitch button.active{background:var(--red); color:#fff;}
   .errorMsg{color:#ff6b6b; font-size:12.5px; margin-top:-6px; margin-bottom:14px; display:none;}
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>📚 Τα Μαθήματά μου</h1>
-    <p class="sub">Happy Fit Physio · εκπαιδευτικά μαθήματα</p>
+    <div class="langSwitch"><button class="langBtn active" data-lang="el" type="button">ΕΛ</button><button class="langBtn" data-lang="en" type="button">EN</button></div>
+    <h1 id="hTitle">📚 Τα Μαθήματά μου</h1>
+    <p class="sub" id="hSub">Happy Fit Physio · εκπαιδευτικά μαθήματα</p>
 
     <div id="emailView" class="card">
       <div class="field">
-        <label>Email που χρησιμοποίησες στην αγορά</label>
+        <label id="emailLbl">Email που χρησιμοποίησες στην αγορά</label>
         <input type="email" id="emailInput" placeholder="you@example.com" required>
       </div>
       <div class="errorMsg" id="errorMsg"></div>
-      <button class="btn" id="unlockBtn">Δες τα μαθήματά μου →</button>
+      <button class="btn" id="unlockBtn" type="button">Δες τα μαθήματά μου →</button>
     </div>
 
     <div id="listView" style="display:none;"></div>
@@ -65,11 +69,34 @@
   const listView = document.getElementById('listView');
   const courseView = document.getElementById('courseView');
   const errorMsg = document.getElementById('errorMsg');
+
+  const I18N = {
+    el:{ title:'Τα Μαθήματά μου', sub:'Happy Fit Physio · εκπαιδευτικά μαθήματα', emailLabel:'Email που χρησιμοποίησες στην αγορά', unlock:'Δες τα μαθήματά μου →', checking:'Έλεγχος…',
+      notFound:'Δεν βρέθηκε αγορά με αυτό το email. Έλεγξε το email ή επικοινώνησε μαζί μας.', changeEmail:'← Αλλαγή email', loading:'Φόρτωση…', back:'← Πίσω',
+      noContent:'Δεν βρέθηκε ακόμα περιεχόμενο για αυτό το μάθημα.', explain:'Σου το εξηγώ ο ίδιος →', done:'Ολοκληρώθηκε' },
+    en:{ title:'My Courses', sub:'Happy Fit Physio · educational courses', emailLabel:'Email you used for the purchase', unlock:'See my courses →', checking:'Checking…',
+      notFound:'No purchase was found with this email. Check the email or contact us.', changeEmail:'← Change email', loading:'Loading…', back:'← Back',
+      noContent:'No content has been added for this course yet.', explain:'I explain it myself →', done:'Completed' }
+  };
+  let LANG = 'el';
+  try{ const l = localStorage.getItem('hfp_lang'); LANG = (l==='en'||l==='el') ? l : (/^el\b/i.test(navigator.language||'el') ? 'el' : 'en'); }catch(e){}
+  const tr = k => I18N[LANG][k];
+  function applyStatic(){
+    document.documentElement.lang = LANG;
+    document.title = tr('title') + ' · Happy Fit Physio';
+    document.getElementById('hTitle').textContent = '📚 ' + tr('title');
+    document.getElementById('hSub').textContent = tr('sub');
+    document.getElementById('emailLbl').textContent = tr('emailLabel');
+    document.getElementById('unlockBtn').textContent = tr('unlock');
+    document.querySelectorAll('.langBtn').forEach(b=>b.classList.toggle('active', b.dataset.lang===LANG));
+  }
+  document.querySelectorAll('.langBtn').forEach(b=>b.addEventListener('click', ()=>{ LANG = b.dataset.lang; try{ localStorage.setItem('hfp_lang', LANG); }catch(e){} applyStatic(); }));
   let currentEmail = '';
   // Everything that comes from the database is escaped before it goes into the page, and links must be https.
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const safeUrl = u => /^https:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
 
+  applyStatic();
   document.getElementById('unlockBtn').addEventListener('click', unlock);
   document.getElementById('emailInput').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
 
@@ -78,11 +105,11 @@
     errorMsg.style.display = 'none';
     if(!email) return;
     const btn = document.getElementById('unlockBtn');
-    btn.disabled = true; btn.textContent = 'Έλεγχος…';
+    btn.disabled = true; btn.textContent = tr('checking');
     const { data, error } = await supabase.rpc('list_my_enrollments', { p_email: email });
-    btn.disabled = false; btn.textContent = 'Δες τα μαθήματά μου →';
+    btn.disabled = false; btn.textContent = tr('unlock');
     if(error || !data || !data.length){
-      errorMsg.textContent = 'Δεν βρέθηκε αγορά με αυτό το email. Έλεγξε το email ή επικοινώνησε μαζί μας.';
+      errorMsg.textContent = tr('notFound');
       errorMsg.style.display = 'block';
       return;
     }
@@ -93,7 +120,7 @@
 
   function renderList(courses){
     listView.style.display = 'block';
-    listView.innerHTML = `<a class="backLink" id="logoutLink">← Αλλαγή email</a>` + courses.map(c => `
+    listView.innerHTML = `<a class="backLink" id="logoutLink">${tr('changeEmail')}</a>` + courses.map(c => `
       <div class="courseCard" data-id="${esc(c.course_id)}">
         <h3>${esc(c.title)}</h3>
         <p>${esc(c.subtitle || '')}</p>
@@ -107,10 +134,10 @@
   async function openCourse(courseId, title){
     listView.style.display = 'none';
     courseView.style.display = 'block';
-    courseView.innerHTML = `<p class="empty">Φόρτωση…</p>`;
+    courseView.innerHTML = `<p class="empty">${tr('loading')}</p>`;
     const { data, error } = await supabase.rpc('get_course_content', { p_email: currentEmail, p_course_id: courseId });
     if(error || !data || !data.length){
-      courseView.innerHTML = `<a class="backLink" id="backLink">← Πίσω</a><p class="empty">Δεν βρέθηκε ακόμα περιεχόμενο για αυτό το μάθημα.</p>`;
+      courseView.innerHTML = `<a class="backLink" id="backLink">${tr('back')}</a><p class="empty">${tr('noContent')}</p>`;
       document.getElementById('backLink').addEventListener('click', backToList);
       return;
     }
@@ -119,11 +146,11 @@
       if(!modules[row.module_title]) modules[row.module_title] = [];
       modules[row.module_title].push(row);
     });
-    let html = `<a class="backLink" id="backLink">← Πίσω</a><h1 style="font-size:20px; margin-bottom:20px;">${esc(title)}</h1>`;
+    let html = `<a class="backLink" id="backLink">${tr('back')}</a><h1 style="font-size:20px; margin-bottom:20px;">${esc(title)}</h1>`;
     Object.entries(modules).forEach(([modTitle, lessons]) => {
       html += `<div class="moduleBlock"><h3>${esc(modTitle)}</h3>`;
       lessons.forEach(l => {
-        html += `<div class="lesson" data-lesson="${encodeURIComponent(l.lesson_title)}"><h4>${esc(l.lesson_title)}</h4><p>${esc(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${safeUrl(l.video_url) ? `<a href="${esc(safeUrl(l.video_url))}" target="_blank" rel="noopener noreferrer">🎥 Σου το εξηγώ ο ίδιος →</a>` : ''}<div style="margin-top:10px;"><label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--red); cursor:pointer;"><input type="checkbox" class="lessonDoneCheck" data-course="${esc(courseId)}" data-title="${esc(l.lesson_title)}"> ✓ Ολοκληρώθηκε</label></div></div>`;
+        html += `<div class="lesson" data-lesson="${encodeURIComponent(l.lesson_title)}"><h4>${esc(l.lesson_title)}</h4><p>${esc(l.lesson_content||'').replace(/\n/g,'<br>')}</p>${safeUrl(l.video_url) ? `<a href="${esc(safeUrl(l.video_url))}" target="_blank" rel="noopener noreferrer">🎥 ${tr('explain')}</a>` : ''}<div style="margin-top:10px;"><label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--red); cursor:pointer;"><input type="checkbox" class="lessonDoneCheck" data-course="${esc(courseId)}" data-title="${esc(l.lesson_title)}"> ✓ ${tr('done')}</label></div></div>`;
       });
       html += `</div>`;
     });
