@@ -4499,7 +4499,7 @@ async function renderLibrary(main, isCoach){
         <div class="editExForm" style="display:none;"></div>` : ''}
         <div class="viewMode">
         ${ex3dSlotHtml(ex, isCoach)}
-        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
+        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
         <p>${escapeHtml(desc||'')}</p>
         <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
@@ -4522,7 +4522,7 @@ async function renderLibrary(main, isCoach){
         ${ex.progression_text ? `<p style="font-size:12.5px; margin-bottom:10px;"><strong>⬆ ${locale==='el'?'Δυσκολότερη εναλλακτική':'Harder alternative'}:</strong> ${escapeHtml(ex.progression_text)}</p>` : ''}
         <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('bibliography',locale)}</h4>
         ${(ex.evidence||[]).length===0 ? '<p style="font-size:12px;color:var(--ink-soft);" class="noEvidenceMsg">—</p>' : ''}
-        ${(ex.evidence||[]).map(ev=>`<div class="evidenceItem">${ev.evidence_type?`<span class="badge mono" style="margin-right:6px;">${escapeHtml(ev.evidence_type)}</span>`:''}${escapeHtml(ev.citation)} ${ev.url?`<a href="${escapeHtml(ev.url)}" target="_blank" rel="noreferrer">↗</a>`:''}</div>`).join('')}
+        ${(ex.evidence||[]).map(ev=>`<div class="evidenceItem">${ev.evidence_type?`<span class="badge mono" style="margin-right:6px;">${escapeHtml(ev.evidence_type)}</span>`:''}${escapeHtml(ev.citation)} ${ev.url?`<a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener noreferrer">↗</a>`:''}</div>`).join('')}
         ${isCoach ? `<div class="autoEvidenceBox" style="margin-top:8px; font-size:12px; color:var(--ink-soft);"></div>
         <div class="addEvidence" style="margin-top:10px;">
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -4561,7 +4561,7 @@ async function renderLibrary(main, isCoach){
             await supabase.from('exercises').update({ last_reviewed: localDateStr(new Date()) }).eq('id', ex.id);
             ex.last_reviewed = localDateStr(new Date());
           }catch(err){
-            box.innerHTML = `<a href="https://europepmc.org/search?query=${encodeURIComponent(ex.name_en||ex.name_el)}" target="_blank" rel="noreferrer">${locale==='el'?'Αναζήτηση χειροκίνητα στο Europe PMC ↗':'Search manually on Europe PMC ↗'}</a>`;
+            box.innerHTML = `<a href="https://europepmc.org/search?query=${encodeURIComponent(ex.name_en||ex.name_el)}" target="_blank" rel="noopener noreferrer">${locale==='el'?'Αναζήτηση χειροκίνητα στο Europe PMC ↗':'Search manually on Europe PMC ↗'}</a>`;
           }
         }
       }
@@ -9258,7 +9258,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:10px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
       <div class="whyPanel" style="display:none; background:var(--tint-soft); border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex3dSlotHtml(ex, false)}
-        ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
+        ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.execution_steps ? `<p style="margin-bottom:6px; white-space:pre-line;"><strong>${t('executionSteps',locale)}:</strong> ${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
@@ -9736,7 +9736,7 @@ async function renderClientDashboard(main){
       card.innerHTML = `
         ${callPlan ? `<p style="font-size:12px; color:var(--ink-soft); margin:0 0 8px;">${locale==='el'?'Περιλαμβάνονται':'Included'}: ${callPlan.calls} ${locale==='el'?'βιντεοκλήση/εις τον μήνα':'video call(s) per month'}</p>` : ''}
         ${nextCallStr ? `<p style="margin-bottom:14px;">${t('yourBookedCall',locale)}: <strong class="mono">${nextCallStr}</strong></p>` : ''}
-        <a class="btn" href="${escapeHtml(clientRow.zoom_link)}" target="_blank" rel="noreferrer">📹 ${t('joinCall',locale)} ↗</a>
+        <a class="btn" href="${escapeHtml(clientRow.zoom_link)}" target="_blank" rel="noopener noreferrer">📹 ${t('joinCall',locale)} ↗</a>
       `;
     } else {
       card.innerHTML = `<p style="color:var(--ink-soft);">${t('noCallScheduled',locale)}</p>`;
@@ -9775,7 +9775,7 @@ async function renderClientDashboard(main){
     } else if(clientRow?.payment_link){
       card.innerHTML = planHtml + `
         ${clientRow.monthly_price ? `<p style="margin-bottom:14px;">${locale==='el'?'Μηνιαία συνδρομή':'Monthly subscription'}: <strong class="mono">€${clientRow.monthly_price}</strong></p>` : ''}
-        <a class="btn" href="${escapeHtml(clientRow.payment_link)}" target="_blank" rel="noreferrer">${t('payNow',locale)} ↗</a>
+        <a class="btn" href="${escapeHtml(clientRow.payment_link)}" target="_blank" rel="noopener noreferrer">${t('payNow',locale)} ↗</a>
       `;
     } else {
       card.innerHTML = planHtml + `<p style="color:var(--ink-soft);">${t('noPaymentLink',locale)}</p>`;
