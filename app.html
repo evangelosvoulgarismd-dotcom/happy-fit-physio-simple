@@ -1384,7 +1384,7 @@ function openMassageInquiryModal(){
       </div>
       <div class="grid2">
         <div class="field"><label>${el_?'Περιοχή':'Area'} *</label><select class="mi_area" required><option value="">—</option><option>${el_?'Αθήνα':'Athens'}</option><option>${el_?'Σαντορίνη':'Santorini'}</option></select></div>
-        <div class="field"><label>${t('massageType',locale)}</label><select class="mi_type"><option>Relaxation</option><option>Deep Tissue</option><option>Recovery</option><option>Travel Recovery</option><option>Couple</option><option>Compression Therapy</option></select></div>
+        <div class="field"><label>${t('massageType',locale)}</label><select class="mi_type">${massageTypeOptions()}</select></div>
       </div>
       <div class="field"><label>${el_?'Διεύθυνση ή κατάλυμα (π.χ. όνομα βίλας)':'Address or accommodation (e.g. villa name)'} *</label><input class="mi_addr" required maxlength="200"></div>
       <div class="grid2">
@@ -3234,6 +3234,8 @@ const PLANS = {
     el:'Ό,τι στο GROWTH, με 2 βιντεοκλήσεις τον μήνα, επανεκτίμηση και αναπροσαρμογή κάθε 2 εβδομάδες, απάντηση την ίδια μέρα (για μηνύματα πριν τις 18:00) και προτεραιότητα στη διαθεσιμότητα ραντεβού.',
     en:'Everything in GROWTH, with 2 video calls per month, reassessment and adjustment every 2 weeks, same-day reply (for messages before 18:00) and priority on appointment availability.' },
 };
+const MASSAGE_TYPES = [['Relaxation','Χαλάρωση'],['Deep Tissue','Εν τω βάθει'],['Recovery','Αποκατάσταση'],['Travel Recovery','Αποκατάσταση ταξιδιού'],['Couple','Ζευγαριών'],['Compression Therapy','Θεραπεία συμπίεσης']];
+function massageTypeOptions(){ return MASSAGE_TYPES.map(([v,g])=>`<option value="${v}">${locale==='el'?g:v}</option>`).join(''); }
 function planOf(key){ return key && PLANS[key] ? PLANS[key] : null; }
 function planReplyText(key){ return key==='start' ? (locale==='el'?'εντός 2 εργάσιμων ημερών':'within 2 working days') : key==='growth' ? (locale==='el'?'εντός 24 ωρών (εργάσιμες)':'within 24 hours (working days)') : key==='performance' ? (locale==='el'?'την ίδια μέρα (μηνύματα πριν τις 18:00)':'same day (messages before 18:00)') : ''; }
 function periodLabel(period){ return new Date(period + '-15').toLocaleDateString(locale==='el'?'el-GR':'en-GB', { month:'long', year:'numeric' }); }
@@ -7846,7 +7848,7 @@ async function renderMassageTab(body, person, isCoach, clientRow){
       <div class="field"><label>${t('preferredDate',locale)} *</label><input class="m_date" type="date" required min="${tomorrow}"></div>
       <div class="field"><label>${t('preferredTime',locale)} *</label><input class="m_time" type="time" required></div>
       <div class="field"><label>${t('massageType',locale)}</label>
-        <select class="m_type"><option>Relaxation</option><option>Deep Tissue</option><option>Recovery</option><option>Travel Recovery</option><option>Couple</option><option>Compression Therapy</option></select></div>
+        <select class="m_type">${massageTypeOptions()}</select></div>
       <div class="field"><label>${el_?'Περιοχή':'Area'}</label>
         <select class="m_area"><option value="Αθήνα" ${lastArea==='Αθήνα'?'selected':''}>${el_?'Αθήνα':'Athens'}</option><option value="Σαντορίνη" ${lastArea==='Σαντορίνη'?'selected':''}>${el_?'Σαντορίνη':'Santorini'}</option></select></div>
       <div class="field mfWide"><label>${t('massageLocation',locale)} *</label><input class="m_loc" required maxlength="200" value="${escapeHtml(lastAddr)}" placeholder="${el_?'Διεύθυνση, όροφος, ξενοδοχείο/βίλα':'Address, floor, hotel/villa'}"></div>
