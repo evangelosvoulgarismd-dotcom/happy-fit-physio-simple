@@ -210,7 +210,7 @@
     #brandMark svg{width:26px; height:26px;}
     #sidebar h1{font-size:13px; text-align:left;}
     #sidebar .tagline{display:none;}
-#chatTopBtn{margin-left:auto;} #chatTopBtn + #notifBell{margin-left:6px;} #notifBell{margin-left:auto;}
+#chatTopBtn{margin-left:auto;} #chatTopBtn + #notifBell{margin-left:6px;} #notifBell{margin-left:auto;} #searchTopBtn{margin-left:auto;} #searchTopBtn + #notifBell{margin-left:6px;}
     .navBtn{padding:7px 10px; font-size:12px; border-left:none; border-bottom:3px solid transparent;}
     .navBtn.active{border-left:none; border-bottom-color:var(--gold);}
     /* Settings/export/logout + legal links + social icons: same weight as the nav links,
@@ -282,7 +282,7 @@
   #menuToggleBtn{display:none; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   .massageForm .mfGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;} .massageForm .mfWide{grid-column:1/-1;} .massageForm .field{margin-bottom:0;} .massageForm textarea{width:100%; box-sizing:border-box; padding:9px 12px; border-radius:6px; border:1px solid var(--line); font:inherit; resize:vertical;}
   @media (max-width:520px){ .massageForm .mfGrid{grid-template-columns:1fr;} }
-  #notifBell, #chatTopBtn{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
+  #notifBell, #chatTopBtn, #searchTopBtn{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #themeBtn{background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #notifBell .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
   #chatTopBtn .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
@@ -311,7 +311,7 @@
     #brandMark { min-width:0; flex:1 1 auto; overflow:hidden; }
     #brandMark img { width:40px !important; height:40px !important; flex:0 0 40px; }
     #brandMark h1, #brandMark .brandName { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #menuToggleBtn, #notifBell, #chatTopBtn { width:42px; height:42px; min-width:42px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
+    #menuToggleBtn, #notifBell, #chatTopBtn, #searchTopBtn { width:42px; height:42px; min-width:42px; display:inline-flex; align-items:center; justify-content:center; padding:0; }
     #sidebarBottom .optRow, #sidebarBottom .navBtn{ min-height:44px; }
     .navBtnsWrap { width:100%; max-height:calc(100dvh - 145px); overflow:auto; -webkit-overflow-scrolling:touch; }
     .navBtnsWrap .navBtn { min-height:44px; padding:10px 12px; }
@@ -360,14 +360,14 @@
   @media (max-width:380px){
     #sidebar { padding-left:8px; padding-right:8px; gap:5px; }
     #brandMark img { width:34px !important; height:34px !important; flex-basis:34px; }
-    #menuToggleBtn, #notifBell, #chatTopBtn { width:38px; height:38px; min-width:38px; }
+    #menuToggleBtn, #notifBell, #chatTopBtn, #searchTopBtn { width:38px; height:38px; min-width:38px; }
     #main { padding-left:9px; padding-right:9px; }
     .statCard .num { font-size:20px; }
     .bottomTab .lbl { font-size:8.5px; }
   }
 
   /* Reduce accidental selection/zoom while keeping form usability */
-  button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell, #chatTopBtn { user-select:none; }
+  button, .navBtn, .bottomTab, #menuToggleBtn, #notifBell, #chatTopBtn, #searchTopBtn { user-select:none; }
 
   /* ── Press feedback + accessibility preferences ── */
   .btn:active{transform:scale(.97);}
@@ -450,7 +450,7 @@
   #sidebarFooter a{ color:var(--ink-soft); }
   .optLabel{ color:var(--ink-soft); }
   .optGroup .optRow, .langToggle button{ color:var(--nav-ink); }
-  #notifBell, #chatTopBtn, #menuToggleBtn{ background:var(--nav-on-bg); color:var(--ink); border:1px solid var(--hair); border-radius:999px; }
+  #notifBell, #chatTopBtn, #searchTopBtn, #menuToggleBtn{ background:var(--nav-on-bg); color:var(--ink); border:1px solid var(--hair); border-radius:999px; }
 
   /* cards: large radius, hairline border, no red edge */
   .card, .statCard, .clinicalCard, .chartWrap{ border:1px solid var(--line); border-left:1px solid var(--line); border-radius:var(--r-card); box-shadow:none; }
@@ -565,6 +565,33 @@
     #sidebarBottom.open{ display:flex !important; flex-direction:column !important; }
     #main{ width:100%; max-width:1180px; margin:0 auto; padding:24px 32px 60px; }
   }
+
+  /* ── UX pass: forms, touch targets, skeleton loading, quick switcher ── */
+  .mxForm label{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--ink-soft); }
+  .mxForm input{ width:100%; box-sizing:border-box; min-height:42px; border-radius:var(--r-field); }
+  .cmBox textarea, .cmBox form textarea{ width:100%; box-sizing:border-box; border-radius:var(--r-field); padding:10px 12px; font-family:inherit; font-size:14px; border:1px solid var(--line); background:var(--input-bg); color:var(--ink); }
+  .searchInput, .sportFilterSelect, .statusFilterSelect, .sortSelect{ border-radius:var(--r-field) !important; min-height:42px; padding:8px 12px !important; }
+  .sportFilterSelect, .statusFilterSelect, .sortSelect{ flex:1 1 150px; min-width:0; }
+  @media (pointer:coarse){
+    .btn{ min-height:42px; }
+    .cmReact, .cmPin, .cmDel, .cmLeave, .cmJoin, .draftBtn{ min-height:38px; padding:7px 14px !important; }
+    .bottomTab .lbl{ font-size:10px; }
+  }
+  @media (max-width:760px){ .bottomTab .lbl{ font-size:9.5px; } }
+  /* skeleton while a screen loads (appears only after a short wait, like the old text did) */
+  @keyframes skel{ 0%{ background-position:100% 0; } 100%{ background-position:-100% 0; } }
+  .loadingP{ font-size:0 !important; height:auto; }
+  .loadingP::before{ content:''; display:block; height:96px; border-radius:var(--r-card); margin-bottom:12px;
+    background:linear-gradient(90deg, var(--surface2) 25%, color-mix(in srgb, var(--surface2) 55%, var(--panel)) 50%, var(--surface2) 75%); background-size:200% 100%; animation:skel 1.4s linear infinite; }
+  .loadingP::after{ content:''; display:block; height:150px; border-radius:var(--r-card);
+    background:linear-gradient(90deg, var(--surface2) 25%, color-mix(in srgb, var(--surface2) 55%, var(--panel)) 50%, var(--surface2) 75%); background-size:200% 100%; animation:skel 1.4s linear infinite; }
+  @media (prefers-reduced-motion:reduce){ .loadingP::before, .loadingP::after{ animation:none; } }
+  .qsItem{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 12px; border-radius:12px; cursor:pointer; font-size:14px; }
+  .qsItem small{ color:var(--ink-soft); font-size:11px; }
+  .qsItem.on, .qsItem:hover{ background:var(--nav-on-bg); }
+  .qsInput{ min-height:46px; font-size:16px; border-radius:var(--r-field); }
+  :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  @media (pointer:coarse){ .qsBox > p{ display:none; } }
 </style>
 </head>
 <body>
@@ -1144,6 +1171,27 @@ function undoableAction(msg, run, onUndo, ms){
   tEl.querySelector('button').addEventListener('click', ()=>{ if(done) return; done = true; clearTimeout(h); window.removeEventListener('pagehide', finish); tEl.remove(); if(onUndo) onUndo(); });
   document.body.appendChild(tEl);
 }
+
+// Own confirmation sheet instead of the browser's native confirm() (same wording, matches the app, rises as a sheet on phones)
+function askConfirm(message){
+  return new Promise(resolve=>{
+    const el_ = locale==='el';
+    const risky = /διαγραφ|delete|ακυρωθ|cancel|δεν επαναφ|cannot be undone/i.test(message);
+    const ov = el(`<div class="modalOverlay cfOverlay"><div class="modalBox" style="max-width:420px; padding:22px;">
+      <p style="font-size:15px; line-height:1.5; margin:0 0 18px; white-space:pre-line;">${escapeHtml(message)}</p>
+      <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+        <button type="button" class="btn secondary cfNo" style="flex:1 1 120px;">${el_?'Άκυρο':'Cancel'}</button>
+        <button type="button" class="btn ${risky?'danger':''} cfYes" style="flex:1 1 120px;">${risky?(el_?'Ναι, συνέχεια':'Yes, continue'):(el_?'Συνέχεια':'Continue')}</button></div></div></div>`);
+    let done = false; const fin = v=>{ if(done) return; done = true; mo.disconnect(); ov.remove(); resolve(v); };
+    const mo = new MutationObserver(()=>{ if(!ov.isConnected) fin(false); }); mo.observe(document.body,{childList:true});
+    ov.addEventListener('click', e=>{ if(e.target===ov) fin(false); });
+    ov.querySelector('.cfNo').addEventListener('click', ()=>fin(false));
+    ov.querySelector('.cfYes').addEventListener('click', ()=>fin(true));
+    document.body.appendChild(ov);
+    ov.querySelector('.cfNo').focus();
+  });
+}
+
 function toast(msg, ms){
   let tEl = document.getElementById('toast');
   if(!tEl){ tEl = el('<div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:20px;max-width:min(92vw,380px);z-index:10000;pointer-events:none;background:var(--toast-bg);color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;line-height:1.35;opacity:0;transition:opacity .25s;"></div>'); document.body.appendChild(tEl); }
@@ -1774,6 +1822,7 @@ function renderShell(){
         ${isOwner ? `<p style="text-align:center; margin-top:4px;"><span style="display:inline-block; font-size:10px; font-weight:800; letter-spacing:0.5px; color:var(--red-text); background:var(--tint); border-radius:20px; padding:2px 10px;">CEO · ${locale==='el'?'Ιδρυτής':'Founder'}</span></p>` : ''}
       </div>
       <button id="menuToggleBtn" aria-label="${locale==='el'?'Άνοιγμα μενού':'Open menu'}">☰</button>
+      ${isCoach ? `<button id="searchTopBtn" type="button" aria-label="${locale==='el'?'Αναζήτηση (Ctrl K)':'Search (Ctrl K)'}">🔍</button>` : ''}
       <button id="notifBell" aria-label="${locale==='el'?'Ειδοποιήσεις':'Notifications'}">🔔<span class="dot" id="notifDot"></span></button>
       <div class="navBtnsWrap" id="navBtnsWrap">
       ${isCoach ? `<div class="modeSwitch" role="group" aria-label="${locale==='el'?'Λειτουργία':'Mode'}"><button type="button" data-mode="coach">🏋️ Coach</button><button type="button" data-mode="manager">🧭 Manager</button></div>` : ''}
@@ -1862,6 +1911,7 @@ function renderShell(){
   });
   shell.querySelectorAll('#themeToggle .optRow').forEach(b=>b.addEventListener('click', ()=>applyTheme(b.dataset.th)));
   applyTheme(document.documentElement.getAttribute('data-theme')||'dark');
+  shell.querySelector('#searchTopBtn')?.addEventListener('click', ()=>openQuickSwitcher());
   const chatTop = shell.querySelector('#chatTopBtn');
   if(chatTop) chatTop.addEventListener('click', ()=>{ renderClientDashboard._tab = 'messages'; renderClientDashboard._reuse = false; switchView('dashboard'); });
   shell.querySelector('#notifBell').addEventListener('click', (e)=>{
@@ -2121,11 +2171,11 @@ async function renderPackagesView(main){
     const hb = card.querySelector('.histBtn');
     if(hb) hb.addEventListener('click', ()=>{ const b=card.querySelector('.histBox'); b.style.display = b.style.display==='none' ? 'block' : 'none'; });
     card.querySelectorAll('.delSesBtn').forEach(b=>b.addEventListener('click', async ()=>{
-      if(!confirm(el_?'Διαγραφή αυτής της συνεδρίας;':'Delete this session?')) return;
+      if(!(await askConfirm(el_?'Διαγραφή αυτής της συνεδρίας;':'Delete this session?'))) return;
       await supabase.from('recovery_sessions').delete().eq('id', b.dataset.id); refresh();
     }));
     card.querySelector('.delPkgBtn').addEventListener('click', async ()=>{
-      if(!confirm(el_?`Διαγραφή του πακέτου "${p.client_name}" και όλων των συνεδριών του;`:`Delete package "${p.client_name}" and all its sessions?`)) return;
+      if(!(await askConfirm(el_?`Διαγραφή του πακέτου "${p.client_name}" και όλων των συνεδριών του;`:`Delete package "${p.client_name}" and all its sessions?`))) return;
       await supabase.from('recovery_packages').delete().eq('id', p.id); refresh();
     });
     main.appendChild(card);
@@ -2172,7 +2222,7 @@ async function renderMassageInquiriesBox(main){
       if(!uErr){ toast(t('saved',locale)); }
     });
     card.querySelector('.miDel').addEventListener('click', async ()=>{
-      if(!confirm(el_?'Διαγραφή του αιτήματος; Δεν επαναφέρεται.':'Delete this request? This cannot be undone.')) return;
+      if(!(await askConfirm(el_?'Διαγραφή του αιτήματος; Δεν επαναφέρεται.':'Delete this request? This cannot be undone.'))) return;
       const { error: dErr } = await supabase.from('massage_inquiries').delete().eq('id', r.id);
       if(!dErr){ card.remove(); toast(el_?'Διαγράφηκε':'Deleted'); }
     });
@@ -2319,7 +2369,7 @@ async function renderLeadsView(main){
       renderLeadsView(main);
     });
     card.querySelector('.delLeadBtn').addEventListener('click', async ()=>{
-      if(!confirm(locale==='el' ? `Διαγραφή του ενδιαφερόμενου "${l.full_name}";` : `Delete lead "${l.full_name}"?`)) return;
+      if(!(await askConfirm(locale==='el' ? `Διαγραφή του ενδιαφερόμενου "${l.full_name}";` : `Delete lead "${l.full_name}"?`))) return;
       await supabase.from('leads').delete().eq('id', l.id);
       renderLeadsView(main);
     });
@@ -2485,7 +2535,7 @@ async function renderTemplatesView(main){
     });
 
     card.querySelector('.delTplBtn').addEventListener('click', async ()=>{
-      if(!confirm(locale==='el' ? `Διαγραφή του προτύπου "${tpl.title}";` : `Delete template "${tpl.title}"?`)) return;
+      if(!(await askConfirm(locale==='el' ? `Διαγραφή του προτύπου "${tpl.title}";` : `Delete template "${tpl.title}"?`))) return;
       await supabase.from('program_templates').delete().eq('id', tpl.id);
       renderTemplatesView(main);
     });
@@ -4269,7 +4319,7 @@ async function renderLibrary(main, isCoach){
     header.querySelector('#bulk3dBtn').addEventListener('click', async ()=>{
       const todo = exercises.map(e=>({e, s:(e.anim_pattern?null:ex3dSuggest(e))})).filter(x=>x.s);
       if(!todo.length){ alert(locale==='el'?'Δεν υπάρχουν ασκήσεις χωρίς 3D που να αναγνωρίζονται αυτόματα.':'No exercises without 3D could be matched automatically.'); return; }
-      if(!confirm(locale==='el' ? `Θα προταθεί 3D για ${todo.length} ασκήσεις ως ΠΡΟΧΕΙΡΟ. Δεν θα το βλέπουν οι πελάτες μέχρι να εγκρίνεις κάθε μία. Συνέχεια;` : `This will suggest 3D for ${todo.length} exercises as DRAFT. Clients will not see them until you approve each one. Continue?`)) return;
+      if(!(await askConfirm(locale==='el' ? `Θα προταθεί 3D για ${todo.length} ασκήσεις ως ΠΡΟΧΕΙΡΟ. Δεν θα το βλέπουν οι πελάτες μέχρι να εγκρίνεις κάθε μία. Συνέχεια;` : `This will suggest 3D for ${todo.length} exercises as DRAFT. Clients will not see them until you approve each one. Continue?`))) return;
       let fail = 0;
       for(const x of todo){
         const { error:err } = await supabase.from('exercises').update({anim_pattern:x.s.pat, anim_prop:x.s.prop, anim_status:'draft'}).eq('id', x.e.id);
@@ -4578,7 +4628,7 @@ async function renderLibrary(main, isCoach){
         renderLibrary(main, isCoach);
       });
       card.querySelector('.delExBtn').addEventListener('click', async ()=>{
-        if(!confirm(locale==='el' ? `Διαγραφή της άσκησης "${name}"; Θα αφαιρεθεί από όλα τα προγράμματα.` : `Delete exercise "${name}"? It will be removed from all programs.`)) return;
+        if(!(await askConfirm(locale==='el' ? `Διαγραφή της άσκησης "${name}"; Θα αφαιρεθεί από όλα τα προγράμματα.` : `Delete exercise "${name}"? It will be removed from all programs.`))) return;
         await supabase.from('exercises').delete().eq('id', ex.id);
         renderLibrary(main, isCoach);
       });
@@ -5479,7 +5529,7 @@ async function renderRecapTab(body, client, checkins, programs){
   card.querySelector('.recapCopy').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(ta.value); toast(locale==='el'?'Αντιγράφηκε':'Copied'); }catch(e){ ta.select(); toast(locale==='el'?'Επίλεξε και αντίγραψε χειροκίνητα':'Select and copy manually'); } });
   card.querySelector('.recapSend').addEventListener('click', async (e)=>{
     const text = ta.value.trim(); if(!text) return;
-    if(!confirm(locale==='el' ? `Να σταλεί το μήνυμα στον/στην ${client.full_name};` : `Send this message to ${client.full_name}?`)) return;
+    if(!(await askConfirm(locale==='el' ? `Να σταλεί το μήνυμα στον/στην ${client.full_name};` : `Send this message to ${client.full_name}?`))) return;
     e.target.disabled = true;
     const { error: sErr } = await supabase.from('messages').insert({ client_id: client.id, sender_id: profile.id, sender_role: 'coach', body: text });
     e.target.disabled = false;
@@ -5629,7 +5679,7 @@ async function renderSopsView(main){
       card.querySelector('.clickable').addEventListener('click', ()=>{ const d = card.querySelector('.sopDetail'); d.style.display = d.style.display==='none' ? 'block' : 'none'; });
       card.querySelector('.sEdit').addEventListener('click', ()=>editForm(r));
       card.querySelector('.sDel').addEventListener('click', async ()=>{
-        if(!confirm(locale==='el' ? `Διαγραφή της διαδικασίας "${r.title}";` : `Delete "${r.title}"?`)) return;
+        if(!(await askConfirm(locale==='el' ? `Διαγραφή της διαδικασίας "${r.title}";` : `Delete "${r.title}"?`))) return;
         await supabase.from('sops').delete().eq('id', r.id); refresh();
       });
       listBox.appendChild(card);
@@ -5784,7 +5834,7 @@ async function renderStudioView(main){
     const w = el(`<div style="display:flex; gap:8px; margin-top:8px;"><button class="btn secondary aEdit" type="button" style="padding:5px 12px; font-size:11px;">✏️ ${L('Επεξεργασία','Edit')}</button><button class="btn danger aDel" type="button" style="padding:5px 12px; font-size:11px;">🗑 ${t('delete',locale)}</button></div>`);
     w.querySelector('.aEdit').addEventListener('click', onEdit);
     w.querySelector('.aDel').addEventListener('click', async ()=>{
-      if(!confirm(L('Διαγραφή αυτού του στοιχείου;','Delete this item?'))) return;
+      if(!(await askConfirm(L('Διαγραφή αυτού του στοιχείου;','Delete this item?')))) return;
       const { error: e3 } = await supabase.from('studio_items').delete().eq('id', r.id);
       if(e3){ toast(L('Σφάλμα: ','Error: ')+e3.message); return; }
       refresh();
@@ -7208,7 +7258,7 @@ async function renderHabitsTab(body, client){
       <button type="button" class="btn secondary hbDel" style="padding:4px 10px; font-size:11px;" aria-label="${el_?'Διαγραφή':'Delete'}">✕</button></div>`);
     row.querySelector('.hbToggle').addEventListener('click', async ()=>{ await supabase.from('client_habits').update({ active: !h.active }).eq('id', h.id); renderHabitsTab(body, client); });
     row.querySelector('.hbDel').addEventListener('click', async ()=>{
-      if(!confirm(el_?'Διαγραφή της συνήθειας και του ιστορικού της;':'Delete this habit and its history?')) return;
+      if(!(await askConfirm(el_?'Διαγραφή της συνήθειας και του ιστορικού της;':'Delete this habit and its history?'))) return;
       await supabase.from('client_habits').delete().eq('id', h.id); renderHabitsTab(body, client); });
     listBox.appendChild(row);
   });
@@ -7400,7 +7450,7 @@ async function renderCommunity(box, groupId, isCoach){
       else await supabase.from('community_reactions').insert({ post_id:p.id, user_id:profile.id, emoji:em });
       refresh(); }));
     card.querySelector('.cmPin')?.addEventListener('click', async ()=>{ await supabase.from('community_posts').update({ pinned: !p.pinned }).eq('id', p.id); refresh(); });
-    card.querySelector('.cmDel')?.addEventListener('click', async ()=>{ if(!confirm(el_?'Διαγραφή ανάρτησης;':'Delete this post?')) return; await supabase.from('community_posts').delete().eq('id', p.id); refresh(); });
+    card.querySelector('.cmDel')?.addEventListener('click', async ()=>{ if(!(await askConfirm(el_?'Διαγραφή ανάρτησης;':'Delete this post?'))) return; await supabase.from('community_posts').delete().eq('id', p.id); refresh(); });
     box.appendChild(card);
   });
 }
@@ -7419,6 +7469,82 @@ async function communityCardForClient(wrap){
   let loaded=false;
   det.addEventListener('toggle', ()=>{ if(det.open && !loaded){ loaded=true; renderCommunity(det.querySelector('.cmBox'), coachId, false).catch(()=>{}); } });
 }
+
+
+// ── Quick switcher (coach): Ctrl/Cmd+K or "/" opens a search over clients and screens ────────────
+let _qsClients = null, _qsAt = 0;
+async function openQuickSwitcher(){
+  if(!profile || !(profile.role==='coach' || profile.role==='owner')) return;
+  if(document.querySelector('.qsOverlay')) return;
+  const el_ = locale==='el';
+  const norm = x => String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const overlay = el(`<div class="modalOverlay qsOverlay"><div class="modalBox qsBox" style="max-width:520px; padding:16px;">
+    <input class="qsInput" type="search" autocomplete="off" placeholder="${el_?'Αναζήτηση πελάτη ή οθόνης…':'Search a client or screen…'}" aria-label="${el_?'Αναζήτηση':'Search'}" style="width:100%;">
+    <div class="qsList" role="listbox" style="margin-top:10px;"></div>
+    <p style="font-size:11px; color:var(--ink-soft); margin:10px 0 0;">${el_?'↑ ↓ για επιλογή, Enter για άνοιγμα, Esc για κλείσιμο':'↑ ↓ to choose, Enter to open, Esc to close'}</p></div></div>`);
+  document.body.appendChild(overlay);
+  const close = ()=>overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) close(); });
+  const input = overlay.querySelector('.qsInput'), list = overlay.querySelector('.qsList');
+  input.focus();
+  if(!_qsClients || Date.now()-_qsAt > 60000){
+    const { data } = await supabase.from('clients').select('*').order('full_name');
+    _qsClients = data || []; _qsAt = Date.now();
+  }
+  const screens = [...document.querySelectorAll('#navBtnsWrap .navBtn[data-v]')].map(b=>({ kind:'view', label:b.textContent.trim(), v:b.dataset.v }));
+  let items = [], idx = 0;
+  const go = (it)=>{
+    close();
+    if(it.kind==='client'){ view='dashboard'; selectedClient = it.c; renderClientDetail._tab = 'program'; renderShell(); }
+    else document.querySelector(`#navBtnsWrap .navBtn[data-v="${it.v}"]`)?.click();
+  };
+  const draw = ()=>{
+    const q = norm(input.value.trim());
+    const cl = _qsClients.filter(c=>!q || norm(c.full_name).includes(q)).slice(0,6).map(c=>({ kind:'client', c, label:c.full_name, sub:(PLANS[c.plan]?.label||'') }));
+    const sc = screens.filter(s=>q && norm(s.label).includes(q)).slice(0,4);
+    items = [...cl, ...sc]; if(idx>=items.length) idx = Math.max(0, items.length-1);
+    list.innerHTML = items.length ? items.map((it,i)=>`<div class="qsItem ${i===idx?'on':''}" role="option" aria-selected="${i===idx}" data-i="${i}"><span>${it.kind==='client'?'👤':'↗'} ${escapeHtml(it.label)}</span><small>${escapeHtml(it.sub||(it.kind==='view'?(el_?'οθόνη':'screen'):''))}</small></div>`).join('') : `<p style="font-size:13px; color:var(--ink-soft); margin:6px 2px;">${el_?'Δεν βρέθηκε τίποτα.':'Nothing found.'}</p>`;
+    list.querySelectorAll('.qsItem').forEach(n=>{ n.addEventListener('click', ()=>go(items[+n.dataset.i])); });
+  };
+  input.addEventListener('input', ()=>{ idx = 0; draw(); });
+  input.addEventListener('keydown', e=>{
+    if(e.key==='ArrowDown'){ e.preventDefault(); idx = Math.min(items.length-1, idx+1); draw(); list.querySelector('.on')?.scrollIntoView({block:'nearest'}); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); idx = Math.max(0, idx-1); draw(); list.querySelector('.on')?.scrollIntoView({block:'nearest'}); }
+    else if(e.key==='Enter'){ e.preventDefault(); if(items[idx]) go(items[idx]); }
+  });
+  draw();
+}
+document.addEventListener('keydown', (e)=>{
+  if(!profile) return;
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||'') || document.activeElement?.isContentEditable;
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openQuickSwitcher(); }
+  else if(e.key==='/' && !typing && !e.ctrlKey && !e.metaKey){ e.preventDefault(); openQuickSwitcher(); }
+});
+
+// ── Dialog accessibility for every modal: role, focus in, Esc closes, focus returns ──────────────
+(function(){
+  const seen = new WeakSet();
+  const mo = new MutationObserver(muts=>{
+    muts.forEach(m=>{
+      m.addedNodes.forEach(n=>{
+        if(!(n instanceof HTMLElement) || !n.classList.contains('modalOverlay') || seen.has(n)) return;
+        seen.add(n);
+        const box = n.querySelector('.modalBox'); const prev = document.activeElement;
+        if(box){ box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); if(!box.hasAttribute('tabindex')) box.setAttribute('tabindex','-1');
+          if(!n.contains(document.activeElement)) setTimeout(()=>{ if(n.isConnected && !n.contains(document.activeElement)) box.focus({preventScroll:true}); }, 30); }
+        const onKey = (e)=>{
+          if(e.key==='Escape' && n.isConnected && [...document.querySelectorAll('.modalOverlay')].pop()===n){
+            const x = n.querySelector('.modalCloseBtn'); if(x) x.click(); else n.remove();
+          }
+        };
+        document.addEventListener('keydown', onKey);
+        const rm = new MutationObserver(()=>{ if(!n.isConnected){ document.removeEventListener('keydown', onKey); rm.disconnect(); try{ if(prev && prev.isConnected) prev.focus({preventScroll:true}); }catch(e){} } });
+        rm.observe(document.body,{childList:true,subtree:true});
+      });
+    });
+  });
+  mo.observe(document.body,{childList:true});
+})();
 
 async function renderPhotosTab(body, client, isCoach){
   const { data: photos } = await supabase.from('progress_photos').select('*').eq('client_id', client.id).order('taken_at',{ascending:false}).order('created_at',{ascending:false});
@@ -7496,7 +7622,7 @@ async function renderPhotosTab(body, client, isCoach){
     const ed = card.querySelector('.editPhotoBtn');
     if(ed) ed.addEventListener('click', ()=>openPhotoEditor(p, client, refresh));
     card.querySelector('.delPhotoBtn').addEventListener('click', async ()=>{
-      if(!confirm(L2('Διαγραφή της φωτογραφίας;','Delete this photo?'))) return;
+      if(!(await askConfirm(L2('Διαγραφή της φωτογραφίας;','Delete this photo?')))) return;
       await supabase.storage.from('progress-photos').remove([p.storage_path]);
       await supabase.from('progress_photos').delete().eq('id', p.id);
       await refresh();
@@ -7766,7 +7892,7 @@ async function renderMassageTab(body, person, isCoach, clientRow){
         ${r.status==='pending'?`<button type="button" class="btn secondary cancelReq" style="margin-top:8px; padding:5px 12px; font-size:11px;">${el_?'Ακύρωση αιτήματος':'Cancel request'}</button>`:''}
       </div>`);
       card.querySelector('.cancelReq')?.addEventListener('click', async ()=>{
-        if(!confirm(el_?'Να ακυρωθεί αυτό το αίτημα;':'Cancel this request?')) return;
+        if(!(await askConfirm(el_?'Να ακυρωθεί αυτό το αίτημα;':'Cancel this request?'))) return;
         const { error } = await supabase.from('massage_requests').update({ status:'cancelled' }).eq('id', r.id).eq('client_id', person.id);
         if(error){ toast(el_?'Δεν μπόρεσε να ακυρωθεί. Στείλε μας μήνυμα.':'Could not cancel. Send us a message.'); return; }
         body.innerHTML=''; await renderMassageTab(body, person, false, clientRow);
@@ -8247,7 +8373,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
   const activateBtn = phaseBar.querySelector('.activateProgBtn');
   if(activateBtn) activateBtn.addEventListener('click', async ()=>{
-    if(!confirm(locale==='el' ? 'Ενεργοποίηση. Ο ασκούμενος θα δει αυτό το πρόγραμμα. Συνέχεια;' : 'Activate. The client will see this program. Continue?')) return;
+    if(!(await askConfirm(locale==='el' ? 'Ενεργοποίηση. Ο ασκούμενος θα δει αυτό το πρόγραμμα. Συνέχεια;' : 'Activate. The client will see this program. Continue?'))) return;
     await supabase.from('programs').update({ active:true }).eq('id', program.id);
     onChanged();
   });
@@ -8387,7 +8513,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     });
     balBox.querySelector('.balApply').addEventListener('click', async ()=>{
       if(!plan) return;
-      if(!confirm(locale==='el'?'Θα αλλάξει η ημέρα και η σειρά των ασκήσεων. Συνέχεια;':'This changes the day and order of the exercises. Continue?')) return;
+      if(!(await askConfirm(locale==='el'?'Θα αλλάξει η ημέρα και η σειρά των ασκήσεων. Συνέχεια;':'This changes the day and order of the exercises. Continue?'))) return;
       const results = await Promise.all(plan.map((x,i)=>supabase.from('program_exercises').update({ day_label: 'Ημέρα '+x.day, sort_order: i }).eq('id', x.pe.id)));
       const bad = results.find(r=>r.error);
       if(bad){ toast(bad.error.message); return; }
@@ -9681,7 +9807,7 @@ async function renderClientDashboard(main){
     accountMenu.appendChild(exportRow);
     const delRow = el(`<button class="profileMenuRow"><span class="cbn-ico">🗑️</span><span>${locale==='el'?'Αίτημα διαγραφής λογαριασμού':'Request account deletion'}</span><span class="profileMenuArrow">›</span></button>`);
     delRow.addEventListener('click', async ()=>{
-      if(!confirm(locale==='el' ? 'Θα σταλεί αίτημα διαγραφής του λογαριασμού και των δεδομένων σου στον προπονητή. Θα απαντήσουμε εντός ενός μήνα. Συνέχεια;' : 'A request to delete your account and data will be sent to your coach. We will reply within one month. Continue?')) return;
+      if(!(await askConfirm(locale==='el' ? 'Θα σταλεί αίτημα διαγραφής του λογαριασμού και των δεδομένων σου στον προπονητή. Θα απαντήσουμε εντός ενός μήνα. Συνέχεια;' : 'A request to delete your account and data will be sent to your coach. We will reply within one month. Continue?'))) return;
       const { error } = await supabase.from('messages').insert({ client_id: profile.id, sender_id: profile.id, sender_role: 'client', body: locale==='el' ? 'ΑΙΤΗΜΑ ΔΙΑΓΡΑΦΗΣ ΛΟΓΑΡΙΑΣΜΟΥ: Ζητώ τη διαγραφή του λογαριασμού και των δεδομένων μου (άρθρο 17 ΓΚΠΔ).' : 'ACCOUNT DELETION REQUEST: I request deletion of my account and data (GDPR Art. 17).' });
       if(error){ toast((locale==='el'?'Σφάλμα: ':'Error: ') + error.message); return; }
       toast(locale==='el'?'Το αίτημα στάλθηκε.':'Request sent.', 4500);
