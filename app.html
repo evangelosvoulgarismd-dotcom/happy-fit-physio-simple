@@ -55,7 +55,7 @@
   .cbn-btn .cbn-ico { font-size:19px; line-height:1; }
   .cbn-btn.active { color:var(--red-text); font-weight:700; }
   .cbn-btn{position:relative;} .chatDot{position:absolute; top:0; left:calc(50% + 6px); min-width:16px; height:16px; padding:0 4px; box-sizing:border-box; border-radius:8px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:16px; text-align:center;}
-  .inlineBadge{display:inline-block; margin-left:6px; min-width:16px; height:16px; padding:0 5px; box-sizing:border-box; border-radius:8px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:16px; text-align:center;}
+  .inlineBadge{display:inline-block; margin-left:6px; min-width:16px; height:16px; padding:0 5px; box-sizing:border-box; border-radius:8px; background:#d4352f; color:#fff; font-size:11.5px; font-weight:800; line-height:16px; text-align:center;}
   .cbn-btn.cbn-central .cbn-ico { background:var(--red); color:#fff; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:2px; box-shadow:0 3px 8px rgba(196,32,31,0.35); }
   .cbn-btn.cbn-central { color:var(--red); }
   .profileMenu { display:flex; flex-direction:column; gap:8px; }
@@ -73,7 +73,7 @@
   #brandMark{display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px 0 2px;}
   #brandMark svg{width:38px; height:38px;}
   #sidebar h1{font-size:15px; color:#fff; text-align:center; letter-spacing:0.01em;}
-  #sidebarFooter{margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,0.12); font-size:11px; color:#d99a92; text-align:center; line-height:1.6;}
+  #sidebarFooter{margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,0.12); font-size:12px; color:#d99a92; text-align:center; line-height:1.6;}
   #sidebarFooter a{color:#f0d9d4; cursor:pointer; text-decoration:underline;}
   .modalOverlay{position:fixed; inset:0; background:rgba(36,20,19,0.55); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;}
   .modalOverlay{animation:modalFade .2s ease;}
@@ -86,7 +86,7 @@
   .modalBox h4{font-size:13px; margin:16px 0 6px;}
   .modalCloseBtn{float:right; background:transparent; border:none; font-size:20px; cursor:pointer; color:var(--ink-soft); line-height:1;}
   .trustBadges{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:6px;}
-  .trustBadges .badge{font-size:10px; padding:2px 7px;}
+  .trustBadges .badge{font-size:11.5px; padding:2px 7px;}
   .clinicalCard{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:22px 24px; margin-bottom:18px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
   .clinicalHeader{display:flex; align-items:center; gap:10px; padding-bottom:12px; border-bottom:2px solid var(--ink); margin-bottom:16px;}
   .clinicalHeader svg{width:26px; height:26px;}
@@ -96,14 +96,14 @@
   .clinicalSection h4{font-family:'Poppins',sans-serif; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--red-text); border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:12px;}
   .bodyDiagram{display:flex; gap:20px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
   .bodyDiagram .bodyCol{text-align:center;}
-  .bodyDiagram .bodyCol .lbl{font-size:11px; color:var(--ink-soft); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.04em;}
+  .bodyDiagram .bodyCol .lbl{font-size:12px; color:var(--ink-soft); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.04em;}
   .bodyDiagram svg{width:100px; height:210px; cursor:crosshair; background:var(--tint-soft); border:1px solid var(--line); border-radius:6px;}
-  .bodyDiagram .clearMarkers{font-size:11px; color:var(--red-text); cursor:pointer; text-decoration:underline; display:block; margin-top:4px;}
+  .bodyDiagram .clearMarkers{font-size:12px; color:var(--red-text); cursor:pointer; text-decoration:underline; display:block; margin-top:4px;}
   .painMarker{fill:#c4201f; stroke:#fff; stroke-width:1;}
   .reassessTable{width:100%; border-collapse:collapse; font-size:12px;}
   .reassessTable th, .reassessTable td{border:1px solid var(--line); padding:6px 8px; text-align:center;}
-  .reassessTable th{background:var(--surface2); font-weight:600; color:var(--ink-soft); font-size:11px; text-transform:uppercase;}
-  #sidebar .tagline{font-size:11px; color:#f1c9c1; text-align:center; margin:2px 0 0;}
+  .reassessTable th{background:var(--surface2); font-weight:600; color:var(--ink-soft); font-size:12px; text-transform:uppercase;}
+  #sidebar .tagline{font-size:12px; color:#f1c9c1; text-align:center; margin:2px 0 0;}
   .navBtn{background:transparent; border:none; color:#f0d9d4; text-align:left; padding:9px 10px; border-radius:var(--radius); cursor:pointer; font-size:13px; font-family:inherit; border-left:3px solid transparent;}
   .langToggle button.active{color:#1a1204 !important; font-weight:700;}
   .navBtn:hover{background:rgba(255,255,255,.08);}
@@ -119,7 +119,7 @@
   .statGrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:18px;}
   .statCard{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
   .statCard .num{font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; color:var(--red-text); line-height:1.1;}
-  .statCard .lbl{font-size:11px; color:var(--ink-soft); margin-top:4px;}
+  .statCard .lbl{font-size:12px; color:var(--ink-soft); margin-top:4px;}
   .chartWrap{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px 8px; margin-bottom:14px; height:220px; box-shadow:0 1px 3px rgba(36,20,19,0.06);}
   .chartTitle{font-size:12px; color:var(--ink-soft); margin-bottom:6px; font-weight:600;}
   .btn{font-family:inherit; font-weight:600; font-size:13px; padding:9px 16px; border-radius:var(--radius); border:1px solid var(--red); background:var(--red); color:#fff; cursor:pointer; transition:transform .1s ease-out, background-color .2s ease, border-color .2s ease, color .2s ease;}
@@ -133,12 +133,12 @@
   .field input,.field select,.field textarea{font-family:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius); background:var(--input-bg); color:var(--ink); width:100%;}
   .field textarea{min-height:56px;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:0 16px;}
-  .badge{display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:var(--surface2); color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
-  .savedTag{font-size:11px; color:var(--red);}
+  .badge{display:inline-block; font-size:12px; padding:2px 8px; border-radius:20px; background:var(--surface2); color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
+  .savedTag{font-size:12px; color:var(--red);}
   .errorTag{font-size:12px; color:var(--danger); background:var(--tint); padding:8px 10px; border-radius:var(--radius);}
   table.hist{width:100%; border-collapse:collapse; font-size:12px;}
   table.hist th,table.hist td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left;}
-  table.hist th{background:var(--surface2); font-weight:600; color:var(--ink-soft); font-size:11px;}
+  table.hist th{background:var(--surface2); font-weight:600; color:var(--ink-soft); font-size:12px;}
   .authWrap{max-width:380px; margin:60px auto;}
   .authWrap .card{border-left-width:6px;}
   .roleToggle{display:flex; gap:8px; margin-bottom:14px;}
@@ -154,13 +154,13 @@
   .ic.icDot{vertical-align:-0.1em;}
   .dayCard{background:linear-gradient(135deg, var(--tint) 0%, var(--panel) 62%); border:1px solid var(--line); border-radius:14px; padding:20px 18px; margin-bottom:14px;}
   .dayTop{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;}
-  .dayDate{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);}
+  .dayDate{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);}
   .dayGreet{font-size:24px; line-height:1.15; margin-bottom:10px;}
   .dayTitle{font-weight:700; font-size:16px; margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
   .dayStats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;}
   .dayStat{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 6px; text-align:center;}
   .dayStat strong{display:block; font-size:20px;}
-  .dayStat span{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .dayStat span{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
   .dayBarWrap{display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:12px;}
   .dayBar{flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden;}
   .dayBar>div{height:100%; background:var(--accent); transition:width .25s;}
@@ -168,7 +168,7 @@
   .dayList{font-size:12px; color:var(--ink-soft); margin-bottom:14px; line-height:1.5;}
   .dayCTA{width:100%; min-height:52px; font-size:15px; border-radius:12px;}
   .wkRow{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
-  .wkDay{display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; color:var(--ink-soft);}
+  .wkDay{display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11.5px; color:var(--ink-soft);}
   .wkDay i{font-style:normal; width:28px; height:28px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff;}
   .wkDay.done i{background:var(--accent); border-color:var(--accent);}
   .wkDay.today i{border-color:var(--red);}
@@ -180,7 +180,7 @@
   .setLine{display:grid; grid-template-columns:22px 1fr 1fr 1fr 46px; gap:8px; align-items:end; margin-bottom:4px;}
   .setNum{font-size:12px; color:var(--ink-soft); padding-bottom:12px; text-align:center;}
   .setField{display:flex; flex-direction:column; gap:2px; min-width:0;}
-  .setField small{font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft);}
+  .setField small{font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft);}
   .setField input{width:100%; min-width:0; padding:10px 6px; font-size:16px; text-align:center; border-radius:10px;}
   .setField input.prefilled{color:var(--ink-soft); font-style:italic;}
   .setDone{width:46px; height:46px; border-radius:50%; border:2px solid var(--accent); background:transparent; color:var(--red-text); font-size:20px; font-weight:800; line-height:1; cursor:pointer; padding:0; transition:transform .15s ease, background .15s ease, color .15s ease;}
@@ -188,7 +188,7 @@
   .setDone.pop{animation:setPop .28s ease;}
   @keyframes setPop{0%{transform:scale(.85)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
   @media (prefers-reduced-motion:reduce){ .setDone, .setDone.pop{animation:none; transition:none;} }
-  .setMoreBtn{background:none; border:none; color:var(--ink-soft); font-size:11px; padding:2px 0 8px 30px; cursor:pointer; font-family:inherit;}
+  .setMoreBtn{background:none; border:none; color:var(--ink-soft); font-size:12px; padding:2px 0 8px 30px; cursor:pointer; font-family:inherit;}
   .setMore{display:none; grid-template-columns:22px 1fr 1fr 46px; gap:8px; margin:0 0 8px; }
   .setMore.open{display:grid;}
   .clickable{cursor:pointer;}
@@ -227,7 +227,7 @@
     .bodyDiagram{gap:10px;}
     .bodyDiagram svg{width:80px; height:168px;}
     .statGrid{grid-template-columns:repeat(2,1fr);}
-    table.hist, .reassessTable{font-size:11px;}
+    table.hist, .reassessTable{font-size:12px;}
     .field input,.field select,.field textarea{font-size:16px;}
     .navBtnsWrap{display:none; width:100%; order:4; flex-direction:column; gap:4px;}
     .navBtnsWrap.open{display:flex;}
@@ -264,17 +264,17 @@
   .pfStats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px;}
   .pfStat{background:var(--surface2); border-radius:10px; padding:10px 6px;}
   .pfStat strong{display:block; font-size:18px;}
-  .pfStat span{font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .pfStat span{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
   .pfRemove{background:none; border:none; color:var(--ink-soft); font-size:11.5px; cursor:pointer; text-decoration:underline; font-family:inherit; margin-top:8px;}
   /* Language / theme choice rows and the red logout button: stacked, one per line */
-  .optLabel{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#d9b8b0; margin:8px 2px 0;}
+  .optLabel{font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#d9b8b0; margin:8px 2px 0;}
   .optGroup{display:flex; flex-direction:column; gap:6px;}
   .optRow{display:flex; align-items:center; justify-content:space-between; width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid rgba(255,255,255,.18); background:transparent; color:#f0d9d4; cursor:pointer; font-size:13px; font-family:inherit; text-align:left;}
   .optRow i{font-style:normal; font-weight:800; color:var(--gold);}
   .optRow.active{border-color:var(--gold); background:rgba(226,162,51,.12); color:#fff; font-weight:600;}
   .navBtn.logoutBtn{background:#e50914; color:#fff; font-weight:700; text-align:center; border:1px solid #ff6b6b; margin-top:8px;}
   .navBtn.logoutBtn:hover{background:#c40812;}
-  .profileOptLabel{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin:18px 2px 8px;}
+  .profileOptLabel{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin:18px 2px 8px;}
   .profileMenuRow.optP.active{border-color:var(--red); background:var(--tint-soft);}
   .profileMenuRow.optP i{font-style:normal; font-weight:800; color:var(--red-text);}
   .profileMenuRow.logoutP{background:var(--red); border-color:var(--red); color:#fff; font-weight:700; justify-content:center;}
@@ -284,8 +284,8 @@
   @media (max-width:520px){ .massageForm .mfGrid{grid-template-columns:1fr;} }
   #notifBell, #chatTopBtn, #searchTopBtn{position:relative; background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
   #themeBtn{background:transparent; border:1px solid #a8302f; color:#f5ddd6; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:14px;}
-  #notifBell .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
-  #chatTopBtn .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; display:none;}
+  #notifBell .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:11.5px; font-weight:800; line-height:17px; text-align:center; display:none;}
+  #chatTopBtn .dot{position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:#d4352f; color:#fff; font-size:11.5px; font-weight:800; line-height:17px; text-align:center; display:none;}
   #notifBell .dot.show{display:block;}
   #chatTopBtn .dot.show{display:block;}
   .notifPanel{position:absolute; top:56px; right:14px; width:300px; max-height:400px; overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:0 10px 30px rgba(36,20,19,0.25); z-index:200; padding:12px;}
@@ -324,7 +324,7 @@
     .statGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     .statCard { padding:12px; min-width:0; }
     .statCard .num { font-size:22px; }
-    .statCard .lbl { font-size:10.5px; line-height:1.35; }
+    .statCard .lbl { font-size:11.5px; line-height:1.35; }
     .grid2 { grid-template-columns:1fr !important; gap:0; }
     .field { margin-bottom:12px; }
     .field label { font-size:12px; line-height:1.35; }
@@ -346,7 +346,7 @@
 
     .bodyDiagram { gap:8px; }
     .bodyDiagram svg { width:min(26vw,92px); height:auto; aspect-ratio:100/210; }
-    .reassessTable { font-size:10.5px; }
+    .reassessTable { font-size:11.5px; }
 
     .clinicalHeader { flex-wrap:wrap; gap:8px; }
     .clinicalHeader .doc-title { width:100%; margin-left:0; font-size:13px; }
@@ -517,7 +517,7 @@
 .libChip{flex:0 0 auto; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:999px; padding:8px 14px; font:inherit; font-size:12.5px; min-height:36px; cursor:pointer; white-space:nowrap}
 .libChip.on{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 .libCount{font-size:12px; color:var(--ink-soft); margin:0 0 8px}
-.libGroup{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin:16px 2px 8px}
+.libGroup{font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin:16px 2px 8px}
 .libSub{font-size:12px; color:var(--ink-soft); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .favBtn{background:none; border:0; font-size:20px; line-height:1; color:var(--gold, #e2a233); cursor:pointer; min-width:40px; min-height:40px; padding:0}
 
@@ -539,8 +539,8 @@
 
   /* Library: always-visible filter rows with counts, two-column list on wide screens */
   .libFRow{ margin-bottom:6px; }
-  .libFLabel{ display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin:6px 2px 4px; }
-  .libN{ font-size:11px; opacity:.6; margin-left:2px; }
+  .libFLabel{ display:block; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin:6px 2px 4px; }
+  .libN{ font-size:12px; opacity:.6; margin-left:2px; }
   .libChip.on .libN{ opacity:.85; }
   @media (min-width: 760px){ .libChipsWrap{ flex-wrap:wrap; overflow:visible; } }
   @media (min-width: 980px){
@@ -587,11 +587,13 @@
     background:linear-gradient(90deg, var(--surface2) 25%, color-mix(in srgb, var(--surface2) 55%, var(--panel)) 50%, var(--surface2) 75%); background-size:200% 100%; animation:skel 1.4s linear infinite; }
   @media (prefers-reduced-motion:reduce){ .loadingP::before, .loadingP::after{ animation:none; } }
   .qsItem{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 12px; border-radius:12px; cursor:pointer; font-size:14px; }
-  .qsItem small{ color:var(--ink-soft); font-size:11px; }
+  .qsItem small{ color:var(--ink-soft); font-size:12px; }
   .qsItem.on, .qsItem:hover{ background:var(--nav-on-bg); }
   .qsInput{ min-height:46px; font-size:16px; border-radius:var(--r-field); }
   :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   @media (pointer:coarse){ .qsBox > p{ display:none; } }
+  @media (min-width:761px){ .navBtnsWrap.navMore{ -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent); } }
+  details.card > summary::-webkit-details-marker{ display:none; }
 </style>
 </head>
 <body>
@@ -1330,6 +1332,8 @@ const LEGAL_CONTENT = {
         <h4>Ραντεβού διά ζώσης (μάλαξη, recovery)</h4>
         <p><strong>Προκαταβολή:</strong> για να κλείσει το ραντεβού ζητείται προκαταβολή 50% της τιμής. Το ραντεβού θεωρείται κλεισμένο όταν εισπραχθεί η προκαταβολή και το επιβεβαιώσουμε.</p>
         <p><strong>Ακύρωση:</strong> μπορείς να ακυρώσεις ή να αλλάξεις ώρα έως 24 ώρες πριν το ραντεβού και η προκαταβολή επιστρέφεται ή μεταφέρεται στη νέα ώρα. Αν η ακύρωση γίνει μέσα σε 24 ώρες ή δεν παρουσιαστείς, χρεώνεται το 100% της τιμής του ραντεβού.</p>
+        <p><strong>Κράτηση μέσω Instagram:</strong> Αν κλείσεις μέσω Instagram, σου στέλνω στο μήνυμα τον τρόπο πληρωμής της προκαταβολής και το ραντεβού επιβεβαιώνεται μόλις εισπραχθεί.</p>
+        <p><strong>Χρέωση μετακίνησης (βάση Γέρακας):</strong> ανά επίσκεψη, με βάση τον χρόνο διαδρομής (μονής) με εκτίμηση Google Maps για την ώρα του ραντεβού. Ζώνη Α έως 20': 0€. Ζώνη Β 21' έως 30': +10€. Ζώνη Γ 31' έως 45': +25€. Ζώνη Δ πάνω από 45': κατόπιν προσφοράς. Στις ώρες αιχμής η ζώνη μπορεί να ανέβει κατά μία.</p>
         <h4>Τεχνικό πρόβλημα</h4>
         <p>Αν χρεωθήκατε λόγω τεχνικού σφάλματος, επικοινωνήστε άμεσα μαζί μας για πλήρη επιστροφή.</p>
         <h4>Επικοινωνία</h4>
@@ -1342,6 +1346,8 @@ const LEGAL_CONTENT = {
         <h4>In-person appointments (massage, recovery)</h4>
         <p><strong>Deposit:</strong> a 50% deposit is required to book. The appointment is booked once the deposit is received and we confirm it.</p>
         <p><strong>Cancellation:</strong> you can cancel or reschedule up to 24 hours before the appointment, and the deposit is refunded or moved to the new time. If you cancel within 24 hours or do not show up, 100% of the appointment price is charged.</p>
+        <p><strong>Booking through Instagram:</strong> If you book through Instagram, I send you the way to pay the deposit in the message, and the appointment is confirmed once it is received.</p>
+        <p><strong>Travel surcharge (base Gerakas):</strong> per visit, based on the one-way travel time with a Google Maps estimate for the appointment time. Zone A up to 20': 0€. Zone B 21' to 30': +10€. Zone C 31' to 45': +25€. Zone D over 45': on quote. At peak hours the zone may go up by one.</p>
         <h4>Technical issue</h4>
         <p>If you were charged due to a technical error, contact us immediately for a full refund.</p>
         <h4>Contact</h4>
@@ -1435,7 +1441,7 @@ function renderAuth(){
   app.innerHTML = '';
   let mode = 'signup', role = 'client';
   const wrap = el(`<div class="authWrap"><div class="card">
-    <div class="authLang" style="display:flex; justify-content:flex-end; gap:6px; margin:-4px 0 6px;" role="group" aria-label="Language"><button type="button" data-l="el" class="btn ${locale==='el'?'':'secondary'}" style="padding:4px 10px; font-size:11px;">Ελληνικά</button><button type="button" data-l="en" class="btn ${locale==='en'?'':'secondary'}" style="padding:4px 10px; font-size:11px;">English</button></div>
+    <div class="authLang" style="display:flex; justify-content:flex-end; gap:6px; margin:-4px 0 6px;" role="group" aria-label="Language"><button type="button" data-l="el" class="btn ${locale==='el'?'':'secondary'}" style="padding:4px 10px; font-size:12px;">Ελληνικά</button><button type="button" data-l="en" class="btn ${locale==='en'?'':'secondary'}" style="padding:4px 10px; font-size:12px;">English</button></div>
     <div id="brandMark" style="margin-bottom:10px;">
       <img src="data:image/webp;base64,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" alt="Happy Fit Physio" style="width:100px;height:100px;border-radius:14px;">
     </div>
@@ -1454,7 +1460,7 @@ function renderAuth(){
       <div class="field"><label>${t('email',locale)}</label><input id="authEmail" name="email" type="email" autocomplete="username" required></div>
       <div class="field"><label>${t('password',locale)}</label><input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="6"></div>
       <div class="field" id="codeField" style="display:none;"><label>${t('inviteCode',locale)}</label><input id="inviteCode" placeholder="${locale==='el'?'π.χ.':'e.g.'} A1B2C3D4"></div>
-      <div class="field" id="coachCodeField" style="display:none;"><label>${t('coachInviteCode',locale)}</label><input id="coachInviteCode" placeholder="${locale==='el'?'π.χ.':'e.g.'} A1B2C3D4"><p style="font-size:11px; color:var(--ink-soft); margin:4px 0 0;">${t('coachInviteCodeHint',locale)}</p></div>
+      <div class="field" id="coachCodeField" style="display:none;"><label>${t('coachInviteCode',locale)}</label><input id="coachInviteCode" placeholder="${locale==='el'?'π.χ.':'e.g.'} A1B2C3D4"><p style="font-size:12px; color:var(--ink-soft); margin:4px 0 0;">${t('coachInviteCodeHint',locale)}</p></div>
       <div class="field" id="consentField" style="display:none; flex-direction:row; align-items:flex-start; gap:8px;">
         <input type="checkbox" id="consentBox" style="width:auto; margin-top:3px;">
         <label style="margin:0; font-size:12px; line-height:1.5;">${locale==='el'
@@ -1698,7 +1704,7 @@ async function renderNotifPanel(anchorEl, isCoach){
   }
   const closeBtn = `<div style="display:flex; justify-content:flex-end; margin:-4px -4px 4px 0;"><button type="button" class="notifClose" aria-label="${locale==='el'?'Κλείσιμο':'Close'}" style="background:transparent; border:0; color:var(--ink-soft); font-size:18px; line-height:1; padding:6px 10px; cursor:pointer;">×</button></div>`;
   panel.innerHTML = closeBtn + (items.length
-    ? items.map((i,idx)=>`<div class="notifItem" data-i="${idx}" style="${i.go?'cursor:pointer;':''}${unreadSet.has(i)?' font-weight:700;':''}">${unreadSet.has(i)?'<span style="color:var(--red-text);">● </span>':''}${i.ico||''} ${escapeHtml(i.text)}<div class="mono" style="font-size:10px; color:var(--ink-soft); margin-top:2px; font-weight:400;">${new Date(i.t).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div></div>`).join('')
+    ? items.map((i,idx)=>`<div class="notifItem" data-i="${idx}" style="${i.go?'cursor:pointer;':''}${unreadSet.has(i)?' font-weight:700;':''}">${unreadSet.has(i)?'<span style="color:var(--red-text);">● </span>':''}${i.ico||''} ${escapeHtml(i.text)}<div class="mono" style="font-size:11.5px; color:var(--ink-soft); margin-top:2px; font-weight:400;">${new Date(i.t).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div></div>`).join('')
     : `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Καμία πρόσφατη ειδοποίηση.':'No recent notifications.'}</p>`);
   panel.querySelector('.notifClose')?.addEventListener('click', ()=>{ panel.remove(); cleanup(); });
   panel.querySelectorAll('.notifItem[data-i]').forEach(n=>n.addEventListener('click', ()=>{ const it = items[Number(n.dataset.i)]; if(it && it.go) goToNotif(it, isCoach); }));
@@ -1819,7 +1825,7 @@ function renderShell(){
       <div id="brandMark">
         <img src="data:image/webp;base64,UklGRoITAABXRUJQVlA4IHYTAADQTwCdASrwAPAAPlEokUWjoqGSmnTkOAUEpu5KgXETz/s79r7JC8Pb/7J+zH5jfL5Vf7L/Xf1Bw+FXeZh5N+d/6v+0/jd70/9n/d/cB+ov9R7gH6c/7H/F/kn9d/QV5gP15/5n+V93L/Mf7H2Rf1L8eP7l8gv8l/tv/q7CD9zPYK/mn+89Mr9pfg//bf9u/gc/ZD/2+wB///UA6hfqf/Yu2P+7flJ2Vvov27yf75f8vPZ7/O+Gvx51CPW/+I+arjr9Q8wj25+kf6zwsv4z0N+bP3APzF42igX/Lv63/4/Zl/nf/j/l/P1+g/6D/2/6H4Df5t/Y/Te9k3oa/tCRd+jS09+gIX5ULkU6ljHv0A+4r+hRrpVEuQhslazVKkt9qjo9kGnyTGvp1LGDotoKfCERYv81EDYw2YDkTW5KWHQlbqC/DRj/yIsinUtLWnAO+18QWTNCMw6e/QEL8a6v29lr2Nr5SeFyKdSnHLJNpQJYlhxO19MglPdfbnSimJzH3AGm0L2Ptt2V+lTdHW8HMPFC9NXvO2S3FhPpuw1WKQdO9OOUKf6RjU7F2+UEvmOONK+ekr4T/0+F+Ras0K0zGEvQAO00X2ZyToZP/f3Ua0RKzNB725Bfvt0beQrP9VzQSWZSM/FhnUsY8EI5d0lT3LPX28BKWPtOhXm8b/v22rtfV44SQDOW1BfDYv6QKwJRqred+40lYHZqLlRHpXlVfr3QMlnhjUDVX8cDun4/HuQ6I9sIB/QyxVOQsbmBpIqPXuaibWdhCsh3lppo+KZZ5wcYaNqZ5jvB2cYpw/4Y/ziTi3q487zArJxiBYxE5yKQsG9ngvHw2ueufyoXIp1LGPfoApx951mIAAD+/T95/Ht4TXR7/3yo6qOqjks+px5r2u+BSbLxfB4AAAHXn9qG+pVDOAl1+uufKkWHFOqrnZrv1+F7sF6PVTRefs3L4rMDo60/IoLJZ+bpSfZFJGrCZ91kmCehSXaB4Z53RNozq1Dknbd415O3pKTAyZfM+X9aFw5tNy3VKOej4VnfyDUohu2n6uOUlNQC5OT/KlUnCq8Gd7IojrjzVwJnMj8Ob6cTKb9LFhKIcY7ap+BJkTv8Yam8Mh5KhyzSGOAtmnW+tnvB06rO8whIy7Lz7ISHRy9XJUmZU8+jL/jG04jAkpxEDZ23CsEnYcCCaZjvxydhfbfhJMBGJREdJb31xFapdsqwVtLd+2fHLW3wqmIS+N70XWh4cReEPnOGQ74b7CXra240UqpwnLC8bPY5iLirBrQSdr/RIBDkOgSXFr2KawdXx2/8w/csawKYqrxG94JnndGlVHvq8rjKBLbo2XGZ6yxeNN0h8IzMTDHykrizLnbNvz16awGWFiPd25E1ed0JoBVaXB+576QWvchq4GDcNZiGRkpLauSyDfI/lplKxb+e+ov4dxXXOMNumUXu+RySzvxglvWyyvGQ84574ZIXDdwr5Wkq7hPQLKEWc3JSDYoKMkOqMxmTmfS2ZkNaDGDSVAYvR7pqZku4qlEahhpJZHeDODA4qeOVtwkOW/AYfzxn/4JLgK3zYwA2LehcjtyYDV5yki7sQU2SlKr+EyMZbMGjjyIoYDjQfjetIMOzaWX0cYeTRwc6srpChKFnfKsMZWBjam/F5GzaUVQeDo07zQDMaUqeNAAfF26VgDox31YFeCgGY7QELWeQ4euC+/sodEz0H0hO4Ry1d/yCR61RP0hN6AAMV3HLrPTQUzVEXFfbmfGRmdg+OPsvbIoyUrAO52jeYT8/ZNIWlyo64l1RpaIGHVHConjIDqhQcuDb1l+Oy7sy23qp3tr3H6ikjn5p0CYKseenM/hs+HPhvIGJ2bfdH7Cl8ju2gzcaNAZbmaAArITGfTs2ZdU36hh1iwzC4tjbjBVMDbd3Cj4wdlWd4r1DSl8sGNsjcJzrhtU9SZXb3NKMkWp4A9kbzs7SDUMrRh4GULm3X0GFEj5YoFT/KNz/TbmC55YsAd7NFctv4kpmFqJbu7rk3PwrBlHRmHwo8JPjmuMyYeXnOuWgB4Vju3fZpb+GeSLoY9Z6/c43rbFUXzs0jxf6Z/ArktGf0/urKw6NtBpHCUi53fgz9yU3XQjkA+ftlrvzHHI48SNW7bLWZYKLJ+dm+UTY4rh0SA9WpVHYqxD4f0t6o8OWDhAZ0ngpW5du7RpyuULEebraGzV+AV5/3tGe73FlyYH26Z6zGvpHgwa+7hwA2a55HE5/s5Clo7NYhh+AQC2+bJlhmjyxQHO/rquMNonRshZphPnwZNyTQEdDi4r6+KUAiDoPJWj1/4OgI8KwwKyXCRr68VsoYDwTTnW12AyXxzF/GCs4JN3QZtxjFZZGYPLOxgke9tJMEPCFGGjNfqoF7GeixCelo5s701cyhxllIblMpG0eg4YQ2otkNfnNTQ7qAWWvbipd9gpGeVDijFUpG3grKlLU3IWd/R9VaKXJZeJmsfl+a63SuiFYI7vOUerHtuuf7F7lbx0LF9Ze8hwq5vsjtDA2AZ9nEMTb/4/tcRbaBMWBVIdlGg7quYyLQNqGCKk/iIJ2VKFsCQWh7DJqwOTpy3sbqhaW5g0g7W+GhsW9LXcWpIC7vF9fmYzz72dK0Km0CEqDR+dy2iow597lJXFlZSenbvY1Wr4gavxg7/HtZkAPdKHP8y/UIU9ipz3AbYmmVT25vCIFnVo4/xnDZ+VeWwtPYD9I3RIZTiSCXX+IEHFQn+wliXEmZxuud7gocrFtWVjlMWpZeGgPbHspAkuNvPQoPIF6Dswk7+GfxoHPV6LrGmPJrscZqo+mQaf+He794W/IU8+WdK5qFzNSzhtOKzaopT2YexWd9jvSTkg1TMUS3Tb3vTjjtn/2WsqIV26w9h/v/qWipo1Fx1HbAUN+OxshOhL3PDhB1PNuh+uEBIWbI0dTDaTZtlfTpWvDvsqR0X4W+R7vCSrCgmXrZJZwXCXWBz7aD5GiudjKleI+J35r9qk35K2V6NvdXi5PxO4pQofXSy2KSy3NbKLRkTC9t2bM5gTnuUOwdVOZUB7+3S8ji62cJW//+Q6FB18I9RklbyiktjyvDH4YTRCP3vMW7KcVAUXN5+4ewxYEkUgp2w1sydEs3cZhn7Gea14184WJLZHJoW963WAnP2Z9e1ZrqfFOCKzW2xSAnyjNroJTYjJ8at8GX5NdQVZ/IU6oNbO+Zj5T7a7X0qqKkcAEaufEYaqm58J2bnYAMLB3/4WXv+ZFY0Lura3gQ4IxZ/e5uyEVx6ZSyFtuDhG3/4xhtAeSep+ZdTtk3749zG4mqealBBoSorJErHNzGQdlgON5s3oVTMW4vElaB6KX1s2zwtQ4iK+4c75lOdkh0fQOAXg+a4WssUJj3NifC8cOXebINejjZ8RJNY3mmNRP6iJvgm5nOl+59Ec0nkO0RMcSpq+urFpBDLszj+k8UL72G8VITsWLzlKiFu8/zOg5jI/DGUUTBdfT590d/gmWSLtDcanzIEe7p0WLkMZHzjvq/nkM9BbABPTkEef7nF4VHg0FROEnjevAB/q/HpJiolamFtcOCwYbyHuUY6p/cdaC9qVYmzanupFgJOAIKSADfflmfWELjnz+BRAzpOdu9d2XaZUwku2eyJcM/yX1hNA5Nh/Iq7zSYnGPW4UpAdNhzsUATECisG5Y4HBeRm+g0d/CiQbs4cG3631QCH/1EN6pm9TZndFhzRUtzKT5WNLOyWDCEx3L0oTjkXs6lX0kP4uPwvqALZf85EPapM6C8qRBRhNnqpZ5Z4r0fOJ6/qN933vo9KyFkpi8TiYfSrVCv8J8GHn9tRfUS/Bk6WiZzdn0zqzyBmZRYLBGTOznmkrDf96zepRtn1fF/J6Nb2qP8k1gfs9Yyl4eJgEHWb9pfyodEDgcsVOUhdqHwRx3/ceXePIxpdMls/PFhazHqJFPi8mSjODV1P6ajqdE6O3TLXU/wMXhoE9/mfwmRXP+PD3+fWsYGmf1fxy9nMGl0hGfHT+ussei0w5eOkQ4e2+rVZT8//TnyxVwaILJLzgCtevTdpF9CE6ZNOVWoAT/gZ/2zyHAO/nQ0+mDd/JQUCdzGvTSPnkvJ4y8QkUhmBUo6aV4NfU5wIEVMbMrBygaqiwm5SiRqFyelYlZNcC789OiBHioXF3jAOmTX48WuZpz9P7M1eMxNHvXtTXJTvJ32XVVMqQZNvZehkTMUouPg0qo7X2iJJYcG+StAUG1J7/42a69MGyd6QMWZ/NR6x7HwBfSN51zvvujlCStytQDVxO8N9UjYkvIEF8qa0Jg/D/++eXfjHkCtacsReO7y5jdbXr4fohM5s6SGpoVDdf5/zNSR3K/WjFLcdYJyW9hZKo/di2p5uXJL8BV0s2a93aE4lAvXsRhETF9Qcyw2rrueufuhInoxyRqlQE6MJioF0wfS7TXxY7D1l5FlH1/nFm9HmYXv3Jb7NjDjhMln1AAGuEyfP/t/aeWuqJfhiVZyE5pgWTxUaP3Jn81V/Da6nmv6L1R209tEVVNNx05mNf2IgYE/i3EN83Mb0Da2SGQGsjXjUFl7tcdn8ZB6s/jkke4S6J10mSPebF/DPRfzwT/spIht/kHcR83Mbs3JByImw8H5uHjVER4oa3NB8HTKqXeMTJoz5q5as/tHCPrZdrPw4T6KbCk7Cr/jDvmMm4N0z/o68p6AFQ+izEF8LkxPdpv+fH6zfMp8PYF5oCYsur3G9Q6Z/qLL48lBnoA0fHOrGwKwshu/0t9j4mbw+757BMtr4297mwlAEEIHb7S5Hivu1JSwlN2xjcb7dvm9u4HauGp+fnnYQkTPHvLzSGxBnQnbeCYhviIeJsk+N1x4q2/7OUtdXnf2vL3HC0bSBHUP7cgHUw2dmnQcGXGPkp7capA2ef0ybYdrLpmnkDdW5R/bnurjx8cPnKi2DNkoRYscnmxuX5q2rhYB68y/66wLQfQ+uTxNqGkvHj/oPEP5szb1qPhW8FCpTzwihSYK4vJTgdL48HbVkJCPpIxtZm1fypcYOv3xny9AJHK+qOXgjE0z552g+XBimy3sOCeuV/WiUEi8PwlhrQP/MJuvRlz4IxK5fzRFUrV5AOwYvd0IXSf9vCXOI1A3fC658SPqP+hmExfFoj3ZTu83wvyirY1jTDczRl/aQQP4MBhxVt1L/bqjlc94QFrzpvOUbULOKUbGnvtZ2/dDTwV+NQGldrmaxy3izRlQdZgz5pY9iUrm2c2dyYjOnEOJytH6eJx1yiUA8mnDiNx8Pzt07mUvtxeER0fwDbTtkf7jNsacqGuWbI63Tb1rcR0400Qj5OdOB24M/GcSZvj/+PDhOcBg2b1BEaZhAN7yy1i4X4+6RpSU60BOeRyFwDFb0fRwpVXelFHAswZCV9DFK/E074CyLwEqnBcCPFme+0xhtk6FvcuYkUarCZb4nGRO+2wvTDBRrlYaVc0rTiOxTRAGhqbJ05+4sTU8ttcZYqsVM6CEBYe/BZOhs8GfBT3Add9fH6VCc0Mo14+KQlIAxKKe1fTP+lRYdgKiBeNrWvrpGQahO5h/udW58BxzHfL2ROAN1ZzePG7KUQQKlY8NWAoDOFtWy/MT4uFmXpWg4RPEQDduSv1mt3G5VwgShqWYNUxe1paIxfCyLTsbvDDgsZSMS+B5z5clmVd2lmciTJ0yco90EL3xDsnuEwFgfgEZ798slp9nEy88X5/YVGGTefmOZCp8qeGkL5Ao8cKNF9i2JyVS08DZbeSAGeU9jaVBeQ5SaIVJ2FrHYHL93v7iKVhCfI+CZWGud8m9iRkZS51b9KQ6JAuVsbQkFXj7j7GVSFfvR7tdeHc2PFPM2ySr6unZjOeEgQNUKj1dRmVeobtvoybl8b79BRNN6nxAd36cGByimvW1oUG/Q2mWrHYZT/8uyzxTSge9HUiH6oGWir2hXxdqnZaKX5j3esTlKxdn204Gga9Jrww7+k5/jIedloTXVN8/j7Mx+bd5mLQz8Q8PlbocUPvz8akcLxvgt10iUsmuCkvjcKipowbL6cGVKeFCb9Zu3NqSdjCtRYDMgfwS6Yx2lA5qGdppzuC86ZRHx13j5LvqIR20Gl0OW2Hfq0NGlvQtMbf+q6JSDOaoekTtdPKShtRxtWnVQbqieTFzyjQALB1ujlsiRE4OYjiybTSt1YjsYrQJjmr0I8ncjBoL3cuw3Hchs/fMc7i4VqQpZbOH3TvMALTRJtPKJvjbwDQFjetgIrvYmdY3x7hC/Mc69C+JIRzmACJeF/BQWF2+WdZ5LTn+g4Zp3B2tQym/aLQ0JJ+4DeHLNQV6v5/XdvYBNMNUUFAxXrbpkdzACpRekF5oIL0ODoyXW/JzDpKSTUnUH+rfS1J7KzUxIkcNjP+B43Feu66tRkjDHOfxatkkFsWkaN2b9Lpb02zvYsCHNalDsPI2XZR01Oq6K7VhhClTYSKsO74o7ztJXZk6JQ5UHVmuF+NDrLXdxojeEtC+rKVLYsrPype10ABZb2e1/L1V00/FRFZ9LIf5Qh4v+ALTb7UUumsIjQFi9QUsoWnXZwD0cZSkPE6dB57uFQ5NVbBP2iNtFXVUwC03JkWNi0BiQ8PAqAIZIFZ36CCZza+vdT27Ngu8n0P2K/q19+LNkXOAT3dz83huULAAa8figAAAA==" alt="Happy Fit Physio" style="width:74px;height:74px;border-radius:10px;">
         <p class="tagline" style="text-align:center; margin-top:2px;">${t('tagline',locale)}</p>
-        ${isOwner ? `<p style="text-align:center; margin-top:4px;"><span style="display:inline-block; font-size:10px; font-weight:800; letter-spacing:0.5px; color:var(--red-text); background:var(--tint); border-radius:20px; padding:2px 10px;">CEO · ${locale==='el'?'Ιδρυτής':'Founder'}</span></p>` : ''}
+        ${isOwner ? `<p style="text-align:center; margin-top:4px;"><span style="display:inline-block; font-size:11.5px; font-weight:800; letter-spacing:0.5px; color:var(--red-text); background:var(--tint); border-radius:20px; padding:2px 10px;">CEO · ${locale==='el'?'Ιδρυτής':'Founder'}</span></p>` : ''}
       </div>
       <button id="menuToggleBtn" aria-label="${locale==='el'?'Άνοιγμα μενού':'Open menu'}">☰</button>
       ${isCoach ? `<button id="searchTopBtn" type="button" aria-label="${locale==='el'?'Αναζήτηση (Ctrl K)':'Search (Ctrl K)'}">🔍</button>` : ''}
@@ -1912,6 +1918,7 @@ function renderShell(){
   shell.querySelectorAll('#themeToggle .optRow').forEach(b=>b.addEventListener('click', ()=>applyTheme(b.dataset.th)));
   applyTheme(document.documentElement.getAttribute('data-theme')||'dark');
   shell.querySelector('#searchTopBtn')?.addEventListener('click', ()=>openQuickSwitcher());
+  { const nb = shell.querySelector('.navBtnsWrap'); if(nb){ const upd = ()=>nb.classList.toggle('navMore', nb.scrollWidth > nb.clientWidth+4 && nb.scrollLeft+nb.clientWidth < nb.scrollWidth-4); nb.addEventListener('scroll', upd, {passive:true}); window.addEventListener('resize', upd); setTimeout(upd,60); setTimeout(upd,600); } }
   const chatTop = shell.querySelector('#chatTopBtn');
   if(chatTop) chatTop.addEventListener('click', ()=>{ renderClientDashboard._tab = 'messages'; renderClientDashboard._reuse = false; switchView('dashboard'); });
   shell.querySelector('#notifBell').addEventListener('click', (e)=>{
@@ -2133,7 +2140,7 @@ async function renderPackagesView(main){
             ${isDone(p) ? `<span class="badge">${el_?'Ολοκληρώθηκε':'Completed'}</span>` : ''}
           </div>
         </div>
-        <div style="text-align:right;"><div class="mono" style="font-size:20px; font-weight:800;">${used}/${p.total_sessions}</div><div style="font-size:11px; color:var(--ink-soft);">${el_?`απομένουν ${left}`:`${left} left`}</div></div>
+        <div style="text-align:right;"><div class="mono" style="font-size:20px; font-weight:800;">${used}/${p.total_sessions}</div><div style="font-size:12px; color:var(--ink-soft);">${el_?`απομένουν ${left}`:`${left} left`}</div></div>
       </div>
       <div style="background:var(--surface2); border-radius:20px; height:8px; overflow:hidden; margin:12px 0;"><div style="background:var(--red); height:100%; width:${pct}%;"></div></div>
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -2180,7 +2187,7 @@ async function renderPackagesView(main){
     });
     main.appendChild(card);
   });
-  main.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-top:14px;">${el_?'Οι τιμές είναι καταγραφή για εσένα, όχι τιμολόγιο ή απόδειξη.':'Prices are a record for you, not an invoice or receipt.'}</p>`));
+  main.appendChild(el(`<p style="font-size:12px; color:var(--ink-soft); margin-top:14px;">${el_?'Οι τιμές είναι καταγραφή για εσένα, όχι τιμολόγιο ή απόδειξη.':'Prices are a record for you, not an invoice or receipt.'}</p>`));
 }
 
 
@@ -2215,7 +2222,7 @@ async function renderMassageInquiriesBox(main){
         ${r.email ? `<a class="btn secondary" style="padding:5px 12px; font-size:12px;" href="mailto:${escapeHtml(r.email)}">✉️ Email</a>` : ''}
         <button class="btn danger miDel" type="button" style="padding:5px 12px; font-size:12px;">🗑</button>
       </div>
-      <div class="mono" style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${new Date(r.created_at).toLocaleString(el_?'el-GR':'en-GB')}</div>
+      <div class="mono" style="font-size:11.5px; color:var(--ink-soft); margin-top:6px;">${new Date(r.created_at).toLocaleString(el_?'el-GR':'en-GB')}</div>
     </div>`);
     card.querySelector('.miStatus').addEventListener('change', async (e)=>{
       const { error: uErr } = await supabase.from('massage_inquiries').update({ status: e.target.value }).eq('id', r.id);
@@ -2457,8 +2464,8 @@ async function renderTemplatesView(main){
       items.forEach((te, idx)=>{
         const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px; gap:6px;">
           <div style="display:flex; flex-direction:column; gap:0;">
-            <button class="btn secondary reorderUpBtn" type="button" style="padding:0 6px; font-size:10px; line-height:1.4; ${idx===0?'visibility:hidden;':''}">▲</button>
-            <button class="btn secondary reorderDownBtn" type="button" style="padding:0 6px; font-size:10px; line-height:1.4; ${idx===items.length-1?'visibility:hidden;':''}">▼</button>
+            <button class="btn secondary reorderUpBtn" type="button" style="padding:0 6px; font-size:11.5px; line-height:1.4; ${idx===0?'visibility:hidden;':''}">▲</button>
+            <button class="btn secondary reorderDownBtn" type="button" style="padding:0 6px; font-size:11.5px; line-height:1.4; ${idx===items.length-1?'visibility:hidden;':''}">▼</button>
           </div>
           <span style="flex:1;">${escapeHtml(locale==='el'?te.exercises.name_el:(te.exercises.name_en||te.exercises.name_el))}</span>
           <input class="mono editSets" value="${te.target_sets??''}" style="width:36px; padding:3px; font-size:12px; text-align:center;">
@@ -2466,7 +2473,7 @@ async function renderTemplatesView(main){
           <input class="mono editReps" value="${escapeHtml(te.target_reps||'')}" style="width:50px; padding:3px; font-size:12px; text-align:center;">
           <span style="color:var(--ink-soft);">@</span>
           <input class="mono editLoad" value="${escapeHtml(te.target_load||'')}" style="width:60px; padding:3px; font-size:12px; text-align:center;">
-          <button class="btn danger delTeBtn" type="button" style="padding:3px 8px; font-size:11px;">✕</button>
+          <button class="btn danger delTeBtn" type="button" style="padding:3px 8px; font-size:12px;">✕</button>
         </div>`);
         async function saveEdit(){
           await supabase.from('program_template_exercises').update({
@@ -2663,7 +2670,7 @@ async function renderDirectoryView(main){
     const row = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
       <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
         <strong>${escapeHtml(r.full_name)}</strong>
-        <span class="mono" style="font-size:11px; color:var(--ink-soft);">${new Date(r.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}</span>
+        <span class="mono" style="font-size:12px; color:var(--ink-soft);">${new Date(r.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')}</span>
       </div>
       <div style="font-size:12px; color:var(--ink-soft); margin:3px 0;">📧 <a href="mailto:${escapeHtml(r.email)}">${escapeHtml(r.email)}</a>${r.phone ? ` · 📞 ${escapeHtml(r.phone)}` : ''}</div>
       ${r.message ? `<p style="font-size:13px; margin:4px 0 8px;">${escapeHtml(r.message)}</p>` : ''}
@@ -2671,7 +2678,7 @@ async function renderDirectoryView(main){
         <select class="rStatus" style="width:auto; padding:5px 8px; font-size:12px;">
           ${['new','contacted','closed'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${{new:L('Νέο','New'),contacted:L('Επικοινωνήθηκε','Contacted'),closed:L('Έκλεισε','Closed')}[s]}</option>`).join('')}
         </select>
-        <button class="btn danger rDel" type="button" style="padding:5px 10px; font-size:11px;">🗑</button>
+        <button class="btn danger rDel" type="button" style="padding:5px 10px; font-size:12px;">🗑</button>
       </div></div>`);
     row.querySelector('.rStatus').addEventListener('change', async e=>{ await supabase.from('directory_requests').update({ status:e.target.value }).eq('id', r.id); });
     row.querySelector('.rDel').addEventListener('click', async ev=>{
@@ -2723,11 +2730,11 @@ async function renderDirectoryView(main){
     const past = new Date(ev.starts_at) < new Date();
     const row = el(`<div style="padding:12px 0; border-top:1px solid var(--line); ${past?'opacity:.6;':''}">
       <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:flex-start;">
-        <div><strong>${escapeHtml(ev.title)}</strong><div class="mono" style="font-size:11px; color:var(--ink-soft);">${new Date(ev.starts_at).toLocaleString(locale==='el'?'el-GR':'en-GB',{dateStyle:'medium',timeStyle:'short'})} · ${signups.length}/${ev.capacity} ${L('θέσεις','spots')} · ${ev.price==null||Number(ev.price)===0 ? L('Δωρεάν','Free') : escapeHtml(String(ev.price))+'€'}</div></div>
+        <div><strong>${escapeHtml(ev.title)}</strong><div class="mono" style="font-size:12px; color:var(--ink-soft);">${new Date(ev.starts_at).toLocaleString(locale==='el'?'el-GR':'en-GB',{dateStyle:'medium',timeStyle:'short'})} · ${signups.length}/${ev.capacity} ${L('θέσεις','spots')} · ${ev.price==null||Number(ev.price)===0 ? L('Δωρεάν','Free') : escapeHtml(String(ev.price))+'€'}</div></div>
         <div style="display:flex; gap:6px;">
-          <button class="btn secondary evPub" type="button" style="padding:5px 10px; font-size:11px;">${ev.published ? L('Απόκρυψη','Hide') : L('Δημοσίευση','Publish')}</button>
-          <button class="btn secondary evWho" type="button" style="padding:5px 10px; font-size:11px;">${L('Συμμετέχοντες','Attendees')}</button>
-          <button class="btn danger evDel" type="button" style="padding:5px 10px; font-size:11px;">🗑</button>
+          <button class="btn secondary evPub" type="button" style="padding:5px 10px; font-size:12px;">${ev.published ? L('Απόκρυψη','Hide') : L('Δημοσίευση','Publish')}</button>
+          <button class="btn secondary evWho" type="button" style="padding:5px 10px; font-size:12px;">${L('Συμμετέχοντες','Attendees')}</button>
+          <button class="btn danger evDel" type="button" style="padding:5px 10px; font-size:12px;">🗑</button>
         </div>
       </div>
       <div class="evSignups" style="display:none; margin-top:8px; font-size:12.5px;"></div></div>`);
@@ -2883,11 +2890,11 @@ async function renderCourseModules(area, course){
 async function renderCourseAccess(area, course){
   area.innerHTML = '';
   const { data: enrollments } = await supabase.from('course_enrollments').select('*').eq('course_id', course.id).order('purchased_at',{ascending:false});
-  area.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πρόσθεσε το email του αγοραστή μετά την πληρωμή (Viva Wallet) για να ξεκλειδώσει το μάθημα στο courses.html':'Add the buyer email after payment (Viva Wallet) to unlock the course on courses.html'}</p>`));
+  area.appendChild(el(`<p style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πρόσθεσε το email του αγοραστή μετά την πληρωμή (Viva Wallet) για να ξεκλειδώσει το μάθημα στο courses.html':'Add the buyer email after payment (Viva Wallet) to unlock the course on courses.html'}</p>`));
   (enrollments||[]).forEach(e=>{
     const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px;">
       <span>${escapeHtml(e.email)}</span>
-      <button class="btn danger delEnrollBtn" type="button" style="padding:3px 10px; font-size:11px;">🗑</button>
+      <button class="btn danger delEnrollBtn" type="button" style="padding:3px 10px; font-size:12px;">🗑</button>
     </div>`);
     row.querySelector('.delEnrollBtn').addEventListener('click', async ()=>{
       await supabase.from('course_enrollments').delete().eq('id', e.id);
@@ -2996,7 +3003,7 @@ async function renderGroupClassesView(main){
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           ${!c.active?`<span class="badge">${t('groupClassInactive',locale)}</span>`:''}
-          <label style="display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer;"><input type="checkbox" class="activeChk" ${c.active?'checked':''}> ${locale==='el'?'Ενεργό':'Active'}</label>
+          <label style="display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer;"><input type="checkbox" class="activeChk" ${c.active?'checked':''}> ${locale==='el'?'Ενεργό':'Active'}</label>
           <button class="btn danger delClassBtn" type="button" style="padding:5px 10px; font-size:12px;">🗑</button>
         </div>
       </div>
@@ -3022,7 +3029,7 @@ async function renderGroupClassesView(main){
       bookings.forEach(b=>{
         const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:12.5px; gap:8px; flex-wrap:wrap;">
           <span>${escapeHtml(b.clients?.full_name||'')} ${b.status==='checked_in'?`<span class="badge" style="margin-left:6px;">${t('groupClassCheckedIn',locale)}</span>`:''}</span>
-          <label style="display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer;"><input type="checkbox" class="paidChk" ${b.paid?'checked':''}> ${t('groupClassPaid',locale)}</label>
+          <label style="display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer;"><input type="checkbox" class="paidChk" ${b.paid?'checked':''}> ${t('groupClassPaid',locale)}</label>
         </div>`);
         row.querySelector('.paidChk').addEventListener('change', async (e)=>{
           await supabase.from('group_class_bookings').update({ paid: e.target.checked }).eq('id', b.id);
@@ -3151,7 +3158,7 @@ async function renderBusinessOverview(main){
     main.appendChild(el(`<div class="card" style="margin-bottom:16px; border-left-color:var(--gold);">
       <h3 style="margin-bottom:6px; font-size:14px;">${t('myPartnershipFee',locale)}</h3>
       <p class="mono" style="font-size:20px; color:var(--red-text); margin-bottom:4px;">${euro(feeOwed)}</p>
-      <p style="font-size:11px; color:var(--ink-soft);">${t('myPartnershipFeeNote',locale).replace('{rate}', partnerFeeBandsText(euro))}</p>
+      <p style="font-size:12px; color:var(--ink-soft);">${t('myPartnershipFeeNote',locale).replace('{rate}', partnerFeeBandsText(euro))}</p>
     </div>`));
 
     if(myCharges && myCharges.length){
@@ -3186,13 +3193,13 @@ async function renderBusinessOverview(main){
       <h3 style="margin-bottom:10px; font-size:14px;">📚 ${locale==='el'?'Μαθήματα':'Courses'}</h3>
       <p style="font-size:13px; margin-bottom:4px;">${locale==='el'?'Συνολικές εγγραφές':'Total enrollments'}: <strong class="mono">${totalEnrollments}</strong></p>
       <p style="font-size:13px;">${locale==='el'?'Έσοδα (κατά προσέγγιση)':'Revenue (approx.)'}: <strong class="mono">${euro(courseRevenueApprox)}</strong></p>
-      <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Υπολογισμός με τη σημερινή τιμή κάθε μαθήματος. Αν η τιμή άλλαξε στο παρελθόν, δεν αντανακλά ακριβή ταμειακή ροή.':"Calculated using each course's current price. If a price changed over time, this is not an exact cash figure."}</p>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Υπολογισμός με τη σημερινή τιμή κάθε μαθήματος. Αν η τιμή άλλαξε στο παρελθόν, δεν αντανακλά ακριβή ταμειακή ροή.':"Calculated using each course's current price. If a price changed over time, this is not an exact cash figure."}</p>
     </div>
     <div class="card">
       <h3 style="margin-bottom:10px; font-size:14px;">💆 ${locale==='el'?'Κατ\' οίκον μάλαξη':'In-home massage'}</h3>
       <p style="font-size:13px; margin-bottom:4px;">${locale==='el'?'Επιβεβαιωμένες συνεδρίες':'Confirmed sessions'}: <strong class="mono">${confirmedMassage}</strong></p>
       <p style="font-size:13px;">${locale==='el'?'Εκκρεμείς':'Pending'}: <strong class="mono">${pendingMassage}</strong></p>
-      <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Δεν καταγράφεται τιμή ανά αίτημα ακόμα, άρα δεν εμφανίζεται έσοδο εδώ.':'No price is stored per request yet, so no revenue figure is shown here.'}</p>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Δεν καταγράφεται τιμή ανά αίτημα ακόμα, άρα δεν εμφανίζεται έσοδο εδώ.':'No price is stored per request yet, so no revenue figure is shown here.'}</p>
     </div>
   </div>`));
 
@@ -3305,10 +3312,10 @@ async function renderPartnersView(main){
         <td>${cp.suspended ? `<span class="badge" style="color:var(--danger);">${t('suspended',locale)}</span>` : `<span class="badge" style="color:var(--ok);">${t('active_',locale)}</span>`}</td>
         <td>
           <div style="display:flex; flex-direction:column; gap:5px; align-items:stretch;">
-            <button class="btn secondary partnerToggleBtn" style="padding:5px 10px; font-size:11px;">${cp.suspended ? t('reactivate',locale) : t('suspend',locale)}</button>
-            <button class="btn secondary partnerViewClientsBtn" style="padding:5px 10px; font-size:11px;">${t('viewClients',locale)}</button>
-            <button class="btn secondary partnerHistoryBtn" style="padding:5px 10px; font-size:11px;">${t('chargeHistory',locale)}</button>
-            <button class="btn secondary partnerRecordChargeBtn" style="padding:5px 10px; font-size:11px;" ${isRecorded ? 'disabled' : ''}>${isRecorded ? t('alreadyRecorded',locale) : t('recordCharge',locale)}</button>
+            <button class="btn secondary partnerToggleBtn" style="padding:5px 10px; font-size:12px;">${cp.suspended ? t('reactivate',locale) : t('suspend',locale)}</button>
+            <button class="btn secondary partnerViewClientsBtn" style="padding:5px 10px; font-size:12px;">${t('viewClients',locale)}</button>
+            <button class="btn secondary partnerHistoryBtn" style="padding:5px 10px; font-size:12px;">${t('chargeHistory',locale)}</button>
+            <button class="btn secondary partnerRecordChargeBtn" style="padding:5px 10px; font-size:12px;" ${isRecorded ? 'disabled' : ''}>${isRecorded ? t('alreadyRecorded',locale) : t('recordCharge',locale)}</button>
           </div>
         </td>
       </tr>`);
@@ -3351,7 +3358,7 @@ async function renderPartnersView(main){
     dirListings.slice().sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)).forEach(l=>{
       const row = el(`<div style="padding:10px 0; border-top:1px solid var(--line);">
         <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-          <div><strong>${escapeHtml(l.display_name)}</strong> <span style="font-size:11px; color:var(--ink-soft);">(${escapeHtml(nameOf(l.coach_id))} · ${escapeHtml(l.profession)})</span>
+          <div><strong>${escapeHtml(l.display_name)}</strong> <span style="font-size:12px; color:var(--ink-soft);">(${escapeHtml(nameOf(l.coach_id))} · ${escapeHtml(l.profession)})</span>
             ${l.credential_verified ? '<span class="badge" style="color:var(--ok);">✓</span>' : ''}</div>
           <span class="badge">${escapeHtml(l.status)}</span>
         </div>
@@ -3359,9 +3366,9 @@ async function renderPartnersView(main){
         ${l.bio ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:3px;">${escapeHtml(l.bio)}</div>` : ''}
         <div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px;">${escapeHtml((l.specialties||[]).join(', '))} · ${escapeHtml((l.formats||[]).join('/'))} · ${escapeHtml(l.area||'')} ${l.photo_url ? '· 🖼' : ''} ${l.terms_ack_at ? '· ✓ '+(locale==='el'?'δήλωση':'declaration') : '· ✗ '+(locale==='el'?'χωρίς δήλωση':'no declaration')}</div>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
-          ${l.status!=='approved' ? `<button class="btn lApprove" type="button" style="padding:5px 10px; font-size:11px;" ${l.terms_ack_at?'':'disabled'}>${locale==='el'?'Έγκριση':'Approve'}</button>` : `<button class="btn secondary lHide" type="button" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Απόσυρση':'Unpublish'}</button>`}
-          ${l.status!=='rejected' ? `<button class="btn secondary lReject" type="button" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Απόρριψη':'Reject'}</button>` : ''}
-          <button class="btn secondary lVerify" type="button" style="padding:5px 10px; font-size:11px;">${l.credential_verified ? (locale==='el'?'Αφαίρεση σήματος τίτλου':'Remove credential badge') : (locale==='el'?'Σήμα «Έλεγχος τίτλου»':'Give credential badge')}</button>
+          ${l.status!=='approved' ? `<button class="btn lApprove" type="button" style="padding:5px 10px; font-size:12px;" ${l.terms_ack_at?'':'disabled'}>${locale==='el'?'Έγκριση':'Approve'}</button>` : `<button class="btn secondary lHide" type="button" style="padding:5px 10px; font-size:12px;">${locale==='el'?'Απόσυρση':'Unpublish'}</button>`}
+          ${l.status!=='rejected' ? `<button class="btn secondary lReject" type="button" style="padding:5px 10px; font-size:12px;">${locale==='el'?'Απόρριψη':'Reject'}</button>` : ''}
+          <button class="btn secondary lVerify" type="button" style="padding:5px 10px; font-size:12px;">${l.credential_verified ? (locale==='el'?'Αφαίρεση σήματος τίτλου':'Remove credential badge') : (locale==='el'?'Σήμα «Έλεγχος τίτλου»':'Give credential badge')}</button>
         </div></div>`);
       const upd = async patch => { const { error } = await supabase.from('coach_listings').update(patch).eq('coach_id', l.coach_id); if(error) toast((locale==='el'?'Δεν αποθηκεύτηκε: ':'Not saved: ')+error.message, 5000); renderPartnersView(main); };
       row.querySelector('.lApprove')?.addEventListener('click', ()=>upd({ status:'approved' }));
@@ -3463,7 +3470,7 @@ async function renderPartnerHistoryView(main, coachProfile){
       <td class="mono">${row.active_clients}</td>
       <td class="mono">${euro(row.amount)}</td>
       <td>${row.paid ? `<span class="badge" style="color:var(--ok);">${t('paidStatus',locale)}</span>` : `<span class="badge" style="color:var(--gold);">${t('pendingStatus',locale)}</span>`}</td>
-      <td><button class="btn secondary paidToggleBtn" style="padding:5px 10px; font-size:11px;">${row.paid ? t('markUnpaid',locale) : t('markPaid',locale)}</button></td>
+      <td><button class="btn secondary paidToggleBtn" style="padding:5px 10px; font-size:12px;">${row.paid ? t('markUnpaid',locale) : t('markPaid',locale)}</button></td>
     </tr>`);
     tr.querySelector('.paidToggleBtn').addEventListener('click', async ()=>{
       await supabase.from('partner_charges').update({ paid: !row.paid }).eq('id', row.id);
@@ -3518,7 +3525,7 @@ function attachAskAssistant(container, contextType, contextData, clientId){
         <input class="askAssistantInput" placeholder="${locale==='el'?'Γράψε την ερώτησή σου...':'Type your question...'}" style="flex:1;">
         <button class="btn askAssistantSend" type="button" style="padding:6px 14px; font-size:12px;">→</button>
       </div>
-      <p style="margin-top:6px; font-size:10.5px; color:var(--ink-soft);">${locale==='el'
+      <p style="margin-top:6px; font-size:11.5px; color:var(--ink-soft);">${locale==='el'
         ? 'Ο βοηθός είναι AI, όχι φυσικοθεραπευτής, και δεν αντικαθιστά επαγγελματική αξιολόγηση. Για πόνο ή τραυματισμό, μίλα με τον coach σου.'
         : 'This assistant is AI, not a physiotherapist, and doesn’t replace professional evaluation. For pain or injury, talk to your coach.'}</p>
       <div class="askAssistantAnswer" style="margin-top:8px; font-size:12.5px; color:var(--ink); background:var(--bg); border-radius:6px; padding:10px 12px; display:none;"></div>
@@ -3596,7 +3603,7 @@ function renderAiCoachSummaryCard(contextData, clientId){
   const card = el(`<div class="card" style="margin-bottom:16px;">
     <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🤖 ${locale==='el'?'Σύνοψη από τον βοηθό':'Assistant summary'}</h3>
     <p class="aiSummaryText" style="font-size:12.5px; color:var(--ink);">${locale==='el'?'Φορτώνει…':'Loading…'}</p>
-    <p style="margin-top:6px; font-size:10px; color:var(--ink-soft);">${locale==='el' ? 'Αυτόματη σύνοψη από AI, όχι από τον coach σου.' : 'Automatic AI summary, not from your coach.'}</p>
+    <p style="margin-top:6px; font-size:11.5px; color:var(--ink-soft);">${locale==='el' ? 'Αυτόματη σύνοψη από AI, όχι από τον coach σου.' : 'Automatic AI summary, not from your coach.'}</p>
   </div>`);
   const dataHash = _hashStr(JSON.stringify(contextData));
   (async ()=>{
@@ -3634,12 +3641,12 @@ function renderAiCoachSummaryCard(contextData, clientId){
 
 function attachGifPicker(container, gifInput){
   const wrap = el(`<div style="margin-top:6px;">
-    <button class="btn secondary gifSearchToggle" type="button" style="padding:5px 10px; font-size:11px;">🔍 ${locale==='el'?'Βρες GIF (ExerciseDB)':'Find GIF (ExerciseDB)'}</button>
+    <button class="btn secondary gifSearchToggle" type="button" style="padding:5px 10px; font-size:12px;">🔍 ${locale==='el'?'Βρες GIF (ExerciseDB)':'Find GIF (ExerciseDB)'}</button>
     ${gifInput.value ? `<img src="${escapeHtml(gifInput.value)}" style="height:60px; border-radius:6px; margin-left:8px; vertical-align:middle;" alt="Exercise preview">` : ''}
     <div class="gifSearchPanel" style="display:none; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px;">
       <input class="gifSearchInput" placeholder="${locale==='el'?'π.χ. squat, push up...':'e.g. squat, push up...'}" style="width:100%; margin-bottom:8px;">
       <div class="gifResults" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; max-height:220px; overflow-y:auto;"></div>
-      <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Δεδομένα από ExerciseDB (ανοιχτό, δωρεάν σύνολο ασκήσεων).':'Data from ExerciseDB (open, free exercise dataset).'}</p>
+      <p style="font-size:11.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Δεδομένα από ExerciseDB (ανοιχτό, δωρεάν σύνολο ασκήσεων).':'Data from ExerciseDB (open, free exercise dataset).'}</p>
     </div>
   </div>`);
   container.appendChild(wrap);
@@ -3651,7 +3658,7 @@ function attachGifPicker(container, gifInput){
     const opening = panel.style.display === 'none';
     panel.style.display = opening ? 'block' : 'none';
     if(opening && !_exerciseDbCache){
-      results.innerHTML = `<p style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση...':'Loading...'}</p>`;
+      results.innerHTML = `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση...':'Loading...'}</p>`;
       await fetchExerciseDb();
       results.innerHTML = '';
     }
@@ -3663,8 +3670,8 @@ function attachGifPicker(container, gifInput){
     const matches = db.filter(x=>x.name.toLowerCase().includes(q)).slice(0,12);
     results.innerHTML = matches.map(x=>`<div class="gifPick" data-url="${escapeHtml(x.gifUrl)}" style="cursor:pointer; text-align:center;">
       <img src="${escapeHtml(x.gifUrl)}" alt="Exercise demonstration" style="width:100%; border-radius:6px; border:1px solid var(--line);">
-      <div style="font-size:9.5px; color:var(--ink-soft); margin-top:2px;">${escapeHtml(x.name)}</div>
-    </div>`).join('') || `<p style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Καμία αντιστοιχία.':'No matches.'}</p>`;
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:2px;">${escapeHtml(x.name)}</div>
+    </div>`).join('') || `<p style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Καμία αντιστοιχία.':'No matches.'}</p>`;
     results.querySelectorAll('.gifPick').forEach(pick=>{
       pick.addEventListener('click', ()=>{
         gifInput.value = pick.dataset.url;
@@ -3767,10 +3774,10 @@ const EXEC_FIELDS = [
 ];
 function execViewHtml(ex, compact){
   const rows = EXEC_FIELDS.filter(f=>ex && ex[f.k]);
-  const note = `<p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Αν νιώσεις οξύ πόνο, μούδιασμα ή ζάλη, σταμάτα και πες το στον coach σου.':'If you feel sharp pain, numbness or dizziness, stop and tell your coach.'}</p>`;
+  const note = `<p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Αν νιώσεις οξύ πόνο, μούδιασμα ή ζάλη, σταμάτα και πες το στον coach σου.':'If you feel sharp pain, numbness or dizziness, stop and tell your coach.'}</p>`;
   if(!rows.length) return '';
   return `<div class="execGuide" style="border:1px solid var(--line); border-radius:10px; padding:${compact?'8px 10px':'10px 12px'}; margin:8px 0 10px;">
-    <div style="font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--ink-soft); margin-bottom:6px;">${locale==='el'?'Οδηγός εκτέλεσης':'Execution guide'}</div>
+    <div style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--ink-soft); margin-bottom:6px;">${locale==='el'?'Οδηγός εκτέλεσης':'Execution guide'}</div>
     ${rows.map(f=>`<p style="margin:0 0 5px; font-size:${compact?12:12.5}px; line-height:1.45;"><strong>${f.ico} ${locale==='el'?f.el:f.en}:</strong> ${escapeHtml(ex[f.k])}</p>`).join('')}
     ${note}</div>`;
 }
@@ -4135,12 +4142,12 @@ function ex3dSlotHtml(ex, isCoach){
   const draft = ex.anim_status !== 'approved';
   return `<div class="ex3dSlot" data-pat="${escapeHtml(ex.anim_pattern)}" data-prop="${escapeHtml(ex.anim_prop||'none')}" style="border:1px solid var(--line); border-radius:10px; padding:8px; margin:8px 0 10px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">
-      <span style="font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--ink-soft);">🧊 ${locale==='el'?'Κίνηση 3D':'3D movement'}</span>
+      <span style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--ink-soft);">🧊 ${locale==='el'?'Κίνηση 3D':'3D movement'}</span>
       ${draft ? `<span class="badge" style="background:rgba(226,162,51,.18);">${locale==='el'?'Πρόχειρο, δεν το βλέπουν οι πελάτες':'Draft, hidden from clients'}</span>` : (ex3dIsCoachRole() ? `<span class="badge">✓ ${locale==='el'?'Εγκεκριμένο':'Approved'}</span>` : '')}
     </div>
     <div class="ex3dStage" style="min-height:260px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση 3D…':'Loading 3D…'}</div>
     <div class="ex3dCtl" style="display:none; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
-    <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σχηματική απεικόνιση. Σύρε για να γυρίσεις το μοντέλο. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου.':'Schematic illustration. Drag to rotate. Follow the execution guide and your coach.'}</p>
+    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σχηματική απεικόνιση. Σύρε για να γυρίσεις το μοντέλο. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου.':'Schematic illustration. Drag to rotate. Follow the execution guide and your coach.'}</p>
   </div>`;
 }
 async function ex3dMount(slot){
@@ -4152,7 +4159,7 @@ async function ex3dMount(slot){
     stage.innerHTML = ''; stage.style.display = 'block'; stage.style.minHeight = '0';
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const api = lib.mount(stage, slot.dataset.pat, slot.dataset.prop, {height:280, paused: reduce, autorotate:false});
-    const btn = (label, fn, cls) => { const b = document.createElement('button'); b.type='button'; b.className='btn secondary'; b.style.cssText='padding:3px 10px; font-size:11px; min-height:32px;'; b.textContent=label; b.addEventListener('click', ()=>fn(b)); ctl.appendChild(b); return b; };
+    const btn = (label, fn, cls) => { const b = document.createElement('button'); b.type='button'; b.className='btn secondary'; b.style.cssText='padding:3px 10px; font-size:12px; min-height:32px;'; b.textContent=label; b.addEventListener('click', ()=>fn(b)); ctl.appendChild(b); return b; };
     const pb = btn(reduce?'▶':'⏸', b=>{ const on = !api.isPlaying(); api.play(on); b.textContent = on ? '⏸' : '▶'; });
     let slow = false; btn('×0.5', b=>{ slow=!slow; api.setSpeed(slow?.5:1); b.style.opacity = slow?1:.7; }).style.opacity=.7;
     [[el_label('Πλάγια','Side'),0,8],[el_label('Μπροστά','Front'),90,8],[el_label('Πάνω','Top'),0,80],['3/4',55,12]].forEach(([l,a,e])=>btn(l, ()=>api.setView(a,e)));
@@ -4174,7 +4181,7 @@ function ex3dFormFields(ex, pre){
   <div class="field"><label>${locale==='el'?'Τύπος κίνησης':'Movement type'}</label><select class="${pre}anim_pattern"><option value="">${locale==='el'?'— Καμία —':'— None —'}</option>${pats.map(([k,v])=>`<option value="${k}" ${ex&&ex.anim_pattern===k?'selected':''}>${escapeHtml(ex3dLbl(k,v))}</option>`).join('')}</select></div>
   <div class="field"><label>${locale==='el'?'Εξοπλισμός στο 3D':'Equipment in 3D'}</label><select class="${pre}anim_prop">${props.map(([k,v])=>`<option value="${k}" ${(ex&&ex.anim_prop||'none')===k?'selected':''}>${escapeHtml(ex3dLbl(k,v))}</option>`).join('')}</select></div>
   <div class="field"><label>${locale==='el'?'Κατάσταση':'Status'}</label><select class="${pre}anim_status"><option value="draft" ${st!=='approved'?'selected':''}>${locale==='el'?'Πρόχειρο (κρυφό από πελάτες)':'Draft (hidden from clients)'}</option><option value="approved" ${st==='approved'?'selected':''}>${locale==='el'?'Εγκεκριμένο (το βλέπουν οι πελάτες)':'Approved (clients can see it)'}</option></select>
-    <div style="font-size:11px; color:var(--ink-soft); margin-top:4px;">${locale==='el'?'Βλέπε την προεπισκόπηση και έγκρινε μόνο αν η κίνηση ταιριάζει με την άσκηση. Αν αλλάξεις τύπο ή εξοπλισμό, γυρνά σε πρόχειρο.':'Check the preview and approve only if it matches the exercise. Changing type or equipment resets to draft.'}</div></div>
+    <div style="font-size:12px; color:var(--ink-soft); margin-top:4px;">${locale==='el'?'Βλέπε την προεπισκόπηση και έγκρινε μόνο αν η κίνηση ταιριάζει με την άσκηση. Αν αλλάξεις τύπο ή εξοπλισμό, γυρνά σε πρόχειρο.':'Check the preview and approve only if it matches the exercise. Changing type or equipment resets to draft.'}</div></div>
   <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
     <button class="btn secondary ${pre}anim_suggest" type="button" style="font-size:12px;">${locale==='el'?'Αυτόματη πρόταση':'Auto-suggest'}</button>
     <button class="btn secondary ${pre}anim_preview" type="button" style="font-size:12px;">${locale==='el'?'Προεπισκόπηση':'Preview'}</button>
@@ -4545,8 +4552,8 @@ async function renderLibrary(main, isCoach){
       </div>
       <div class="detail" style="display:none; margin-top:12px;">
         ${isCoach ? `<div style="display:flex; gap:8px; margin-bottom:10px;">
-          <button class="btn secondary editExBtn" type="button" style="padding:5px 12px; font-size:11px;">✏️ ${locale==='el'?'Επεξεργασία':'Edit'}</button>
-          <button class="btn danger delExBtn" type="button" style="padding:5px 12px; font-size:11px;">🗑 ${t('delete',locale)}</button>
+          <button class="btn secondary editExBtn" type="button" style="padding:5px 12px; font-size:12px;">✏️ ${locale==='el'?'Επεξεργασία':'Edit'}</button>
+          <button class="btn danger delExBtn" type="button" style="padding:5px 12px; font-size:12px;">🗑 ${t('delete',locale)}</button>
         </div>
         <div class="editExForm" style="display:none;"></div>` : ''}
         <div class="viewMode">
@@ -4734,7 +4741,7 @@ function renderAutoEvidenceBox(box, ex, fresh){
   fresh.forEach(r=>{
     const row = el(`<div class="evidenceItem">
       <div>${escapeHtml(r.authors||'')}, <em>${escapeHtml(r.title||'')}</em> (${escapeHtml(r.journal||'')}, ${r.year||''})</div>
-      <button class="btn secondary addAutoEvBtn" style="margin-top:4px; padding:4px 10px; font-size:11px;" type="button">+ ${t('save',locale)}</button>
+      <button class="btn secondary addAutoEvBtn" style="margin-top:4px; padding:4px 10px; font-size:12px;" type="button">+ ${t('save',locale)}</button>
     </div>`);
     row.querySelector('.addAutoEvBtn').addEventListener('click', async ()=>{
       await supabase.from('evidence').insert({
@@ -5002,7 +5009,7 @@ async function renderCoachDashboard(main){
 
   // Follow-up signals for the coach's business, kept apart from computeAlerts on purpose: they are not
   // clinical, so they must not push a client's clinical status dot to amber/red.
-  const opsByClient = {}, draftsByClient = {};
+  const opsByClient = {}, draftsByClient = {}, slipDaysByClient = {};
   const firstName_ = c => String(c.full_name||'').trim().split(/\s+/)[0] || '';
   const DRAFTS = {
     quiet: c => locale==='el' ? `Γεια σου ${firstName_(c)}! Δεν είδα καταγραφές τις τελευταίες μέρες, όλα καλά; Αν κάτι δυσκόλεψε (χρόνος, πόνος, κίνητρο), πες μου να προσαρμόσουμε το πρόγραμμα.` : `Hi ${firstName_(c)}! I have not seen any logs the last few days, is everything ok? If something got in the way (time, pain, motivation), let me know and we will adjust the program.`,
@@ -5024,6 +5031,7 @@ async function renderCoachDashboard(main){
       const ageDays = c.created_at ? (Date.now()-new Date(c.created_at).getTime())/dayMs : 99;
       if(last!=null){
         const d = Math.floor((Date.now()-last)/dayMs);
+        if(d>=7) slipDaysByClient[c.id] = d;
         if(d>=7){ list.push(locale==='el' ? `Καμία προπόνηση ή καταγραφή εδώ και ${d} ημέρες` : `No training or log for ${d} days`); drafts.push({ k:'quiet', label: locale==='el'?'Υπενθύμιση καταγραφής':'Check-in nudge' }); }
       } else if(ageDays>=7){
         list.push(locale==='el' ? 'Δεν έχει καταγράψει τίποτα ακόμα' : 'Has not logged anything yet'); drafts.push({ k:'quiet', label: locale==='el'?'Υπενθύμιση καταγραφής':'Check-in nudge' });
@@ -5058,9 +5066,9 @@ async function renderCoachDashboard(main){
       flaggedClients.forEach(c=>{
         const row = el(`<div class="clickable" style="padding:6px 0; border-top:1px solid var(--line);">
           <strong style="font-size:13px;">${escapeHtml(c.full_name)}</strong>
-          <div style="font-size:11px; color:var(--danger); margin-top:2px;">${alertsByClient[c.id].map(a=>`⚠ ${escapeHtml(a)}`).join(' · ')}</div>
-          ${(opsByClient[c.id]||[]).length ? `<div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">${opsByClient[c.id].map(a=>`• ${escapeHtml(a)}`).join(' · ')}</div>` : ''}
-          ${(draftsByClient[c.id]||[]).length ? `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">${draftsByClient[c.id].map(d=>`<button type="button" class="btn secondary draftBtn" data-k="${d.k}" style="padding:3px 10px; font-size:11px;">✉ ${escapeHtml(d.label)}</button>`).join('')}</div>` : ''}
+          <div style="font-size:12px; color:var(--danger); margin-top:2px;">${alertsByClient[c.id].map(a=>`⚠ ${escapeHtml(a)}`).join(' · ')}</div>
+          ${(opsByClient[c.id]||[]).length ? `<div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${opsByClient[c.id].map(a=>`• ${escapeHtml(a)}`).join(' · ')}</div>` : ''}
+          ${(draftsByClient[c.id]||[]).length ? `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">${draftsByClient[c.id].map(d=>`<button type="button" class="btn secondary draftBtn" data-k="${d.k}" style="padding:3px 10px; font-size:12px;">✉ ${escapeHtml(d.label)}</button>`).join('')}</div>` : ''}
         </div>`);
         row.querySelectorAll('.draftBtn').forEach(b=>b.addEventListener('click', (e)=>{
           e.stopPropagation();
@@ -5108,14 +5116,14 @@ async function renderCoachDashboard(main){
         <div style="background:var(--red); height:100%; width:${pct}%;"></div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap;">
-        <span style="font-size:11px; color:var(--ink-soft);">${t('activeClients',locale)}: ${activeClients.length}</span>
+        <span style="font-size:12px; color:var(--ink-soft);">${t('activeClients',locale)}: ${activeClients.length}</span>
         <button class="goalEditBtn" type="button" style="background:none; border:none; color:var(--red-text); font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; padding:2px 0;">${locale==='el'?'Άλλαξε στόχο':'Change goal'}</button>
       </div>
       <div class="goalEdit" style="display:none; margin-top:8px; gap:8px; align-items:center; flex-wrap:wrap;">
         <input type="number" class="goalInput" min="100" max="1000000" step="100" value="${GOAL}" inputmode="numeric" style="width:130px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--input-bg); color:var(--ink); font-family:inherit; font-size:16px;">
         <span style="font-size:12px; color:var(--ink-soft);">€ / ${locale==='el'?'μήνα':'month'}</span>
         <button class="btn goalSave" type="button" style="padding:7px 14px; font-size:12px;">${locale==='el'?'Αποθήκευση':'Save'}</button>
-        <div style="width:100%; font-size:10.5px; color:var(--ink-soft);">${locale==='el'?'Ο στόχος αποθηκεύεται σε αυτή τη συσκευή.':'The goal is saved on this device.'}</div>
+        <div style="width:100%; font-size:11.5px; color:var(--ink-soft);">${locale==='el'?'Ο στόχος αποθηκεύεται σε αυτή τη συσκευή.':'The goal is saved on this device.'}</div>
       </div>
     </div>`);
     revenueBox.querySelector('.goalEditBtn').addEventListener('click', ()=>{ const g=revenueBox.querySelector('.goalEdit'); g.style.display = g.style.display==='none' ? 'flex' : 'none'; });
@@ -5186,7 +5194,7 @@ async function renderCoachDashboard(main){
   toggleBar.querySelector('.viewCardsBtn').addEventListener('click', ()=>{ renderCoachDashboard._viewMode='cards'; renderCoachDashboard(main); });
   main.appendChild(toggleBar);
 
-  main.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin:-6px 0 12px;">🧠 ${locale==='el'
+  main.appendChild(el(`<p style="font-size:12px; color:var(--ink-soft); margin:-6px 0 12px;">🧠 ${locale==='el'
     ? 'Η ένδειξη 🟢🟡🔴 είναι βοήθημα παρακολούθησης. Δεν αποφασίζει θεραπεία ή αλλαγή προγράμματος. Η τελική κρίση είναι πάντα δική σου.'
     : 'The 🟢🟡🔴 indicator is a monitoring aid. It does not decide treatment or program changes. The final judgment is always yours.'}</p>`));
 
@@ -5223,8 +5231,8 @@ async function renderCoachDashboard(main){
       const row = el(`<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:6px;">
         <span>${escapeHtml(i.client_name)}: <span class="mono badge">${i.code}</span></span>
         <span style="display:flex; gap:6px;">
-          <button class="btn secondary copyInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Αντιγραφή':'Copy'}</button>
-          <button class="btn danger cancelInviteBtn" type="button" style="padding:4px 10px; font-size:11px;">${locale==='el'?'Ακύρωση':'Cancel'}</button>
+          <button class="btn secondary copyInviteBtn" type="button" style="padding:4px 10px; font-size:12px;">${locale==='el'?'Αντιγραφή':'Copy'}</button>
+          <button class="btn danger cancelInviteBtn" type="button" style="padding:4px 10px; font-size:12px;">${locale==='el'?'Ακύρωση':'Cancel'}</button>
         </span>
       </div>`);
       row.querySelector('.copyInviteBtn').addEventListener('click', async ()=>{
@@ -5333,15 +5341,15 @@ async function renderCoachDashboard(main){
         const painColor = painVal>3 ? 'color:var(--danger); font-weight:700;' : '';
         const clinStatus = clinicalStatusFor(c);
         const row = el(`<tr>
-          <td><input type="checkbox" class="rowCheck" ${selected.has(c.id)?'checked':''}></td>
+          <td><input type="checkbox" class="rowCheck" aria-label="${locale==='el'?'Επιλογή πελάτη':'Select client'}" ${selected.has(c.id)?'checked':''}></td>
           <td title="${escapeHtml(clinStatus.label)}" style="text-align:center;">${clinStatus.dot}</td>
-          <td class="clickable"><strong>${avatarPlaceholder(c.full_name, c.id)}${escapeHtml(c.full_name)}</strong></td>
+          <td class="clickable"><strong>${avatarPlaceholder(c.full_name, c.id)}${escapeHtml(c.full_name)}</strong>${slipDaysByClient[c.id] ? ` <span class="badge" style="background:var(--tint); color:var(--warn); font-weight:700;" title="${locale==='el'?'Χωρίς δραστηριότητα':'Inactive'}">⏳ ${slipDaysByClient[c.id]}${locale==='el'?' ημ.':' d'}</span>` : ''}</td>
           <td>${escapeHtml(goal)}</td>
           <td class="mono">${rScore!==null ? rScore : '—'}</td>
           <td class="mono" style="${painColor}">${painVal!=null ? painVal : '—'}</td>
           <td class="mono">${lastRd?.sleep!=null ? lastRd.sleep : '—'}</td>
           <td class="mono">${lastCk?.adherence!=null ? lastCk.adherence+'%' : '—'}</td>
-          <td><button class="btn danger delRowBtn" type="button" style="padding:3px 8px; font-size:11px;">🗑</button></td>
+          <td><button class="btn danger delRowBtn" type="button" style="padding:3px 8px; font-size:12px;">🗑</button></td>
         </tr>`);
         row.querySelector('.rowCheck').addEventListener('click', (e)=>{ e.stopPropagation(); if(e.target.checked) selected.add(c.id); else selected.delete(c.id); updateBulkBar(); });
         row.querySelector('.clickable').addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
@@ -5372,7 +5380,7 @@ async function renderCoachDashboard(main){
     const clinStatus = clinicalStatusFor(c);
     const card = el(`<div class="card clientCard">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <input type="checkbox" class="cardCheck" ${selected.has(c.id)?'checked':''} style="flex-shrink:0;">
+        <input type="checkbox" class="cardCheck" aria-label="${locale==='el'?'Επιλογή πελάτη':'Select client'}" ${selected.has(c.id)?'checked':''} style="flex-shrink:0;">
         <div class="clickable clientCardMain" style="flex:1; min-width:160px;">
           <strong title="${escapeHtml(clinStatus.label)}">${avatarPlaceholder(c.full_name, c.id)}${clinStatus.dot} ${escapeHtml(c.full_name)}</strong>
           <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
@@ -5386,6 +5394,7 @@ async function renderCoachDashboard(main){
             ${prog ? `<span class="badge">${escapeHtml(prog.title)}</span>` : `<span class="badge" style="color:var(--danger);">${locale==='el'?'Χωρίς πρόγραμμα':'No program'}</span>`}
             ${lastCk ? `<span class="badge">${locale==='el'?'Συνέπεια':'Adherence'} ${lastCk.adherence}%</span>` : ''}
             ${lastCk ? `<span class="badge mono">${lastCk.date}</span>` : ''}
+            ${slipDaysByClient[c.id] ? `<span class="badge" style="background:var(--tint); color:var(--warn); font-weight:700;">⏳ ${locale==='el'?`Χωρίς δραστηριότητα ${slipDaysByClient[c.id]} ημ.`:`Inactive ${slipDaysByClient[c.id]} d`}</span>` : ''}
             ${painFlag ? `<span class="badge" style="background:var(--tint); color:var(--danger);">⚠ ${locale==='el'?'Πόνος':'Pain'} ${lastCk.pain_level}/10</span>` : ''}
             ${clinStatus.dot==='🔴' ? `<span class="badge" style="background:var(--tint); color:var(--danger); font-weight:700;">🔴 ${locale==='el'?'Συνιστάται επανεκτίμηση':'Reassessment recommended'}</span>` : ''}
           </div>
@@ -5393,7 +5402,8 @@ async function renderCoachDashboard(main){
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button class="btn secondary jumpBtn" data-jump="live" style="padding:6px 12px; font-size:12px;">${t('liveSession',locale)}</button>
           <button class="btn secondary jumpBtn" data-jump="program" style="padding:6px 12px; font-size:12px;">${t('program',locale)}</button>
-          <button class="btn secondary jumpBtn" data-jump="messages" style="padding:6px 12px; font-size:12px;">💬</button>
+          <button class="btn secondary jumpBtn" data-jump="messages" aria-label="${locale==='el'?'Μηνύματα':'Messages'}" style="padding:6px 12px; font-size:12px;">💬</button>
+          ${slipDaysByClient[c.id] && (draftsByClient[c.id]||[]).find(d=>d.k==='quiet') ? `<button class="btn nudgeBtn" type="button" style="padding:6px 12px; font-size:12px;">✉ ${locale==='el'?'Υπενθύμιση':'Nudge'}</button>` : ''}
           <button class="btn secondary archiveBtn" type="button" style="padding:6px 12px; font-size:12px;">${c.archived ? '↩️' : '🗄'}</button>
           <button class="btn danger delClientBtn" type="button" style="padding:6px 12px; font-size:12px;">🗑</button>
         </div>
@@ -5401,6 +5411,11 @@ async function renderCoachDashboard(main){
     </div>`);
     card.querySelector('.cardCheck').addEventListener('click', (e)=>{ e.stopPropagation(); if(e.target.checked) selected.add(c.id); else selected.delete(c.id); updateBulkBar(); });
     card.querySelector('.clientCardMain').addEventListener('click', ()=>{ selectedClient = c; renderClientDetail._tab='program'; renderShell(); });
+    const nudge = card.querySelector('.nudgeBtn');
+    if(nudge) nudge.addEventListener('click', ()=>{
+      renderMessagesTab._draft = { clientId: c.id, text: DRAFTS.quiet(c) };
+      selectedClient = c; renderClientDetail._tab='messages'; renderShell();
+    });
     card.querySelectorAll('.jumpBtn').forEach(b=>b.addEventListener('click', ()=>{
       selectedClient = c; renderClientDetail._tab = b.dataset.jump; renderShell();
     }));
@@ -5677,7 +5692,7 @@ async function renderSopsView(main){
       if(r.category!==last){ last = r.category; listBox.appendChild(el(`<h4 class="libGroup">${escapeHtml(r.category||'-')}</h4>`)); }
       const card = el(`<div class="card"><div class="clickable" style="display:flex; justify-content:space-between; gap:10px; align-items:center;"><strong>${escapeHtml(r.title)}</strong><span class="caret">▸</span></div>
         <div class="sopDetail" style="display:none; margin-top:10px;"><div style="white-space:pre-wrap; font-size:13px; line-height:1.55;">${escapeHtml(r.body||'')}</div>
-        <div style="display:flex; gap:8px; margin-top:10px;"><button class="btn secondary sEdit" type="button" style="padding:5px 12px; font-size:11px;">✏️ ${locale==='el'?'Επεξεργασία':'Edit'}</button><button class="btn danger sDel" type="button" style="padding:5px 12px; font-size:11px;">🗑 ${t('delete',locale)}</button></div></div></div>`);
+        <div style="display:flex; gap:8px; margin-top:10px;"><button class="btn secondary sEdit" type="button" style="padding:5px 12px; font-size:12px;">✏️ ${locale==='el'?'Επεξεργασία':'Edit'}</button><button class="btn danger sDel" type="button" style="padding:5px 12px; font-size:12px;">🗑 ${t('delete',locale)}</button></div></div></div>`);
       card.querySelector('.clickable').addEventListener('click', ()=>{ const d = card.querySelector('.sopDetail'); d.style.display = d.style.display==='none' ? 'block' : 'none'; });
       card.querySelector('.sEdit').addEventListener('click', ()=>editForm(r));
       card.querySelector('.sDel').addEventListener('click', async ()=>{
@@ -5757,7 +5772,7 @@ function exPickerWire(root, list, opts){
         const rows = groups.get(g).map(ex=>{
           const pre = risky.get(ex.id) ? '⚠ ' : (recommended.has(ex.id) ? '⭐ ' : '');
           const meta = [ex.equipment ? (EQ_ICON[ex.equipment]||'')+' '+eqName(ex.equipment).replace(/ \(.*\)$/,'') : '', ex.difficulty_level ? exLabel(EX_DIFFICULTIES, ex.difficulty_level) : ''].filter(Boolean).join(' · ');
-          return `<button type="button" class="exPickRow" data-id="${ex.id}" style="display:block; width:100%; text-align:left; padding:9px 8px; border:0; border-bottom:1px solid var(--line); background:transparent; color:inherit; cursor:pointer; font-size:13px;">${pre}${escapeHtml(nm(ex))}${meta?`<span style="display:block; font-size:11px; color:var(--ink-soft);">${escapeHtml(meta)}</span>`:''}</button>`;
+          return `<button type="button" class="exPickRow" data-id="${ex.id}" style="display:block; width:100%; text-align:left; padding:9px 8px; border:0; border-bottom:1px solid var(--line); background:transparent; color:inherit; cursor:pointer; font-size:13px;">${pre}${escapeHtml(nm(ex))}${meta?`<span style="display:block; font-size:12px; color:var(--ink-soft);">${escapeHtml(meta)}</span>`:''}</button>`;
         }).join('');
         return `<details ${filtered?'open':''} style="margin-bottom:6px;"><summary style="cursor:pointer; font-weight:700; font-size:12.5px; padding:6px 2px;">${escapeHtml(regName(g))} <span style="color:var(--ink-soft); font-weight:400;">(${groups.get(g).length})</span></summary>${rows}</details>`;
       }).join('');
@@ -5833,7 +5848,7 @@ async function renderStudioView(main){
     formBox.innerHTML = ''; formBox.appendChild(f); f.scrollIntoView({ behavior: SCROLL_BEHAVIOR(), block:'center' });
   }
   function actionBtns(r, onEdit){
-    const w = el(`<div style="display:flex; gap:8px; margin-top:8px;"><button class="btn secondary aEdit" type="button" style="padding:5px 12px; font-size:11px;">✏️ ${L('Επεξεργασία','Edit')}</button><button class="btn danger aDel" type="button" style="padding:5px 12px; font-size:11px;">🗑 ${t('delete',locale)}</button></div>`);
+    const w = el(`<div style="display:flex; gap:8px; margin-top:8px;"><button class="btn secondary aEdit" type="button" style="padding:5px 12px; font-size:12px;">✏️ ${L('Επεξεργασία','Edit')}</button><button class="btn danger aDel" type="button" style="padding:5px 12px; font-size:12px;">🗑 ${t('delete',locale)}</button></div>`);
     w.querySelector('.aEdit').addEventListener('click', onEdit);
     w.querySelector('.aDel').addEventListener('click', async ()=>{
       if(!(await askConfirm(L('Διαγραφή αυτού του στοιχείου;','Delete this item?')))) return;
@@ -5900,7 +5915,7 @@ async function renderStudioView(main){
         <div class="field"><label>${L('Θέμα (π.χ. πόνος στο γόνατο στο squat)','Topic (e.g. knee pain in squats)')}</label><input class="gTopic" maxlength="300"></div>
         <div class="field"><label>${L('Πλατφόρμα','Platform')}</label><select class="gPlat"><option>Instagram</option><option>TikTok</option><option>YouTube</option></select></div>
         <div style="display:flex; gap:8px;"><button class="btn gGo" type="button">${L('Δημιούργησε ιδέες','Generate ideas')}</button><button class="btn secondary gX" type="button">${L('Κλείσιμο','Close')}</button></div>
-        <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${L('Το AI προτείνει μόνο διατυπώσεις. Έλεγξε ότι δεν υπάρχουν ιατρικοί ισχυρισμοί ή υποσχέσεις αποτελέσματος πριν δημοσιεύσεις.','The AI only suggests wording. Check there are no medical claims or promised results before posting.')}</p>
+        <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${L('Το AI προτείνει μόνο διατυπώσεις. Έλεγξε ότι δεν υπάρχουν ιατρικοί ισχυρισμοί ή υποσχέσεις αποτελέσματος πριν δημοσιεύσεις.','The AI only suggests wording. Check there are no medical claims or promised results before posting.')}</p>
         <div class="gOut" style="margin-top:10px;"></div></div>`);
       panel.querySelector('.gX').addEventListener('click', ()=>{ formBox.innerHTML=''; });
       panel.querySelector('.gGo').addEventListener('click', async (e)=>{
@@ -5916,7 +5931,7 @@ async function renderStudioView(main){
         d.ideas.forEach(i=>{
           const c = el(`<div style="border-top:1px solid var(--line); padding:8px 0;"><div style="font-size:13.5px; font-weight:700;">“${escapeHtml(i.hook)}”</div>
             <div style="font-size:12px; color:var(--ink-soft); margin:3px 0 6px;">${escapeHtml(i.angle||'')}</div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary iHook" type="button" style="padding:5px 12px; font-size:11px;">${L('Σώσε hook','Save hook')}</button><button class="btn secondary iPlan" type="button" style="padding:5px 12px; font-size:11px;">${L('Στο πλάνο','Add to plan')}</button></div></div>`);
+            <div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary iHook" type="button" style="padding:5px 12px; font-size:12px;">${L('Σώσε hook','Save hook')}</button><button class="btn secondary iPlan" type="button" style="padding:5px 12px; font-size:12px;">${L('Στο πλάνο','Add to plan')}</button></div></div>`);
           const save = async (kind, data, btnEl)=>{
             btnEl.disabled = true;
             const { error: e5 } = await supabase.from('studio_items').insert({ kind, owner_id: profile.id, data, updated_at:new Date().toISOString() });
@@ -5948,7 +5963,7 @@ async function renderStudioView(main){
     if(!hooks.length) listBox.appendChild(empty(L('Κράτα εδώ τα hooks που δούλεψαν, για να τα ξαναχρησιμοποιείς.','Keep the hooks that worked here so you can reuse them.')));
     hooks.forEach(r=>{
       const card = el(`<div class="card"><div style="font-size:13.5px; white-space:pre-wrap;">${escapeHtml(r.data.text||'')}</div>${r.data.topic?`<div style="font-size:11.5px; color:var(--ink-soft); margin-top:4px;">${escapeHtml(r.data.topic)}</div>`:''}
-        <div style="display:flex; gap:8px; margin-top:8px;"><button class="btn secondary hCopy" type="button" style="padding:5px 12px; font-size:11px;">${L('Αντιγραφή','Copy')}</button></div></div>`);
+        <div style="display:flex; gap:8px; margin-top:8px;"><button class="btn secondary hCopy" type="button" style="padding:5px 12px; font-size:12px;">${L('Αντιγραφή','Copy')}</button></div></div>`);
       card.querySelector('.hCopy').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(r.data.text||''); toast(L('Αντιγράφηκε','Copied')); }catch(_){ toast(L('Δεν έγινε αντιγραφή','Could not copy')); } });
       card.appendChild(actionBtns(r, ()=>openForm('hook', HF, r, null, ['text'])));
       listBox.appendChild(card);
@@ -5978,7 +5993,7 @@ async function renderStudioView(main){
         const card = el(`<div class="card"><div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;"><strong>📞 ${escapeHtml(d.title||'')}</strong><span style="font-size:12px;">${escapeHtml(d.date||'')} ${escapeHtml(d.time||'')}</span></div>
           ${d.with?`<div style="font-size:12px; color:var(--ink-soft);">${L('Με','With')}: ${escapeHtml(d.with)}</div>`:''}
           ${d.notes?`<div style="font-size:12.5px; margin-top:4px; white-space:pre-wrap;">${escapeHtml(d.notes)}</div>`:''}
-          ${link?`<div style="display:flex; gap:8px; margin-top:8px;"><a class="btn" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" style="padding:5px 12px; font-size:11px; text-decoration:none;">${L('Άνοιγμα','Open')}</a><button class="btn secondary mCopy" type="button" style="padding:5px 12px; font-size:11px;">${L('Copy Link','Copy Link')}</button></div>`:''}</div>`);
+          ${link?`<div style="display:flex; gap:8px; margin-top:8px;"><a class="btn" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" style="padding:5px 12px; font-size:12px; text-decoration:none;">${L('Άνοιγμα','Open')}</a><button class="btn secondary mCopy" type="button" style="padding:5px 12px; font-size:12px;">${L('Copy Link','Copy Link')}</button></div>`:''}</div>`);
         const cb = card.querySelector('.mCopy');
         if(cb) cb.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(link); toast(L('Αντιγράφηκε','Copied')); }catch(_){ toast(L('Δεν έγινε αντιγραφή','Could not copy')); } });
         card.appendChild(actionBtns(r, ()=>openForm('meeting', MTF, r, null, ['title'])));
@@ -6042,10 +6057,10 @@ async function renderStudioView(main){
     const exp = items.filter(r=>r.data.type==='expense').reduce((s,r)=>s+(Number(r.data.amount)||0),0);
     const net = inc-exp;
     holder.appendChild(el(`<div class="card gold" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; margin-bottom:12px;">
-      <div><div style="font-size:11px; color:var(--ink-soft);">${L('Έσοδα','Income')}</div><strong>${euro(inc)}</strong></div>
-      <div><div style="font-size:11px; color:var(--ink-soft);">${L('Έξοδα','Expenses')}</div><strong>${euro(exp)}</strong></div>
-      <div><div style="font-size:11px; color:var(--ink-soft);">${L('Καθαρό','Net')}</div><strong>${euro(net)}</strong></div>
-      <div><div style="font-size:11px; color:var(--ink-soft);">${L('Περιθώριο','Margin')}</div><strong>${inc>0?Math.round(net/inc*100)+'%':'-'}</strong></div></div>`));
+      <div><div style="font-size:12px; color:var(--ink-soft);">${L('Έσοδα','Income')}</div><strong>${euro(inc)}</strong></div>
+      <div><div style="font-size:12px; color:var(--ink-soft);">${L('Έξοδα','Expenses')}</div><strong>${euro(exp)}</strong></div>
+      <div><div style="font-size:12px; color:var(--ink-soft);">${L('Καθαρό','Net')}</div><strong>${euro(net)}</strong></div>
+      <div><div style="font-size:12px; color:var(--ink-soft);">${L('Περιθώριο','Margin')}</div><strong>${inc>0?Math.round(net/inc*100)+'%':'-'}</strong></div></div>`));
     holder.appendChild(listBox);
     if(!items.length) listBox.appendChild(empty(L('Καμία κίνηση αυτόν τον μήνα.','No entries this month.')));
     items.forEach(r=>{
@@ -6142,24 +6157,33 @@ async function renderClientDetail(main, forceRefresh){
   // daily work (program/live/messages) first, then monitoring data, then occasional
   // service extras, then one-time/admin setup (business, intake) last.
   const unreadChat = tab==='messages' ? 0 : await chatUnreadCount(client.id, 'coach');
-  const tabs = el(`<div style="display:flex; gap:8px; margin:16px 0; flex-wrap:wrap;">
-    <button class="btn ${tab==='program'?'':'secondary'}" data-t="program">${t('program',locale)}</button>
-    <button class="btn ${tab==='live'?'':'secondary'}" data-t="live">${t('liveSession',locale)}</button>
-    <button class="btn ${tab==='messages'?'':'secondary'}" data-t="messages">${t('messages',locale)}${unreadChat>0?`<span class="inlineBadge">${unreadChat>9?'9+':unreadChat}</span>`:''}</button>
-    <button class="btn ${tab==='checkins'?'':'secondary'}" data-t="checkins">${t('checkins',locale)}</button>
-    <button class="btn ${tab==='readiness'?'':'secondary'}" data-t="readiness">${t('readiness',locale)}</button>
-    <button class="btn ${tab==='progress'?'':'secondary'}" data-t="progress">📈 ${locale==='el'?'Πρόοδος':'Progress'}</button>
-    <button class="btn ${tab==='recap'?'':'secondary'}" data-t="recap">📝 ${locale==='el'?'Σύνοψη εβδομάδας':'Weekly recap'}</button>
-    <button class="btn ${tab==='reassess'?'':'secondary'}" data-t="reassess">${t('reassessment',locale)}</button>
-    <button class="btn ${tab==='habits'?'':'secondary'}" data-t="habits">✅ ${locale==='el'?'Συνήθειες':'Habits'}</button>
-    <button class="btn ${tab==='metrics'?'':'secondary'}" data-t="metrics">📲 ${locale==='el'?'Μετρήσεις':'Metrics'}</button>
-    <button class="btn ${tab==='nutrition'?'':'secondary'}" data-t="nutrition">🍽️ ${t('nutrition',locale)}</button>
-    <button class="btn ${tab==='massage'?'':'secondary'}" data-t="massage">💆 ${t('massage',locale)}</button>
-    <button class="btn ${tab==='photos'?'':'secondary'}" data-t="photos">📸 ${t('progressPhotos',locale)}</button>
-    <button class="btn ${tab==='business'?'':'secondary'}" data-t="business">${t('business',locale)}</button>
-    <button class="btn ${tab==='intake'?'':'secondary'}" data-t="intake">${t('intake',locale)}</button>
+  const isEl_ = locale==='el';
+  const TAB_LABEL = {
+    program: t('program',locale), live: t('liveSession',locale), reassess: t('reassessment',locale), nutrition: '🍽️ '+t('nutrition',locale),
+    checkins: t('checkins',locale), readiness: t('readiness',locale), progress: '📈 '+(isEl_?'Πρόοδος':'Progress'), habits: '✅ '+(isEl_?'Συνήθειες':'Habits'),
+    metrics: '📲 '+(isEl_?'Μετρήσεις':'Metrics'), photos: '📸 '+t('progressPhotos',locale),
+    messages: t('messages',locale)+(unreadChat>0?`<span class="inlineBadge">${unreadChat>9?'9+':unreadChat}</span>`:''), recap: '📝 '+(isEl_?'Σύνοψη εβδομάδας':'Weekly recap'),
+    intake: t('intake',locale), business: t('business',locale), massage: '💆 '+t('massage',locale),
+  };
+  const TAB_GROUPS = [
+    { k:'plan',    label: isEl_?'Πρόγραμμα':'Plan',        tabs:['program','live','reassess','nutrition'] },
+    { k:'monitor', label: isEl_?'Παρακολούθηση':'Monitor', tabs:['checkins','readiness','progress','habits','metrics','photos'] },
+    { k:'talk',    label: isEl_?'Επικοινωνία':'Contact',   tabs:['messages','recap'] },
+    { k:'file',    label: isEl_?'Φάκελος':'File',          tabs:['intake','business','massage'] },
+  ];
+  const curGroup = TAB_GROUPS.find(g=>g.tabs.includes(tab)) || TAB_GROUPS[0];
+  const tabs = el(`<div class="tabGroups" style="margin:16px 0;">
+    <div class="tabGroupRow" role="tablist" style="display:flex; gap:8px; flex-wrap:wrap;">
+      ${TAB_GROUPS.map(g=>`<button class="btn ${g.k===curGroup.k?'':'secondary'}" role="tab" aria-selected="${g.k===curGroup.k}" data-g="${g.k}">${escapeHtml(g.label)}${g.k==='talk'&&unreadChat>0?`<span class="inlineBadge">${unreadChat>9?'9+':unreadChat}</span>`:''}</button>`).join('')}
+    </div>
+    <div class="tabSubRow" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">
+      ${curGroup.tabs.map(k=>`<button class="btn ${tab===k?'':'secondary'}" data-t="${k}" style="padding:7px 12px; font-size:13px;">${TAB_LABEL[k]}</button>`).join('')}
+    </div>
   </div>`);
-  tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDetail._tab = b.dataset.t; renderClientDetail(main); }));
+  tabs.querySelectorAll('button[data-t]').forEach(b=>b.addEventListener('click', ()=>{ renderClientDetail._tab = b.dataset.t; renderClientDetail(main); }));
+  tabs.querySelectorAll('button[data-g]').forEach(b=>b.addEventListener('click', ()=>{
+    const g = TAB_GROUPS.find(x=>x.k===b.dataset.g); renderClientDetail._tab = g.tabs[0]; renderClientDetail(main);
+  }));
   main.appendChild(tabs);
 
   const body = el('<div></div>');
@@ -6273,7 +6297,7 @@ function renderBodyDiagram(container, state, onChange){
       <span class="clearMarkers" data-view="back">${t('clearMarkers',locale)}</span>
     </div>
   </div>
-  <p style="font-size:11px; color:var(--ink-soft); text-align:center; margin:-6px 0 14px;">${t('clickToMark',locale)}</p>`);
+  <p style="font-size:12px; color:var(--ink-soft); text-align:center; margin:-6px 0 14px;">${t('clickToMark',locale)}</p>`);
 
   ['front','back'].forEach(view=>{
     const holder = wrap.querySelectorAll('.svgHolder')[view==='front'?0:1];
@@ -6344,7 +6368,7 @@ function renderClinicalRecommendation(container, state){
   const title = rec.riskPresent ? t('riskReferral',locale) : t('pathwayRecommendation',locale);
   const text = rec.riskPresent ? t('screeningUnclear',locale) : t('screeningClear',locale);
   const card = el(`<div class="card gold" style="margin-top:14px;">
-    <div style="font-size:11px;color:var(--ink-soft);margin-bottom:5px;">${t('pathway',locale)}</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:5px;">${t('pathway',locale)}</div>
     <h3 style="margin:0 0 8px;">${escapeHtml(title)}</h3>
     <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;">${escapeHtml(text)}</p>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -6377,7 +6401,7 @@ async function renderPsfsCard(container, client, headingText){
     const row = el(`<div style="margin-bottom:10px;">
       <input class="psfsActivity" placeholder="${locale==='el'?`Δραστηριότητα ${i+1}`:`Activity ${i+1}`}" value="${escapeHtml(existing.activity||'')}" style="width:100%; margin-bottom:6px; padding:7px; border:1px solid var(--line); border-radius:6px; font-family:inherit; font-size:12.5px; box-sizing:border-box;">
       <div style="display:flex; align-items:center; gap:8px;">
-        <input type="range" class="psfsScore" min="0" max="10" value="${existing.score ?? 5}" style="flex:1;">
+        <input type="range" class="psfsScore" aria-label="${locale==='el'?'Βαθμός δυσκολίας 0 έως 10':'Score 0 to 10'}" min="0" max="10" value="${existing.score ?? 5}" style="flex:1;">
         <span class="mono psfsScoreVal" style="width:22px; text-align:right; font-size:12px;">${existing.score ?? 5}</span>
       </div>
     </div>`);
@@ -6385,7 +6409,7 @@ async function renderPsfsCard(container, client, headingText){
     rows.push(row);
     wrap.appendChild(row);
   }
-  const statusSpan = el(`<span class="savedTag" style="margin-left:10px; font-size:11px;"></span>`);
+  const statusSpan = el(`<span class="savedTag" style="margin-left:10px; font-size:12px;"></span>`);
   const saveBtn = el(`<button class="btn secondary" type="button">💾 ${locale==='el'?'Αποθήκευση PSFS':'Save PSFS'}</button>`);
   saveBtn.addEventListener('click', async ()=>{
     const items = rows.map(r=>({ activity: r.querySelector('.psfsActivity').value.trim(), score: Number(r.querySelector('.psfsScore').value) })).filter(it=>it.activity);
@@ -6443,7 +6467,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
   function renderProgress(){
     const pct = Math.round(((stepIndex+1)/allSteps.length)*100);
     progressWrap.innerHTML = `
-      <div style="font-size:11px; color:var(--ink-soft); margin-bottom:6px;">${t('step',locale)} ${stepIndex+1} ${t('of',locale)} ${allSteps.length} · ${t(allSteps[stepIndex].title,locale)}</div>
+      <div style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('step',locale)} ${stepIndex+1} ${t('of',locale)} ${allSteps.length} · ${t(allSteps[stepIndex].title,locale)}</div>
       <div style="height:6px; background:var(--line); border-radius:3px; overflow:hidden;">
         <div style="height:100%; width:${pct}%; background:var(--red); transition:width 0.3s ease;"></div>
       </div>`;
@@ -6459,7 +6483,7 @@ function renderIntakeForm(body, client, existingData, isCoach){
       secEl.insertBefore(el(`<p style="font-size:13px; line-height:1.6; margin-bottom:12px;">${locale==='el'
         ? 'Στις επόμενες ερωτήσεις θα καταγράψεις στοιχεία για την υγεία σου (τραυματισμοί, πόνος, φάρμακα, ιστορικό). Αυτά είναι <strong>δεδομένα ειδικής κατηγορίας</strong> (άρθρο 9 ΓΚΠΔ). Χρησιμοποιούνται μόνο για να προσαρμοστεί το πρόγραμμά σου και τα βλέπει ο coach σου. Δεν πωλούνται και δεν μοιράζονται για διαφήμιση. Μπορείς να ανακαλέσεις τη συναίνεση και να ζητήσεις διαγραφή όποτε θέλεις, επικοινωνώντας με τον coach. Η εφαρμογή δεν αποτελεί ιατρική διάγνωση ή θεραπεία.'
         : 'The next questions record health information (injuries, pain, medication, history). This is <strong>special category data</strong> (GDPR Article 9). It is used only to tailor your program and is visible to your coach. It is not sold or shared for advertising. You can withdraw consent and ask for deletion at any time by contacting your coach. The app is not a medical diagnosis or treatment.'}</p>`), secEl.querySelector('.fieldsGrid'));
-      if(state.consentHealthAt) secEl.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Καταγράφηκε':'Recorded'}: ${escapeHtml(new Date(state.consentHealthAt).toLocaleString(locale==='el'?'el-GR':'en-GB'))}</p>`));
+      if(state.consentHealthAt) secEl.appendChild(el(`<p style="font-size:12px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Καταγράφηκε':'Recorded'}: ${escapeHtml(new Date(state.consentHealthAt).toLocaleString(locale==='el'?'el-GR':'en-GB'))}</p>`));
     }
     if(section.key==='pain'){
       renderBodyDiagram(secEl, state, scheduleSave);
@@ -6546,13 +6570,13 @@ async function renderCoachSummary(body, client, state){
     if(section.key === 'psfs'){
       const items = (psfsLatest?.items || []).filter(it=>it && it.activity);
       summaryBody.appendChild(el(`<div class="clinicalSection"><h4>${t(section.title,locale)}</h4>${items.length
-        ? items.map(it=>`<div style="margin-bottom:8px;"><strong>${escapeHtml(it.activity)}</strong> <span class="mono">${escapeHtml(String(it.score))}/10</span></div>`).join('') + `<div style="font-size:11px; color:var(--ink-soft);">${new Date(psfsLatest.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')} · 0 = ${locale==='el'?'αδύνατο':'unable'}, 10 = ${locale==='el'?'χωρίς κανένα πρόβλημα':'no difficulty'}</div>`
+        ? items.map(it=>`<div style="margin-bottom:8px;"><strong>${escapeHtml(it.activity)}</strong> <span class="mono">${escapeHtml(String(it.score))}/10</span></div>`).join('') + `<div style="font-size:12px; color:var(--ink-soft);">${new Date(psfsLatest.created_at).toLocaleDateString(locale==='el'?'el-GR':'en-GB')} · 0 = ${locale==='el'?'αδύνατο':'unable'}, 10 = ${locale==='el'?'χωρίς κανένα πρόβλημα':'no difficulty'}</div>`
         : `<span style="color:var(--ink-soft);">—</span>`}</div>`));
       return;
     }
     const rows = section.fields.map(([key])=>{
       const val = state[key];
-      return `<div style="margin-bottom:8px;"><span style="font-size:11px; color:var(--ink-soft);">${t(key,locale)}:</span> <strong>${val ? escapeHtml(trTerm(val)) : `<span style="color:var(--ink-soft); font-weight:400;">${t('notFilled',locale)}</span>`}</strong></div>`;
+      return `<div style="margin-bottom:8px;"><span style="font-size:12px; color:var(--ink-soft);">${t(key,locale)}:</span> <strong>${val ? escapeHtml(trTerm(val)) : `<span style="color:var(--ink-soft); font-weight:400;">${t('notFilled',locale)}</span>`}</strong></div>`;
     }).join('');
     summaryBody.appendChild(el(`<div class="clinicalSection"><h4>${t(section.title,locale)}</h4>${rows}</div>`));
   });
@@ -6573,7 +6597,7 @@ async function renderReassessmentTab(body, client, isCoach){
   ]);
 
   if(isCoach && (readiness?.length || checkins?.length)){
-    body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Δες τις τάσεις πριν αποφασίσεις':'Review trends before deciding'}</p>`));
+    body.appendChild(el(`<p style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Δες τις τάσεις πριν αποφασίσεις':'Review trends before deciding'}</p>`));
     if(readiness?.length) renderTrendChart(body, locale==='el'?'Πόνος τάσεις':'Pain trend', readiness, 'date', [{key:'pain', label:locale==='el'?'Πόνος':'Pain', color:'#c4201f'}]);
     if(checkins?.length) renderTrendChart(body, locale==='el'?'Συνέπεια %':'Adherence %', checkins, 'date', [{key:'adherence', label:locale==='el'?'Συνέπεια %':'Adherence %', color:'#8f1615'}]);
   }
@@ -6644,7 +6668,7 @@ async function renderReassessmentTab(body, client, isCoach){
       return `<tr>
       <td class="mono">${r.session_number??''}</td><td class="mono">${r.pain??''}</td><td>${escapeHtml(r.other_symptoms||'')}</td>
       <td>${escapeHtml(r.passive_rom||'')}</td><td>${escapeHtml(r.active_rom||'')}</td><td class="mono">${romDegCell}</td><td>${escapeHtml(r.strength||'')}</td>
-      <td>${r.decision?`<strong>${escapeHtml(trTerm(r.decision))}</strong>${r.decision_notes?`<div style="color:var(--ink-soft);font-size:11px;margin-top:2px;">${escapeHtml(r.decision_notes)}</div>`:''}`:''}</td>
+      <td>${r.decision?`<strong>${escapeHtml(trTerm(r.decision))}</strong>${r.decision_notes?`<div style="color:var(--ink-soft);font-size:12px;margin-top:2px;">${escapeHtml(r.decision_notes)}</div>`:''}`:''}</td>
     </tr>`;
     }).join('')}
   </tbody></table>`);
@@ -6732,7 +6756,7 @@ async function renderTestimonialTab(body){
     <h3 style="font-size:14px; margin-bottom:6px;">${L('Η γνώμη σου','Your feedback')}</h3>
     <p style="font-size:12.5px; line-height:1.6; margin-bottom:12px;">${L('Αν θες, γράψε 1-3 προτάσεις για την εμπειρία σου με το πρόγραμμα. Μην αναφέρεις διάγνωση, ιατρικά αποτελέσματα ή υποσχέσεις θεραπείας. Ο coach σου δεν μπορεί να αλλάξει το κείμενο, μόνο να το δημοσιεύσει ή όχι.','If you wish, write 1-3 sentences about your experience. Do not mention diagnoses, medical results or treatment promises. Your coach cannot edit the text, only publish it or not.')}</p>
     <div class="field"><label>${L('Όνομα που θα εμφανίζεται (π.χ. μικρό όνομα)','Name shown (e.g. first name)')}</label><input class="tName" maxlength="40" value="${escapeHtml(row?.display_name || first)}"></div>
-    <div class="field"><label>${L('Κείμενο','Text')} <span class="mono tCount" style="font-size:11px; color:var(--ink-soft);"></span></label><textarea class="tQuote" rows="4" maxlength="400">${escapeHtml(row?.quote||'')}</textarea></div>
+    <div class="field"><label>${L('Κείμενο','Text')} <span class="mono tCount" style="font-size:12px; color:var(--ink-soft);"></span></label><textarea class="tQuote" rows="4" maxlength="400">${escapeHtml(row?.quote||'')}</textarea></div>
     <label style="display:flex; gap:8px; font-size:12.5px; align-items:flex-start; margin:10px 0;"><input type="checkbox" class="tConsent" style="margin-top:3px;" ${row?.consent_public?'checked':''}><span>${L('Συναινώ να δημοσιευθεί το κείμενο και το όνομα που επέλεξα στο site και στον κατάλογο του Happy Fit Physio. Μπορώ να το αποσύρω ή να το διαγράψω όποτε θέλω.','I consent to this text and chosen name being published on the Happy Fit Physio site and directory. I can withdraw or delete it at any time.')}</span></label>
     <p class="tErr errorTag" style="display:none;"></p>
     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
@@ -6807,8 +6831,8 @@ async function renderTestimonialsModeration(container){
       <div style="font-size:13px; margin:4px 0; line-height:1.6;">«${escapeHtml(r.quote)}»</div>
       ${flagged ? `<div class="errorTag" style="font-size:12px; margin-bottom:6px;">${L('Προσοχή: περιέχει όρο που μπορεί να διαβαστεί ως ισχυρισμός υγείας. Προτείνεται να μην εγκριθεί.','Warning: contains a term that may read as a health claim. Approval is not recommended.')}</div>` : ''}
       <div style="display:flex; gap:6px;">
-        ${r.consent_public && r.status!=='approved' ? `<button class="btn tApprove" type="button" style="padding:5px 10px; font-size:11px;">${L('Έγκριση','Approve')}</button>` : ''}
-        ${r.status==='approved' ? `<button class="btn secondary tHide" type="button" style="padding:5px 10px; font-size:11px;">${L('Απόκρυψη','Hide')}</button>` : ''}
+        ${r.consent_public && r.status!=='approved' ? `<button class="btn tApprove" type="button" style="padding:5px 10px; font-size:12px;">${L('Έγκριση','Approve')}</button>` : ''}
+        ${r.status==='approved' ? `<button class="btn secondary tHide" type="button" style="padding:5px 10px; font-size:12px;">${L('Απόκρυψη','Hide')}</button>` : ''}
       </div></div>`);
     const setStatus = async (status)=>{
       const { error: e2 } = await supabase.from('client_testimonials').update({ status }).eq('id', r.id);
@@ -6975,7 +6999,7 @@ function renderBusinessTab(body, client, onChanged){
   const period = currentPeriod();
   async function paintPayRow(){
     const { data: pay, error: payErr } = await supabase.from('client_payments').select('id').eq('client_id', client.id).eq('period', period).maybeSingle();
-    if(payErr){ payRow.innerHTML = `<span style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Η καταγραφή πληρωμών δεν είναι ενεργή ακόμα (migration_subscription.sql).':'Payment tracking is not active yet (migration_subscription.sql).'}</span>`; return; }
+    if(payErr){ payRow.innerHTML = `<span style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Η καταγραφή πληρωμών δεν είναι ενεργή ακόμα (migration_subscription.sql).':'Payment tracking is not active yet (migration_subscription.sql).'}</span>`; return; }
     payRow.innerHTML = `<span style="font-size:12.5px;">${pay ? '✓ ' : '⏳ '}${escapeHtml(periodLabel(period))}: <strong>${pay ? (locale==='el'?'Πληρώθηκε':'Paid') : (locale==='el'?'Ανεξόφλητο':'Unpaid')}</strong></span>
       <button class="btn ${pay?'secondary':''} togglePayBtn" type="button" style="padding:5px 12px; font-size:12px;">${pay ? (locale==='el'?'Αναίρεση':'Undo') : (locale==='el'?'Σήμανση ως πληρωμένο':'Mark as paid')}</button>`;
     payRow.querySelector('.togglePayBtn').addEventListener('click', async ()=>{
@@ -7255,9 +7279,9 @@ async function renderHabitsTab(body, client){
     const row = el(`<div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); ${h.active?'':'opacity:.5;'}">
       <span style="font-size:20px;">${escapeHtml(h.icon||'✅')}</span>
       <div style="flex:1; min-width:0;"><strong>${escapeHtml(h.name)}</strong><div style="margin-top:4px;">${dots}</div>
-        <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">${el_?'Τελευταίες 7 ημέρες':'Last 7 days'}: <strong class="mono">${last7}/7</strong> · ${el_?'14 ημέρες':'14 days'}: <span class="mono">${doneCount}/14</span></div></div>
-      <button type="button" class="btn secondary hbToggle" style="padding:4px 10px; font-size:11px;">${h.active?(el_?'Παύση':'Pause'):(el_?'Ενεργοποίηση':'Resume')}</button>
-      <button type="button" class="btn secondary hbDel" style="padding:4px 10px; font-size:11px;" aria-label="${el_?'Διαγραφή':'Delete'}">✕</button></div>`);
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${el_?'Τελευταίες 7 ημέρες':'Last 7 days'}: <strong class="mono">${last7}/7</strong> · ${el_?'14 ημέρες':'14 days'}: <span class="mono">${doneCount}/14</span></div></div>
+      <button type="button" class="btn secondary hbToggle" style="padding:4px 10px; font-size:12px;">${h.active?(el_?'Παύση':'Pause'):(el_?'Ενεργοποίηση':'Resume')}</button>
+      <button type="button" class="btn secondary hbDel" style="padding:4px 10px; font-size:12px;" aria-label="${el_?'Διαγραφή':'Delete'}">✕</button></div>`);
     row.querySelector('.hbToggle').addEventListener('click', async ()=>{ await supabase.from('client_habits').update({ active: !h.active }).eq('id', h.id); renderHabitsTab(body, client); });
     row.querySelector('.hbDel').addEventListener('click', async ()=>{
       if(!(await askConfirm(el_?'Διαγραφή της συνήθειας και του ιστορικού της;':'Delete this habit and its history?'))) return;
@@ -7352,10 +7376,10 @@ async function renderMetricsTab(body, client){
   if(error){ body.appendChild(el(`<div class="card"><p style="font-size:13px;">${el_?'Οι μετρήσεις δεν είναι ακόμα ενεργές. Τρέξε το migration_metrics.sql στο Supabase.':'Metrics are not enabled yet. Run migration_metrics.sql in Supabase.'}</p></div>`)); return; }
   if(!rows?.length){ body.appendChild(el(`<div class="card"><h3>📲 ${el_?'Μετρήσεις':'Metrics'}</h3><p style="font-size:13px; color:var(--ink-soft);">${el_?'Ο πελάτης δεν έχει καταχωρήσει μετρήσεις ακόμα (βήματα, ύπνος, σφυγμοί, βάρος).':'The client has not logged any metrics yet (steps, sleep, heart rate, weight).'}</p></div>`)); return; }
   const avg = k => { const v = rows.map(r=>r[k]).filter(x=>x!=null).map(Number); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length) : null; };
-  const stat = (lbl, v, unit, dec=0) => `<div style="flex:1; min-width:110px;"><div style="font-size:11px; color:var(--ink-soft);">${lbl}</div><div class="mono" style="font-size:18px; font-weight:700;">${v==null?'—':v.toFixed(dec)} <span style="font-size:11px; font-weight:500;">${unit}</span></div></div>`;
+  const stat = (lbl, v, unit, dec=0) => `<div style="flex:1; min-width:110px;"><div style="font-size:12px; color:var(--ink-soft);">${lbl}</div><div class="mono" style="font-size:18px; font-weight:700;">${v==null?'—':v.toFixed(dec)} <span style="font-size:12px; font-weight:500;">${unit}</span></div></div>`;
   body.appendChild(el(`<div class="card"><h3 style="margin-bottom:8px;">📲 ${el_?'Μετρήσεις, μέσοι όροι 30 ημερών':'Metrics, 30-day averages'}</h3>
     <div style="display:flex; gap:12px; flex-wrap:wrap;">${stat(el_?'Βήματα':'Steps', avg('steps'), '')}${stat(el_?'Ύπνος':'Sleep', avg('sleep_hours'), el_?'ώρες':'h', 1)}${stat(el_?'Σφυγμοί ηρεμίας':'Resting HR', avg('resting_hr'), 'bpm')}${stat(el_?'Βάρος':'Weight', avg('weight_kg'), 'kg', 1)}</div>
-    <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${el_?'Καταχωρούνται από τον πελάτη (χειροκίνητα ή CSV). Δεν αποτελούν διάγνωση.':'Entered by the client (manual or CSV). Not a diagnosis.'}</p></div>`));
+    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${el_?'Καταχωρούνται από τον πελάτη (χειροκίνητα ή CSV). Δεν αποτελούν διάγνωση.':'Entered by the client (manual or CSV). Not a diagnosis.'}</p></div>`));
   const chartBox = el('<div></div>'); body.appendChild(chartBox);
   if(rows.some(r=>r.steps!=null)) renderTrendChart(chartBox, el_?'Βήματα':'Steps', rows, 'metric_date', [{key:'steps', label:el_?'Βήματα':'Steps', color:'#c4201f'}]);
   if(rows.some(r=>r.sleep_hours!=null)) renderTrendChart(chartBox, el_?'Ύπνος (ώρες)':'Sleep (hours)', rows, 'metric_date', [{key:'sleep_hours', label:el_?'Ύπνος':'Sleep', color:'#8f1615'}]);
@@ -7367,18 +7391,19 @@ async function metricsCardForClient(wrap, clientId){
   const { data: rows, error } = await supabase.from('client_metrics').select('*').eq('client_id', clientId).gte('metric_date', addDaysStr(today,-6)).order('metric_date', { ascending:false });
   if(error) return null;
   const cur = (rows||[]).find(r=>r.metric_date===today) || {};
-  const card = el(`<div class="card" style="padding:12px 14px; margin-bottom:12px;">
-    <h3 style="font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">📲 ${el_?'Σημερινές μετρήσεις':"Today's metrics"}</h3>
-    <form class="mxForm" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px;">
-      <label style="font-size:11px;">${el_?'Βήματα':'Steps'}<input name="steps" type="number" min="0" max="100000" inputmode="numeric" value="${cur.steps??''}"></label>
-      <label style="font-size:11px;">${el_?'Ύπνος (ώρες)':'Sleep (hours)'}<input name="sleep_hours" type="number" min="0" max="24" step="0.1" inputmode="decimal" value="${cur.sleep_hours??''}"></label>
-      <label style="font-size:11px;">${el_?'Σφυγμοί ηρεμίας':'Resting HR'}<input name="resting_hr" type="number" min="25" max="220" inputmode="numeric" value="${cur.resting_hr??''}"></label>
-      <label style="font-size:11px;">${el_?'Βάρος (kg)':'Weight (kg)'}<input name="weight_kg" type="number" min="20" max="400" step="0.1" inputmode="decimal" value="${cur.weight_kg??''}"></label>
+  const filled = [cur.steps!=null?`${cur.steps} ${el_?'βήματα':'steps'}`:'', cur.sleep_hours!=null?`${cur.sleep_hours} ${el_?'ώρες ύπνου':'h sleep'}`:'', cur.resting_hr!=null?`${cur.resting_hr} bpm`:'', cur.weight_kg!=null?`${cur.weight_kg} kg`:''].filter(Boolean).join(' · ');
+  const card = el(`<details class="card" style="padding:12px 14px; margin-bottom:12px;">
+    <summary style="cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:10px; align-items:center;"><span style="font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; font-weight:700;">📲 ${el_?'Σημερινές μετρήσεις':"Today's metrics"}</span><span style="font-size:12.5px; color:var(--ink-soft);">${filled ? escapeHtml(filled) : (el_?'Πάτα για καταχώρηση':'Tap to log')}</span></summary>
+    <form class="mxForm" style="margin-top:10px; display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px;">
+      <label style="font-size:12px;">${el_?'Βήματα':'Steps'}<input name="steps" type="number" min="0" max="100000" inputmode="numeric" value="${cur.steps??''}"></label>
+      <label style="font-size:12px;">${el_?'Ύπνος (ώρες)':'Sleep (hours)'}<input name="sleep_hours" type="number" min="0" max="24" step="0.1" inputmode="decimal" value="${cur.sleep_hours??''}"></label>
+      <label style="font-size:12px;">${el_?'Σφυγμοί ηρεμίας':'Resting HR'}<input name="resting_hr" type="number" min="25" max="220" inputmode="numeric" value="${cur.resting_hr??''}"></label>
+      <label style="font-size:12px;">${el_?'Βάρος (kg)':'Weight (kg)'}<input name="weight_kg" type="number" min="20" max="400" step="0.1" inputmode="decimal" value="${cur.weight_kg??''}"></label>
       <div style="grid-column:1/-1; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><button class="btn" type="submit" style="padding:6px 14px;">${el_?'Αποθήκευση':'Save'}</button>
         <label class="btn secondary" style="padding:6px 14px; cursor:pointer; margin:0;">${el_?'Εισαγωγή CSV':'Import CSV'}<input class="mxCsv" type="file" accept=".csv,text/csv" style="display:none;"></label>
         <span class="mxMsg" style="font-size:12px; color:var(--ink-soft);"></span></div>
     </form>
-    <p style="font-size:11px; color:var(--ink-soft); margin:8px 0 0;">${el_?'Από ρολόι ή εφαρμογή υγείας μπορείς να εξάγεις CSV με στήλες: date, steps, sleep, resting_hr, weight. Ο coach βλέπει μόνο αυτές τις τιμές.':'From your watch or health app you can export a CSV with columns: date, steps, sleep, resting_hr, weight. Your coach sees only these values.'}</p></div>`);
+    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${el_?'Από ρολόι ή εφαρμογή υγείας μπορείς να εξάγεις CSV με στήλες: date, steps, sleep, resting_hr, weight. Ο coach βλέπει μόνο αυτές τις τιμές.':'From your watch or health app you can export a CSV with columns: date, steps, sleep, resting_hr, weight. Your coach sees only these values.'}</p></details>`);
   const msg = card.querySelector('.mxMsg');
   card.querySelector('.mxForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
@@ -7420,7 +7445,7 @@ async function renderCommunity(box, groupId, isCoach){
 
   if(!isCoach){
     box.appendChild(el(isMember
-      ? `<div class="card" style="padding:10px 14px; margin-bottom:10px; font-size:12px; color:var(--ink-soft);">${el_?'Συμμετέχεις στην κοινότητα. Οι άλλοι βλέπουν μόνο το μικρό σου όνομα. Μην μοιράζεσαι ιατρικά σου δεδομένα.':'You have joined the community. Others see only your first name. Do not share medical details.'} <button class="btn secondary cmLeave" style="padding:3px 10px; font-size:11px; margin-left:6px;">${el_?'Αποχώρηση':'Leave'}</button></div>`
+      ? `<div class="card" style="padding:10px 14px; margin-bottom:10px; font-size:12px; color:var(--ink-soft);">${el_?'Συμμετέχεις στην κοινότητα. Οι άλλοι βλέπουν μόνο το μικρό σου όνομα. Μην μοιράζεσαι ιατρικά σου δεδομένα.':'You have joined the community. Others see only your first name. Do not share medical details.'} <button class="btn secondary cmLeave" style="padding:3px 10px; font-size:12px; margin-left:6px;">${el_?'Αποχώρηση':'Leave'}</button></div>`
       : `<div class="card" style="padding:12px 14px; margin-bottom:10px;"><p style="font-size:13px; margin:0 0 8px;">${el_?'Μπορείς να δεις τις ανακοινώσεις του coach. Αν θέλεις να γράφεις και να βλέπεις αναρτήσεις άλλων πελατών, πρέπει να συναινέσεις: θα εμφανίζεται μόνο το μικρό σου όνομα και δεν πρέπει να μοιράζεσαι ιατρικά δεδομένα. Μπορείς να αποχωρήσεις οποιαδήποτε στιγμή.':'You can read the coach announcements. To post and see other clients\' posts you need to opt in: only your first name is shown and you should not share medical details. You can leave any time.'}</p><button class="btn cmJoin" style="padding:6px 14px;">${el_?'Συμμετέχω':'Join'}</button></div>`));
     box.querySelector('.cmLeave')?.addEventListener('click', async ()=>{ await supabase.from('community_members').delete().eq('client_id', profile.id); refresh(); });
     box.querySelector('.cmJoin')?.addEventListener('click', async ()=>{ const { error:e } = await supabase.from('community_members').insert({ client_id: profile.id, coach_id: groupId }); if(e) toast(e.message,'error'); else refresh(); });
@@ -7439,13 +7464,13 @@ async function renderCommunity(box, groupId, isCoach){
   posts.forEach(p=>{
     const mine = p.author_id===profile.id; const rs = rBy[p.id]||[];
     const rbtn = ['👍','❤️','💪'].map(em=>{ const n = rs.filter(r=>r.emoji===em).length; const on = rs.some(r=>r.emoji===em && r.user_id===profile.id);
-      return `<button class="btn ${on?'':'secondary'} cmReact" data-e="${em}" style="padding:2px 9px; font-size:12px;">${em} ${n||''}</button>`; }).join(' ');
+      return `<button class="btn ${on?'':'secondary'} cmReact" aria-label="${el_?'Αντίδραση':'React'} ${em}" aria-pressed="${on}" data-e="${em}" style="padding:2px 9px; font-size:12px;">${em} ${n||''}</button>`; }).join(' ');
     const card = el(`<div class="card" style="padding:10px 14px; margin-bottom:8px; ${p.pinned?'border-left:3px solid var(--brand,#c4201f);':''}">
       <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">${p.pinned?'📌 ':''}<strong>${escapeHtml(p.author_name)}</strong>${p.author_role==='coach'?' · Coach':''} · ${escapeHtml(new Date(p.created_at).toLocaleDateString(el_?'el-GR':'en-GB'))}</div>
       <div style="font-size:14px; white-space:pre-wrap;">${escapeHtml(p.body)}</div>
       <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; align-items:center;">${rbtn}
-        ${isCoach?`<button class="btn secondary cmPin" style="padding:2px 9px; font-size:11px;">${p.pinned?(el_?'Ξεκαρφίτσωμα':'Unpin'):(el_?'Καρφίτσωμα':'Pin')}</button>`:''}
-        ${(mine||isCoach)?`<button class="btn secondary cmDel" style="padding:2px 9px; font-size:11px;">${el_?'Διαγραφή':'Delete'}</button>`:''}</div></div>`);
+        ${isCoach?`<button class="btn secondary cmPin" style="padding:2px 9px; font-size:12px;">${p.pinned?(el_?'Ξεκαρφίτσωμα':'Unpin'):(el_?'Καρφίτσωμα':'Pin')}</button>`:''}
+        ${(mine||isCoach)?`<button class="btn secondary cmDel" style="padding:2px 9px; font-size:12px;">${el_?'Διαγραφή':'Delete'}</button>`:''}</div></div>`);
     card.querySelectorAll('.cmReact').forEach(b=>b.addEventListener('click', async ()=>{
       const em = b.dataset.e; const on = rs.some(r=>r.emoji===em && r.user_id===profile.id);
       if(on) await supabase.from('community_reactions').delete().eq('post_id', p.id).eq('user_id', profile.id).eq('emoji', em);
@@ -7483,7 +7508,7 @@ async function openQuickSwitcher(){
   const overlay = el(`<div class="modalOverlay qsOverlay"><div class="modalBox qsBox" style="max-width:520px; padding:16px;">
     <input class="qsInput" type="search" autocomplete="off" placeholder="${el_?'Αναζήτηση πελάτη ή οθόνης…':'Search a client or screen…'}" aria-label="${el_?'Αναζήτηση':'Search'}" style="width:100%;">
     <div class="qsList" role="listbox" style="margin-top:10px;"></div>
-    <p style="font-size:11px; color:var(--ink-soft); margin:10px 0 0;">${el_?'↑ ↓ για επιλογή, Enter για άνοιγμα, Esc για κλείσιμο':'↑ ↓ to choose, Enter to open, Esc to close'}</p></div></div>`);
+    <p style="font-size:12px; color:var(--ink-soft); margin:10px 0 0;">${el_?'↑ ↓ για επιλογή, Enter για άνοιγμα, Esc για κλείσιμο':'↑ ↓ to choose, Enter to open, Esc to close'}</p></div></div>`);
   document.body.appendChild(overlay);
   const close = ()=>overlay.remove();
   overlay.addEventListener('click', e=>{ if(e.target===overlay) close(); });
@@ -7609,13 +7634,13 @@ async function renderPhotosTab(body, client, isCoach){
     const card = el(`<div class="card" style="padding:8px;">
       ${signed?.signedUrl
         ? `<img src="${signed.signedUrl}" alt="Progress photo" style="width:100%; height:140px; object-fit:cover; border-radius:6px; display:block;">`
-        : `<div style="width:100%; height:140px; border-radius:6px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--danger); text-align:center; padding:8px;">${L2('Σφάλμα φόρτωσης','Load error')}${signErr?': '+escapeHtml(signErr.message):''}</div>`}
-      <div class="mono" style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${p.taken_at}${p.pose ? ' · '+photoPoseLabel(p.pose) : ''}${isNew ? ' <strong style="color:var(--gold, #b8860b);">● '+L2('Νέα','New')+'</strong>' : ''}${p.is_edited ? ' · '+L2('επεξεργ.','edited') : ''}</div>
+        : `<div style="width:100%; height:140px; border-radius:6px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--danger); text-align:center; padding:8px;">${L2('Σφάλμα φόρτωσης','Load error')}${signErr?': '+escapeHtml(signErr.message):''}</div>`}
+      <div class="mono" style="font-size:12px; color:var(--ink-soft); margin-top:6px;">${p.taken_at}${p.pose ? ' · '+photoPoseLabel(p.pose) : ''}${isNew ? ' <strong style="color:var(--gold, #b8860b);">● '+L2('Νέα','New')+'</strong>' : ''}${p.is_edited ? ' · '+L2('επεξεργ.','edited') : ''}</div>
       ${p.notes ? `<div style="font-size:12px; margin-top:2px;">${escapeHtml(p.notes)}</div>` : ''}
       <div style="display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap:wrap;">
-        <label style="font-size:11px;"><input type="checkbox" class="selPhoto"> ${L2('Επιλογή','Select')}</label>
-        ${isCoach ? `<button class="btn secondary editPhotoBtn" type="button" style="padding:3px 10px; font-size:11px;">✏</button>` : ''}
-        <button class="btn danger delPhotoBtn" type="button" style="padding:3px 10px; font-size:11px;">🗑</button>
+        <label style="font-size:12px;"><input type="checkbox" class="selPhoto"> ${L2('Επιλογή','Select')}</label>
+        ${isCoach ? `<button class="btn secondary editPhotoBtn" type="button" style="padding:3px 10px; font-size:12px;">✏</button>` : ''}
+        <button class="btn danger delPhotoBtn" type="button" style="padding:3px 10px; font-size:12px;">🗑</button>
       </div></div>`);
     card.querySelector('.selPhoto').addEventListener('change', (e)=>{
       if(e.target.checked){ if(selected.size>=2){ e.target.checked=false; toast(L2('Μέχρι 2 φωτογραφίες','Max 2 photos')); return; } selected.add(p.id); } else selected.delete(p.id);
@@ -7706,7 +7731,7 @@ async function renderNutritionTab(body, person, isCoach){
       mealsList.innerHTML = `<h4 style="margin-bottom:8px; font-size:13px; color:var(--ink-soft);">${today}</h4>`;
       todayLogs.forEach(l=>{
         mealsList.appendChild(el(`<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px;">
-          <span>${l.meal_label?`<span class="mono" style="color:var(--red-text); font-size:11px;">${escapeHtml(l.meal_label)}</span> `:''}${escapeHtml(l.food_name)}</span>
+          <span>${l.meal_label?`<span class="mono" style="color:var(--red-text); font-size:12px;">${escapeHtml(l.meal_label)}</span> `:''}${escapeHtml(l.food_name)}</span>
           <span class="mono" style="color:var(--ink-soft);">${l.calories||0} kcal</span>
         </div>`));
       });
@@ -7855,7 +7880,7 @@ async function renderMassageTab(body, person, isCoach, clientRow){
       <div class="field mfWide"><label>${el_?'Σημειώσεις (π.χ. τραυματισμοί, περιοχή που θες να δουλευτεί)':'Notes (e.g. injuries, areas to focus on)'}</label><textarea class="m_notes" rows="3" maxlength="500"></textarea></div>
     </div>
     <p class="small" style="font-size:11.5px; color:var(--ink-soft); margin:2px 0 10px;">${el_?'Αν έχεις πυρετό, φλεγμονή, πρόσφατο τραύμα ή διάγνωση που σε προβληματίζει, γράψ\' το στις σημειώσεις ώστε να το συζητήσουμε πριν το ραντεβού.':'If you have a fever, inflammation, a recent injury or a diagnosis that concerns you, note it above so we can discuss it before the appointment.'}</p>
-    <p class="small" style="font-size:11.5px; color:var(--ink-soft); margin:0 0 10px;">${el_?'Το ραντεβού κλείνει με προκαταβολή 50% και επιβεβαίωση από εμάς. Δωρεάν ακύρωση έως 24 ώρες πριν, αλλιώς χρεώνεται το 100%.':'The appointment is booked with a 50% deposit and our confirmation. Free cancellation up to 24 hours before, otherwise 100% is charged.'}</p>
+    <p class="small" style="font-size:11.5px; color:var(--ink-soft); margin:0 0 10px;">${el_?'Το ραντεβού κλείνει με προκαταβολή 50% και επιβεβαίωση από εμάς. Δωρεάν ακύρωση έως 24 ώρες πριν, αλλιώς χρεώνεται το 100%. Χρέωση μετακίνησης ανά επίσκεψη: έως 20\' 0€, 21\' έως 30\' +10€, 31\' έως 45\' +25€, πάνω από 45\' κατόπιν προσφοράς.':'The appointment is booked with a 50% deposit and our confirmation. Free cancellation up to 24 hours before, otherwise 100% is charged. Travel surcharge per visit: up to 20\' 0€, 21\' to 30\' +10€, 31\' to 45\' +25€, over 45\' on quote.'}</p>
     <button class="btn" type="submit">${t('requestMassage',locale)}</button>
   </form>`);
   form.addEventListener('submit', async (e)=>{
@@ -7891,7 +7916,7 @@ async function renderMassageTab(body, person, isCoach, clientRow){
           <span class="badge" style="color:${STAT_COL[r.status]||'var(--ink-soft)'};">${escapeHtml(STAT[r.status]||r.status)}</span>
         </div>
         <div style="color:var(--ink-soft); margin-top:4px;">${escapeHtml(r.massage_type||'')}${r.location?' · '+escapeHtml(r.location):''}</div>
-        ${r.status==='pending'?`<button type="button" class="btn secondary cancelReq" style="margin-top:8px; padding:5px 12px; font-size:11px;">${el_?'Ακύρωση αιτήματος':'Cancel request'}</button>`:''}
+        ${r.status==='pending'?`<button type="button" class="btn secondary cancelReq" style="margin-top:8px; padding:5px 12px; font-size:12px;">${el_?'Ακύρωση αιτήματος':'Cancel request'}</button>`:''}
       </div>`);
       card.querySelector('.cancelReq')?.addEventListener('click', async ()=>{
         if(!(await askConfirm(el_?'Να ακυρωθεί αυτό το αίτημα;':'Cancel this request?'))) return;
@@ -7907,7 +7932,7 @@ async function renderMassageTab(body, person, isCoach, clientRow){
 async function renderMessagesTab(body, client, viewerRole){
   const headerRow = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
     <h3 style="font-size:13px; margin:0;">${t('messages',locale)}</h3>
-    <button class="btn secondary refreshMsgBtn" type="button" style="padding:5px 12px; font-size:11px;">🔄 ${locale==='el'?'Ανανέωση':'Refresh'}</button>
+    <button class="btn secondary refreshMsgBtn" type="button" style="padding:5px 12px; font-size:12px;">🔄 ${locale==='el'?'Ανανέωση':'Refresh'}</button>
   </div>`);
   body.appendChild(headerRow);
   { // Package reply-time note (client) / reply-time check (coach)
@@ -7957,8 +7982,8 @@ async function renderMessagesTab(body, client, viewerRole){
         const lbl = escalationLabel(f.escalation);
         flagCard.appendChild(el(`<div style="padding:8px 0; border-top:1px solid var(--line); font-size:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="mono" style="color:var(--ink-soft); font-size:10.5px;">${new Date(f.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</span>
-            <span style="font-size:10.5px; font-weight:700; color:var(--danger);">${lbl.icon} ${lbl.text}</span>
+            <span class="mono" style="color:var(--ink-soft); font-size:11.5px;">${new Date(f.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</span>
+            <span style="font-size:11.5px; font-weight:700; color:var(--danger);">${lbl.icon} ${lbl.text}</span>
           </div>
           <div style="margin-top:3px;"><strong>${locale==='el'?'Ρώτησε':'Asked'}:</strong> ${escapeHtml(f.question)}</div>
           <div style="margin-top:2px; color:var(--ink-soft);"><strong>${locale==='el'?'Απάντηση':'Answer'}:</strong> ${escapeHtml(f.answer)}</div>
@@ -7977,7 +8002,7 @@ async function renderMessagesTab(body, client, viewerRole){
       const mine = m.sender_role === viewerRole;
       listWrap.appendChild(el(`<div style="margin-bottom:10px; text-align:${mine?'right':'left'};">
         <div style="display:inline-block; max-width:80%; padding:8px 12px; border-radius:10px; background:${mine?'var(--red)':'var(--surface2)'}; color:${mine?'#fff':'var(--ink)'}; font-size:13px;">${escapeHtml(m.body)}</div>
-        <div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">${new Date(m.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">${new Date(m.created_at).toLocaleString(locale==='el'?'el-GR':'en-GB')}</div>
       </div>`));
     });
   }
@@ -8006,7 +8031,7 @@ async function renderMessagesTab(body, client, viewerRole){
       : ['Great work today!', 'How did your body feel after the session?', "I haven't seen you this week. All good? Want to adjust the program?", 'I saw you reported pain. I want us to talk before your next session.'];
     const chips = el(`<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;"></div>`);
     quick.forEach(q=>{
-      const b = el(`<button type="button" class="btn secondary" style="padding:4px 10px; font-size:11px; font-weight:500;">${escapeHtml(q.length>34 ? q.slice(0,32)+'…' : q)}</button>`);
+      const b = el(`<button type="button" class="btn secondary" style="padding:4px 10px; font-size:12px; font-weight:500;">${escapeHtml(q.length>34 ? q.slice(0,32)+'…' : q)}</button>`);
       b.addEventListener('click', ()=>{ const inp = form.querySelector('.msgInput'); inp.value = q; inp.focus(); });
       chips.appendChild(b);
     });
@@ -8193,16 +8218,16 @@ function buildPersonalizedDraft(intakeData, exercises){
 function renderPersonalizedDraft(body, client, intakeData, exercises, onCreated){
   const draft=buildPersonalizedDraft(intakeData, exercises);
   const card=el(`<div class="card gold" style="margin-bottom:14px;">
-    <div style="font-size:11px;color:var(--ink-soft);margin-bottom:5px;">ΠΡΟΤΑΣΗ ΑΠΟ ΤΗΝ ΑΞΙΟΛΟΓΗΣΗ</div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:5px;">ΠΡΟΤΑΣΗ ΑΠΟ ΤΗΝ ΑΞΙΟΛΟΓΗΣΗ</div>
     <h3 style="margin:0 0 7px;">Πρόχειρο εξατομικευμένου προγράμματος</h3>
     <p style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;">${escapeHtml(draft.reason)}</p>
     <p style="font-size:12px;margin-bottom:10px;"><strong>Φάση:</strong> ${escapeHtml(draft.phase)}</p>
     ${draft.items.length ? `<div class="draftList"></div>` : `<div style="padding:10px;border:1px solid var(--line);border-radius:8px;">${escapeHtml(draft.reason)}</div>`}
-    ${draft.items.length ? `<p style="font-size:11px;color:var(--ink-soft);margin:10px 0;">Οι ασκήσεις αποτελούν πρόταση για έλεγχο από τον επαγγελματία και δεν ενεργοποιούνται αυτόματα για τον ασκούμενο.</p><button class="btn createDraft" type="button">Δημιουργία προγράμματος για έλεγχο</button>` : ''}
+    ${draft.items.length ? `<p style="font-size:12px;color:var(--ink-soft);margin:10px 0;">Οι ασκήσεις αποτελούν πρόταση για έλεγχο από τον επαγγελματία και δεν ενεργοποιούνται αυτόματα για τον ασκούμενο.</p><button class="btn createDraft" type="button">Δημιουργία προγράμματος για έλεγχο</button>` : ''}
   </div>`);
   if(draft.items.length){
     const list=card.querySelector('.draftList');
-    draft.items.forEach((ex,i)=>list.appendChild(el(`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);"><span><strong>${i+1}.</strong> ${escapeHtml(ex.name_el||ex.name_en||'Άσκηση')}</span><span class="mono" style="font-size:10px;color:var(--ink-soft);">${escapeHtml(ex.category||'')}</span></div>`)));
+    draft.items.forEach((ex,i)=>list.appendChild(el(`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);"><span><strong>${i+1}.</strong> ${escapeHtml(ex.name_el||ex.name_en||'Άσκηση')}</span><span class="mono" style="font-size:11.5px;color:var(--ink-soft);">${escapeHtml(ex.category||'')}</span></div>`)));
     card.querySelector('.createDraft').addEventListener('click', async()=>{
       const {data:newProg,error}=await supabase.from('programs').insert({client_id:client.id,coach_id:profile.id,title:`Εξατομικευμένο πρόγραμμα · ${new Date().toLocaleDateString('el-GR')}`,active:false,phase:draft.phase}).select().single();
       if(error||!newProg){ toast('Δεν δημιουργήθηκε το πρόγραμμα.'); return; }
@@ -8381,7 +8406,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   });
   body.appendChild(phaseBar);
   if(intakeData){
-    body.appendChild(el(`<p style="font-size:11px; color:var(--ink-soft); margin:-4px 0 10px;">
+    body.appendChild(el(`<p style="font-size:12px; color:var(--ink-soft); margin:-4px 0 10px;">
       ⭐ ${locale==='el'?'= ταιριάζει με τον στόχο του' : '= matches their goal'} ·
       ⚠ ${locale==='el'?'= πιθανή σύγκρουση με ιστορικό, πρόσεξε, όχι απαγόρευση' : '= possible conflict with history, caution, not a ban'}
     </p>`));
@@ -8435,7 +8460,7 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
     const prev = quickBox.querySelector('.qtPreview');
     prev.innerHTML = (note ? `<div style="color:var(--ink-soft); margin-bottom:6px;">🤖 ${escapeHtml(note)}</div>` : '') + (rows.length ? rows.map(r=> r.exercise
       ? `<div>✓ ${risky.get(r.exercise.id)?'⚠ ':''}<strong>${escapeHtml(locale==='el'?r.exercise.name_el:(r.exercise.name_en||r.exercise.name_el))}</strong> <span class="mono">· ${escapeHtml(r.day)} · ${r.sets} × ${escapeHtml(r.reps)}${r.load?' @ '+escapeHtml(r.load):''}${r.superset?' · 🔗'+escapeHtml(r.superset):''}</span></div>`
-      : `<div style="color:var(--danger);">✗ ${escapeHtml(r.raw)} <span style="font-size:11px;">(${escapeHtml(r.error)})</span></div>`).join('') : '—');
+      : `<div style="color:var(--danger);">✗ ${escapeHtml(r.raw)} <span style="font-size:12px;">(${escapeHtml(r.error)})</span></div>`).join('') : '—');
     quickBox.querySelector('.qtAdd').disabled = !qtValid.length;
   }
   quickBox.querySelector('.qtCheck').addEventListener('click', ()=>{
@@ -8539,13 +8564,13 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
         <div style="flex:1;">
           <strong>${escapeHtml(locale==='el'?pe.exercises.name_el:(pe.exercises.name_en||pe.exercises.name_el))}</strong>${pe.superset_group ? ` <span class="badge">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}${pe.exercises.equipment ? ` <span class="badge">${EX_EQ_ICON[pe.exercises.equipment]||'🏋️'} ${escapeHtml(exLabel(EX_EQUIPMENT, pe.exercises.equipment))}</span>` : ''}
           <div class="mono peView" style="font-size:12px; color:var(--ink-soft);">${pe.target_sets} × ${escapeHtml(pe.target_reps||'')} @ ${escapeHtml(pe.target_load||'—')}</div>
-          ${pe.change_reason ? `<div style="font-size:11px; color:var(--red-text); margin-top:4px;">💡 ${escapeHtml(pe.change_reason)}</div>` : ''}
+          ${pe.change_reason ? `<div style="font-size:12px; color:var(--red-text); margin-top:4px;">💡 ${escapeHtml(pe.change_reason)}</div>` : ''}
         </div>
         <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button class="btn secondary movePeUp" type="button" aria-label="↑" title="↑" style="padding:4px 9px; font-size:11px;" ${idxInDay===0?'disabled':''}>↑</button>
-          <button class="btn secondary movePeDown" type="button" aria-label="↓" title="↓" style="padding:4px 9px; font-size:11px;" ${idxInDay===dayArr.length-1?'disabled':''}>↓</button>
-          <button class="btn secondary editPeBtn" type="button" style="padding:4px 10px; font-size:11px;">✏️</button>
-          <button class="btn danger delPeBtn" type="button" style="padding:4px 10px; font-size:11px;">🗑</button>
+          <button class="btn secondary movePeUp" type="button" aria-label="↑" title="↑" style="padding:4px 9px; font-size:12px;" ${idxInDay===0?'disabled':''}>↑</button>
+          <button class="btn secondary movePeDown" type="button" aria-label="↓" title="↓" style="padding:4px 9px; font-size:12px;" ${idxInDay===dayArr.length-1?'disabled':''}>↓</button>
+          <button class="btn secondary editPeBtn" type="button" aria-label="${locale==='el'?'Επεξεργασία':'Edit'}" style="padding:4px 10px; font-size:12px;">✏️</button>
+          <button class="btn danger delPeBtn" type="button" aria-label="${locale==='el'?'Διαγραφή':'Delete'}" style="padding:4px 10px; font-size:12px;">🗑</button>
         </div>
       </div>
       <div class="peEditForm" style="display:none; margin-top:10px; gap:8px; flex-wrap:wrap; align-items:flex-end;">
@@ -8670,7 +8695,7 @@ function renderBodygraphCard(g){
     <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:2px;">🧬 ${locale==='el'?'Βαθμολογημένο σώμα':'Ranked Bodygraph'}</h3>
     <p style="font-weight:800; font-size:15px; margin-bottom:10px;">${escapeHtml(g.rankLabel)} · ${locale==='el'?'Επίπεδο':'Level'} ${g.level}</p>
     <div class="bodyDiagram" style="justify-content:center;"></div>
-    <p style="font-size:10.5px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Ο χρωματισμός δείχνει τη συνολική σου βαθμίδα, βάσει πραγματικών καταγραφών σου.':'The color reflects your overall rank, based on your actual logged activity.'}</p>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Ο χρωματισμός δείχνει τη συνολική σου βαθμίδα, βάσει πραγματικών καταγραφών σου.':'The color reflects your overall rank, based on your actual logged activity.'}</p>
   </div>`);
   const wrap = card.querySelector('.bodyDiagram');
   ['front','back'].forEach(view=>{
@@ -8695,25 +8720,25 @@ function renderLevelCard({ sessionLogDates, checkins, readiness }){
         <span style="font-size:24px; flex-shrink:0;">🏅</span>
         <div style="min-width:0;">
           <div style="font-weight:800; font-size:14px;">${escapeHtml(g.rankLabel)} · ${locale==='el'?'Επίπεδο':'Level'} ${g.level}</div>
-          <div style="font-size:11px; color:var(--ink-soft);" class="mono">${g.xpIntoLevel} / ${g.xpForThisLevel} XP</div>
+          <div style="font-size:12px; color:var(--ink-soft);" class="mono">${g.xpIntoLevel} / ${g.xpForThisLevel} XP</div>
         </div>
       </div>
       ${g.streak>0 ? `<div style="text-align:center; flex-shrink:0;">
         <div style="font-size:20px; line-height:1;">🔥</div>
-        <div style="font-size:11px; font-weight:700; white-space:nowrap;">${g.streak} ${locale==='el'?(g.streak===1?'μέρα':'μέρες'):(g.streak===1?'day':'days')}</div>
+        <div style="font-size:12px; font-weight:700; white-space:nowrap;">${g.streak} ${locale==='el'?(g.streak===1?'μέρα':'μέρες'):(g.streak===1?'day':'days')}</div>
       </div>` : ''}
     </div>
     <div style="height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:10px;">
       <div style="height:100%; width:${g.pct}%; background:var(--red); border-radius:4px;"></div>
     </div>
-    <p style="font-size:10.5px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Ο στόχος είναι να ξεπερνάς τον εαυτό σου, όχι τους άλλους.':'The goal is to beat your own previous self, not anyone else.'}</p>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Ο στόχος είναι να ξεπερνάς τον εαυτό σου, όχι τους άλλους.':'The goal is to beat your own previous self, not anyone else.'}</p>
     <div class="badgeRow" style="display:flex; gap:10px; margin-top:8px; overflow-x:auto; padding-bottom:2px;"></div>
   </div>`);
   const badgeRow = card.querySelector('.badgeRow');
   g.badgeDefs.forEach(b=>{
     badgeRow.appendChild(el(`<div title="${escapeHtml(b.label)}" style="display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:56px;">
       <div style="width:36px; height:36px; border-radius:50%; background:${b.earned?'var(--gold)':'var(--line)'}; display:flex; align-items:center; justify-content:center; font-size:17px; opacity:${b.earned?'1':'.4'};">${b.ico}</div>
-      <span style="font-size:9px; color:${b.earned?'var(--ink)':'var(--ink-soft)'}; text-align:center; margin-top:3px; line-height:1.2; opacity:${b.earned?'1':'.6'};">${escapeHtml(b.label)}</span>
+      <span style="font-size:10.5px; color:${b.earned?'var(--ink)':'var(--ink-soft)'}; text-align:center; margin-top:3px; line-height:1.2; opacity:${b.earned?'1':'.6'};">${escapeHtml(b.label)}</span>
     </div>`));
   });
   return card;
@@ -8856,7 +8881,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
   if(todayReadiness){
     const readyCard = el(`<div class="card" style="padding:12px 14px; margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-        <div><div style="font-size:11px; color:var(--ink-soft);">${t('readinessScore',locale)}</div>
+        <div><div style="font-size:12px; color:var(--ink-soft);">${t('readinessScore',locale)}</div>
           <div style="font-size:22px; font-weight:800; color:${readinessColor};" class="mono">${readinessScore}<span style="font-size:12px; color:var(--ink-soft);">%</span></div></div>
         <button class="btn secondary goReadinessBtn" type="button" style="padding:6px 12px; font-size:12px;">${t('goToReadiness',locale)}</button>
       </div>
@@ -8922,12 +8947,12 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
   const miniGrid = el('<div class="grid2"></div>');
   if(goal){
     miniGrid.appendChild(el(`<div class="card" style="padding:12px 14px;">
-      <h3 style="font-size:11px; color:var(--ink-soft); margin-bottom:4px;">🎯 ${locale==='el'?'Στόχος':'Goal'}</h3>
+      <h3 style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">🎯 ${locale==='el'?'Στόχος':'Goal'}</h3>
       <p style="font-size:13px; font-weight:600;">${escapeHtml(goal)}</p>
     </div>`));
   }
   const reassessCard = el(`<div class="card" style="padding:12px 14px;">
-    <h3 style="font-size:11px; color:var(--ink-soft); margin-bottom:4px;">📝 ${locale==='el'?'Επανεκτίμηση':'Reassessment'}</h3>
+    <h3 style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">📝 ${locale==='el'?'Επανεκτίμηση':'Reassessment'}</h3>
     ${(()=>{
       if(nextReassessAt){
         const daysLeft = Math.ceil((new Date(nextReassessAt) - new Date(localDateStr(new Date()))) / 86400000);
@@ -8981,7 +9006,7 @@ function renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, read
     const coursesCard = el(`<div class="card">
       <h3 style="font-size:13px; color:var(--ink-soft); margin-bottom:8px;">🎓 ${locale==='el'?'Μαθήματα':'Courses'}</h3>
       ${nextLesson ? `
-        <p style="font-size:11px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(nextLesson.courseTitle||'')}</p>
+        <p style="font-size:12px; color:var(--ink-soft); margin-bottom:2px;">${escapeHtml(nextLesson.courseTitle||'')}</p>
         <p style="font-size:13px; font-weight:600; margin-bottom:8px;">${locale==='el'?'Επόμενο':'Next'}: ${escapeHtml(nextLesson.lessonTitle)}</p>
       ` : `<p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?`Όλα ολοκληρωμένα, ή εγγεγραμμένος/η σε ${courseEnrollmentsCount} μάθημα${courseEnrollmentsCount>1?'τα':''}.`:`All completed, or enrolled in ${courseEnrollmentsCount} course${courseEnrollmentsCount>1?'s':''}.`}</p>`}
       <a class="service-cta" href="courses.html" style="font-size:12px; color:var(--red-text); font-weight:700;">${locale==='el'?'Συνέχισε →':'Continue →'}</a>
@@ -9067,7 +9092,7 @@ async function renderAdjustmentSuggestion(body, clientId){
   const card = el(`<div class="card gold" style="margin-bottom:12px;">
     <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--red-text); margin-bottom:6px;">${icon} ${locale==='el'?'Προτεινόμενη προσαρμογή':'Suggested adjustment'}</h4>
     <p style="font-size:13px;">${text}</p>
-    <p style="font-size:10.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Βάσει της τελευταίας φόρμας μετά την προπόνηση ('+fb.session_date+'). Πρόταση, όχι αυτόματη αλλαγή — αποφασίζεις εσύ.':'Based on the last post-workout form ('+fb.session_date+'). A suggestion, not an automatic change — you decide.'}</p>
+    <p style="font-size:11.5px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Βάσει της τελευταίας φόρμας μετά την προπόνηση ('+fb.session_date+'). Πρόταση, όχι αυτόματη αλλαγή — αποφασίζεις εσύ.':'Based on the last post-workout form ('+fb.session_date+'). A suggestion, not an automatic change — you decide.'}</p>
   </div>`);
   body.appendChild(card);
 }
@@ -9202,7 +9227,7 @@ async function renderExercisePainFlags(body, clientId, program){
   if(!flags.length && !noVideoMap.size) return;
   const card = el(`<div class="card ${flags.length?'':'gold'}" style="margin-bottom:12px; ${flags.length?'border-left-color:var(--danger);':''}">
     ${flags.length ? `<h4 style="font-size:12.5px; color:var(--danger); margin-bottom:6px;">🩺 ${locale==='el'?'Ασκήσεις με επαναλαμβανόμενο πόνο':'Exercises with repeated pain'}</h4>
-      <p style="font-size:11px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πόνος 3 και πάνω σε 2 ή περισσότερες διαφορετικές μέρες, τελευταίες 30 μέρες. Σκέψου πιο εύκολη εναλλακτική ή αλλαγή φορτίου.':'Pain of 3 or more on 2+ different days in the last 30 days. Consider an easier alternative or load change.'}</p>
+      <p style="font-size:12px; color:var(--ink-soft); margin-bottom:8px;">${locale==='el'?'Πόνος 3 και πάνω σε 2 ή περισσότερες διαφορετικές μέρες, τελευταίες 30 μέρες. Σκέψου πιο εύκολη εναλλακτική ή αλλαγή φορτίου.':'Pain of 3 or more on 2+ different days in the last 30 days. Consider an easier alternative or load change.'}</p>
       ${flags.map(f=>`<div style="display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-top:1px solid var(--line); font-size:12.5px;"><span>${escapeHtml(f.name)}</span><span class="mono" style="white-space:nowrap;">${f.days} ${locale==='el'?'μέρες':'days'} · max ${f.max}/10</span></div>`).join('')}` : ''}
     ${noVideoMap.size ? `<div style="${flags.length?'margin-top:10px; padding-top:8px; border-top:1px solid var(--line);':''} font-size:11.5px; color:var(--ink-soft);">🎥 ${locale==='el'?'Χωρίς βίντεο ή gif στο πρόγραμμα':'No video or gif in this program'}: ${[...noVideoMap.values()].map(escapeHtml).join(', ')}</div>` : ''}
   </div>`);
@@ -9244,7 +9269,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     const b = el(`<div class="prBanner" role="status"><div class="prIco">🏆</div><div style="min-width:0;">
       <div style="font-weight:800; font-size:14px;">${locale==='el'?'Νέο προσωπικό ρεκόρ!':'New personal record!'}</div>
       <div style="font-size:12.5px;">${name} · <strong class="mono">${pr.now.load_kg}kg × ${pr.now.reps}</strong></div>
-      <div style="font-size:11px; color:var(--ink-soft);">${locale==='el'?'Προηγούμενο καλύτερο':'Previous best'}: ${pr.before.load_kg}kg × ${pr.before.reps}</div>
+      <div style="font-size:12px; color:var(--ink-soft);">${locale==='el'?'Προηγούμενο καλύτερο':'Previous best'}: ${pr.before.load_kg}kg × ${pr.before.reps}</div>
     </div></div>`);
     document.body.appendChild(b);
     requestAnimationFrame(()=>requestAnimationFrame(()=>b.classList.add('show')));
@@ -9275,7 +9300,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   // Session progress — how many of today's sets are logged so far, across the selected day.
   const progressCard = el(`<div class="card" style="padding:10px 14px; margin-bottom:14px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-      <span style="font-size:11px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Πρόοδος προπόνησης':'Workout progress'}</span>
+      <span style="font-size:12px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Πρόοδος προπόνησης':'Workout progress'}</span>
       <span class="mono sessionProgressCount" style="font-size:12px; font-weight:700;">0/0</span>
     </div>
     <div style="height:6px; background:var(--line); border-radius:3px; overflow:hidden;">
@@ -9289,7 +9314,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
   const restBanner = el(`<div class="card gold" style="display:none; position:sticky; bottom:96px; z-index:5; padding:10px 14px; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,0,0,.12);">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
       <div>
-        <div style="font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Διάλειμμα':'Rest'}</div>
+        <div style="font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Διάλειμμα':'Rest'}</div>
         <div class="restTimerDisplay mono" style="font-size:22px; font-weight:800;">90s</div>
       </div>
       <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
@@ -9373,7 +9398,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <span><strong>${escapeHtml(exName)}</strong>${pe.superset_group ? ` <span class="badge" title="${locale==='el'?'Εναλλάξ με τις άλλες ασκήσεις του ίδιου superset':'Alternate with the other exercises in this superset'}">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}</span>
-        <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:11px; flex-shrink:0;">ℹ️ ${t('why',locale)}</button>
+        <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:12px; flex-shrink:0;">ℹ️ ${t('why',locale)}</button>
       </div>
       <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; line-height:1.6;">🎯 <strong>${pe.target_sets}</strong> ${locale==='el'?'σετ':'sets'} × <strong>${escapeHtml(pe.target_reps||'')}</strong> ${locale==='el'?'επαναλήψεις':'reps'} · ${pe.target_load ? (locale==='el'?'φορτίο':'load')+': <strong>'+escapeHtml(pe.target_load)+'</strong>' : (locale==='el'?'φορτίο: το επιλέγεις εσύ':'load: your choice')}${ex.equipment ? ` · <span class="badge">${EX_EQ_ICON[ex.equipment]||'🏋️'} ${escapeHtml(exLabel(EX_EQUIPMENT, ex.equipment))}</span>` : ''}</div>
       ${tracker ? `<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; margin-bottom:10px;">
@@ -9381,9 +9406,9 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         ${tracker.pr ? `<span>🏆 PR: <strong class="mono">${tracker.pr.load_kg}kg × ${tracker.pr.reps}</strong></span>` : ''}
         ${tracker.e1rm ? `<span title="${locale==='el'?'Εκτίμηση με τον τύπο Epley, ισχύει για έως 10 επαναλήψεις':'Epley estimate, valid up to 10 reps'}">📐 e1RM: <strong class="mono">~${tracker.e1rm}kg</strong></span>` : ''}
       </div>` : ''}
-      ${suggHtml ? `<div style="font-size:11.5px; background:rgba(226,162,51,0.12); border-radius:6px; padding:6px 9px; margin-bottom:8px;">💡 ${suggHtml}<div style="font-size:10px; color:var(--ink-soft); margin-top:2px;">${locale==='el'?'Απλός υπολογισμός από τις καταγραφές σου, όχι ιατρική οδηγία. Ο coach σου αποφασίζει το πρόγραμμα.':'Simple calculation from your logs, not medical advice. Your coach decides the program.'}</div></div>` : ''}
-      ${warm.length ? `<div style="margin-bottom:8px;"><button class="btn secondary warmToggleBtn" type="button" style="padding:3px 10px; font-size:11px; min-height:32px;">🔥 ${locale==='el'?'Προθέρμανση':'Warm-up'}</button>
-        <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:10px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
+      ${suggHtml ? `<div style="font-size:11.5px; background:rgba(226,162,51,0.12); border-radius:6px; padding:6px 9px; margin-bottom:8px;">💡 ${suggHtml}<div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">${locale==='el'?'Απλός υπολογισμός από τις καταγραφές σου, όχι ιατρική οδηγία. Ο coach σου αποφασίζει το πρόγραμμα.':'Simple calculation from your logs, not medical advice. Your coach decides the program.'}</div></div>` : ''}
+      ${warm.length ? `<div style="margin-bottom:8px;"><button class="btn secondary warmToggleBtn" type="button" style="padding:3px 10px; font-size:12px; min-height:32px;">🔥 ${locale==='el'?'Προθέρμανση':'Warm-up'}</button>
+        <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
       <div class="whyPanel" style="display:none; background:var(--tint-soft); border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex3dSlotHtml(ex, false)}
         ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
@@ -9392,7 +9417,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<p style="margin-bottom:6px; color:var(--danger);"><strong>${t('commonMistakes',locale)}:</strong> ${escapeHtml(ex.common_mistakes)}</p>` : ''}
         ${execViewHtml(ex, true)}
-        <div class="altBox" style="margin-bottom:8px;"><button class="btn secondary altBtn" type="button" style="padding:4px 10px; font-size:11px;">🔁 ${locale==='el'?'Δεν έχω τον εξοπλισμό; Εναλλακτικές':'No equipment? Alternatives'}</button><div class="altList" style="display:none; margin-top:6px;"></div></div>
+        <div class="altBox" style="margin-bottom:8px;"><button class="btn secondary altBtn" type="button" style="padding:4px 10px; font-size:12px;">🔁 ${locale==='el'?'Δεν έχω τον εξοπλισμό; Εναλλακτικές':'No equipment? Alternatives'}</button><div class="altList" style="display:none; margin-top:6px;"></div></div>
         ${(ex.body_region || ex.primary_muscles || ex.goal_tags) ? `<div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:6px;">
           ${ex.body_region ? `<span class="badge">📍 ${escapeHtml(exLabel(EX_BODY_REGIONS, ex.body_region))}</span>` : ''}
           ${ex.primary_muscles ? `<span class="badge">💪 ${escapeHtml(ex.primary_muscles)}</span>` : ''}
@@ -9407,7 +9432,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       const list = card.querySelector('.altList');
       if(list.style.display==='block'){ list.style.display='none'; return; }
       list.style.display='block'; list.innerHTML = '…';
-      try{ const all = await loadAltCatalog(); list.innerHTML = exAltListHtml(ex, all) + `<p style="font-size:11px; color:var(--ink-soft); margin:6px 0 0;">${locale==='el'?'Μπορείς να κάνεις μία από αυτές σήμερα και να το γράψεις στις σημειώσεις ή να το πεις στον coach σου.':'You can do one of these today and note it, or tell your coach.'}</p>`; }
+      try{ const all = await loadAltCatalog(); list.innerHTML = exAltListHtml(ex, all) + `<p style="font-size:12px; color:var(--ink-soft); margin:6px 0 0;">${locale==='el'?'Μπορείς να κάνεις μία από αυτές σήμερα και να το γράψεις στις σημειώσεις ή να το πεις στον coach σου.':'You can do one of these today and note it, or tell your coach.'}</p>`; }
       catch(e){ list.innerHTML = '—'; }
     });
     card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
@@ -9439,7 +9464,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           <label class="setField"><small>RIR</small><input class="f_rir" inputmode="numeric" value="${existing?.rir ?? ''}"></label>
           <span></span>
         </div>
-        <div class="painNote" style="display:none; margin:4px 0 6px; font-size:11px; font-weight:600; border-radius:6px; padding:5px 8px;"></div>
+        <div class="painNote" style="display:none; margin:4px 0 6px; font-size:12px; font-weight:600; border-radius:6px; padding:5px 8px;"></div>
       </div>`);
       setRows.push(row);
       row.querySelector('.setMoreBtn').addEventListener('click', ()=>{
@@ -9474,13 +9499,13 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           // current best-practice pairing per NICE NG59 — education alongside the action,
           // not a replacement for the existing app-safety rule or triage logic below).
           painNote.innerHTML = locale==='el'
-            ? `🟡 Πόνος ${p}/10 — μείωσε φορτίο/επαναλήψεις σε αυτή την άσκηση και παρακολούθησε.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.85;">Ο πόνος κατά την άσκηση δεν σημαίνει πάντα βλάβη στον ιστό — συχνά είναι ένα προστατευτικό σήμα του σώματος.</div>`
-            : `🟡 Pain ${p}/10 — reduce load/reps on this exercise and monitor.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.85;">Pain during exercise doesn't always mean tissue damage — it's often the body's protective signal.</div>`;
+            ? `🟡 Πόνος ${p}/10 — μείωσε φορτίο/επαναλήψεις σε αυτή την άσκηση και παρακολούθησε.<div style="font-weight:400; font-size:11.5px; margin-top:3px; opacity:.85;">Ο πόνος κατά την άσκηση δεν σημαίνει πάντα βλάβη στον ιστό — συχνά είναι ένα προστατευτικό σήμα του σώματος.</div>`
+            : `🟡 Pain ${p}/10 — reduce load/reps on this exercise and monitor.<div style="font-weight:400; font-size:11.5px; margin-top:3px; opacity:.85;">Pain during exercise doesn't always mean tissue damage — it's often the body's protective signal.</div>`;
         } else {
           painNote.style.background = 'var(--danger)'; painNote.style.color = '#fff';
           painNote.innerHTML = locale==='el'
-            ? `🔴 Πόνος ${p}/10 — σταμάτα αυτή την άσκηση. Σημειώθηκε για τον coach σου.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.9;">Η διακοπή τώρα είναι σωστή φροντίδα, όχι αποτυχία — ο coach σου θα το δει και θα προσαρμόσει.</div>`
-            : `🔴 Pain ${p}/10 — stop this exercise. Flagged for your coach.<div style="font-weight:400; font-size:10px; margin-top:3px; opacity:.9;">Stopping now is the right call, not a setback — your coach will see this and adjust.</div>`;
+            ? `🔴 Πόνος ${p}/10 — σταμάτα αυτή την άσκηση. Σημειώθηκε για τον coach σου.<div style="font-weight:400; font-size:11.5px; margin-top:3px; opacity:.9;">Η διακοπή τώρα είναι σωστή φροντίδα, όχι αποτυχία — ο coach σου θα το δει και θα προσαρμόσει.</div>`
+            : `🔴 Pain ${p}/10 — stop this exercise. Flagged for your coach.<div style="font-weight:400; font-size:11.5px; margin-top:3px; opacity:.9;">Stopping now is the right call, not a setback — your coach will see this and adjust.</div>`;
         }
       }
       showPainNote(existing?.pain);
@@ -9897,7 +9922,7 @@ async function renderClientDashboard(main){
     const { data: planRow } = await supabase.from('clients').select('plan').eq('id', profile.id).maybeSingle();
     const { data: paidRow, error: paidErr } = await supabase.from('client_payments').select('id').eq('client_id', profile.id).eq('period', currentPeriod()).maybeSingle();
     const myPlan = planRow?.plan && PLANS[planRow.plan] ? PLANS[planRow.plan] : null;
-    const planHtml = myPlan ? `<div style="margin-bottom:14px;"><div style="font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Το πακέτο σου':'Your package'}</div><strong>${myPlan.label}</strong><p style="font-size:12.5px; color:var(--ink-soft); margin-top:4px;">${escapeHtml(locale==='el'?myPlan.el:myPlan.en)}</p></div>` : '';
+    const planHtml = myPlan ? `<div style="margin-bottom:14px;"><div style="font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;">${locale==='el'?'Το πακέτο σου':'Your package'}</div><strong>${myPlan.label}</strong><p style="font-size:12.5px; color:var(--ink-soft); margin-top:4px;">${escapeHtml(locale==='el'?myPlan.el:myPlan.en)}</p></div>` : '';
     if(!paidErr && paidRow){
       card.innerHTML = `${planHtml}<p style="font-size:14px;">✓ ${locale==='el'?'Εξοφλημένο για':'Paid for'} <strong>${escapeHtml(periodLabel(currentPeriod()))}</strong></p>`;
     } else if(clientRow?.payment_link){
@@ -9966,7 +9991,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
   journeySteps.forEach((s, i)=>{
     journeyRow.appendChild(el(`<div style="display:flex; flex-direction:column; align-items:center; flex:1; min-width:70px;">
       <div style="width:28px; height:28px; border-radius:50%; background:${s.done?'var(--red)':'var(--line)'}; color:${s.done?'#fff':'var(--ink-soft)'}; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">${s.done?'✓':(i+1)}</div>
-      <span style="font-size:10.5px; color:${s.done?'var(--ink)':'var(--ink-soft)'}; margin-top:4px; text-align:center;">${s.label}</span>
+      <span style="font-size:11.5px; color:${s.done?'var(--ink)':'var(--ink-soft)'}; margin-top:4px; text-align:center;">${s.label}</span>
     </div>`));
     if(i < journeySteps.length-1){
       journeyRow.appendChild(el(`<div style="flex:0 0 20px; height:2px; background:${s.done?'var(--red)':'var(--line)'}; margin:0 -2px 18px;"></div>`));
@@ -10120,7 +10145,7 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     prRows.forEach(pr=>{
       prRowsEl.appendChild(el(`<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-top:1px solid var(--line); font-size:12.5px;">
         <span>${escapeHtml(pr.name)}</span>
-        <span class="mono"><strong>${pr.load_kg}kg × ${pr.reps}</strong> <span style="color:var(--ink-soft); font-size:11px;">(${pr.date})</span></span>
+        <span class="mono"><strong>${pr.load_kg}kg × ${pr.reps}</strong> <span style="color:var(--ink-soft); font-size:12px;">(${pr.date})</span></span>
       </div>`));
     });
     body.appendChild(prCard);
@@ -10236,8 +10261,8 @@ async function renderProgressTab(body, clientId, checkins, readiness){
           ${exerciseOptions.map(o=>`<option value="${escapeHtml(String(o.id))}">${escapeHtml(o.name)} (${o.trend.length} ${locale==='el'?'ημέρες':'days'})</option>`).join('')}
         </select>
         <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <button class="btn perfMetricBtn" type="button" data-m="load" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Φορτίο':'Load'}</button>
-          <button class="btn secondary perfMetricBtn" type="button" data-m="volume" style="padding:5px 10px; font-size:11px;">${locale==='el'?'Όγκος':'Volume'}</button>
+          <button class="btn perfMetricBtn" type="button" data-m="load" style="padding:5px 10px; font-size:12px;">${locale==='el'?'Φορτίο':'Load'}</button>
+          <button class="btn secondary perfMetricBtn" type="button" data-m="volume" style="padding:5px 10px; font-size:12px;">${locale==='el'?'Όγκος':'Volume'}</button>
         </div>
         <div class="perfChartHolder"></div>
       </div>`);
@@ -10303,9 +10328,9 @@ async function renderProgressTab(body, clientId, checkins, readiness){
     const rows = [...regionCounts.entries()].sort((a,b)=>b[1]-a[1]);
     const muscleCard = el(`<div class="card">
       <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">${locale==='el'?'🗺️ Κατανομή προπόνησης ανά περιοχή σώματος':'🗺️ Training balance by body region'}</h4>
-      <p style="font-size:11px; color:var(--ink-soft); margin-bottom:14px;">${locale==='el'?`Βάσει των τελευταίων ${taggedSetCount} καταγεγραμμένων σετ με ορισμένη περιοχή σώματος.`:`Based on the last ${taggedSetCount} logged sets with a body region set.`}</p>
+      <p style="font-size:12px; color:var(--ink-soft); margin-bottom:14px;">${locale==='el'?`Βάσει των τελευταίων ${taggedSetCount} καταγεγραμμένων σετ με ορισμένη περιοχή σώματος.`:`Based on the last ${taggedSetCount} logged sets with a body region set.`}</p>
       <div class="regionRows"></div>
-      ${untaggedSetCount > 0 ? `<p style="font-size:10.5px; color:var(--ink-soft); margin-top:12px;">${locale==='el'?`+ ${untaggedSetCount} σετ χωρίς ορισμένη περιοχή σώματος στην άσκηση (ο coach μπορεί να τη συμπληρώσει στη Βιβλιοθήκη Ασκήσεων).`:`+ ${untaggedSetCount} sets whose exercise has no body region set yet (your coach can add it in the Exercise Library).`}</p>` : ''}
+      ${untaggedSetCount > 0 ? `<p style="font-size:11.5px; color:var(--ink-soft); margin-top:12px;">${locale==='el'?`+ ${untaggedSetCount} σετ χωρίς ορισμένη περιοχή σώματος στην άσκηση (ο coach μπορεί να τη συμπληρώσει στη Βιβλιοθήκη Ασκήσεων).`:`+ ${untaggedSetCount} sets whose exercise has no body region set yet (your coach can add it in the Exercise Library).`}</p>` : ''}
     </div>`);
     const regionRowsEl = muscleCard.querySelector('.regionRows');
     rows.forEach(([region, count])=>{
@@ -10390,7 +10415,7 @@ function renderReadinessForm(body, existing){
     const referral = Number(state.pain) >= 7
       ? `<p style="font-size:13px; color:var(--danger); font-weight:700; margin-top:10px; padding-top:10px; border-top:1px solid var(--line);">⚠️ ${locale==='el' ? 'Χρειάζεται επαγγελματική αξιολόγηση — τα σημερινά δεδομένα δείχνουν έντονο πόνο. Επικοινώνησε με τον coach σου πριν συνεχίσεις.' : "Professional assessment needed — today's data shows severe pain. Contact your coach before continuing."}</p>`
       : '';
-    verdictCard.innerHTML = `<div style="font-size:28px; margin-bottom:6px;">${dot}</div><p style="font-size:13.5px; color:${color}; font-weight:700;">${msg}</p><p style="font-size:11px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Ενημερωτικό βοήθημα, όχι αυτόματη αλλαγή προγράμματος. Ο coach σου βλέπει την ένδειξη και αποφασίζει.':'An informational aid, not an automatic program change. Your coach sees this and decides.'}</p>${referral}`;
+    verdictCard.innerHTML = `<div style="font-size:28px; margin-bottom:6px;">${dot}</div><p style="font-size:13.5px; color:${color}; font-weight:700;">${msg}</p><p style="font-size:12px; color:var(--ink-soft); margin-top:6px;">${locale==='el'?'Ενημερωτικό βοήθημα, όχι αυτόματη αλλαγή προγράμματος. Ο coach σου βλέπει την ένδειξη και αποφασίζει.':'An informational aid, not an automatic program change. Your coach sees this and decides.'}</p>${referral}`;
   }
   updateVerdict();
 }
