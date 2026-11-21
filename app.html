@@ -9684,6 +9684,7 @@ function renderStartHereCard(body, { intakeDone, hasProgram, trained, loggedToda
       ${x.done ? '' : `<button class="btn ${x.off?'secondary':''} shStep" data-tab="${x.tab}" type="button" style="padding:8px 14px; font-size:13px; flex-shrink:0;">${x.btn}</button>`}
     </div>`).join('')}
     ${reply ? `<div style="font-size:12.5px; color:var(--ink-soft); margin-top:10px;">💬 ${el_?'Απαντάμε στα μηνύματά σου':'We reply to your messages'} ${reply}.</div>` : ''}
+    <div style="font-size:12.5px; margin-top:10px;"><a href="onboarding.html" style="color:var(--red-text,#c4201f);">${el_?'Δες πώς δουλεύουμε βήμα βήμα':'See how we work step by step'}</a></div>
   </div>`);
   card.querySelectorAll('.shStep').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.tab; renderClientDashboard._reuse=false; renderClientDashboard(main); }));
   body.appendChild(card);
