@@ -9663,6 +9663,32 @@ async function removeAvatar(userId){
   _avatarCache.delete(userId);
 }
 
+// Client onboarding ("Start here"): three steps that tick themselves from real data and disappear once all are done.
+function renderStartHereCard(body, { intakeDone, hasProgram, trained, loggedToday, plan, main }){
+  const el_ = locale==='el';
+  const steps = [
+    { done:intakeDone, title: el_?'Ιστορικό και στόχοι':'History and goals', sub: el_?'Σύντομη φόρμα, περίπου 5 λεπτά. Αποθηκεύεται αυτόματα.':'Short form, about 5 minutes. Saves automatically.', tab:'intake', btn: el_?'Συμπλήρωση':'Fill in' },
+    { done:trained, title: el_?'Πρώτη προπόνηση':'First workout', sub: hasProgram ? (el_?'Το πρόγραμμά σου είναι έτοιμο. Καταγράψε σετ και κιλά.':'Your program is ready. Log sets and weights.') : (el_?'Ο coach ετοιμάζει το πρόγραμμά σου μόλις δει το ιστορικό σου.':'Your coach is preparing your program once they see your history.'), tab:'program', btn: el_?'Πρόγραμμα':'Program', off: !hasProgram },
+    { done:loggedToday, title: el_?'Πρώτο check-in':'First check-in', sub: el_?'Πώς νιώθεις σήμερα: ενέργεια, ύπνος, πόνος.':'How you feel today: energy, sleep, pain.', tab:'readiness', btn: el_?'Καταγραφή':'Log it' },
+  ];
+  const n = steps.filter(x=>x.done).length;
+  if(n===steps.length) return;
+  const pct = Math.round(n/steps.length*100);
+  const reply = plan ? planReplyText(plan) : '';
+  const card = el(`<div class="card" role="region" aria-label="${el_?'Ξεκίνα εδώ':'Start here'}">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;"><div style="font-weight:800; font-size:16px;">🚀 ${el_?'Ξεκίνα εδώ':'Start here'}</div><div class="mono" style="font-size:13px; color:var(--ink-soft);">${n}/${steps.length} · ${pct}%</div></div>
+    <div style="height:8px; border-radius:4px; background:var(--line); overflow:hidden; margin:10px 0 14px;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div style="height:100%; width:${pct}%; background:var(--accent, #22c55e); transition:width .4s;"></div></div>
+    ${steps.map((x,i)=>`<div style="display:flex; align-items:center; gap:12px; padding:10px 0; ${i?'border-top:1px solid var(--line);':''}">
+      <div aria-hidden="true" style="width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:800; ${x.done?'background:#22c55e; color:#fff;':'background:var(--tint); color:var(--ink);'}">${x.done?'✓':i+1}</div>
+      <div style="flex:1; min-width:0;"><div style="font-weight:700; font-size:14px;">${x.title}</div><div style="font-size:13px; color:var(--ink-soft);">${x.sub}</div></div>
+      ${x.done ? '' : `<button class="btn ${x.off?'secondary':''} shStep" data-tab="${x.tab}" type="button" style="padding:8px 14px; font-size:13px; flex-shrink:0;">${x.btn}</button>`}
+    </div>`).join('')}
+    ${reply ? `<div style="font-size:12.5px; color:var(--ink-soft); margin-top:10px;">💬 ${el_?'Απαντάμε στα μηνύματά σου':'We reply to your messages'} ${reply}.</div>` : ''}
+  </div>`);
+  card.querySelectorAll('.shStep').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.tab; renderClientDashboard._reuse=false; renderClientDashboard(main); }));
+  body.appendChild(card);
+}
+
 async function renderClientDashboard(main){
   let tab = renderClientDashboard._tab || 'today';
   const today = localDateStr(new Date());
@@ -9679,7 +9705,7 @@ async function renderClientDashboard(main){
     supabase.from('programs').select('*, program_exercises(*, exercises(*))').eq('client_id', profile.id).eq('active', true).order('created_at',{ascending:false}),
     supabase.from('checkins').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).order('date',{ascending:false}),
-    supabase.from('clients').select('coach_id,payment_link,monthly_price,zoom_link,next_call_at,next_reassessment_at').eq('id', profile.id).maybeSingle(),
+    supabase.from('clients').select('coach_id,payment_link,monthly_price,zoom_link,next_call_at,next_reassessment_at,plan').eq('id', profile.id).maybeSingle(),
     supabase.from('readiness_logs').select('*').eq('client_id', profile.id).eq('date', today).maybeSingle(),
     supabase.from('messages').select('body,sender_role,created_at').eq('client_id', profile.id).order('created_at',{ascending:false}).limit(1).maybeSingle(),
     supabase.from('client_intake').select('data').eq('client_id', profile.id).maybeSingle(),
@@ -9864,6 +9890,7 @@ async function renderClientDashboard(main){
     logoutRow.style.marginTop='10px';
     body.appendChild(accountMenu);
   } else if(tab==='today'){
+    renderStartHereCard(body, { intakeDone: !!intakeRow, hasProgram: !!program, trained: (sessionLogDates||[]).length>0, loggedToday: (readiness||[]).length>0 || (checkins||[]).length>0, plan: clientRow?.plan, main });
     renderTodayTab(body, { program, todayReadiness, lastMsg, checkins, readiness, sessionLogDates, intakeData: intakeRow?.data || {}, lastReassess, nutritionTarget, todayNutritionLogs, courseEnrollmentsCount: (courseEnrollments||[]).length, nextReassessAt: clientRow?.next_reassessment_at, nextLesson, groupClasses, groupClassOccupancy, myGroupBookings });
     maybeShowTestimonialPrompt(body, sessionLogDates);
   } else if(tab==='intake'){
