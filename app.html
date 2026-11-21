@@ -4924,9 +4924,13 @@ async function renderCoachDashboard(main){
     const rds = readinessByClient[client.id] || [];
     const daysSince = (dateStr)=> (Date.now() - new Date(dateStr).getTime()) / (1000*60*60*24);
 
-    if(cks.length===0 || daysSince(cks[0].date) > 10){
+    // Grace period by plan (START = check-in every 4 weeks) and for brand-new clients,
+    // so nobody is flagged "no check-in" before a check-in was even due.
+    const ciLimit = client.plan === 'start' ? 32 : 10;
+    const ageDaysCk = client.created_at ? daysSince(client.created_at) : 999;
+    if(cks.length===0 ? ageDaysCk > ciLimit : daysSince(cks[0].date) > ciLimit){
       alerts.push(t('alertNoCheckin',locale));
-    } else if((client.plan === 'growth' || client.plan === 'performance') && daysSince(cks[0].date) > 8){
+    } else if(cks.length>0 && (client.plan === 'growth' || client.plan === 'performance') && daysSince(cks[0].date) > 8){
       alerts.push(t('alertWeeklyCheckin',locale));
     }
     if(cks.length>=2 && cks[0].pain_level!=null && cks[1].pain_level!=null && cks[0].pain_level > cks[1].pain_level && cks[0].pain_level >= 4){
