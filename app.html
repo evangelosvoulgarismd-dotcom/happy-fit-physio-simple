@@ -2267,7 +2267,17 @@ async function renderLeadsView(main){
   await renderMassageInquiriesBox(main);
 
   if(!allLeads?.length){
-    main.appendChild(el(`<p>${t('noLeads',locale)}</p>`));
+    const emptyLeads = el(`<div class="card" style="text-align:center; padding:22px 14px;">
+      <p style="margin-bottom:6px; font-weight:700;">${t('noLeads',locale)}</p>
+      <p style="font-size:13px; color:var(--ink-soft); margin-bottom:14px;">${locale==='el'?'Τα αιτήματα από τη φόρμα του site και το Concierge θα εμφανιστούν εδώ. Βάλε τον σύνδεσμο του site στο bio σου στο Instagram.':'Requests from the site form and the Concierge will appear here. Put the site link in your Instagram bio.'}</p>
+      <button type="button" class="btn secondary copySiteBtn" style="font-size:13px;">🔗 ${locale==='el'?'Αντιγραφή συνδέσμου του site':'Copy site link'}</button>
+    </div>`);
+    emptyLeads.querySelector('.copySiteBtn').addEventListener('click', async ()=>{
+      const url = new URL('index.html', location.href).href;
+      try{ await navigator.clipboard.writeText(url); toast(locale==='el'?'Ο σύνδεσμος αντιγράφηκε.':'Link copied.'); }
+      catch(e){ toast(url); }
+    });
+    main.appendChild(emptyLeads);
     return;
   }
   if(pipelineOn){
@@ -8000,7 +8010,13 @@ async function renderMessagesTab(body, client, viewerRole){
   const { data: msgs } = await supabase.from('messages').select('*').eq('client_id', client.id).order('created_at',{ascending:true});
   const listWrap = el('<div class="card" style="max-height:400px; overflow-y:auto;"></div>');
   if(!msgs?.length){
-    listWrap.appendChild(el(`<p style="color:var(--ink-soft); font-size:12px;">${t('noMessages',locale)}</p>`));
+    const emptyBox = el(`<div style="text-align:center; padding:18px 8px;">
+      <p style="color:var(--ink-soft); font-size:13px; margin-bottom:${viewerRole==='coach'?'12px':'0'};">${t('noMessages',locale)}${viewerRole==='coach' ? '' : (locale==='el' ? ' Γράψε το πρώτο σου μήνυμα παρακάτω, π.χ. πώς νιώθεις ή τι θες να βελτιώσουμε.' : ' Write your first message below, for example how you feel or what you want to improve.')}</p>
+      ${viewerRole==='coach' ? `<button type="button" class="btn secondary emptyDraftBtn" style="font-size:13px;">✉ ${locale==='el'?'Έτοιμο μήνυμα καλωσορίσματος':'Ready welcome message'}</button>` : ''}
+    </div>`);
+    const edb = emptyBox.querySelector('.emptyDraftBtn');
+    if(edb) edb.addEventListener('click', ()=>{ const inp = body.querySelector('.msgInput'); if(inp){ const fn = String(client.full_name||'').trim().split(/\s+/)[0] || ''; inp.value = locale==='el' ? `Γεια σου ${fn}, καλώς ήρθες! Να κλείσουμε μια σύντομη αρχική κλήση για στόχους και ιστορικό; Πότε σε βολεύει;` : `Hi ${fn}, welcome! Shall we book a short first call about your goals and history? When suits you?`; inp.focus(); } });
+    listWrap.appendChild(emptyBox);
   } else {
     msgs.forEach(m=>{
       const mine = m.sender_role === viewerRole;
