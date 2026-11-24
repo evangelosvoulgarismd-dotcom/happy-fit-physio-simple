@@ -766,9 +766,56 @@ async function enablePushNotifications(){
       auth: json.keys.auth,
     }, { onConflict: 'endpoint' });
     toast(locale==='el' ? '✓ Ειδοποιήσεις ενεργές' : '✓ Notifications enabled');
+    try{ document.getElementById('pushBanner')?.remove(); await reg.showNotification('Happy Fit Physio', { body: locale==='el' ? 'Οι ειδοποιήσεις δουλεύουν ✓ Θα ενημερώνεσαι για νέα μηνύματα.' : 'Notifications work ✓ You will be told about new messages.' }); }catch(e){}
   }catch(err){
     toast((locale==='el' ? 'Σφάλμα: ' : 'Error: ') + (err.message || err));
   }
+}
+
+// Notification opt-in made visible: a small dismissible banner for coach AND client (it used to live only in a menu).
+// - normal browsers/Android/desktop: one button asks for permission
+// - iPhone/iPad: push only works for the app added to the Home Screen, so we say how
+// - permission already granted: silently re-register this device so a lost subscription never means silence
+function pushIsIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+function pushIsStandalone(){ return window.matchMedia && window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+async function syncPushSubscription(){
+  try{
+    if(!profile || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window) || Notification.permission!=='granted') return;
+    const reg = await navigator.serviceWorker.register('./sw.js');
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    const json = sub.toJSON();
+    await supabase.from('push_subscriptions').upsert({ profile_id: profile.id, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth }, { onConflict:'endpoint' });
+  }catch(e){}
+}
+function showPushBanner(){
+  try{
+    if(!profile || document.getElementById('pushBanner')) return;
+    const L = (a,b)=>locale==='el'?a:b;
+    const dismissKey = 'hfp_push_banner_until_' + profile.id;
+    if(Number(localStorage.getItem(dismissKey)||0) > Date.now()) return;
+    let mode = '';
+    if(pushIsIOS() && !pushIsStandalone()) mode = 'ios';
+    else if('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window && Notification.permission==='default') mode = 'ask';
+    if(!mode){ syncPushSubscription(); return; }
+    const isCoachRole = profile.role==='coach' || profile.role==='owner';
+    const what = isCoachRole ? L('νέα μηνύματα, ενδιαφερόμενους και κρατήσεις','new messages, leads and bookings') : L('απαντήσεις του προπονητή σου και υπενθυμίσεις','replies from your coach and reminders');
+    const text = mode==='ios'
+      ? L('Για να παίρνεις ειδοποιήσεις στο iPhone: πάτα Κοινοποίηση και μετά «Προσθήκη στην αρχική οθόνη», και άνοιξε την εφαρμογή από εκεί.', 'To get notifications on iPhone: tap Share, then “Add to Home Screen”, and open the app from there.')
+      : L('Θες να ειδοποιείσαι για ' + what + ';', 'Want to be notified about ' + what + '?');
+    const b = el(`<div id="pushBanner" role="region" aria-label="${L('Ειδοποιήσεις','Notifications')}" style="position:fixed; z-index:300; left:12px; right:12px; bottom:calc(84px + env(safe-area-inset-bottom)); max-width:420px; margin:0 auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; box-shadow:0 8px 28px rgba(0,0,0,.4); display:flex; gap:10px; align-items:center;">
+      <span style="font-size:22px;">🔔</span>
+      <div style="flex:1; font-size:13px; line-height:1.4;">${escapeHtml(text)}</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        ${mode==='ask' ? `<button type="button" class="btn pbYes" style="padding:6px 12px; font-size:12.5px;">${L('Ενεργοποίηση','Enable')}</button>` : ''}
+        <button type="button" class="btn secondary pbLater" style="padding:6px 12px; font-size:12.5px;">${L('Αργότερα','Later')}</button>
+      </div>
+    </div>`);
+    b.querySelector('.pbLater').addEventListener('click', ()=>{ try{ localStorage.setItem(dismissKey, String(Date.now()+7*86400000)); }catch(e){} b.remove(); });
+    const yes = b.querySelector('.pbYes');
+    if(yes) yes.addEventListener('click', async ()=>{ await enablePushNotifications(); b.remove(); });
+    document.body.appendChild(b);
+  }catch(e){}
 }
 
 // ---------- i18n ----------
@@ -1670,6 +1717,7 @@ function setNotifDot(n){
   const dot = document.getElementById('notifDot'); if(!dot) return;
   dot.classList.toggle('show', n>0);
   dot.textContent = n>0 ? (n>9 ? '9+' : String(n)) : '';
+  try{ if(navigator.setAppBadge){ if(n>0) navigator.setAppBadge(n); else navigator.clearAppBadge(); } }catch(e){}
   const bell = document.getElementById('notifBell');
   if(bell) bell.setAttribute('aria-label', (locale==='el'?'Ειδοποιήσεις':'Notifications') + (n>0 ? ` (${n} ${locale==='el'?'νέες':'new'})` : ''));
 }
@@ -1975,6 +2023,7 @@ function renderShell(){
     applyMode();
   }
   startNotifWatcher(isCoach);
+  setTimeout(showPushBanner, 2500);
   shell.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', ()=>showLegalModal(a.dataset.legal)));
 
   const main = shell.querySelector('#main');
@@ -10624,6 +10673,13 @@ async function boot(){
   if(profile.role==='coach' && profile.suspended){ renderSuspendedScreen(); return; }
   view = 'dashboard'; selectedClient = null;
   if(deepLinkTab && profile.role==='client'){ renderClientDashboard._tab = deepLinkTab; }
+  const deepLinkClient = urlParams.get('client');
+  if(deepLinkClient && (profile.role==='coach' || profile.role==='owner')){
+    try{
+      const { data: dc } = await supabase.from('clients').select('*').eq('id', deepLinkClient).maybeSingle();
+      if(dc){ selectedClient = dc; renderClientDetail._tab = 'messages'; }
+    }catch(e){}
+  }
   renderShell();
 }
 
