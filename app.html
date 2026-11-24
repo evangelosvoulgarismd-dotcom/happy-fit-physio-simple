@@ -606,6 +606,18 @@
   .fxAnim .fxB{ animation:fxFlip 2.4s steps(1,end) infinite; }
   @keyframes fxFlip{ 0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;} }
   @media (prefers-reduced-motion: reduce){ .fxAnim .fxB{ animation:none; opacity:0; } }
+  /* how-to steps and muscle card (pattern seen in the reference, own styling) */
+  .stepList{ list-style:none; margin:0 0 12px; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .stepList li{ display:flex; gap:12px; align-items:flex-start; line-height:1.5; }
+  .stepNum{ flex:0 0 26px; height:26px; border-radius:50%; background:var(--panel); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--ink-soft); margin-top:1px; }
+  .muscleCard{ display:flex; flex-direction:column; gap:10px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin:0 0 12px; }
+  .muscleCard small{ display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:2px; }
+  .muscleCard strong{ font-size:16px; } .muscleCard span{ font-size:14px; }
+  /* empty states: icon circle, title, one line (pattern seen in the reference) */
+  .emptyState{ text-align:center; padding:28px 16px; }
+  .emptyState .emptyIco{ width:64px; height:64px; border-radius:50%; background:var(--surface2); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px; }
+  .emptyState h3{ font-size:19px; margin-bottom:6px; }
+  .emptyState p{ color:var(--ink-soft); margin:0 auto; max-width:30ch; }
   /* Coach / Manager switch */
   .modeSwitch{ display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--nav-on-bg, rgba(0,0,0,.06)); margin:0 0 10px; }
   .modeSwitch button{ flex:1; border:none; background:transparent; color:var(--ink-soft); font-family:inherit; font-size:12px; font-weight:700; padding:8px 6px; border-radius:9px; cursor:pointer; transition:background-color .2s ease, color .2s ease, transform .28s var(--ease-out); }
@@ -2447,9 +2459,10 @@ async function renderLeadsView(main){
   await renderMassageInquiriesBox(main);
 
   if(!allLeads?.length){
-    const emptyLeads = el(`<div class="card" style="text-align:center; padding:22px 14px;">
-      <p style="margin-bottom:6px; font-weight:700;">${t('noLeads',locale)}</p>
-      <p style="font-size:13px; color:var(--ink-soft); margin-bottom:14px;">${locale==='el'?'Τα αιτήματα από τη φόρμα του site και το Concierge θα εμφανιστούν εδώ. Βάλε τον σύνδεσμο του site στο bio σου στο Instagram.':'Requests from the site form and the Concierge will appear here. Put the site link in your Instagram bio.'}</p>
+    const emptyLeads = el(`<div class="card emptyState">
+      <div class="emptyIco">📥</div>
+      <h3>${t('noLeads',locale)}</h3>
+      <p style="font-size:13px; margin-bottom:14px;">${locale==='el'?'Τα αιτήματα από τη φόρμα του site και το Concierge θα εμφανιστούν εδώ. Βάλε τον σύνδεσμο του site στο bio σου στο Instagram.':'Requests from the site form and the Concierge will appear here. Put the site link in your Instagram bio.'}</p>
       <button type="button" class="btn secondary copySiteBtn" style="font-size:13px;">🔗 ${locale==='el'?'Αντιγραφή συνδέσμου του site':'Copy site link'}</button>
     </div>`);
     emptyLeads.querySelector('.copySiteBtn').addEventListener('click', async ()=>{
@@ -4330,6 +4343,13 @@ async function ex3dLoad(){
 }
 function ex3dIsCoachRole(){ try{ return profile && (profile.role==='coach' || profile.role==='owner'); }catch(e){ return false; } }
 function ex3dVisible(ex, isCoach){ return !!(ex && ex.anim_pattern && EX3D_PATTERNS[ex.anim_pattern] && (isCoach || ex.anim_status==='approved')); }
+function stepsHtml(text){
+  const lines = String(text||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  if(!lines.length) return '';
+  const numbered = lines.every(l=>/^\d+[.)]\s+/.test(l));
+  if(!numbered) return `<p style="white-space:pre-line;">${escapeHtml(text)}</p>`;
+  return `<ol class="stepList">${lines.map((l,i)=>`<li><span class="stepNum">${i+1}</span><span>${escapeHtml(l.replace(/^\d+[.)]\s+/,''))}</span></li>`).join('')}</ol>`;
+}
 function fxIs(u){ return /free-exercise-db\/main\/exercises\/[^/]+\/0\.jpg$/.test(u||''); }
 function fxAnimHtml(ex){
   const u = ex && ex.gif_url || '';
@@ -4762,7 +4782,7 @@ async function renderLibrary(main, isCoach){
         ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : ((ex.gif_url && !fxIs(ex.gif_url)) ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
         <p>${escapeHtml(desc||'')}</p>
         <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
-        ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
+        ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4>${stepsHtml(ex.execution_steps)}` : ''}
         ${ex.technique_cues ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('techniqueCues',locale)}</h4><p>${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<h4 style="font-size:12px; color:var(--danger); margin-bottom:6px;">${t('commonMistakes',locale)}</h4><p>${escapeHtml(ex.common_mistakes)}</p>` : ''}
         ${execViewHtml(ex)}
@@ -4776,8 +4796,10 @@ async function renderLibrary(main, isCoach){
           ${ex.movement_pattern ? `<span class="badge">🔁 ${escapeHtml(ex.movement_pattern)}</span>` : ''}
           ${(ex.goal_tags||'').split(',').map(g=>g.trim()).filter(Boolean).map(g=>`<span class="badge">🎯 ${escapeHtml(exLabel(EX_GOALS,g))}</span>`).join('')}
         </div>` : ''}
-        ${ex.primary_muscles ? `<p style="font-size:12.5px; margin-bottom:4px;"><strong>${locale==='el'?'Κύριοι μύες':'Primary muscles'}:</strong> ${escapeHtml(ex.primary_muscles)}</p>` : ''}
-        ${ex.secondary_muscles ? `<p style="font-size:12.5px; margin-bottom:10px;"><strong>${locale==='el'?'Δευτερεύοντες μύες':'Secondary muscles'}:</strong> ${escapeHtml(ex.secondary_muscles)}</p>` : ''}
+        ${(ex.primary_muscles||ex.secondary_muscles) ? `<div class="muscleCard">
+          ${ex.primary_muscles ? `<div><small>${locale==='el'?'Κύριοι μύες':'Primary muscles'}</small><strong>${escapeHtml(ex.primary_muscles)}</strong></div>` : ''}
+          ${ex.secondary_muscles ? `<div><small>${locale==='el'?'Δευτερεύοντες μύες':'Secondary muscles'}</small><span>${escapeHtml(ex.secondary_muscles)}</span></div>` : ''}
+        </div>` : ''}
         ${ex.regression_text ? `<p style="font-size:12.5px; margin-bottom:4px;"><strong>⬇ ${locale==='el'?'Ευκολότερη εναλλακτική':'Easier alternative'}:</strong> ${escapeHtml(ex.regression_text)}</p>` : ''}
         ${ex.progression_text ? `<p style="font-size:12.5px; margin-bottom:10px;"><strong>⬆ ${locale==='el'?'Δυσκολότερη εναλλακτική':'Harder alternative'}:</strong> ${escapeHtml(ex.progression_text)}</p>` : ''}
         <h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('bibliography',locale)}</h4>
@@ -8213,7 +8235,8 @@ async function renderMessagesTab(body, client, viewerRole){
   const { data: msgs } = await supabase.from('messages').select('*').eq('client_id', client.id).order('created_at',{ascending:true});
   const listWrap = el('<div class="card" style="max-height:400px; overflow-y:auto;"></div>');
   if(!msgs?.length){
-    const emptyBox = el(`<div style="text-align:center; padding:18px 8px;">
+    const emptyBox = el(`<div class="emptyState" style="padding:18px 8px;">
+      <div class="emptyIco">💬</div>
       <p style="color:var(--ink-soft); font-size:13px; margin-bottom:${viewerRole==='coach'?'12px':'0'};">${t('noMessages',locale)}${viewerRole==='coach' ? '' : (locale==='el' ? ' Γράψε το πρώτο σου μήνυμα παρακάτω, π.χ. πώς νιώθεις ή τι θες να βελτιώσουμε.' : ' Write your first message below, for example how you feel or what you want to improve.')}</p>
       ${viewerRole==='coach' ? `<button type="button" class="btn secondary emptyDraftBtn" style="font-size:13px;">✉ ${locale==='el'?'Έτοιμο μήνυμα καλωσορίσματος':'Ready welcome message'}</button>` : ''}
     </div>`);
@@ -9649,7 +9672,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         ${fxAnimHtml(ex)}
         ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : ((ex.gif_url && !fxIs(ex.gif_url)) ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
-        ${ex.execution_steps ? `<p style="margin-bottom:6px; white-space:pre-line;"><strong>${t('executionSteps',locale)}:</strong> ${escapeHtml(ex.execution_steps)}</p>` : ''}
+        ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin:12px 0 6px;">${t('executionSteps',locale)}</h4>${stepsHtml(ex.execution_steps)}` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
         ${ex.common_mistakes ? `<p style="margin-bottom:6px; color:var(--danger);"><strong>${t('commonMistakes',locale)}:</strong> ${escapeHtml(ex.common_mistakes)}</p>` : ''}
         ${execViewHtml(ex, true)}
