@@ -627,7 +627,19 @@
   .mmPrim{ fill:var(--red); opacity:.95; } .mmSec{ fill:var(--red); opacity:.38; }
   .mmLegend{ flex-basis:100%; display:flex; gap:16px; justify-content:center; font-size:12px; color:var(--ink-soft); }
   .mmDot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:var(--red); } .mmDot.sec{ opacity:.38; }
-  /* Coach / Manager switch */
+  
+  /* Navigation v3: one icon set, no truncated labels */
+  #main h2 > .ic{ display:none !important; }
+  .navSvg{ width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; display:block; }
+  .bottomTab .ico, .cbn-btn .cbn-ico{ display:flex; align-items:center; justify-content:center; }
+  .bottomTab .lbl, .cbn-btn > span:last-child{ font-size:10.5px !important; font-weight:600 !important; letter-spacing:0; line-height:1.15; overflow:visible !important; text-overflow:clip !important; }
+  .cbn-btn.cbn-central .cbn-ico .navSvg{ width:24px; height:24px; stroke-width:2.2; }
+  .cbn-btn.cbn-central{ flex:0 0 64px !important; }
+  .cbn-btn.active .navSvg, .bottomTab.active .navSvg{ stroke-width:2.1; }
+  .cbn-btn{ overflow:visible !important; padding-left:0 !important; padding-right:0 !important; white-space:nowrap; }
+  .cbn-btn.active > span:last-child{ font-weight:600 !important; }
+  @media (max-width:400px){ .cbn-btn > span:last-child, .bottomTab .lbl{ font-size:9.5px !important; letter-spacing:-.01em; } }
+/* Coach / Manager switch */
   .modeSwitch{ display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--nav-on-bg, rgba(0,0,0,.06)); margin:0 0 10px; }
   .modeSwitch button{ flex:1; border:none; background:transparent; color:var(--ink-soft); font-family:inherit; font-size:12px; font-weight:700; padding:8px 6px; border-radius:9px; cursor:pointer; transition:background-color .2s ease, color .2s ease, transform .28s var(--ease-out); }
   .modeSwitch button:active{ transform:scale(.96); transition-duration:.06s; }
@@ -714,6 +726,22 @@ setTimeout(function(){
 
 <!-- Supabase client via CDN, no npm/build step needed -->
 <script type="module">
+// One consistent line-icon set for the navigation (own simple paths, no external files).
+const NAV_ICO = {
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  dumbbell:'<path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  chat:'<path d="M21 12a8 8 0 01-11.5 7.2L4 20l1-4.5A8 8 0 1121 12z"/>',
+  heart:'<path d="M12 20s-7-4.5-9-9a5 5 0 019-2.5A5 5 0 0121 11c-2 4.5-9 9-9 9z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3.5-5.5 7-5.5s7 2 7 5.5"/><path d="M16 4.5a3.5 3.5 0 010 7M22 20c0-3-2-4.8-4.5-5.3"/>',
+  book:'<path d="M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4z"/><path d="M4 16a4 4 0 014-4h12"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  swap:'<path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>'
+};
+const navIco = n => `<svg class="navSvg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${NAV_ICO[n]||''}</svg>`;
+
 const SCROLL_BEHAVIOR = () => (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 // Phone sheets: drag a dialog down to dismiss. It follows the finger 1:1, then either leaves in the
 // direction of the throw or springs back. Only starts when the sheet is scrolled to the top.
@@ -2083,13 +2111,13 @@ function renderShell(){
     </div>
     <div id="main" role="main" tabindex="-1"></div>
     ${isCoach ? `<nav id="bottomTabBar">
-      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">🏠</span><span class="lbl">${t('clients',locale)}</span></button>
-      <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">📚</span><span class="lbl">${t('exerciseLibrary',locale)}</span></button>
+      <button class="bottomTab ${view==='dashboard'?'active':''}" data-v="dashboard"><span class="ico">${navIco('users')}</span><span class="lbl">${t('clients',locale)}</span></button>
+      <button class="bottomTab ${view==='library'?'active':''}" data-v="library"><span class="ico">${navIco('book')}</span><span class="lbl">${locale==='el'?'Βιβλιοθήκη':'Library'}</span></button>
       <button class="bottomTab ${view==='business'?'active':''}" data-v="business" style="display:none;"><span class="ico">📊</span><span class="lbl">${locale==='el'?'Επιχείρηση':'Business'}</span></button>
       <button class="bottomTab ${view==='leads'?'active':''}" data-v="leads" style="display:none;"><span class="ico">📥</span><span class="lbl">${t('leads',locale)}</span></button>
-      <button class="bottomTab ${view==='studio'?'active':''}" data-v="studio"><span class="ico">🧭</span><span class="lbl">Studio</span></button>
-      <button class="bottomTab" id="bottomModeBtn"><span class="ico">🔁</span><span class="lbl"></span></button>
-      <button class="bottomTab" id="bottomMoreBtn"><span class="ico">☰</span><span class="lbl">${locale==='el'?'Περισσότερα':'More'}</span></button>
+      <button class="bottomTab ${view==='studio'?'active':''}" data-v="studio"><span class="ico">${navIco('compass')}</span><span class="lbl">Studio</span></button>
+      <button class="bottomTab" id="bottomModeBtn"><span class="ico">${navIco('swap')}</span><span class="lbl"></span></button>
+      <button class="bottomTab" id="bottomMoreBtn"><span class="ico">${navIco('menu')}</span><span class="lbl">${locale==='el'?'Μενού':'Menu'}</span></button>
     </nav>` : ''}
   </div>`);
   app.appendChild(shell);
@@ -2138,7 +2166,7 @@ function renderShell(){
       });
       shell.querySelectorAll('.modeSwitch button').forEach(b=>b.classList.toggle('active', (b.dataset.mode==='manager')===managerMode));
       const mb = shell.querySelector('#bottomModeBtn');
-      if(mb){ mb.querySelector('.lbl').textContent = managerMode ? '🏋️ Coach' : '🧭 Manager'; mb.querySelector('.ico').textContent = '🔁'; }
+      if(mb){ mb.querySelector('.lbl').textContent = managerMode ? 'Coach' : 'Manager'; mb.querySelector('.ico').innerHTML = navIco('swap'); }
     };
     const setMode = (m)=>{
       managerMode = (m==='manager');
@@ -2156,6 +2184,22 @@ function renderShell(){
   shell.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', ()=>showLegalModal(a.dataset.legal)));
 
   const main = shell.querySelector('#main');
+  // Uniform page titles: no emoji prefix, short names (the same look on every screen).
+  const TITLE_SHORT = { 'Επιχείρηση — πραγματικά στοιχεία':'Επιχείρηση', 'Πρότυπα Προγραμμάτων':'Πρότυπα', 'Διαθεσιμότητα Κλήσεων':'Διαθεσιμότητα', 'Πακέτα συνεδριών':'Πακέτα', 'Διαδικασίες (SOP)':'Διαδικασίες', 'Βιβλιοθήκη ασκήσεων':'Βιβλιοθήκη', 'Business — real figures':'Business', 'Program templates':'Templates' };
+  const EMO = /^(?:\p{Extended_Pictographic}|\uFE0F|\u200D|\s)+/u;
+  let tidyQueued = false;
+  const tidyTitles = ()=>{
+    tidyQueued = false;
+    (document.querySelector('#main')||main).querySelectorAll('h2').forEach(h=>{
+      if(h.closest('.modalBox, .card, .detail')) return;
+      const w = document.createTreeWalker(h, NodeFilter.SHOW_TEXT); const n = w.nextNode();
+      if(!n) return;
+      let txt = n.nodeValue; const clean = txt.replace(EMO,'');
+      const short = TITLE_SHORT[clean.trim()] || clean;
+      if(short !== txt) n.nodeValue = short;
+    });
+  };
+  new MutationObserver(()=>{ if(!tidyQueued){ tidyQueued = true; requestAnimationFrame(tidyTitles); } }).observe(document.body, {childList:true, subtree:true});
   renderMainView(main, isCoach, isOwner);
 }
 
@@ -4231,16 +4275,46 @@ function ex3dBuild(THREE){
     const matJoint = new THREE.MeshStandardMaterial({color:0xe5301f, roughness:.35, emissive:0xb01810, emissiveIntensity: darkUI?.55:.15});
     const matProp = new THREE.MeshStandardMaterial({color: darkUI?0x9aa3b2:0x2c3038, roughness:.4, metalness:.6});
     const matWood = new THREE.MeshStandardMaterial({color:0x7a8696, roughness:.8});
-    const segs = []; const cyl = new THREE.CylinderGeometry(1,1,1,14); const sph = new THREE.SphereGeometry(1,16,12);
-    function seg(a, b, r, mat){ const m = new THREE.Mesh(cyl, mat||matBody); scene.add(m); segs.push({m,a,b,r}); return m; }
-    function ball(name, r, mat){ const m = new THREE.Mesh(sph, mat||matJoint); m.scale.setScalar(r); scene.add(m); return {m,name}; }
-    const BONES = [['hipL','kneeL',.058],['kneeL','ankleL',.05],['ankleL','toeL',.035],['ankleL','heelL',.035],
-                   ['hipR','kneeR',.058],['kneeR','ankleR',.05],['ankleR','toeR',.035],['ankleR','heelR',.035],
-                   ['shoulderL','elbowL',.045],['elbowL','wristL',.04],['shoulderR','elbowR',.045],['wristR','elbowR',.04],
-                   ['hipL','hipR',.07],['shoulderL','shoulderR',.05],['pelvis','shoulderC',.1],['shoulderC','head',.04]];
-    BONES.forEach(([a,b,r])=>seg(a,b,r));
-    const balls = ['kneeL','kneeR','elbowL','elbowR','wristL','wristR','ankleL','ankleR'].map(n=>ball(n,.052));
-    const headM = new THREE.Mesh(sph, matBody); headM.scale.set(.1,.115,.095); scene.add(headM);
+    // Anatomical body: tapered, muscle-shaped limbs lofted from the same joint positions (no joint dots).
+    const segs = []; const cyl = new THREE.CylinderGeometry(1,1,1,14); const sph = new THREE.SphereGeometry(1,24,16);
+    const matSkin = new THREE.MeshStandardMaterial({color: darkUI?0x8d9099:0xc4cad6, roughness:.5, metalness:.05});
+    const matLow = new THREE.MeshStandardMaterial({color: darkUI?0x6b6e77:0xa9b0bf, roughness:.55, metalness:.05});
+    function smooth(k){ return k*k*(3-2*k); }
+    function loft(keys, xs, zs, mat){
+      const pts = [new THREE.Vector2(0.0001, 0)];
+      const N = 22;
+      for(let i=0;i<=N;i++){
+        const t = i/N; let r = keys[keys.length-1][1];
+        for(let j=0;j<keys.length-1;j++){
+          if(t>=keys[j][0] && t<=keys[j+1][0]){ const u = (t-keys[j][0])/((keys[j+1][0]-keys[j][0])||1); r = keys[j][1] + (keys[j+1][1]-keys[j][1])*smooth(u); break; }
+        }
+        const cap = Math.min(1, Math.sqrt(Math.min(t,1-t)/.06)); // rounded ends
+        pts.push(new THREE.Vector2(Math.max(.0005, r*(i===0||i===N?.55:1)*Math.min(1,.45+cap*.55)), t));
+      }
+      pts.push(new THREE.Vector2(0.0001, 1));
+      const g = new THREE.LatheGeometry(pts, 28);
+      const m = new THREE.Mesh(g, mat||matSkin); scene.add(m);
+      return {m, xs, zs};
+    }
+    const BONES = [
+      ['hipL','kneeL', loft([[0,.098],[.3,.092],[1,.058]],1,1)], ['kneeL','ankleL', loft([[0,.058],[.25,.066],[1,.035]],1,1,matLow)],
+      ['hipR','kneeR', loft([[0,.098],[.3,.092],[1,.058]],1,1)], ['kneeR','ankleR', loft([[0,.058],[.25,.066],[1,.035]],1,1,matLow)],
+      ['shoulderL','elbowL', loft([[0,.058],[.4,.056],[1,.04]],1,1)], ['elbowL','wristL', loft([[0,.042],[.3,.045],[1,.028]],1,1,matLow)],
+      ['shoulderR','elbowR', loft([[0,.058],[.4,.056],[1,.04]],1,1)], ['elbowR','wristR', loft([[0,.042],[.3,.045],[1,.028]],1,1,matLow)],
+      ['pelvis','shoulderC', loft([[0,.105],[.18,.12],[.5,.105],[.8,.13],[1,.08]],.75,1.55)],
+      ['shoulderC','head', loft([[0,.058],[1,.04]],1,1,matLow)],
+      ['ankleL','toeL', loft([[0,.04],[.55,.03],[1,.02]],.65,1.15,matLow)], ['ankleR','toeR', loft([[0,.04],[.55,.03],[1,.02]],.65,1.15,matLow)],
+    ];
+    const bodyBalls = []; // soft round joints: shoulders, hips, knees, elbows, head
+    ['hipL','hipR'].forEach(n=>bodyBalls.push({n, r:.1, m:matSkin}));
+    ['shoulderL','shoulderR'].forEach(n=>bodyBalls.push({n, r:.068, m:matSkin}));
+    ['kneeL','kneeR'].forEach(n=>bodyBalls.push({n, r:.058, m:matLow}));
+    ['elbowL','elbowR'].forEach(n=>bodyBalls.push({n, r:.044, m:matLow}));
+    ['wristL','wristR'].forEach(n=>bodyBalls.push({n, r:.032, m:matLow, sc:[1,1.25,.8]}));
+    bodyBalls.forEach(o=>{ o.mesh = new THREE.Mesh(sph, o.m); const sc=o.sc||[1,1,1]; o.mesh.scale.set(o.r*sc[0],o.r*sc[1],o.r*sc[2]); scene.add(o.mesh); });
+    const headM = new THREE.Mesh(sph, matSkin); headM.scale.set(.1,.12,.092); scene.add(headM);
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(.5,32), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity: darkUI?.35:.12, depthWrite:false}));
+    shadow.rotation.x = -Math.PI/2; shadow.position.y = .002; shadow.scale.set(1,.55,1); scene.add(shadow);
 
     // props
     const dyn = []; // updated every frame
@@ -4292,7 +4366,7 @@ function ex3dBuild(THREE){
     let bx0=1e9,bx1=-1e9,by0=1e9,by1=-1e9;
     for(let i=0;i<24;i++){ const Jf = place(pat, sample(pat, pat.T*i/24), ref0); for(const k in Jf){ const q=Jf[k]; bx0=Math.min(bx0,q[0]);bx1=Math.max(bx1,q[0]);by0=Math.min(by0,q[1]);by1=Math.max(by1,q[1]); } }
     const size = Math.max(bx1-bx0, by1-by0, 1.2) + .5;
-    const fitDist = (size/2)/Math.tan(17.5*D2R) * 1.05 + .6;
+    const fitDist = (size/2)/Math.tan(17.5*D2R) * .92 + .15;
     const cx0 = (bx0+bx1)/2, cy0 = Math.max(.3,(by0+by1)/2);
     let az = (opts.az ?? 55)*D2R, el = (opts.el ?? 12)*D2R, dist = opts.dist || fitDist, target = new THREE.Vector3(cx0,cy0,0);
     function placeCam(){
@@ -4312,9 +4386,14 @@ function ex3dBuild(THREE){
     function draw(){
       const p = sample(pat, tt);
       const J = place(pat, p, ref);
-      segs.forEach(s=>{ const A=V(J[s.a]), B=V(J[s.b]); cylBetween(s.m, A, B, s.r); });
-      balls.forEach(b=>b.m.position.copy(V(J[b.name])));
-      headM.position.copy(V(J.head)).add(new THREE.Vector3(0,.0,0));
+      BONES.forEach(([a,b,L])=>{
+        const A=V(J[a]), B=V(J[b]); const d=new THREE.Vector3().subVectors(B,A), len=d.length()||1e-6;
+        L.m.position.copy(A); L.m.scale.set(L.xs,len,L.zs);
+        L.m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
+      });
+      bodyBalls.forEach(o=>o.mesh.position.copy(V(J[o.n])));
+      headM.position.copy(V(J.head));
+      shadow.position.x = (J.ankleL[0]+J.ankleR[0])/2; shadow.position.z = (J.ankleL[2]+J.ankleR[2])/2; shadow.scale.set(.9,.9*.55,1);
       dyn.forEach(f=>f(J));
       target.set(cx0, opts.ty ?? cy0, 0);
       placeCam(); renderer.render(scene, cam);
@@ -10169,12 +10248,12 @@ async function renderClientDashboard(main){
   const profileGroup = ['intake','messages','nutrition','massage','calls','payment','photos','refer','safety','testimonial','progress'];
   const inProfileGroup = profileGroup.includes(tab) && tab!=='massage' && tab!=='messages';
   const tabs = el(`<div class="clientBottomNav">
-    <button class="cbn-btn ${tab==='today'?'active':''}" data-t="today"><span class="cbn-ico">🏠</span><span>${locale==='el'?'Αρχική':'Home'}</span></button>
-    <button class="cbn-btn ${tab==='program'?'active':''}" data-t="program"><span class="cbn-ico">🏋️</span><span>${t('program',locale)}</span></button>
-    <button class="cbn-btn cbn-central ${tab==='readiness'?'active':''}" data-t="readiness"><span class="cbn-ico">＋</span><span>${locale==='el'?'Σήμερα':'Today'}</span></button>
-    <button class="cbn-btn ${tab==='messages'?'active':''}" data-t="messages"><span class="cbn-ico">💬</span><span>${t('messages',locale)}</span></button>
-    <button class="cbn-btn ${tab==='massage'?'active':''}" data-t="massage"><span class="cbn-ico">💆</span><span>${locale==='el'?'Μάλαξη':'Massage'}</span></button>
-    <button class="cbn-btn ${tab==='profile'||inProfileGroup?'active':''}" data-t="profile"><span class="cbn-ico">👤</span><span>${locale==='el'?'Προφίλ':'Profile'}</span></button>
+    <button class="cbn-btn ${tab==='today'?'active':''}" data-t="today"><span class="cbn-ico">${navIco('home')}</span><span>${locale==='el'?'Αρχική':'Home'}</span></button>
+    <button class="cbn-btn ${tab==='program'?'active':''}" data-t="program"><span class="cbn-ico">${navIco('dumbbell')}</span><span>${t('program',locale)}</span></button>
+    <button class="cbn-btn cbn-central ${tab==='readiness'?'active':''}" data-t="readiness"><span class="cbn-ico">${navIco('plus')}</span><span>${locale==='el'?'Σήμερα':'Today'}</span></button>
+    <button class="cbn-btn ${tab==='messages'?'active':''}" data-t="messages"><span class="cbn-ico">${navIco('chat')}</span><span>${t('messages',locale)}</span></button>
+    <button class="cbn-btn ${tab==='massage'?'active':''}" data-t="massage"><span class="cbn-ico">${navIco('heart')}</span><span>${locale==='el'?'Μάλαξη':'Massage'}</span></button>
+    <button class="cbn-btn ${tab==='profile'||inProfileGroup?'active':''}" data-t="profile"><span class="cbn-ico">${navIco('user')}</span><span>${locale==='el'?'Προφίλ':'Profile'}</span></button>
   </div>`);
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ renderClientDashboard._tab=b.dataset.t; renderClientDashboard._reuse = true; renderClientDashboard(main); }));
   main.appendChild(tabs);
