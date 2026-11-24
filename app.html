@@ -391,6 +391,29 @@
   .btn, .navBtn, .bottomTab, .cbn-btn, .clientCard, .optRow, .profileMenuRow, .setDone, .exPickRow, .exPickBtn, .leadChip{ transition:transform .28s var(--ease-out), background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, opacity .2s ease; }
   .btn:active, .bottomTab:active, .cbn-btn:active, .optRow:active, .profileMenuRow:active, .setDone:active, .exPickBtn:active, .leadChip:active{ transform:scale(.96); transition-duration:.06s; }
   .exPickRow:active{ transform:scale(.985); transition-duration:.06s; }
+  /* Exercise picker: opens as a full-screen sheet on phones and a centred dialog on desktop, above the bottom nav. */
+  .exPickPanel{ display:none; }
+  .exPickPanel.open{ display:flex; flex-direction:column; gap:8px; position:fixed; inset:0; z-index:400; background:var(--bg,#0b0b0b); color:var(--ink,#f5f5f5); padding:calc(12px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom)); }
+  .exPickHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .exPickHead b{ font-size:16px; }
+  .exPickPanel .exPickQ, .exPickPanel .exPickRegion, .exPickPanel .exPickLevel{ width:100%; box-sizing:border-box; }
+  .exPickFilters{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .exPickChips{ display:flex; gap:6px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+  .exPickChips .btn{ flex:none; white-space:nowrap; }
+  .exPickList{ flex:1; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; }
+  .exPickRow{ min-height:48px; }
+  @media (min-width:900px){
+    .exPickPanel.open{ inset:5vh auto 5vh 50%; transform:translateX(-50%); width:min(680px,92vw); border:1px solid var(--line); border-radius:14px; box-shadow:0 0 0 100vmax rgba(0,0,0,.6); }
+  }
+  /* Add-exercise form: exercise first, then a tidy grid, then the Add button. */
+  .exAddForm{ display:flex; flex-direction:column; gap:10px; }
+  .exAddGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .exAddGrid .field, .exAddRow .field{ margin:0; min-width:0; }
+  .exAddGrid input, .exAddRow input{ width:100%; box-sizing:border-box; }
+  .exAddRow{ display:flex; gap:8px; align-items:flex-end; }
+  .exAddRow .field{ width:96px; flex:none; }
+  .exAddRow .btn{ flex:1; justify-content:center; min-height:44px; }
+  @media (max-width:600px){ .exAddGrid{ grid-template-columns:1fr 1fr; } }
   .clientCard:active{ transform:scale(.985); transition-duration:.06s; }
   .btn{ -webkit-user-select:none; user-select:none; }
   .btn:disabled{ opacity:.55; }
@@ -5733,12 +5756,16 @@ async function renderSopsView(main){
 // Shared sectioned exercise picker (program builder and templates)
 function exPickerMarkup(){ return `<div class="field" style="min-width:100%; margin-bottom:0;"><label>${locale==='el'?'Άσκηση':'Exercise'}</label>
       <input type="hidden" class="exSelect">
-      <button type="button" class="btn secondary exPickBtn" style="width:100%; text-align:left; justify-content:space-between; display:flex;"><span class="exPickLabel">${locale==='el'?'Διάλεξε άσκηση…':'Choose an exercise…'}</span><span>▾</span></button>
-      <div class="exPickPanel" style="display:none; margin-top:8px; border:1px solid var(--line); border-radius:8px; padding:10px; background:var(--panel);">
-        <input class="exPickQ" type="search" placeholder="${locale==='el'?'Αναζήτηση (π.χ. squat, γλουτιαίοι, λάστιχο)':'Search (e.g. squat, glutes, band)'}" aria-label="${locale==='el'?'Αναζήτηση άσκησης':'Search exercise'}" style="width:100%; margin-bottom:8px;">
-        <div class="exPickChips" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;"></div>
-        <select class="exPickRegion" aria-label="${locale==='el'?'Περιοχή σώματος':'Body region'}" style="width:100%; margin-bottom:8px;"></select>
-        <div class="exPickList" style="max-height:52vh; overflow:auto;"></div>
+      <button type="button" class="btn secondary exPickBtn" style="width:100%; text-align:left; justify-content:space-between; display:flex; min-height:46px;"><span class="exPickLabel">${locale==='el'?'Διάλεξε άσκηση…':'Choose an exercise…'}</span><span>▾</span></button>
+      <div class="exPickPanel" role="dialog" aria-modal="true" aria-label="${locale==='el'?'Επιλογή άσκησης':'Choose exercise'}">
+        <div class="exPickHead"><b>${locale==='el'?'Διάλεξε άσκηση':'Choose an exercise'}</b><button type="button" class="btn secondary exPickClose" style="padding:6px 12px; font-size:12.5px;">✕ ${locale==='el'?'Κλείσιμο':'Close'}</button></div>
+        <input class="exPickQ" type="search" placeholder="${locale==='el'?'Αναζήτηση (π.χ. squat, γλουτιαίοι, λάστιχο)':'Search (e.g. squat, glutes, band)'}" aria-label="${locale==='el'?'Αναζήτηση άσκησης':'Search exercise'}">
+        <div class="exPickChips"></div>
+        <div class="exPickFilters">
+          <select class="exPickRegion" aria-label="${locale==='el'?'Περιοχή σώματος':'Body region'}"></select>
+          <select class="exPickLevel" aria-label="${locale==='el'?'Επίπεδο δυσκολίας':'Difficulty level'}"></select>
+        </div>
+        <div class="exPickList"></div>
       </div>
     </div>`; }
 function exPickerWire(root, list, opts){
@@ -5746,7 +5773,7 @@ function exPickerWire(root, list, opts){
     const hid = root.querySelector('.exSelect'), openBtn = root.querySelector('.exPickBtn'), lbl = root.querySelector('.exPickLabel');
     const defaultLabel = lbl.textContent;
     const risky = (opts && opts.risky) || new Map(), recommended = (opts && opts.recommended) || new Set();
-    const panel = root.querySelector('.exPickPanel'), qIn = panel.querySelector('.exPickQ'), regSel = panel.querySelector('.exPickRegion');
+    const panel = root.querySelector('.exPickPanel'), qIn = panel.querySelector('.exPickQ'), regSel = panel.querySelector('.exPickRegion'), lvlSel = panel.querySelector('.exPickLevel');
     const chipsBox = panel.querySelector('.exPickChips'), listBox = panel.querySelector('.exPickList');
     let equipSel = '';
     const nm = ex => locale==='el' ? ex.name_el : (ex.name_en||ex.name_el);
@@ -5760,10 +5787,13 @@ function exPickerWire(root, list, opts){
     const regName = v => v ? exLabel(EX_BODY_REGIONS, v) : L('Άλλες','Other');
     const regs = regOrder.filter(r=>list.some(e=>e.body_region===r));
     regSel.innerHTML = `<option value="">${L('Όλες οι περιοχές','All regions')}</option>` + regs.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(regName(r))}</option>`).join('');
+    const lvls = EX_DIFFICULTIES.map(d=>d.el).filter(v=>list.some(e=>e.difficulty_level===v));
+    lvlSel.innerHTML = `<option value="">${L('Όλα τα επίπεδα','All levels')}</option>` + lvls.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(exLabel(EX_DIFFICULTIES, v))}</option>`).join('');
     function base(skipEquip){
-      const q = qIn.value.trim().toLowerCase(), rg = regSel.value;
+      const q = qIn.value.trim().toLowerCase(), rg = regSel.value, lv = lvlSel.value;
       return list.filter(ex=>{
         if(rg && ex.body_region!==rg) return false;
+        if(lv && ex.difficulty_level!==lv) return false;
         if(!skipEquip && equipSel && eqKey(ex)!==equipSel) return false;
         if(q && !((ex.name_el||'')+' '+(ex.name_en||'')+' '+(ex.category||'')).toLowerCase().includes(q)) return false;
         return true;
@@ -5777,7 +5807,7 @@ function exPickerWire(root, list, opts){
       chipsBox.innerHTML = mk('', L('Όλες','All'), pool.length) + order.map(k=>mk(k, (EQ_ICON[k]||'')+' '+escapeHtml(eqName(k)), counts[k])).join('');
     }
     function renderList(){
-      const items = base(false), filtered = !!(qIn.value.trim() || equipSel || regSel.value);
+      const items = base(false), filtered = !!(qIn.value.trim() || equipSel || regSel.value || lvlSel.value) || items.length <= 40;
       if(!items.length){ listBox.innerHTML = `<p style="color:var(--ink-soft); font-size:12.5px;">${L('Καμία άσκηση με αυτά τα φίλτρα.','No exercises match these filters.')}</p>`; return; }
       const groups = new Map();
       items.forEach(ex=>{ const g = ex.body_region || ''; if(!groups.has(g)) groups.set(g, []); groups.get(g).push(ex); });
@@ -5792,17 +5822,22 @@ function exPickerWire(root, list, opts){
       }).join('');
     }
     const refresh = ()=>{ renderChips(); renderList(); };
-    openBtn.addEventListener('click', ()=>{ const open = panel.style.display==='none'; panel.style.display = open ? 'block' : 'none'; if(open){ refresh(); } });
+    const closePanel = ()=>{ panel.classList.remove('open'); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); };
+    const onKey = e=>{ if(e.key==='Escape') closePanel(); };
+    const openPanel = ()=>{ panel.classList.add('open'); document.body.style.overflow = 'hidden'; document.addEventListener('keydown', onKey); refresh(); setTimeout(()=>{ try{ qIn.focus(); }catch(e){} }, 50); };
+    openBtn.addEventListener('click', openPanel);
+    panel.querySelector('.exPickClose').addEventListener('click', closePanel);
     qIn.addEventListener('input', refresh);
     regSel.addEventListener('change', refresh);
+    lvlSel.addEventListener('change', refresh);
     chipsBox.addEventListener('click', e=>{ const b = e.target.closest('[data-eq]'); if(!b) return; equipSel = b.dataset.eq; refresh(); });
     listBox.addEventListener('click', e=>{
       const b = e.target.closest('.exPickRow'); if(!b) return;
       const ex = list.find(x=>String(x.id)===b.dataset.id); if(!ex) return;
-      hid.value = ex.id; lbl.textContent = nm(ex); panel.style.display = 'none';
+      hid.value = ex.id; lbl.textContent = nm(ex); closePanel();
     });
   
-    return { reset(){ hid.value=''; lbl.textContent = defaultLabel; panel.style.display='none'; qIn.value=''; } };
+    return { reset(){ hid.value=''; lbl.textContent = defaultLabel; closePanel(); qIn.value=''; } };
 }
 
 // ============================================================
@@ -8435,15 +8470,24 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
   const dayNums = dayLabels.map(d=>parseInt(d.match(/\d+/)?.[0]||'0',10));
   const nextDayLabel = dayLabels.length ? `${locale==='el'?'Ημέρα':'Day'} ${Math.max(0,...dayNums)+1}` : `${locale==='el'?'Ημέρα':'Day'} 1`;
 
-  const addForm = el(`<form class="card gold" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">    ${exPickerMarkup()}
-    <div class="field" style="width:110px; margin-bottom:0;"><label>${locale==='el'?'Ημέρα':'Day'}</label><input class="exDay" list="dayList" value="${escapeHtml(nextDayLabel)}"></div>
+renderProgramTab._last = renderProgramTab._last || {}; const lastAdd = renderProgramTab._last[program.id] || {};
+  const defaultDay = lastAdd.day || (dayLabels.length ? dayLabels[dayLabels.length-1] : nextDayLabel);
+  const addForm = el(`<form class="card gold exAddForm">
+    ${exPickerMarkup()}
+    <div class="exAddGrid">
+      <div class="field"><label>${locale==='el'?'Ημέρα':'Day'}</label><input class="exDay" list="dayList" value="${escapeHtml(defaultDay)}"></div>
+      <div class="field"><label>${t('sets',locale)}</label><input class="exSets" type="number" inputmode="numeric" value="${escapeHtml(String(lastAdd.sets ?? 3))}"></div>
+      <div class="field"><label>${t('reps',locale)}</label><input class="exReps" value="${escapeHtml(lastAdd.reps ?? '8-10')}"></div>
+      <div class="field"><label>${t('load',locale)}</label><input class="exLoad" value="${escapeHtml(lastAdd.load ?? '')}"></div>
+    </div>
     <datalist id="dayList">${dayLabels.map(d=>`<option value="${escapeHtml(d)}">`).join('')}</datalist>
-    <div class="field" style="width:70px; margin-bottom:0;"><label>${t('sets',locale)}</label><input class="exSets" type="number" value="3"></div>
-    <div class="field" style="width:90px; margin-bottom:0;"><label>${t('reps',locale)}</label><input class="exReps" value="8-10"></div>
-    <div class="field" style="width:100px; margin-bottom:0;"><label>${t('load',locale)}</label><input class="exLoad"></div>
-    <div class="field" style="width:80px; margin-bottom:0;"><label title="${locale==='el'?'Ίδιο γράμμα = εναλλάξ (superset)':'Same letter = alternating (superset)'}">Superset</label><input class="exSuper" maxlength="1" placeholder="A"></div>
-    <button class="btn" type="submit">+ ${locale==='el'?'Προσθήκη':'Add'}</button>
+    <div class="exAddRow">
+      <div class="field"><label title="${locale==='el'?'Ίδιο γράμμα = εναλλάξ (superset)':'Same letter = alternating (superset)'}">Superset</label><input class="exSuper" maxlength="1" placeholder="A"></div>
+      <button class="btn" type="submit">+ ${locale==='el'?'Προσθήκη':'Add'}</button>
+    </div>
+    <button type="button" class="btn secondary exNewDayBtn" style="align-self:flex-start; padding:5px 12px; font-size:12px;">${locale==='el'?'+ Νέα ημέρα':'+ New day'} (${escapeHtml(nextDayLabel)})</button>
   </form>`);
+  addForm.querySelector('.exNewDayBtn').addEventListener('click', ()=>{ addForm.querySelector('.exDay').value = nextDayLabel; });
 
   exPickerWire(addForm, sortedExercises, { risky, recommended });
   addForm.addEventListener('submit', async (e)=>{
@@ -8461,7 +8505,10 @@ async function renderProgramTab(body, client, program, exercises, onChanged, int
       ...(superVal ? { superset_group: superVal } : {}),
     });
     if(insErr){ toast(insErr.message); return; }
-    onChanged();
+    renderProgramTab._last[program.id] = { day: addForm.querySelector('.exDay').value.trim(), sets: addForm.querySelector('.exSets').value, reps: addForm.querySelector('.exReps').value, load: addForm.querySelector('.exLoad').value };
+    toast(locale==='el' ? '✓ Προστέθηκε' : '✓ Added');
+    const y = window.scrollY; onChanged();
+    [200, 500, 900].forEach(ms=>setTimeout(()=>window.scrollTo(0, y), ms));
   });
   body.appendChild(addForm);
 
