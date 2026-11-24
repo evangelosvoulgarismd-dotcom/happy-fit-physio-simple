@@ -556,7 +556,9 @@
   /* ===== Style v2: modern workout-app look (large titles, segmented controls, list rows, optional accent) ===== */
   html[data-theme="dark"]{ --bg:#0e0d0f; --panel:#161518; --surface2:#1d1c20; --line:#27262c; --ink:#f3f3f1; --ink-soft:#9a9aa0; }
   /* large left-aligned screen titles */
-  #main h2{ font-size:32px; line-height:1.08; letter-spacing:-.025em; margin:2px 0 14px; }
+  #main h2{ font-size:32px; line-height:1.08; letter-spacing:-.025em; margin:2px 0 14px; overflow-wrap:anywhere; min-width:0; }
+  @media (max-width:400px){ #main h2{ font-size:28px !important; } }
+  #main > div[style*="justify-content:space-between"]{ flex-wrap:wrap; gap:10px; }
   @media (max-width:760px){ #main h2{ font-size:34px; } }
   /* segmented control: a dark track with a light pill on the active option */
   .tabGroupRow, .tabSubRow, .roleToggle, .modeSwitch{ display:flex; gap:2px; padding:4px; background:var(--surface2); border:0; border-radius:999px; overflow-x:auto; scrollbar-width:none; }
@@ -2603,7 +2605,7 @@ async function renderTemplatesView(main){
   ]);
   main.innerHTML = '';
 
-  const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+  const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
     <h2>📋 ${t('templates',locale)}</h2>
     <button class="btn" id="newTplBtn">${t('newTemplate',locale)}</button>
   </div>`);
@@ -4580,7 +4582,7 @@ async function renderLibrary(main, isCoach){
   let chip = '';            // '' = all, '__fav' = favourites, '__novis' = missing visuals (coach), otherwise a category
   let limit = 40;
   const noVisualCount = exercises.filter(e=>!e.gif_url && !e.video_url).length;
-  const chipsBar = el(`<div class="libChips" role="tablist" aria-label="${locale==='el'?'Κατηγορίες':'Categories'}"></div>`);
+  const chipsBar = el(`<div class="libChips" role="group" aria-label="${locale==='el'?'Κατηγορίες':'Categories'}"></div>`);
   main.appendChild(chipsBar);
   const countLine = el('<div class="libCount"></div>');
   const equipBar = el(`<div class="libChips" style="margin:4px 0 8px;"></div>`);
@@ -5382,7 +5384,7 @@ async function renderCoachDashboard(main){
   const toolbar = el(`<div class="card" style="margin-bottom:12px; padding:12px 14px;">
     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
       <input class="searchInput" placeholder="${locale==='el'?'🔍 Αναζήτηση με όνομα...':'🔍 Search by name...'}" value="${escapeHtml(searchQuery)}" style="flex:1; min-width:160px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
-      ${sports.length ? `<select class="sportFilterSelect" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
+      ${sports.length ? `<select class="sportFilterSelect" aria-label="${locale==='el'?'Φίλτρο αθλήματος':'Sport filter'}" style="padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;">
         <option value="">${t('allClients',locale)}</option>
         ${sports.map(s=>`<option value="${escapeHtml(s)}" ${activeSportFilter===s?'selected':''}>${escapeHtml(s)}</option>`).join('')}
       </select>` : ''}
@@ -8990,13 +8992,13 @@ function renderLevelCard({ sessionLogDates, checkins, readiness }){
       <div style="height:100%; width:${g.pct}%; background:var(--red); border-radius:4px;"></div>
     </div>
     <p style="font-size:11.5px; color:var(--ink-soft); margin-top:8px;">${locale==='el'?'Ο στόχος είναι να ξεπερνάς τον εαυτό σου, όχι τους άλλους.':'The goal is to beat your own previous self, not anyone else.'}</p>
-    <div class="badgeRow" style="display:flex; gap:10px; margin-top:8px; overflow-x:auto; padding-bottom:2px;"></div>
+    <div class="badgeRow" tabindex="0" role="group" aria-label="${locale==='el'?'Επιτεύγματα':'Achievements'}" style="display:flex; gap:10px; margin-top:8px; overflow-x:auto; padding-bottom:2px;"></div>
   </div>`);
   const badgeRow = card.querySelector('.badgeRow');
   g.badgeDefs.forEach(b=>{
     badgeRow.appendChild(el(`<div title="${escapeHtml(b.label)}" style="display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:56px;">
       <div style="width:36px; height:36px; border-radius:50%; background:${b.earned?'var(--gold)':'var(--line)'}; display:flex; align-items:center; justify-content:center; font-size:17px; opacity:${b.earned?'1':'.4'};">${b.ico}</div>
-      <span style="font-size:10.5px; color:${b.earned?'var(--ink)':'var(--ink-soft)'}; text-align:center; margin-top:3px; line-height:1.2; opacity:${b.earned?'1':'.6'};">${escapeHtml(b.label)}</span>
+      <span style="font-size:10.5px; color:${b.earned?'var(--ink)':'var(--ink-soft)'}; text-align:center; margin-top:3px; line-height:1.2; opacity:${b.earned?'1':'.85'};">${escapeHtml(b.label)}</span>
     </div>`));
   });
   return card;
