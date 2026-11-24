@@ -9535,6 +9535,46 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     setTimeout(()=>{ b.classList.remove('show'); setTimeout(()=>b.remove(), 400); }, 4200);
   }
 
+  function buildHistoryPanel(panel, exerciseId){
+    const el_ = locale==='el';
+    const hist = (logsByExerciseId[exerciseId] || []).filter(l=>l.load_kg!=null && l.reps!=null);
+    if(!hist.length){ panel.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft);">${el_?'Δεν υπάρχουν ακόμα καταγραφές.':'No logs yet.'}</p>`; return; }
+    const byDate = {}; hist.forEach(l=>{ (byDate[l.session_date] = byDate[l.session_date] || []).push(l); });
+    const dates = Object.keys(byDate).sort().reverse();
+    const heaviest = hist.reduce((m,l)=>l.load_kg>m.load_kg?l:m, hist[0]);
+    const bestVol = hist.reduce((m,l)=>l.load_kg*l.reps>m.load_kg*m.reps?l:m, hist[0]);
+    let bestE = null; hist.forEach(l=>{ const e=epley1RM(l.load_kg,l.reps); if(e && (bestE==null||e>bestE)) bestE=e; });
+    const stat = (v,l)=>`<div class="statCard" style="padding:10px 12px;"><div class="mono" style="font-size:17px; font-weight:800;">${v}</div><div style="font-size:11px; color:var(--ink-soft); margin-top:2px;">${l}</div></div>`;
+    panel.innerHTML = `
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:10px;">
+        ${stat(heaviest.load_kg+'kg × '+heaviest.reps, el_?'Μεγαλύτερο βάρος':'Heaviest weight')}
+        ${stat(bestVol.load_kg+'kg × '+bestVol.reps, el_?'Καλύτερος όγκος σετ':'Best set volume')}
+        ${stat(bestE?('~'+bestE+'kg'):'-', el_?'Εκτιμώμενο 1RM':'Estimated 1RM')}
+        ${stat(hist.length, el_?'Σύνολο σετ':'Total sets')}
+      </div>
+      <div class="tabSubRow histPeriods" style="margin-bottom:8px;">
+        <button type="button" class="btn secondary" data-p="30">${el_?'30 ημ.':'30D'}</button>
+        <button type="button" class="btn" data-p="90">${el_?'3 μήνες':'3M'}</button>
+        <button type="button" class="btn secondary" data-p="all">${el_?'Όλα':'All'}</button>
+      </div>
+      <div class="histChart"></div>
+      <h4 style="font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:12px 0 8px;">${el_?'Ιστορικό':'History'}</h4>
+      <div class="histList">${dates.slice(0,10).map(d=>`<div style="display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-top:1px solid var(--line); font-size:12.5px;"><span style="color:var(--ink-soft);">${d}</span><span class="mono" style="text-align:right;">${byDate[d].slice().sort((a,b)=>a.set_number-b.set_number).map(l=>l.load_kg+'×'+l.reps).join('  ')}</span></div>`).join('')}</div>`;
+    const chartBox = panel.querySelector('.histChart');
+    const draw = (period)=>{
+      const cutoff = period==='all' ? null : new Date(Date.now() - Number(period)*86400000).toISOString().slice(0,10);
+      const rows = dates.filter(d=>!cutoff || d>=cutoff).map(d=>{ let b=null; byDate[d].forEach(l=>{ const e=epley1RM(l.load_kg,l.reps); if(e && (b==null||e>b)) b=e; }); return b==null?null:{date:d, e1rm:b}; }).filter(Boolean);
+      chartBox.innerHTML = '';
+      if(rows.length<2){ chartBox.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft);">${el_?'Χρειάζονται τουλάχιστον δύο προπονήσεις στην περίοδο για να φανεί τάση.':'Log this exercise at least twice in the period to see a trend.'}</p>`; return; }
+      renderTrendChart(chartBox, el_?'Εκτιμώμενο 1RM (kg)':'Estimated 1RM (kg)', rows, 'date', [{key:'e1rm', label:'e1RM', color:'#e5301f'}]);
+    };
+    panel.querySelectorAll('.histPeriods button').forEach(b=>b.addEventListener('click', ()=>{
+      panel.querySelectorAll('.histPeriods button').forEach(x=>x.classList.toggle('secondary', x!==b));
+      draw(b.dataset.p);
+    }));
+    draw('90');
+  }
+
   function trackerStatsFor(exerciseId){
     const history = (logsByExerciseId[exerciseId] || []).filter(l=>l.load_kg!=null && l.reps!=null);
     if(!history.length) return null;
@@ -9663,7 +9703,8 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         ${tracker.lastSession ? `<span>📊 ${locale==='el'?'Προηγούμενη':'Previous'}: <strong class="mono">${tracker.lastSession.load_kg}kg × ${tracker.lastSession.reps}</strong> <span style="color:var(--ink-soft);">(${tracker.lastSession.session_date})</span></span>` : ''}
         ${tracker.pr ? `<span>🏆 PR: <strong class="mono">${tracker.pr.load_kg}kg × ${tracker.pr.reps}</strong></span>` : ''}
         ${tracker.e1rm ? `<span title="${locale==='el'?'Εκτίμηση με τον τύπο Epley, ισχύει για έως 10 επαναλήψεις':'Epley estimate, valid up to 10 reps'}">📐 e1RM: <strong class="mono">~${tracker.e1rm}kg</strong></span>` : ''}
-      </div>` : ''}
+      </div>
+      <div style="margin-bottom:10px;"><button class="btn secondary histToggleBtn" type="button" style="padding:3px 12px; font-size:12px; min-height:32px;">📈 ${locale==='el'?'Ιστορικό και ρεκόρ':'History and records'}</button><div class="histPanel" style="display:none; margin-top:10px;"></div></div>` : ''}
       ${suggHtml ? `<div style="font-size:11.5px; background:rgba(226,162,51,0.12); border-radius:6px; padding:6px 9px; margin-bottom:8px;">💡 ${suggHtml}<div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">${locale==='el'?'Απλός υπολογισμός από τις καταγραφές σου, όχι ιατρική οδηγία. Ο coach σου αποφασίζει το πρόγραμμα.':'Simple calculation from your logs, not medical advice. Your coach decides the program.'}</div></div>` : ''}
       ${warm.length ? `<div style="margin-bottom:8px;"><button class="btn secondary warmToggleBtn" type="button" style="padding:3px 10px; font-size:12px; min-height:32px;">🔥 ${locale==='el'?'Προθέρμανση':'Warm-up'}</button>
         <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
@@ -9700,6 +9741,12 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       if(p.style.display==='block') ex3dMountAll(p);
     });
     attachAskAssistant(card.querySelector('.whyPanel'), 'exercise', { name: exName, why, execution_steps: ex.execution_steps, technique_cues: ex.technique_cues, common_mistakes: ex.common_mistakes, body_region: ex.body_region, primary_muscles: ex.primary_muscles, goal_tags: ex.goal_tags, regression_text: ex.regression_text, progression_text: ex.progression_text, target_sets: pe.target_sets, target_reps: pe.target_reps, target_load: pe.target_load, client_goal: goalText || undefined, program_title: program.title }, client.id);
+    const histBtn = card.querySelector('.histToggleBtn');
+    if(histBtn){ histBtn.addEventListener('click', ()=>{
+      const hp = card.querySelector('.histPanel'); const open = hp.style.display==='none';
+      hp.style.display = open ? 'block' : 'none';
+      if(open && !hp.dataset.built){ hp.dataset.built='1'; buildHistoryPanel(hp, ex.id); }
+    }); }
     const warmBtn = card.querySelector('.warmToggleBtn');
     if(warmBtn) warmBtn.addEventListener('click', ()=>{ const wp = card.querySelector('.warmPanel'); wp.style.display = wp.style.display==='none' ? 'block' : 'none'; });
     const setsCount = pe.target_sets || 3;
