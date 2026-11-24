@@ -4176,7 +4176,7 @@ const EX3D_PROPS = {
 
 const EX3D_EN = {"squat": "Squat", "goblet_squat": "Goblet squat", "hinge": "Hip hinge (RDL)", "lunge": "Lunge", "glute_bridge": "Glute bridge", "plank": "Plank", "pushup": "Push-up", "row": "Bent-over row", "overhead_press": "Overhead press", "biceps_curl": "Biceps curl", "lateral_raise": "Lateral raise", "calf_raise": "Calf raise", "clamshell": "Clamshell (side-lying)", "bird_dog": "Bird-dog (quadruped)", "dead_bug": "Dead bug (supine)", "crunch": "Crunch", "pullup": "Pull-up", "none": "No equipment", "dumbbells": "Dumbbells", "dumbbell1": "One dumbbell", "barbell": "Barbell (in hands)", "barbell_back": "Barbell on back", "kettlebell": "Kettlebell", "bench": "Bench", "band_hands": "Band (hands)", "band_knees": "Band (knees)", "pullbar": "Pull-up bar", "mat": "Mat"};
 const ex3dLbl = (k,v) => locale==='el' ? v.el : (EX3D_EN[k] || v.el);
-function ex3dBuild(THREE){
+function ex3dBuild(THREE, BODY){
   const D2R = Math.PI/180;
   const L = {thigh:.45, shank:.45, foot:.22, heel:.06, torso:.52, neck:.2, uarm:.30, farm:.27, hipW:.09, shW:.19};
   const ease = x => x*x*(3-2*x);
@@ -4316,6 +4316,68 @@ function ex3dBuild(THREE){
     const shadow = new THREE.Mesh(new THREE.CircleGeometry(.5,32), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity: darkUI?.35:.12, depthWrite:false}));
     shadow.rotation.x = -Math.PI/2; shadow.position.y = .002; shadow.scale.set(1,.55,1); scene.add(shadow);
 
+    // ---- Real anatomy skinned to the same joints (falls back to the simple figure when hfp_body.bin is absent) ----
+    let bodyRig = null;
+    if(BODY){
+      const meta = BODY.meta, dvb = BODY.buf, o0 = BODY.binOff;
+      const Lr = L; // rig segment lengths
+      const jr = meta.joints, dist = (a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+      const sg = (Lr.thigh+Lr.shank+Lr.torso+Lr.neck) / (dist(jr.hipL,jr.kneeL)+dist(jr.kneeL,jr.ankleL)+dist(jr.pelvis,jr.shoulderC)+dist(jr.shoulderC,jr.head));
+      const rest = {}; for(const k in jr) rest[k] = new THREE.Vector3(jr[k][0]*sg, jr[k][1]*sg, jr[k][2]*sg);
+      const bones = meta.bones.map(()=>{ const b = new THREE.Bone(); b.matrixAutoUpdate = false; b.matrixWorldAutoUpdate = false; return b; });
+      const skeleton = new THREE.Skeleton(bones, bones.map(()=>new THREE.Matrix4()));
+      const hi = new Set((opts.muscles&&opts.muscles.prim)||[]), hs = new Set((opts.muscles&&opts.muscles.sec)||[]);
+      const anyHi = hi.size || hs.size;
+      const mkMat = (g, key)=>{
+        if(g==='skin') return new THREE.MeshStandardMaterial({color: darkUI?0xcfd3dc:0x9aa3b2, roughness:.6, transparent:true, opacity: opts.xray===false?.9:.16, depthWrite:false});
+        if(g==='bone') return new THREE.MeshStandardMaterial({color:0xd9cfb8, roughness:.7});
+        const prim = hi.has(key), sec = hs.has(key);
+        if(prim) return new THREE.MeshStandardMaterial({color:0xe5301f, roughness:.45, emissive:0x8a1208, emissiveIntensity:.55});
+        if(sec) return new THREE.MeshStandardMaterial({color:0xb4503f, roughness:.5, emissive:0x3a0d08, emissiveIntensity:.3});
+        return new THREE.MeshStandardMaterial({color: anyHi ? 0x6b4a4a : 0x9a3e3c, roughness:.55});
+      };
+      const meshes = [];
+      meta.meshes.forEach(m=>{
+        const nv = m.nv, pos = new Float32Array(nv*3);
+        const q = new Uint16Array(dvb, o0+m.pos, nv*3);
+        for(let i=0;i<nv;i++) for(let k=0;k<3;k++) pos[3*i+k] = (m.min[k] + q[3*i+k]/65535*(m.max[k]-m.min[k]))*sg;
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+        g.setIndex(new THREE.BufferAttribute(m.u32 ? new Uint32Array(dvb.slice(o0+m.idx, o0+m.idx+m.ni*4)) : new Uint16Array(dvb.slice(o0+m.idx, o0+m.idx+m.ni*2)),1));
+        const sk8 = new Uint8Array(dvb, o0+m.sk, nv*4), sw8 = new Uint8Array(dvb, o0+m.sw, nv*4);
+        g.setAttribute('skinIndex', new THREE.BufferAttribute(Uint16Array.from(sk8),4));
+        g.setAttribute('skinWeight', new THREE.BufferAttribute(Float32Array.from(sw8, v=>v/255),4));
+        g.computeVertexNormals();
+        const mesh = new THREE.SkinnedMesh(g, mkMat(m.group, m.key));
+        mesh.bind(skeleton, new THREE.Matrix4());
+        mesh.frustumCulled = false;
+        mesh.renderOrder = m.group==='skin' ? 5 : 1;
+        scene.add(mesh); meshes.push({mesh, m});
+      });
+      const bdef = meta.bones.map(b=>({A:b.A, B:b.B}));
+      const u0 = bdef.map(b=>rest[b.B].clone().sub(rest[b.A]));
+      const L0 = u0.map(v=>v.length()); u0.forEach(v=>v.normalize());
+      const _q = new THREE.Quaternion(), _m1 = new THREE.Matrix4(), _m2 = new THREE.Matrix4(), _m3 = new THREE.Matrix4(), _u1 = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
+      bodyRig = {
+        update(J){
+          bdef.forEach((d,i)=>{
+            _a.set(...J[d.A]); _b.set(...J[d.B]); _u1.subVectors(_b,_a); const L1 = Math.max(1e-6,_u1.length()); _u1.divideScalar(L1);
+            _q.setFromUnitVectors(u0[i], _u1); const k = L1/L0[i]; const u = u0[i];
+            // S = I + (k-1) u u^T
+            const c = k-1;
+            _m1.set(1+c*u.x*u.x, c*u.x*u.y, c*u.x*u.z, 0,  c*u.y*u.x, 1+c*u.y*u.y, c*u.y*u.z, 0,  c*u.z*u.x, c*u.z*u.y, 1+c*u.z*u.z, 0,  0,0,0,1);
+            _m2.makeRotationFromQuaternion(_q);
+            _m3.makeTranslation(-rest[d.A].x, -rest[d.A].y, -rest[d.A].z);
+            const M = bones[i].matrixWorld;
+            M.copy(_m2).multiply(_m1).multiply(_m3);
+            M.premultiply(_m2.makeTranslation(_a.x,_a.y,_a.z));
+          });
+        }
+      };
+    }
+
+    if(bodyRig){ BONES.forEach(b=>{ b[2].m.visible=false; }); bodyBalls.forEach(o=>{ o.mesh.visible=false; }); headM.visible=false; }
+
     // props
     const dyn = []; // updated every frame
     function cylBetween(m, a, b, r){
@@ -4365,9 +4427,9 @@ function ex3dBuild(THREE){
     // auto-fit the camera to the whole movement
     let bx0=1e9,bx1=-1e9,by0=1e9,by1=-1e9;
     for(let i=0;i<24;i++){ const Jf = place(pat, sample(pat, pat.T*i/24), ref0); for(const k in Jf){ const q=Jf[k]; bx0=Math.min(bx0,q[0]);bx1=Math.max(bx1,q[0]);by0=Math.min(by0,q[1]);by1=Math.max(by1,q[1]); } }
-    const size = Math.max(bx1-bx0, by1-by0, 1.2) + .5;
+    const size = Math.max(bx1-bx0, by1-by0, 1.2) + (BODY?.3:.5);
     const fitDist = (size/2)/Math.tan(17.5*D2R) * .92 + .15;
-    const cx0 = (bx0+bx1)/2, cy0 = Math.max(.3,(by0+by1)/2);
+    const cx0 = (bx0+bx1)/2, cy0 = Math.max(.3,(by0+by1)/2) + (BODY?.08:0);
     let az = (opts.az ?? 55)*D2R, el = (opts.el ?? 12)*D2R, dist = opts.dist || fitDist, target = new THREE.Vector3(cx0,cy0,0);
     function placeCam(){
       cam.position.set(target.x + dist*Math.cos(el)*Math.sin(az), target.y + dist*Math.sin(el), target.z + dist*Math.cos(el)*Math.cos(az));
@@ -4386,13 +4448,13 @@ function ex3dBuild(THREE){
     function draw(){
       const p = sample(pat, tt);
       const J = place(pat, p, ref);
+      if(bodyRig){ bodyRig.update(J); } else
       BONES.forEach(([a,b,L])=>{
         const A=V(J[a]), B=V(J[b]); const d=new THREE.Vector3().subVectors(B,A), len=d.length()||1e-6;
         L.m.position.copy(A); L.m.scale.set(L.xs,len,L.zs);
         L.m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
       });
-      bodyBalls.forEach(o=>o.mesh.position.copy(V(J[o.n])));
-      headM.position.copy(V(J.head));
+      if(!bodyRig){ bodyBalls.forEach(o=>o.mesh.position.copy(V(J[o.n]))); headM.position.copy(V(J.head)); }
       shadow.position.x = (J.ankleL[0]+J.ankleR[0])/2; shadow.position.z = (J.ankleL[2]+J.ankleR[2])/2; shadow.scale.set(.9,.9*.55,1);
       dyn.forEach(f=>f(J));
       target.set(cx0, opts.ty ?? cy0, 0);
@@ -4426,8 +4488,36 @@ let _ex3dLib = null;
 async function ex3dLoad(){
   if(_ex3dLib) return _ex3dLib;
   const THREE = await import('./three.module.min.js');
-  _ex3dLib = ex3dBuild(THREE);
+  let body = null;
+  try{ body = await ex3dFetchBody(); }catch(e){ body = null; }   // optional: falls back to the simple figure if the file is missing
+  _ex3dLib = ex3dBuild(THREE, body);
   return _ex3dLib;
+}
+// Real anatomy (BodyParts3D, CC BY 4.0), simplified and pre-weighted for the skeleton. File: hfp_body.bin (next to app.html).
+let _ex3dBodyP = null;
+function ex3dFetchBody(){
+  if(_ex3dBodyP) return _ex3dBodyP;
+  _ex3dBodyP = fetch('./hfp_body.bin').then(r=>{ if(!r.ok) throw new Error('nobody'); return r.arrayBuffer(); }).then(buf=>{
+    const dv = new DataView(buf); const jl = dv.getUint32(0,true);
+    const meta = JSON.parse(new TextDecoder().decode(new Uint8Array(buf,4,jl)));
+    const binOff = 4 + jl + ((4-((4+jl)%4))%4);
+    return {meta, buf, binOff};
+  });
+  return _ex3dBodyP;
+}
+// Greek muscle names (as stored in the library) -> meshes of the anatomy model
+const EX3D_MUSCLE_MAP = [
+  ['Στήθ',['chest_muscles']], ['Ώμ',['deltoid','shoulder_muscles','rotator_cuff']], ['Δικέφ',['upper_arm_muscles']], ['Τρικέφ',['upper_arm_muscles']],
+  ['Πήχ',['forearm_muscles','hand_muscles']], ['Κοιλια',['abdominal_muscles']], ['Τετρακ',['quadriceps']], ['Οπίσθ',['hamstrings']],
+  ['Γλουτ',['gluteal']], ['Γάμπ',['calf','shin_muscles']], ['Προσαγ',['adductors']], ['Απαγ',['gluteal']], ['Τραπεζ',['trapezius']],
+  ['Πλατύς',['back_muscles']], ['Μέση πλ',['back_muscles','trapezius']], ['Οσφυ',['back_muscles']], ['Αυχέν',['neck_muscles']], ['Λαιμ',['neck_muscles']]
+];
+function ex3dMuscleKeys(str){
+  const out = new Set();
+  String(str||'').split(/[,;·\n]/).map(x=>x.trim()).filter(Boolean).forEach(name=>{
+    EX3D_MUSCLE_MAP.forEach(([stem,keys])=>{ if(name.toLowerCase().startsWith(stem.toLowerCase())) keys.forEach(k=>out.add(k)); });
+  });
+  return [...out];
 }
 function ex3dIsCoachRole(){ try{ return profile && (profile.role==='coach' || profile.role==='owner'); }catch(e){ return false; } }
 function ex3dVisible(ex, isCoach){ return !!(ex && ex.anim_pattern && EX3D_PATTERNS[ex.anim_pattern] && (isCoach || ex.anim_status==='approved')); }
@@ -4482,14 +4572,14 @@ function fxAnimHtml(ex){
 function ex3dSlotHtml(ex, isCoach){
   if(!ex3dVisible(ex, isCoach)) return '';
   const draft = ex.anim_status !== 'approved';
-  return `<div class="ex3dSlot" data-pat="${escapeHtml(ex.anim_pattern)}" data-prop="${escapeHtml(ex.anim_prop||'none')}" style="border:1px solid var(--line); border-radius:10px; padding:8px; margin:8px 0 10px;">
+  return `<div class="ex3dSlot" data-pat="${escapeHtml(ex.anim_pattern)}" data-prop="${escapeHtml(ex.anim_prop||'none')}" data-prim="${escapeHtml(ex.primary_muscles||'')}" data-sec="${escapeHtml(ex.secondary_muscles||'')}" style="border:1px solid var(--line); border-radius:10px; padding:8px; margin:8px 0 10px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">
       <span style="font-size:12px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--ink-soft);">🧊 ${locale==='el'?'Κίνηση 3D':'3D movement'}</span>
       ${draft ? `<span class="badge" style="background:rgba(226,162,51,.18);">${locale==='el'?'Πρόχειρο, δεν το βλέπουν οι πελάτες':'Draft, hidden from clients'}</span>` : (ex3dIsCoachRole() ? `<span class="badge">✓ ${locale==='el'?'Εγκεκριμένο':'Approved'}</span>` : '')}
     </div>
     <div class="ex3dStage" style="min-height:260px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση 3D…':'Loading 3D…'}</div>
     <div class="ex3dCtl" style="display:none; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
-    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σχηματική απεικόνιση. Σύρε για να γυρίσεις το μοντέλο. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου.':'Schematic illustration. Drag to rotate. Follow the execution guide and your coach.'}</p>
+    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σύρε για να γυρίσεις το μοντέλο. Με κόκκινο οι κύριοι μύες της άσκησης. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου. Ανατομία: BodyParts3D © DBCLS (CC BY 4.0).':'Schematic illustration. Drag to rotate. Follow the execution guide and your coach.'}</p>
   </div>`;
 }
 async function ex3dMount(slot){
@@ -4500,7 +4590,7 @@ async function ex3dMount(slot){
     const lib = await ex3dLoad();
     stage.innerHTML = ''; stage.style.display = 'block'; stage.style.minHeight = '0';
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const api = lib.mount(stage, slot.dataset.pat, slot.dataset.prop, {height:280, paused: reduce, autorotate:false});
+    const api = lib.mount(stage, slot.dataset.pat, slot.dataset.prop, {height:300, paused: reduce, autorotate:false, muscles:{prim:ex3dMuscleKeys(slot.dataset.prim), sec:ex3dMuscleKeys(slot.dataset.sec)}});
     const btn = (label, fn, cls) => { const b = document.createElement('button'); b.type='button'; b.className='btn secondary'; b.style.cssText='padding:3px 10px; font-size:12px; min-height:32px;'; b.textContent=label; b.addEventListener('click', ()=>fn(b)); ctl.appendChild(b); return b; };
     const pb = btn(reduce?'▶':'⏸', b=>{ const on = !api.isPlaying(); api.play(on); b.textContent = on ? '⏸' : '▶'; });
     let slow = false; btn('×0.5', b=>{ slow=!slow; api.setSpeed(slow?.5:1); b.style.opacity = slow?1:.7; }).style.opacity=.7;
