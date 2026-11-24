@@ -693,7 +693,37 @@ const SUPABASE_URL = 'https://hxbpuamzisdldwbuumda.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_R0pcwjFyKcm-PPIkdm_wkw_7tgXtYoH';
 const VAPID_PUBLIC_KEY = 'BAiV52fua-R28j_R9K7tdThH6T6DSVDCMTQoRv1tNa7wOL4wvg8HKGsaL4wfkc49Mk2vy0ldLCmebseCUp5vp2g';
 
+// Read the password-reset link BEFORE the Supabase client processes (and strips) the URL.
+let recoveryPending = /type=recovery/.test(location.hash) || /type=recovery/.test(location.search);
+const RECOVERY_LINK_ERROR = /error_code=otp_expired|error=access_denied|error_description=/.test(location.hash + location.search);
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Show/hide button for a password field (so people can check what they typed).
+function addPasswordToggle(input){
+  try{
+    if(!input || input.dataset.pwToggle) return;
+    input.dataset.pwToggle = '1';
+    const L = (a,b)=>locale==='el'?a:b;
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:relative; display:block;';
+    input.parentNode.insertBefore(holder, input);
+    holder.appendChild(input);
+    input.style.paddingRight = '84px';
+    input.style.width = '100%'; input.style.boxSizing = 'border-box';
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pwToggleBtn';
+    b.style.cssText = 'position:absolute; right:6px; top:50%; transform:translateY(-50%); background:transparent; border:0; color:var(--ink-soft); font:inherit; font-size:12.5px; font-weight:600; padding:8px; cursor:pointer;';
+    b.textContent = L('Εμφάνιση','Show');
+    b.setAttribute('aria-label', L('Εμφάνιση ή απόκρυψη κωδικού','Show or hide password'));
+    b.addEventListener('click', ()=>{
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      b.textContent = show ? L('Απόκρυψη','Hide') : L('Εμφάνιση','Show');
+      input.focus();
+    });
+    holder.appendChild(b);
+  }catch(e){}
+}
 
 // Safety net for database writes. Many save buttons never looked at the result, so a failed save
 // (RLS, network, missing column) looked exactly like a successful one. Every insert/update/delete/upsert
@@ -1527,7 +1557,7 @@ function renderAuth(){
     </div>
     <form id="authForm">
       <div class="field" id="nameField" style="display:none;"><label>${t('fullName',locale)}</label><input id="fullName"></div>
-      <div class="field"><label>${t('email',locale)}</label><input id="authEmail" name="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label>${t('email',locale)}</label><input id="authEmail" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" required></div>
       <div class="field"><label>${t('password',locale)}</label><input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="6"></div>
       <div class="field" id="codeField" style="display:none;"><label>${t('inviteCode',locale)}</label><input id="inviteCode" placeholder="${locale==='el'?'π.χ.':'e.g.'} A1B2C3D4"></div>
       <div class="field" id="coachCodeField" style="display:none;"><label>${t('coachInviteCode',locale)}</label><input id="coachInviteCode" placeholder="${locale==='el'?'π.χ.':'e.g.'} A1B2C3D4"><p style="font-size:12px; color:var(--ink-soft); margin:4px 0 0;">${t('coachInviteCodeHint',locale)}</p></div>
@@ -1550,6 +1580,14 @@ function renderAuth(){
     </div>
   </div></div>`);
   app.appendChild(wrap);
+  addPasswordToggle(wrap.querySelector('#authPassword'));
+  let lastEmail = '';
+  try{ lastEmail = localStorage.getItem('hfp_last_email') || ''; }catch(e){}
+  if(lastEmail) wrap.querySelector('#authEmail').value = lastEmail;
+  if(RECOVERY_LINK_ERROR && !renderAuth._shownLinkErr){
+    renderAuth._shownLinkErr = true;
+    wrap.querySelector('#authError').innerHTML = `<div class="err">${locale==='el'?'Ο σύνδεσμος για νέο κωδικό δεν ισχύει πια ή έχει ήδη χρησιμοποιηθεί. Πάτα «Ξέχασα τον κωδικό» για νέο.':'That password link is no longer valid or was already used. Tap “Forgot password” for a new one.'}</div>`;
+  }
   wrap.querySelector('#massageInquiryBtn').addEventListener('click', openMassageInquiryModal);
   try{ if(new URLSearchParams(location.search).get('massage')==='1' && !renderAuth._opened){ renderAuth._opened = true; openMassageInquiryModal(); } }catch(e){}
   wrap.querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', (e)=>{ e.preventDefault(); showLegalModal(a.dataset.legal); }));
@@ -1568,12 +1606,26 @@ function renderAuth(){
   wrap.querySelector('#forgotLink').addEventListener('click', async ()=>{
     const email = wrap.querySelector('#authEmail').value.trim();
     const errBox = wrap.querySelector('#authError');
-    if(!email){ errBox.innerHTML = `<div class="err">${locale==='el'?'Γράψε πρώτα το email σου.':'Enter your email first.'}</div>`; return; }
+    const L = (a,b)=>locale==='el'?a:b;
+    if(!email){ errBox.innerHTML = `<div class="err">${L('Γράψε πρώτα το email σου.','Enter your email first.')}</div>`; return; }
+    const link = wrap.querySelector('#forgotLink');
+    if(Number(link.dataset.until||0) > Date.now()){ errBox.innerHTML = `<div class="err">${L('Περίμενε ένα λεπτό πριν ζητήσεις νέο email.','Wait a minute before asking for another email.')}</div>`; return; }
+    link.dataset.until = String(Date.now()+60000);
+    errBox.innerHTML = `<div style="font-size:13px;margin:8px 0;color:var(--ink-soft);">${L('Αποστολή…','Sending…')}</div>`;
+    let sendErr = null;
     try{
-      await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-    }catch(_){}
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+      sendErr = error || null;
+    }catch(e){ sendErr = e; }
+    if(sendErr){
+      // A failure to SEND is not tied to whether the account exists, so it is safe (and necessary) to show it.
+      const rate = sendErr.status === 429 || /rate limit|too many/i.test(sendErr.message||'');
+      errBox.innerHTML = `<div class="err">${rate ? L('Πάρα πολλά αιτήματα. Δοκίμασε ξανά σε λίγο.','Too many requests. Try again shortly.') : L('Δεν στάλθηκε το email: ','The email could not be sent: ') + escapeHtml(sendErr.message||'')}</div>`;
+      link.dataset.until = '0';
+      return;
+    }
     // Same message whether or not the account exists, so this cannot be used to probe for emails.
-    errBox.innerHTML = `<div class="ok" style="color:var(--ink);font-size:13px;margin:8px 0;">${locale==='el'?'Αν υπάρχει λογαριασμός με αυτό το email, θα λάβεις σύνδεσμο για νέο κωδικό.':'If an account exists for this email, you will receive a link to set a new password.'}</div>`;
+    errBox.innerHTML = `<div class="ok" style="color:var(--ink);font-size:13px;margin:8px 0;">${L('Αν υπάρχει λογαριασμός με αυτό το email, θα λάβεις σύνδεσμο για νέο κωδικό. Έλεγξε και τον φάκελο Spam. Ο σύνδεσμος ανοίγει αυτή την εφαρμογή.','If an account exists for this email, you will get a link to set a new password. Check your Spam folder too. The link opens this app.')}</div>`;
   });
   wrap.querySelector('#forgotLink').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); e.target.click(); } });
   wrap.querySelectorAll('#modeToggle button').forEach(b=>b.addEventListener('click', ()=>{
@@ -1586,6 +1638,8 @@ function renderAuth(){
     wrap.querySelectorAll('#roleToggle button').forEach(x=>x.classList.toggle('active', x===b));
     syncFields();
   }));
+  // Returning people (or anyone who followed a reset link) land on "Log in", not "Sign up".
+  if(lastEmail || RECOVERY_LINK_ERROR){ wrap.querySelector('#modeToggle [data-m="login"]').click(); }
 
   wrap.querySelector('#authForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
@@ -1597,6 +1651,7 @@ function renderAuth(){
       if(mode==='login'){
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if(error) throw error;
+        try{ localStorage.setItem('hfp_last_email', email); }catch(e){}
       } else {
         const fullName = wrap.querySelector('#fullName').value.trim();
         const consent = wrap.querySelector('#consentBox').checked;
@@ -10666,6 +10721,7 @@ async function boot(){
   const deepLinkTab = urlParams.get('tab');
   const { data } = await supabase.auth.getSession();
   session = data.session;
+  if(recoveryPending && session){ renderNewPassword(); return; }
   if(!session){ profile = null; renderAuth(); return; }
   const { data: p, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
   if(error || !p){ profile = null; renderAuth(); return; }
@@ -10708,11 +10764,13 @@ function renderNewPassword(){
       <button class="btn" type="submit" style="width:100%;">${el_?'Αποθήκευση':'Save'}</button>
     </form></div></div>`);
   app.appendChild(wrap);
+  addPasswordToggle(wrap.querySelector('#npPass'));
   wrap.querySelector('#npForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const { error } = await supabase.auth.updateUser({ password: wrap.querySelector('#npPass').value });
     if(error){ wrap.querySelector('#npErr').textContent = error.message; return; }
     toast(el_?'Ο κωδικός άλλαξε':'Password updated');
+    recoveryPending = false;
     history.replaceState(null,'',location.pathname);
     await boot();
   });
@@ -10720,7 +10778,7 @@ function renderNewPassword(){
 
 supabase.auth.onAuthStateChange((evt, s)=>{
   session = s;
-  if(evt === 'PASSWORD_RECOVERY'){ renderNewPassword(); return; }
+  if(evt === 'PASSWORD_RECOVERY'){ recoveryPending = true; renderNewPassword(); return; }
   // If Supabase signs us out from under the app (a revoked session, a failed token refresh —
   // not just our own logout button, which already calls boot() itself), the UI previously kept
   // showing the last-rendered screen as if still logged in: every write would then fail under
