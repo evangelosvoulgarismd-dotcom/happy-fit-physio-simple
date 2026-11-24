@@ -553,6 +553,59 @@
   }
   @media (prefers-reduced-motion: reduce){ .modalBox{ animation:none !important; } }
 
+  /* ===== Style v2: modern workout-app look (large titles, segmented controls, list rows, optional accent) ===== */
+  html[data-theme="dark"]{ --bg:#0e0d0f; --panel:#161518; --surface2:#1d1c20; --line:#27262c; --ink:#f3f3f1; --ink-soft:#9a9aa0; }
+  /* large left-aligned screen titles */
+  #main h2{ font-size:32px; line-height:1.08; letter-spacing:-.025em; margin:2px 0 14px; }
+  @media (max-width:760px){ #main h2{ font-size:34px; } }
+  /* segmented control: a dark track with a light pill on the active option */
+  .tabGroupRow, .tabSubRow, .roleToggle, .modeSwitch{ display:flex; gap:2px; padding:4px; background:var(--surface2); border:0; border-radius:999px; overflow-x:auto; scrollbar-width:none; }
+  .tabGroupRow::-webkit-scrollbar, .tabSubRow::-webkit-scrollbar{ display:none; }
+  .tabGroupRow .btn, .tabSubRow .btn, .roleToggle button, .modeSwitch button{ flex:1 0 auto; border:0 !important; background:transparent !important; color:var(--ink-soft) !important; border-radius:999px !important; padding:9px 16px !important; font-weight:600; white-space:nowrap; box-shadow:none; }
+  .tabGroupRow .btn:not(.secondary), .tabSubRow .btn:not(.secondary), .roleToggle button.active, .modeSwitch button.active{ background:var(--ink) !important; color:var(--bg) !important; }
+  .tabGroupRow, .tabSubRow{ margin-bottom:12px; flex-wrap:nowrap !important; gap:2px !important; border-radius:999px; }
+  .tabSubRow{ margin-top:0 !important; }
+  .tabGroups{ margin:14px 0 !important; }
+  .tabGroups .tabSubRow{ margin-top:10px !important; background:transparent; padding:0; border-radius:0; gap:6px !important; }
+  .tabGroups .tabSubRow .btn{ background:var(--surface2) !important; color:var(--ink) !important; padding:8px 14px !important; }
+  .tabGroups .tabSubRow .btn:not(.secondary){ background:var(--ink) !important; color:var(--bg) !important; }
+  /* list rows: soft rounded tiles with a chevron feel */
+  .exPickRow{ background:var(--surface2) !important; border:0 !important; border-radius:16px !important; margin-bottom:8px !important; padding:13px 14px !important; }
+  .exPickRow:active{ background:color-mix(in srgb, var(--ink) 10%, var(--surface2)) !important; }
+  .clientCard{ border-radius:18px; }
+  .profileMenuRow{ border-radius:16px; background:var(--surface2); border-color:transparent; }
+
+  /* Library, reference style: search pill, compact rounded rows, how-to steps */
+  .libToolbar{ background:transparent !important; border:0 !important; padding:0 !important; gap:8px !important; margin-bottom:12px !important; }
+  .libToolbar .libSearchInput{ background:var(--surface2) !important; border:0 !important; border-radius:14px !important; padding:12px 14px !important; min-height:46px; font-size:15px; }
+  .libToolbar select, .libToolbar .btn.secondary{ background:var(--surface2) !important; border:0 !important; border-radius:999px !important; color:var(--ink) !important; padding:8px 14px !important; font-size:13px !important; }
+  .libToolbar .libFilters{ padding-top:2px; }
+  .libToolbar .libSearchInput{ flex:1 1 100% !important; }
+  .libFilterBar:empty{ display:none; }
+  .libFilterBar{ background:transparent !important; border:0 !important; padding:0 !important; }
+  .libCard .badge{ display:inline-block; margin:4px 0 0 !important; font-size:10.5px !important; padding:2px 8px !important; }
+  .libCard{ background:var(--surface2) !important; border:1px solid var(--line) !important; border-radius:16px !important; padding:10px 12px !important; margin-bottom:8px !important; }
+  .libCard > .clickable{ min-height:56px; }
+  .libCard strong{ font-size:15px; font-weight:600; letter-spacing:-.01em; line-height:1.25; display:inline; }
+  .libCard .libSub{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .libCard .caret{ color:var(--ink-soft); font-size:15px; }
+  .libCard img, .libCard .exThumb, .libCard .libThumb{ border-radius:10px; }
+  .libCard .detail{ border-top:1px solid var(--line); padding-top:14px; margin-top:10px !important; }
+  .libCard .detail h4{ font-size:11.5px !important; letter-spacing:.08em; text-transform:uppercase; margin:16px 0 8px !important; }
+  .libCard .detail p{ line-height:1.55; }
+  .libCard .detail .badge{ background:var(--panel); border:0; padding:5px 11px; }
+  .libCard .detail .evidenceItem{ background:var(--panel); border-radius:12px; padding:10px 12px; margin-bottom:6px; font-size:12.5px; }
+  .libCard .execSteps li, .libCard .howTo li{ margin-bottom:10px; }
+  .libGroup{ font-size:12px; letter-spacing:.04em; text-transform:none; font-weight:600; margin:18px 4px 8px; }
+  .libChip{ background:var(--surface2); border:0; }
+  .libChip.on{ background:var(--ink); color:var(--bg); }
+  @media (max-width:760px){ .libCard strong{ font-size:15.5px; } }
+
+  .fxAnim{ position:relative; width:100%; aspect-ratio:3/2; border-radius:14px; overflow:hidden; background:#fff; margin:8px 0 0; }
+  .fxAnim img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+  .fxAnim .fxB{ animation:fxFlip 2.4s steps(1,end) infinite; }
+  @keyframes fxFlip{ 0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;} }
+  @media (prefers-reduced-motion: reduce){ .fxAnim .fxB{ animation:none; opacity:0; } }
   /* Coach / Manager switch */
   .modeSwitch{ display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--nav-on-bg, rgba(0,0,0,.06)); margin:0 0 10px; }
   .modeSwitch button{ flex:1; border:none; background:transparent; color:var(--ink-soft); font-family:inherit; font-size:12px; font-weight:700; padding:8px 6px; border-radius:9px; cursor:pointer; transition:background-color .2s ease, color .2s ease, transform .28s var(--ease-out); }
@@ -4144,14 +4197,17 @@ function ex3dBuild(THREE){
     renderer.domElement.style.cssText = 'width:100%;height:'+H+'px;display:block;touch-action:pan-y;border-radius:10px;cursor:grab;';
     container.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
+    const darkUI = document.documentElement.getAttribute('data-theme')!=='light';
+    renderer.domElement.style.background = darkUI ? 'radial-gradient(120% 90% at 50% 35%, #26262b 0%, #121214 70%)' : '#e9e9e6';
+    renderer.domElement.style.borderRadius = '14px';
     const cam = new THREE.PerspectiveCamera(35, W/H, .1, 50);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x556070, 1.15));
     const dl = new THREE.DirectionalLight(0xffffff, 1.1); dl.position.set(2,4,3); scene.add(dl);
-    const grid = new THREE.GridHelper(4, 16, 0x8a93a3, 0x8a93a3); grid.material.transparent = true; grid.material.opacity = .28; scene.add(grid);
+    const grid = new THREE.GridHelper(4, 16, 0x8a93a3, 0x8a93a3); grid.material.transparent = true; grid.material.opacity = .14; scene.add(grid);
 
-    const matBody = new THREE.MeshStandardMaterial({color:0xb7c0cf, roughness:.55, metalness:.05});
-    const matJoint = new THREE.MeshStandardMaterial({color:0xc4201f, roughness:.4});
-    const matProp = new THREE.MeshStandardMaterial({color:0x2c3038, roughness:.5, metalness:.5});
+    const matBody = new THREE.MeshStandardMaterial({color: darkUI?0x5a5e68:0xb7c0cf, roughness:.62, metalness:.12});
+    const matJoint = new THREE.MeshStandardMaterial({color:0xe5301f, roughness:.35, emissive:0xb01810, emissiveIntensity: darkUI?.55:.15});
+    const matProp = new THREE.MeshStandardMaterial({color: darkUI?0x9aa3b2:0x2c3038, roughness:.4, metalness:.6});
     const matWood = new THREE.MeshStandardMaterial({color:0x7a8696, roughness:.8});
     const segs = []; const cyl = new THREE.CylinderGeometry(1,1,1,14); const sph = new THREE.SphereGeometry(1,16,12);
     function seg(a, b, r, mat){ const m = new THREE.Mesh(cyl, mat||matBody); scene.add(m); segs.push({m,a,b,r}); return m; }
@@ -4274,6 +4330,13 @@ async function ex3dLoad(){
 }
 function ex3dIsCoachRole(){ try{ return profile && (profile.role==='coach' || profile.role==='owner'); }catch(e){ return false; } }
 function ex3dVisible(ex, isCoach){ return !!(ex && ex.anim_pattern && EX3D_PATTERNS[ex.anim_pattern] && (isCoach || ex.anim_status==='approved')); }
+function fxIs(u){ return /free-exercise-db\/main\/exercises\/[^/]+\/0\.jpg$/.test(u||''); }
+function fxAnimHtml(ex){
+  const u = ex && ex.gif_url || '';
+  if(!/free-exercise-db\/main\/exercises\/[^/]+\/0\.jpg$/.test(u)) return '';
+  const u2 = u.replace(/0\.jpg$/, '1.jpg');
+  return `<div class="fxAnim" aria-label="${locale==='el'?'Αρχή και τέλος της κίνησης':'Start and end of the movement'}"><img src="${escapeHtml(u)}" alt="" loading="lazy" decoding="async"><img class="fxB" src="${escapeHtml(u2)}" alt="" loading="lazy" decoding="async"></div><p style="font-size:12px; color:var(--ink-soft); margin:6px 0 10px;">${locale==='el'?'Η εικόνα εναλλάσσεται: αρχή και τέλος της κίνησης.':'The picture alternates between the start and end of the movement.'}</p>`;
+}
 function ex3dSlotHtml(ex, isCoach){
   if(!ex3dVisible(ex, isCoach)) return '';
   const draft = ex.anim_status !== 'approved';
@@ -4477,7 +4540,7 @@ async function renderLibrary(main, isCoach){
 
   const categories = [...new Set(exercises.map(e=>e.category).filter(Boolean))].sort();
   const selStyle = 'padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12px;';
-  const toolbar = el(`<div class="card" style="margin-bottom:14px; padding:12px 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+  const toolbar = el(`<div class="card libToolbar" style="margin-bottom:14px; padding:12px 14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
     <input class="libSearchInput" placeholder="${locale==='el'?'🔍 Αναζήτηση άσκησης...':'🔍 Search exercise...'}" style="flex:1; min-width:160px; padding:7px 10px; border-radius:6px; border:1px solid var(--line); font-family:inherit; font-size:12.5px;">
     <select class="libGroupSelect" aria-label="${locale==='el'?'Ομαδοποίηση':'Group by'}" style="${selStyle}"><option value="category">${locale==='el'?'Ομάδες: Κατηγορία':'Group: Category'}</option><option value="region">${locale==='el'?'Ομάδες: Περιοχή σώματος':'Group: Body region'}</option><option value="level">${locale==='el'?'Ομάδες: Επίπεδο':'Group: Level'}</option><option value="equipment">${locale==='el'?'Ομάδες: Εξοπλισμός':'Group: Equipment'}</option><option value="none">${locale==='el'?'Χωρίς ομάδες':'No groups'}</option></select>
     <button class="btn secondary libFilterToggle" type="button" style="padding:7px 12px; font-size:12px;">⚙ ${locale==='el'?'Φίλτρα':'Filters'}<span class="libFilterCount"></span></button>
@@ -4678,7 +4741,7 @@ async function renderLibrary(main, isCoach){
     }
 
     const subLine = [ex.body_region?exLabel(EX_BODY_REGIONS,ex.body_region):'', ex.equipment?exLabel(EX_EQUIPMENT,ex.equipment):'', ex.difficulty_level?exLabel(EX_DIFFICULTIES,ex.difficulty_level):''].filter(Boolean).join(' · ') || trTerm(ex.category||'');
-    const card = el(`<div class="card">
+    const card = el(`<div class="card libCard">
       <div class="clickable" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
         <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
           ${thumbFor(ex)}
@@ -4694,8 +4757,9 @@ async function renderLibrary(main, isCoach){
         </div>
         <div class="editExForm" style="display:none;"></div>` : ''}
         <div class="viewMode">
+        ${fxAnimHtml(ex)}
         ${ex3dSlotHtml(ex, isCoach)}
-        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
+        ${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:12px; border-radius:6px; overflow:hidden;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen loading="lazy"></iframe></div>` : (ex.video_url ? `<p><a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου το δείχνω ο ίδιος ↗':'I show you myself ↗'}</a></p>` : ((ex.gif_url && !fxIs(ex.gif_url)) ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:220px; border-radius:8px; margin-bottom:12px; display:block;">` : ''))}
         <p>${escapeHtml(desc||'')}</p>
         <p><strong>${t('why',locale)}:</strong> ${escapeHtml(why||'')}</p>
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${t('executionSteps',locale)}</h4><p style="white-space:pre-line;">${escapeHtml(ex.execution_steps)}</p>` : ''}
@@ -9582,7 +9646,8 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
         <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
       <div class="whyPanel" style="display:none; background:var(--tint-soft); border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex3dSlotHtml(ex, false)}
-        ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : (ex.gif_url ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
+        ${fxAnimHtml(ex)}
+        ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : ((ex.gif_url && !fxIs(ex.gif_url)) ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.execution_steps ? `<p style="margin-bottom:6px; white-space:pre-line;"><strong>${t('executionSteps',locale)}:</strong> ${escapeHtml(ex.execution_steps)}</p>` : ''}
         ${ex.technique_cues ? `<p style="margin-bottom:6px;"><strong>${t('techniqueCues',locale)}:</strong> ${escapeHtml(ex.technique_cues)}</p>` : ''}
