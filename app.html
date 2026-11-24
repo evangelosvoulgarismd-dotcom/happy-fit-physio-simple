@@ -620,6 +620,13 @@
   .emptyState .emptyIco{ width:64px; height:64px; border-radius:50%; background:var(--surface2); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px; }
   .emptyState h3{ font-size:19px; margin-bottom:6px; }
   .emptyState p{ color:var(--ink-soft); margin:0 auto; max-width:30ch; }
+  .muscleMap{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; align-items:flex-start; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px; margin:0 0 12px; }
+  .muscleMap svg{ width:min(34vw,110px); height:auto; aspect-ratio:100/210; display:block; }
+  .mmLbl{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); text-align:center; margin-bottom:4px; }
+  .mmBody{ fill:var(--surface2); stroke:var(--line); stroke-width:1; }
+  .mmPrim{ fill:var(--red); opacity:.95; } .mmSec{ fill:var(--red); opacity:.38; }
+  .mmLegend{ flex-basis:100%; display:flex; gap:16px; justify-content:center; font-size:12px; color:var(--ink-soft); }
+  .mmDot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:var(--red); } .mmDot.sec{ opacity:.38; }
   /* Coach / Manager switch */
   .modeSwitch{ display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--nav-on-bg, rgba(0,0,0,.06)); margin:0 0 10px; }
   .modeSwitch button{ flex:1; border:none; background:transparent; color:var(--ink-soft); font-family:inherit; font-size:12px; font-weight:700; padding:8px 6px; border-radius:9px; cursor:pointer; transition:background-color .2s ease, color .2s ease, transform .28s var(--ease-out); }
@@ -3955,7 +3962,7 @@ function exAltSectionHtml(ex, all){
 }
 let _altCatalog = null;
 function loadAltCatalog(){
-  if(!_altCatalog) _altCatalog = supabase.from('exercises').select('id,name_el,name_en,category,body_region,equipment,movement_pattern,difficulty_level').then(r=>r.data||[]);
+  if(!_altCatalog) _altCatalog = Promise.resolve(supabase.from('exercises').select('id,name_el,name_en,category,body_region,equipment,movement_pattern,difficulty_level')).then(r=>(r&&r.data)||[]);
   return _altCatalog;
 }
 function exLabel(list, elValue){
@@ -4345,6 +4352,40 @@ async function ex3dLoad(){
 }
 function ex3dIsCoachRole(){ try{ return profile && (profile.role==='coach' || profile.role==='owner'); }catch(e){ return false; } }
 function ex3dVisible(ex, isCoach){ return !!(ex && ex.anim_pattern && EX3D_PATTERNS[ex.anim_pattern] && (isCoach || ex.anim_status==='approved')); }
+// ---- Muscle map: our own simple SVG (front and back), highlights the muscles listed on the exercise ----
+const MM_SHAPES = {
+  'Αυχένας':{f:'<rect x="46" y="30" width="8" height="8" rx="3"/>', b:'<rect x="46" y="30" width="8" height="8" rx="3"/>'},
+  'Ώμοι':{f:'<circle cx="30" cy="43" r="6.5"/><circle cx="70" cy="43" r="6.5"/>', b:'<circle cx="30" cy="43" r="6.5"/><circle cx="70" cy="43" r="6.5"/>'},
+  'Στήθος':{f:'<ellipse cx="42" cy="51" rx="9" ry="7.5"/><ellipse cx="58" cy="51" rx="9" ry="7.5"/>'},
+  'Δικέφαλοι':{f:'<rect x="24.5" y="52" width="7" height="21" rx="3"/><rect x="68.5" y="52" width="7" height="21" rx="3"/>'},
+  'Τρικέφαλοι':{b:'<rect x="24.5" y="52" width="7" height="21" rx="3"/><rect x="68.5" y="52" width="7" height="21" rx="3"/>'},
+  'Πήχεις':{f:'<rect x="24.5" y="75" width="6" height="22" rx="3"/><rect x="69.5" y="75" width="6" height="22" rx="3"/>', b:'<rect x="24.5" y="75" width="6" height="22" rx="3"/><rect x="69.5" y="75" width="6" height="22" rx="3"/>'},
+  'Κοιλιακοί':{f:'<rect x="43" y="60" width="14" height="40" rx="5"/>'},
+  'Τετρακέφαλοι':{f:'<rect x="33" y="130" width="14" height="40" rx="6"/><rect x="53" y="130" width="14" height="40" rx="6"/>'},
+  'Προσαγωγείς':{f:'<rect x="46" y="125" width="3.5" height="34" rx="1.7"/><rect x="50.5" y="125" width="3.5" height="34" rx="1.7"/>'},
+  'Απαγωγείς':{f:'<rect x="29.5" y="124" width="3.5" height="34" rx="1.7"/><rect x="67" y="124" width="3.5" height="34" rx="1.7"/>', b:'<ellipse cx="33" cy="110" rx="4" ry="6"/><ellipse cx="67" cy="110" rx="4" ry="6"/>'},
+  'Τραπεζοειδείς':{b:'<path d="M50 33 L36 45 L50 66 L64 45 Z"/>'},
+  'Πλατύς ραχιαίος':{b:'<path d="M34 56 L47 66 L45 92 L34 84 Z"/><path d="M66 56 L53 66 L55 92 L66 84 Z"/>'},
+  'Μέση πλάτη':{b:'<rect x="43" y="52" width="14" height="14" rx="4"/>'},
+  'Οσφυϊκή χώρα':{b:'<rect x="43" y="92" width="14" height="14" rx="4"/>'},
+  'Γλουτοί':{b:'<ellipse cx="42" cy="118" rx="9" ry="8"/><ellipse cx="58" cy="118" rx="9" ry="8"/>'},
+  'Οπίσθιοι μηροί':{b:'<rect x="33" y="130" width="14" height="40" rx="6"/><rect x="53" y="130" width="14" height="40" rx="6"/>'},
+  'Γάμπες':{b:'<rect x="33" y="172" width="13" height="30" rx="6"/><rect x="54" y="172" width="13" height="30" rx="6"/>'},
+};
+function muscleMapHtml(ex){
+  const split = v => String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const prim = new Set(split(ex && ex.primary_muscles)), sec = new Set(split(ex && ex.secondary_muscles));
+  const known = k => MM_SHAPES[k];
+  if(![...prim, ...sec].some(known)) return '';
+  const body = '<circle cx="50" cy="18" r="13"/><path d="M50 31 C30 31 24 42 24 60 L24 95 C24 100 30 100 30 95 L32 62 L32 130 L26 205 L40 205 L48 120 L52 120 L60 205 L74 205 L68 130 L68 62 L70 95 C70 100 76 100 76 95 L76 60 C76 42 70 31 50 31 Z"/>';
+  const layer = (view, set, cls) => [...set].filter(known).map(k=>MM_SHAPES[k][view] ? `<g class="${cls}">${MM_SHAPES[k][view]}</g>` : '').join('');
+  const svg = view => `<svg viewBox="0 0 100 210" role="img" aria-label="${view==='f'?(locale==='el'?'Μπροστά':'Front'):(locale==='el'?'Πίσω':'Back')}"><g class="mmBody">${body}</g>${layer(view, sec, 'mmSec')}${layer(view, prim, 'mmPrim')}</svg>`;
+  return `<div class="muscleMap">
+    <div><div class="mmLbl">${locale==='el'?'Μπροστά':'Front'}</div>${svg('f')}</div>
+    <div><div class="mmLbl">${locale==='el'?'Πίσω':'Back'}</div>${svg('b')}</div>
+    <div class="mmLegend"><span><i class="mmDot prim"></i>${locale==='el'?'Κύριοι μύες':'Primary'}</span><span><i class="mmDot sec"></i>${locale==='el'?'Δευτερεύοντες':'Secondary'}</span></div>
+  </div>`;
+}
 function stepsHtml(text){
   const lines = String(text||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
   if(!lines.length) return '';
@@ -4484,7 +4525,7 @@ async function renderLibrary(main, isCoach){
   main.innerHTML = '';
   const header = el(`<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
     <h2>${t('exerciseLibrary',locale)}</h2>
-    ${isCoach ? `<span style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary" id="exportExBtn" style="font-size:12px;">⬇ ${locale==='el'?'Εξαγωγή ασκήσεων':'Export exercises'}</button><button class="btn secondary" id="bulk3dBtn" style="font-size:12px;">🧊 ${locale==='el'?'Πρόταση 3D για όλες':'Suggest 3D for all'}</button><button class="btn secondary" id="aiTagBtn" style="font-size:12px;">🤖 ${locale==='el'?'Συμπλήρωση με AI':'Fill with AI'}</button><button class="btn" id="newExBtn">${t('newExercise',locale)}</button></span>` : ''}
+    ${isCoach ? `<span style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn secondary" id="exportExBtn" style="font-size:12px;">⬇ ${locale==='el'?'Εξαγωγή ασκήσεων':'Export exercises'}</button><button class="btn secondary" id="bulk3dBtn" style="font-size:12px;">🧊 ${locale==='el'?'Πρόταση 3D για όλες':'Suggest 3D for all'}</button><button class="btn secondary" id="aiTagBtn" style="font-size:12px;">🤖 ${locale==='el'?'Συμπλήρωση με AI':'Fill with AI'}</button><button class="btn secondary" id="aiTrBtn" style="font-size:12px;">🌐 ${locale==='el'?'Μετάφραση με AI':'Translate with AI'}</button><button class="btn" id="newExBtn">${t('newExercise',locale)}</button></span>` : ''}
   </div>`);
   main.appendChild(header);
 
@@ -4543,6 +4584,49 @@ async function renderLibrary(main, isCoach){
         }
         overlay.remove();
         toast(el_ ? (fail ? `Αποθηκεύτηκαν ${picked.length-fail}, απέτυχαν ${fail}` : `Αποθηκεύτηκαν ${picked.length} ασκήσεις`) : `${picked.length-fail} saved`);
+        renderLibrary(main, isCoach);
+      });
+      document.body.appendChild(overlay);
+    });
+    // AI translates imported exercises (Greek name + steps), 12 at a time. Nothing is saved until the coach ticks and applies.
+    header.querySelector('#aiTrBtn').addEventListener('click', async ()=>{
+      const el_ = locale==='el';
+      const btn = header.querySelector('#aiTrBtn'); const label = btn.textContent;
+      btn.disabled = true; btn.textContent = '⏳ …';
+      let res;
+      try{ res = await supabase.functions.invoke('translate-exercises', { body: {} }); }catch(e){ res = { error:e }; }
+      btn.disabled = false; btn.textContent = label;
+      const d = res && res.data;
+      if(!d || d.error || res.error){
+        toast(el_ ? (d?.error==='rate_limited' ? 'Πολλά αιτήματα, δοκίμασε σε λίγο.' : 'Η μετάφραση με AI δεν είναι διαθέσιμη (έχει γίνει deploy η translate-exercises;).') : 'AI translation unavailable (is translate-exercises deployed?).');
+        return;
+      }
+      const items = d.items || [];
+      if(!items.length){ toast(el_ ? 'Δεν υπάρχουν άλλες ασκήσεις προς μετάφραση.' : 'Nothing left to translate.'); return; }
+      const rows = items.map((x,i)=>`<label style="display:flex; gap:8px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--line); font-size:12.5px;">
+          <input type="checkbox" class="aiTrChk" data-i="${i}" checked style="margin-top:3px;">
+          <span><strong>${escapeHtml(x.name_el)}</strong> <span style="color:var(--ink-soft);">(${escapeHtml(x.name_en)})</span><br><span style="color:var(--ink-soft);">${x.steps.map((st,k)=>`${k+1}. ${escapeHtml(st)}`).join('<br>')}</span></span></label>`).join('');
+      const overlay = el(`<div class="modalOverlay"><div class="modalBox" style="max-width:680px;">
+        <button class="modalCloseBtn" type="button">&times;</button>
+        <h2>🌐 ${el_?'Μετάφραση ασκήσεων':'Exercise translation'}</h2>
+        <p style="font-size:12px; color:var(--ink-soft);">${el_?'Διάβασε και ξετσέκαρε ό,τι δεν συμφωνείς. Δεν αποθηκεύεται τίποτα πριν πατήσεις Εφαρμογή. Οι ασκήσεις μένουν «Δεν έχει ελεγχθεί ποτέ» μέχρι να τις εγκρίνεις.':'Review and untick anything you disagree with. Nothing is saved until you press Apply.'}${d.remaining?` ${el_?'Απομένουν':'Remaining'}: ${d.remaining}.`:''}</p>
+        <div>${rows}</div>
+        <div style="display:flex; gap:8px; margin-top:14px;"><button class="btn aiTrApply" type="button">${el_?'Εφαρμογή επιλεγμένων':'Apply selected'}</button><button class="btn secondary aiTrCancel" type="button">${el_?'Άκυρο':'Cancel'}</button></div>
+      </div></div>`);
+      overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+      overlay.querySelector('.modalCloseBtn').addEventListener('click', ()=>overlay.remove());
+      overlay.querySelector('.aiTrCancel').addEventListener('click', ()=>overlay.remove());
+      overlay.querySelector('.aiTrApply').addEventListener('click', async ()=>{
+        const picked = [...overlay.querySelectorAll('.aiTrChk')].filter(c=>c.checked).map(c=>items[Number(c.dataset.i)]);
+        if(!picked.length){ overlay.remove(); return; }
+        const ab = overlay.querySelector('.aiTrApply'); ab.disabled = true; ab.textContent = '⏳ …';
+        let fail = 0;
+        for(const x of picked){
+          const { error:err } = await supabase.from('exercises').update({ name_el:x.name_el, execution_steps:x.steps.map((st,k)=>`${k+1}. ${st}`).join('\n') }).eq('id', x.id);
+          if(err) fail++;
+        }
+        overlay.remove();
+        toast(el_ ? (fail ? `Αποθηκεύτηκαν ${picked.length-fail}, απέτυχαν ${fail}` : `Μεταφράστηκαν ${picked.length} ασκήσεις`) : `${picked.length-fail} saved`);
         renderLibrary(main, isCoach);
       });
       document.body.appendChild(overlay);
@@ -4798,6 +4882,7 @@ async function renderLibrary(main, isCoach){
           ${ex.movement_pattern ? `<span class="badge">🔁 ${escapeHtml(ex.movement_pattern)}</span>` : ''}
           ${(ex.goal_tags||'').split(',').map(g=>g.trim()).filter(Boolean).map(g=>`<span class="badge">🎯 ${escapeHtml(exLabel(EX_GOALS,g))}</span>`).join('')}
         </div>` : ''}
+        ${muscleMapHtml(ex)}
         ${(ex.primary_muscles||ex.secondary_muscles) ? `<div class="muscleCard">
           ${ex.primary_muscles ? `<div><small>${locale==='el'?'Κύριοι μύες':'Primary muscles'}</small><strong>${escapeHtml(ex.primary_muscles)}</strong></div>` : ''}
           ${ex.secondary_muscles ? `<div><small>${locale==='el'?'Δευτερεύοντες μύες':'Secondary muscles'}</small><span>${escapeHtml(ex.secondary_muscles)}</span></div>` : ''}
@@ -9537,7 +9622,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     setTimeout(()=>{ b.classList.remove('show'); setTimeout(()=>b.remove(), 400); }, 4200);
   }
 
-  function buildHistoryPanel(panel, exerciseId){
+  function buildHistoryPanel(panel, exerciseId, exObj){
     const el_ = locale==='el';
     const hist = (logsByExerciseId[exerciseId] || []).filter(l=>l.load_kg!=null && l.reps!=null);
     if(!hist.length){ panel.innerHTML = `<p style="font-size:12.5px; color:var(--ink-soft);">${el_?'Δεν υπάρχουν ακόμα καταγραφές.':'No logs yet.'}</p>`; return; }
@@ -9562,6 +9647,19 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       <div class="histChart"></div>
       <h4 style="font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:12px 0 8px;">${el_?'Ιστορικό':'History'}</h4>
       <div class="histList">${dates.slice(0,10).map(d=>`<div style="display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-top:1px solid var(--line); font-size:12.5px;"><span style="color:var(--ink-soft);">${d}</span><span class="mono" style="text-align:right;">${byDate[d].slice().sort((a,b)=>a.set_number-b.set_number).map(l=>l.load_kg+'×'+l.reps).join('  ')}</span></div>`).join('')}</div>`;
+    if(exObj){
+      const simBox = el(`<div class="histSimilar"></div>`); panel.appendChild(simBox);
+      loadAltCatalog().then(cat=>{
+        const done = exAlternatives(exObj, cat, getMyEquip(), 12).filter(c=>(logsByExerciseId[c.id]||[]).some(l=>l.load_kg!=null && l.reps!=null)).slice(0,4);
+        if(!done.length) return;
+        simBox.innerHTML = `<h4 style="font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:12px 0 8px;">${el_?'Παρόμοιες ασκήσεις που έχεις κάνει':'Similar exercises you have logged'}</h4>` + done.map(c=>{
+          const hs=(logsByExerciseId[c.id]||[]).filter(l=>l.load_kg!=null && l.reps!=null);
+          const best=hs.reduce((m,l)=>l.load_kg>m.load_kg?l:m, hs[0]);
+          let e=null; hs.forEach(l=>{ const v=epley1RM(l.load_kg,l.reps); if(v && (e==null||v>e)) e=v; });
+          return `<div style="display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-top:1px solid var(--line); font-size:12.5px;"><span>${escapeHtml(el_?c.name_el:(c.name_en||c.name_el))}</span><span class="mono" style="text-align:right;">${best.load_kg}kg × ${best.reps}${e?' · ~'+e+'kg':''}</span></div>`;
+        }).join('') + `<p style="font-size:11.5px; color:var(--ink-soft); margin:6px 0 0;">${el_?'Τα ρεκόρ μένουν χωριστά ανά άσκηση. Το εκτιμώμενο 1RM σε βοηθά να επιλέξεις βάρος.':'Records stay separate per exercise. The estimated 1RM helps you choose a weight.'}</p>`;
+      }).catch(()=>{});
+    }
     const chartBox = panel.querySelector('.histChart');
     const draw = (period)=>{
       const cutoff = period==='all' ? null : new Date(Date.now() - Number(period)*86400000).toISOString().slice(0,10);
@@ -9713,6 +9811,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       <div class="whyPanel" style="display:none; background:var(--tint-soft); border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
         ${ex3dSlotHtml(ex, false)}
         ${fxAnimHtml(ex)}
+        ${muscleMapHtml(ex)}
         ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : ((ex.gif_url && !fxIs(ex.gif_url)) ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin:12px 0 6px;">${t('executionSteps',locale)}</h4>${stepsHtml(ex.execution_steps)}` : ''}
@@ -9747,7 +9846,7 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
     if(histBtn){ histBtn.addEventListener('click', ()=>{
       const hp = card.querySelector('.histPanel'); const open = hp.style.display==='none';
       hp.style.display = open ? 'block' : 'none';
-      if(open && !hp.dataset.built){ hp.dataset.built='1'; buildHistoryPanel(hp, ex.id); }
+      if(open && !hp.dataset.built){ hp.dataset.built='1'; buildHistoryPanel(hp, ex.id, ex); }
     }); }
     const warmBtn = card.querySelector('.warmToggleBtn');
     if(warmBtn) warmBtn.addEventListener('click', ()=>{ const wp = card.querySelector('.warmPanel'); wp.style.display = wp.style.display==='none' ? 'block' : 'none'; });
