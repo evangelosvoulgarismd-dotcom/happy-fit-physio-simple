@@ -25,6 +25,20 @@
     --surface2:#efe4d4; --tint:#f6e0da; --tint-soft:#f6efe4; --input-bg:#fff;
     --ok:#1f6b3a; --ok-bg:#e3f0e6; --warn:#996915; --warn-bg:#fff2d9; --toast-bg:#241413;
   }
+
+  /* Split view (desktop): the coach's own screen on the left, what the client sees live on the right */
+  #splitPane{position:fixed; top:0; right:0; bottom:0; width:420px; z-index:40; background:var(--bg); border-left:1px solid var(--line); display:flex; flex-direction:column; padding:10px 12px 8px;}
+  #splitPane[hidden]{display:none;}
+  #splitPane .spHead{display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px;}
+  #splitPane .spHead b{white-space:nowrap;}
+  #splitPane .spName{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink-soft);}
+  #splitPane .spBtn{border:1px solid var(--line); background:var(--panel); color:var(--ink); border-radius:8px; padding:5px 9px; font:inherit; font-size:12px; cursor:pointer;}
+  #splitPane .spBtn:hover{border-color:var(--red);}
+  #splitPane .spFrameWrap{flex:1; min-height:0; border:1px solid var(--line); border-radius:18px; overflow:hidden; background:var(--bg);}
+  #splitPane iframe{width:100%; height:100%; border:0; display:block; background:var(--bg);}
+  #splitPane .spNote{font-size:11px; color:var(--ink-soft); text-align:center; margin-top:6px;}
+  body.splitOn #app{margin-right:420px;}
+  html.previewMode #logoutBtn, html.previewMode #enablePushBtn, html.previewMode #exportBtn, html.previewMode #notifBell{display:none !important;}
   /* Dark theme: same palette as the website (black, white, red). Light theme stays available. */
   html[data-theme="dark"]{
     --ink:#f5f5f5; --ink-soft:#9a9a9a; --bg:#0b0b0b; --panel:#121212; --line:#242424;
@@ -2201,6 +2215,7 @@ function renderShell(){
   };
   new MutationObserver(()=>{ if(!tidyQueued){ tidyQueued = true; requestAnimationFrame(tidyTitles); } }).observe(document.body, {childList:true, subtree:true});
   renderMainView(main, isCoach, isOwner);
+  syncSplitPane();
 }
 
 
@@ -4165,7 +4180,7 @@ const EX3D_PROPS = {
   dumbbells:   {el:'Αλτήρες', items:[{t:'db',at:'wristL'},{t:'db',at:'wristR'}]},
   dumbbell1:   {el:'Ένας αλτήρας', items:[{t:'db',at:'wristR'}]},
   barbell:     {el:'Μπάρα (στα χέρια)', items:[{t:'bar',at:'hands'}]},
-  barbell_back:{el:'Μπάρα στην πλάτη', items:[{t:'bar',at:'shoulders'}]},
+  barbell_back:{el:'Μπάρα στην πλάτη', pose:{holdBack:1}, items:[{t:'bar',at:'hands'}]},
   kettlebell:  {el:'Kettlebell', items:[{t:'kb',at:'hands'}]},
   bench:       {el:'Πάγκος', items:[{t:'box',x:-0.3,y:0.2,z:0,w:0.9,h:0.4,d:0.3}]},
   band_hands:  {el:'Λάστιχο (χέρια)', items:[{t:'line',a:'wristL',b:'wristR',c:'#e0a030'}]},
@@ -4174,19 +4189,48 @@ const EX3D_PROPS = {
   mat:         {el:'Στρώμα', items:[{t:'mat'}]}
 };
 
+// ---- Extra movements and equipment (bench, incline bench, seats, cable stations, machines, rack, dip bars) ----
+Object.assign(EX3D_PATTERNS, {"bench_press":{"el":"Πιέσεις στήθους (πάγκος)","anchor":"pelvis","restY":0.535,"T":4,"frames":[{"t":0,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":0},{"t":1.6,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":12,"elbow":78},{"t":2.2,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":12,"elbow":78},{"t":3.8,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":0},{"t":4,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":0}],"plant":true},"incline_press":{"el":"Πιέσεις σε κεκλιμένο πάγκο","anchor":"pelvis","restY":0.5,"T":4,"frames":[{"t":0,"rot":-50,"hip":25,"knee":90,"ankle":0,"shoulder":130,"elbow":0},{"t":1.6,"rot":-50,"hip":25,"knee":90,"ankle":0,"shoulder":40,"elbow":90},{"t":2.2,"rot":-50,"hip":25,"knee":90,"ankle":0,"shoulder":40,"elbow":90},{"t":3.8,"rot":-50,"hip":25,"knee":90,"ankle":0,"shoulder":130,"elbow":0},{"t":4,"rot":-50,"hip":25,"knee":90,"ankle":0,"shoulder":130,"elbow":0}],"plant":true},"db_fly":{"el":"Ανοίγματα με αλτήρες (πάγκος)","anchor":"pelvis","restY":0.535,"T":4,"frames":[{"t":0,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":15,"sabd":0},{"t":1.6,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":25,"sabd":80},{"t":2.2,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":25,"sabd":80},{"t":3.8,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":15,"sabd":0},{"t":4,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":15,"sabd":0}],"plant":true},"skull_crusher":{"el":"Τρικέφαλοι ξαπλωτά","anchor":"pelvis","restY":0.535,"T":4,"frames":[{"t":0,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":0},{"t":1.6,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":105},{"t":2.2,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":105},{"t":3.8,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":0},{"t":4,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":0}],"plant":true},"hip_thrust":{"el":"Hip thrust (πάγκος)","anchor":"shoulderC","restOn":"shoulderC","restY":0.45,"plant":true,"T":4,"frames":[{"t":0,"rot":-62,"hip":58,"knee":90,"ankle":0,"shoulder":56,"elbow":0},{"t":1.6,"rot":-105,"hip":-20,"knee":90,"ankle":0,"shoulder":-30,"elbow":0},{"t":2.2,"rot":-105,"hip":-20,"knee":90,"ankle":0,"shoulder":-30,"elbow":0},{"t":3.8,"rot":-62,"hip":58,"knee":90,"ankle":0,"shoulder":56,"elbow":0},{"t":4,"rot":-62,"hip":58,"knee":90,"ankle":0,"shoulder":56,"elbow":0}],"footX":0.4},"front_raise":{"el":"Μπροστινή ανύψωση","anchor":"ankleR","T":4,"frames":[{"t":0,"shoulder":0,"elbow":5},{"t":1.6,"shoulder":90,"elbow":5},{"t":2.2,"shoulder":90,"elbow":5},{"t":3.8,"shoulder":0,"elbow":5},{"t":4,"shoulder":0,"elbow":5}]},"upright_row":{"el":"Ανύψωση προς το πηγούνι","anchor":"ankleR","T":4,"frames":[{"t":0,"shoulder":0,"elbow":0},{"t":1.6,"shoulder":80,"elbow":100},{"t":2.2,"shoulder":80,"elbow":100},{"t":3.8,"shoulder":0,"elbow":0},{"t":4,"shoulder":0,"elbow":0}]},"triceps_pushdown":{"el":"Triceps pushdown (τροχαλία)","anchor":"ankleR","T":4,"frames":[{"t":0,"spine":8,"shoulder":0,"elbow":105},{"t":1.6,"spine":8,"shoulder":0,"elbow":0},{"t":2.2,"spine":8,"shoulder":0,"elbow":0},{"t":3.8,"spine":8,"shoulder":0,"elbow":105},{"t":4,"spine":8,"shoulder":0,"elbow":105}]},"overhead_tri_ext":{"el":"Τρικέφαλοι πάνω από το κεφάλι","anchor":"ankleR","T":4,"frames":[{"t":0,"shoulder":170,"elbow":140},{"t":1.6,"shoulder":170,"elbow":5},{"t":2.2,"shoulder":170,"elbow":5},{"t":3.8,"shoulder":170,"elbow":140},{"t":4,"shoulder":170,"elbow":140}]},"seated_row":{"el":"Κωπηλασία καθιστά (τροχαλία)","anchor":"pelvis","restY":0.5,"T":4,"frames":[{"t":0,"rot":0,"spine":-5,"hip":88,"knee":15,"ankle":-10,"shoulder":85,"elbow":0},{"t":1.6,"rot":0,"spine":-12,"hip":88,"knee":15,"ankle":-10,"shoulder":-10,"elbow":100},{"t":2.2,"rot":0,"spine":-12,"hip":88,"knee":15,"ankle":-10,"shoulder":-10,"elbow":100},{"t":3.8,"rot":0,"spine":-5,"hip":88,"knee":15,"ankle":-10,"shoulder":85,"elbow":0},{"t":4,"rot":0,"spine":-5,"hip":88,"knee":15,"ankle":-10,"shoulder":85,"elbow":0}],"plant":true},"lat_pulldown":{"el":"Έλξη κάθετη (lat pulldown)","anchor":"pelvis","restY":0.5,"T":4,"frames":[{"t":0,"rot":0,"spine":-8,"hip":88,"knee":90,"ankle":0,"shoulder":170,"elbow":0},{"t":1.6,"rot":0,"spine":-14,"hip":88,"knee":90,"ankle":0,"shoulder":60,"elbow":105},{"t":2.2,"rot":0,"spine":-14,"hip":88,"knee":90,"ankle":0,"shoulder":60,"elbow":105},{"t":3.8,"rot":0,"spine":-8,"hip":88,"knee":90,"ankle":0,"shoulder":170,"elbow":0},{"t":4,"rot":0,"spine":-8,"hip":88,"knee":90,"ankle":0,"shoulder":170,"elbow":0}],"plant":true},"chest_press_machine":{"el":"Πιέσεις στήθους (μηχάνημα)","anchor":"pelvis","restY":0.5,"T":4,"frames":[{"t":0,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":60,"elbow":115},{"t":1.6,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":85,"elbow":8},{"t":2.2,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":85,"elbow":8},{"t":3.8,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":60,"elbow":115},{"t":4,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":60,"elbow":115}],"plant":true},"shoulder_press_seated":{"el":"Πιέσεις ώμων καθιστά","anchor":"pelvis","restY":0.5,"T":4,"frames":[{"t":0,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":30,"elbow":140},{"t":1.6,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":175,"elbow":5},{"t":2.2,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":175,"elbow":5},{"t":3.8,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":30,"elbow":140},{"t":4,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":30,"elbow":140}],"plant":true},"leg_extension":{"el":"Έκταση γονάτου (μηχάνημα)","anchor":"pelvis","restY":0.52,"T":4,"frames":[{"t":0,"rot":0,"hip":90,"knee":90,"ankle":0,"shoulder":20,"elbow":60},{"t":1.6,"rot":0,"hip":90,"knee":5,"ankle":0,"shoulder":20,"elbow":60},{"t":2.2,"rot":0,"hip":90,"knee":5,"ankle":0,"shoulder":20,"elbow":60},{"t":3.8,"rot":0,"hip":90,"knee":90,"ankle":0,"shoulder":20,"elbow":60},{"t":4,"rot":0,"hip":90,"knee":90,"ankle":0,"shoulder":20,"elbow":60}]},"leg_curl":{"el":"Κάμψη γονάτου (μηχάνημα)","anchor":"pelvis","restY":0.52,"T":4,"frames":[{"t":0,"rot":0,"hip":90,"knee":5,"ankle":0,"shoulder":20,"elbow":60},{"t":1.6,"rot":0,"hip":90,"knee":95,"ankle":0,"shoulder":20,"elbow":60},{"t":2.2,"rot":0,"hip":90,"knee":95,"ankle":0,"shoulder":20,"elbow":60},{"t":3.8,"rot":0,"hip":90,"knee":5,"ankle":0,"shoulder":20,"elbow":60},{"t":4,"rot":0,"hip":90,"knee":5,"ankle":0,"shoulder":20,"elbow":60}]},"leg_press":{"el":"Πιέσεις ποδιών (leg press)","anchor":"pelvis","restY":0.42,"T":4,"frames":[{"t":0,"rot":-50,"hip":110,"knee":65,"ankle":0,"shoulder":20,"elbow":70},{"t":1.6,"rot":-50,"hip":72,"knee":8,"ankle":0,"shoulder":20,"elbow":70},{"t":2.2,"rot":-50,"hip":72,"knee":8,"ankle":0,"shoulder":20,"elbow":70},{"t":3.8,"rot":-50,"hip":110,"knee":65,"ankle":0,"shoulder":20,"elbow":70},{"t":4,"rot":-50,"hip":110,"knee":65,"ankle":0,"shoulder":20,"elbow":70}]},"dip":{"el":"Βυθίσεις (δίζυγο)","anchor":"none","hang":true,"hangY":1.07,"T":4,"frames":[{"t":0,"spine":6,"hip":0,"knee":35,"ankle":20,"shoulder":0,"elbow":0},{"t":1.6,"spine":14,"hip":0,"knee":35,"ankle":20,"shoulder":-48,"elbow":55},{"t":2.2,"spine":14,"hip":0,"knee":35,"ankle":20,"shoulder":-48,"elbow":55},{"t":3.8,"spine":6,"hip":0,"knee":35,"ankle":20,"shoulder":0,"elbow":0},{"t":4,"spine":6,"hip":0,"knee":35,"ankle":20,"shoulder":0,"elbow":0}]},"seated_curl":{"el":"Curl καθιστά","anchor":"pelvis","restY":0.5,"T":4,"frames":[{"t":0,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":0,"elbow":0},{"t":1.6,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":5,"elbow":140},{"t":2.2,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":5,"elbow":140},{"t":3.8,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":0,"elbow":0},{"t":4,"rot":0,"hip":88,"knee":90,"ankle":0,"shoulder":0,"elbow":0}],"plant":true},"rear_delt_fly":{"el":"Πίσω ώμοι (reverse fly)","anchor":"ankleR","T":4,"frames":[{"t":0,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":50,"elbow":15,"sabd":5},{"t":1.6,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":50,"elbow":15,"sabd":85},{"t":2.2,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":50,"elbow":15,"sabd":85},{"t":3.8,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":50,"elbow":15,"sabd":5},{"t":4,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":50,"elbow":15,"sabd":5}]},"tricep_kickback":{"el":"Triceps kickback","anchor":"ankleR","T":4,"frames":[{"t":0,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":0,"elbow":90},{"t":1.6,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":0,"elbow":0},{"t":2.2,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":0,"elbow":0},{"t":3.8,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":0,"elbow":90},{"t":4,"hip":70,"knee":25,"ankle":-5,"spine":50,"shoulder":0,"elbow":90}]},"hanging_leg_raise":{"el":"Ανύψωση ποδιών σε δοκό","anchor":"none","hang":true,"T":4,"frames":[{"t":0,"shoulder":178,"elbow":0,"hip":0,"knee":5},{"t":1.6,"shoulder":178,"elbow":0,"hip":95,"knee":20},{"t":2.2,"shoulder":178,"elbow":0,"hip":95,"knee":20},{"t":3.8,"shoulder":178,"elbow":0,"hip":0,"knee":5},{"t":4,"shoulder":178,"elbow":0,"hip":0,"knee":5}]},"pullover":{"el":"Pullover (πάγκος)","anchor":"pelvis","restY":0.535,"T":4,"frames":[{"t":0,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":12},{"t":1.6,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":178,"elbow":12},{"t":2.2,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":178,"elbow":12},{"t":3.8,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":12},{"t":4,"rot":-90,"hip":-5,"knee":90,"ankle":0,"shoulder":90,"elbow":12}],"plant":true}});
+Object.assign(EX3D_PROPS, {"bench_barbell":{"el":"Πάγκος + μπάρα","items":[{"t":"box","x":-0.34,"y":0.41,"z":0,"w":0.95,"h":0.06,"d":0.34,"pad":1},{"t":"box","x":-0.7,"y":0.19,"z":0,"w":0.05,"h":0.38,"d":0.28},{"t":"box","x":0.0,"y":0.19,"z":0,"w":0.05,"h":0.38,"d":0.28},{"t":"bar","at":"hands"}]},"bench_dumbbells":{"el":"Πάγκος + αλτήρες","items":[{"t":"box","x":-0.34,"y":0.41,"z":0,"w":0.95,"h":0.06,"d":0.34,"pad":1},{"t":"box","x":-0.7,"y":0.19,"z":0,"w":0.05,"h":0.38,"d":0.28},{"t":"box","x":0.0,"y":0.19,"z":0,"w":0.05,"h":0.38,"d":0.28},{"t":"db","at":"wristL"},{"t":"db","at":"wristR"}]},"incline_barbell":{"el":"Κεκλιμένος πάγκος + μπάρα","items":[{"t":"box","x":-0.02,"y":0.4,"z":0,"w":0.5,"h":0.06,"d":0.3,"pad":1},{"t":"box","x":-0.36,"y":0.8,"z":0,"w":1,"h":0.07,"d":0.32,"pad":1,"rz":2.45},{"t":"box","x":-0.2,"y":0.2,"z":0,"w":0.12,"h":0.4,"d":0.3,"pad":1},{"t":"bar","at":"hands"},{"t":"box","x":0.08,"y":0.19,"z":0,"w":0.05,"h":0.38,"d":0.28}]},"incline_dumbbells":{"el":"Κεκλιμένος πάγκος + αλτήρες","items":[{"t":"box","x":-0.02,"y":0.4,"z":0,"w":0.5,"h":0.06,"d":0.3,"pad":1},{"t":"box","x":-0.36,"y":0.8,"z":0,"w":1,"h":0.07,"d":0.32,"pad":1,"rz":2.45},{"t":"box","x":-0.2,"y":0.2,"z":0,"w":0.12,"h":0.4,"d":0.3,"pad":1},{"t":"db","at":"wristL"},{"t":"db","at":"wristR"},{"t":"box","x":0.08,"y":0.19,"z":0,"w":0.05,"h":0.38,"d":0.28}]},"bench_hipthrust":{"el":"Πάγκος (πλάτη) + μπάρα","items":[{"t":"box","x":-0.62,"y":0.22,"z":0,"w":0.5,"h":0.44,"d":0.34,"pad":1},{"t":"bar","at":"hips"}]},"cable_high":{"el":"Τροχαλία ψηλά","items":[{"t":"cable","x":0.35,"y":2.2,"to":"hands"}]},"cable_low":{"el":"Τροχαλία χαμηλά","items":[{"t":"cable","x":0.7,"y":0.25,"to":"hands"}]},"seated_cable":{"el":"Καθιστή τροχαλία","items":[{"t":"box","x":0,"y":0.44,"z":0,"w":0.45,"h":0.08,"d":0.34,"pad":1},{"t":"box","x":0,"y":0.22,"z":0,"w":0.1,"h":0.4,"d":0.1},{"t":"cable","x":1.15,"y":0.5,"to":"hands"},{"t":"box","x":0.55,"y":0.28,"z":0,"w":0.06,"h":0.4,"d":0.4}]},"lat_machine":{"el":"Μηχάνημα lat pulldown","items":[{"t":"box","x":0,"y":0.4,"z":0,"w":0.45,"h":0.08,"d":0.34,"pad":1},{"t":"box","x":0,"y":0.19,"z":0,"w":0.1,"h":0.38,"d":0.1},{"t":"cable","x":0.3,"y":2.25,"to":"hands"},{"t":"box","x":0.22,"y":0.62,"z":0,"w":0.4,"h":0.08,"d":0.3,"pad":1}]},"machine_seat_back":{"el":"Μηχάνημα με πλάτη","items":[{"t":"box","x":0,"y":0.4,"z":0,"w":0.45,"h":0.08,"d":0.34,"pad":1},{"t":"box","x":0,"y":0.19,"z":0,"w":0.1,"h":0.38,"d":0.1},{"t":"box","x":-0.22,"y":0.8200000000000001,"z":0,"w":0.08,"h":0.7,"d":0.34,"pad":1}]},"machine_legext":{"el":"Μηχάνημα (πόδια)","items":[{"t":"box","x":0,"y":0.4,"z":0,"w":0.45,"h":0.08,"d":0.34,"pad":1},{"t":"box","x":0,"y":0.19,"z":0,"w":0.1,"h":0.38,"d":0.1},{"t":"box","x":-0.22,"y":0.8200000000000001,"z":0,"w":0.08,"h":0.7,"d":0.34,"pad":1},{"t":"box","x":0.55,"y":0.1,"z":0,"w":0.08,"h":0.2,"d":0.3,"pad":1}]},"leg_press_machine":{"el":"Μηχάνημα leg press","items":[{"t":"box","x":-0.28,"y":0.45,"z":0,"w":1,"h":0.08,"d":0.34,"pad":1,"rz":2.45},{"t":"plate"}]},"dip_bars":{"el":"Δίζυγο","items":[{"t":"box","x":0,"y":1,"z":0.2,"w":0.9,"h":0.04,"d":0.04},{"t":"box","x":0,"y":1,"z":-0.2,"w":0.9,"h":0.04,"d":0.04},{"t":"box","x":-0.4,"y":0.5,"z":0.2,"w":0.05,"h":1,"d":0.05},{"t":"box","x":-0.4,"y":0.5,"z":-0.2,"w":0.05,"h":1,"d":0.05},{"t":"box","x":0.4,"y":0.5,"z":0.2,"w":0.05,"h":1,"d":0.05},{"t":"box","x":0.4,"y":0.5,"z":-0.2,"w":0.05,"h":1,"d":0.05}]},"seat_dumbbells":{"el":"Κάθισμα + αλτήρες","items":[{"t":"box","x":0,"y":0.4,"z":0,"w":0.45,"h":0.08,"d":0.34,"pad":1},{"t":"box","x":0,"y":0.19,"z":0,"w":0.1,"h":0.38,"d":0.1},{"t":"db","at":"wristL"},{"t":"db","at":"wristR"}]},"seat_back_dumbbells":{"el":"Κάθισμα με πλάτη + αλτήρες","items":[{"t":"box","x":0,"y":0.4,"z":0,"w":0.45,"h":0.08,"d":0.34,"pad":1},{"t":"box","x":0,"y":0.19,"z":0,"w":0.1,"h":0.38,"d":0.1},{"t":"box","x":-0.22,"y":0.8200000000000001,"z":0,"w":0.08,"h":0.7,"d":0.34,"pad":1},{"t":"db","at":"wristL"},{"t":"db","at":"wristR"}]},"seat_back_barbell":{"el":"Κάθισμα με πλάτη + μπάρα","items":[{"t":"box","x":0,"y":0.4,"z":0,"w":0.45,"h":0.08,"d":0.34,"pad":1},{"t":"box","x":0,"y":0.19,"z":0,"w":0.1,"h":0.38,"d":0.1},{"t":"box","x":-0.22,"y":0.8200000000000001,"z":0,"w":0.08,"h":0.7,"d":0.34,"pad":1},{"t":"bar","at":"hands"}]},"rack_barbell":{"el":"Rack + μπάρα στην πλάτη","items":[{"t":"box","x":-0.5,"y":1.1,"z":0.55,"w":0.08,"h":2.2,"d":0.08},{"t":"box","x":-0.5,"y":1.1,"z":-0.55,"w":0.08,"h":2.2,"d":0.08},{"t":"bar","at":"hands"}],"pose":{"holdBack":1}}});
+
 const EX3D_EN = {"squat": "Squat", "goblet_squat": "Goblet squat", "hinge": "Hip hinge (RDL)", "lunge": "Lunge", "glute_bridge": "Glute bridge", "plank": "Plank", "pushup": "Push-up", "row": "Bent-over row", "overhead_press": "Overhead press", "biceps_curl": "Biceps curl", "lateral_raise": "Lateral raise", "calf_raise": "Calf raise", "clamshell": "Clamshell (side-lying)", "bird_dog": "Bird-dog (quadruped)", "dead_bug": "Dead bug (supine)", "crunch": "Crunch", "pullup": "Pull-up", "none": "No equipment", "dumbbells": "Dumbbells", "dumbbell1": "One dumbbell", "barbell": "Barbell (in hands)", "barbell_back": "Barbell on back", "kettlebell": "Kettlebell", "bench": "Bench", "band_hands": "Band (hands)", "band_knees": "Band (knees)", "pullbar": "Pull-up bar", "mat": "Mat"};
+Object.assign(EX3D_EN, {"bench_press":"Bench press","incline_press":"Incline press","db_fly":"Dumbbell fly","skull_crusher":"Lying triceps extension","hip_thrust":"Hip thrust (bench)","front_raise":"Front raise","upright_row":"Upright row","triceps_pushdown":"Triceps pushdown (cable)","overhead_tri_ext":"Overhead triceps extension","seated_row":"Seated cable row","lat_pulldown":"Lat pulldown","chest_press_machine":"Chest press (machine)","shoulder_press_seated":"Seated shoulder press","leg_extension":"Leg extension (machine)","leg_curl":"Leg curl (machine)","leg_press":"Leg press","dip":"Parallel bar dip","seated_curl":"Seated curl","rear_delt_fly":"Rear delt fly","tricep_kickback":"Triceps kickback","hanging_leg_raise":"Hanging leg raise","pullover":"Pullover (bench)","bench_barbell":"Bench + barbell","bench_dumbbells":"Bench + dumbbells","incline_barbell":"Incline bench + barbell","incline_dumbbells":"Incline bench + dumbbells","bench_hipthrust":"Bench (back) + barbell","cable_high":"High pulley","cable_low":"Low pulley","seated_cable":"Seated cable station","lat_machine":"Lat pulldown machine","machine_seat_back":"Machine with back pad","machine_legext":"Leg machine","leg_press_machine":"Leg press machine","dip_bars":"Parallel bars","seat_dumbbells":"Seat + dumbbells","seat_back_dumbbells":"Seat with back + dumbbells","seat_back_barbell":"Seat with back + barbell","rack_barbell":"Rack + back barbell"});
 const ex3dLbl = (k,v) => locale==='el' ? v.el : (EX3D_EN[k] || v.el);
 function ex3dBuild(THREE, BODY){
   const D2R = Math.PI/180;
   const L = {thigh:.45, shank:.45, foot:.22, heel:.06, torso:.52, neck:.2, uarm:.30, farm:.27, hipW:.09, shW:.19};
   const ease = x => x*x*(3-2*x);
+  const DEF_LAG = {spine:.06, head:.1, elbow:.03, ankle:.04};
+  // Cyclic monotone cubic (Fritsch-Butland) through the keyframes: velocity stays continuous, no overshoot, holds stay flat.
+  function buildSpline(pat){
+    const F = pat.frames.slice(), T = pat.T;
+    if(F.length>1 && Math.abs(F[F.length-1].t - T) < 1e-6) F.pop();
+    const n = F.length, ts = F.map(f=>f.t), keys = new Set();
+    F.forEach(f=>Object.keys(f).forEach(k=>{ if(k!=='t') keys.add(k); }));
+    const S = {n, ts, T, keys:[...keys], y:{}, m:{}, h:[]};
+    for(let i=0;i<n;i++) S.h[i] = i<n-1 ? ts[i+1]-ts[i] : T-ts[i]+ts[0];
+    S.keys.forEach(k=>{
+      const y = F.map(f=>f[k] ?? 0), d = y.map((v,i)=>(y[(i+1)%n]-v)/S.h[i]), m = [];
+      for(let i=0;i<n;i++){
+        const ip = (i+n-1)%n, dp = d[ip], dn = d[i];
+        if(n<2 || dp*dn <= 0) m[i] = 0;
+        else { const hp = S.h[ip], hn = S.h[i], w1 = 2*hn+hp, w2 = hn+2*hp; m[i] = (w1+w2)/(w1/dp + w2/dn); }
+      }
+      S.y[k] = y; S.m[k] = m;
+    });
+    return S;
+  }
+  function evalSpl(S, k, time){
+    const T = S.T, t = ((time % T)+T)%T, n = S.n, ts = S.ts;
+    let i = n-1; for(let j=0;j<n-1;j++){ if(t < ts[j+1]){ i = j; break; } }
+    let tt = t; if(i===n-1 && t < ts[0]) tt = t + T;
+    const h = S.h[i], u = Math.min(1, Math.max(0, (tt-ts[i])/h)), j = (i+1)%n, y0 = S.y[k][i], y1 = S.y[k][j], m0 = S.m[k][i]*h, m1 = S.m[k][j]*h;
+    const u2 = u*u, u3 = u2*u;
+    return (2*u3-3*u2+1)*y0 + (u3-2*u2+u)*m0 + (-2*u3+3*u2)*y1 + (u3-u2)*m1;
+  }
   function sample(pat, time){
-    const T = pat.T, t = ((time % T)+T)%T, F = pat.frames;
-    let i = 0; while(i < F.length-2 && t >= F[i+1].t) i++;
-    const a = F[i], b = F[i+1], u = ease(Math.min(1, Math.max(0,(t-a.t)/Math.max(1e-6,(b.t-a.t)))));
-    const keys = new Set([...Object.keys(a), ...Object.keys(b)]); keys.delete('t');
-    const o = {};
-    keys.forEach(k => { const va = a[k] ?? 0, vb = b[k] ?? 0; o[k] = va + (vb-va)*u; });
+    const S = pat.__spl || (pat.__spl = buildSpline(pat)), lag = pat.lag || DEF_LAG, o = {};
+    S.keys.forEach(k=>{ o[k] = evalSpl(S, k, time - (lag[k]||0)); });
     return o;
   }
   function g(p, k, side){ return (p[k+side] ?? p[k] ?? 0); }
@@ -4197,7 +4241,7 @@ function ex3dBuild(THREE, BODY){
     const J = {pelvis:[0,0,0]};
     const up = [Math.sin(phi), Math.cos(phi)];
     J.shoulderC = [up[0]*L.torso, up[1]*L.torso, 0];
-    const nk = (rot+spine+(p.head||0))*D2R;
+    const nk = (rot+spine+(p.head ?? (rot>-45 ? -spine*.55 : 0)))*D2R;
     J.head = [J.shoulderC[0]+Math.sin(nk)*L.neck, J.shoulderC[1]+Math.cos(nk)*L.neck, 0];
     const dir = (psi, a, zs) => { const ca = Math.cos(a*D2R); return [Math.sin(psi*D2R)*ca, -Math.cos(psi*D2R)*ca, zs*Math.sin(a*D2R)]; };
     const add = (P, d, len) => [P[0]+d[0]*len, P[1]+d[1]*len, P[2]+d[2]*len];
@@ -4220,6 +4264,19 @@ function ex3dBuild(THREE, BODY){
       const W = add(E, dir(psiFa, sa, zs), L.farm);
       J['shoulder'+s]=S; J['elbow'+s]=E; J['wrist'+s]=W;
     });
+    if(p.holdBack){
+      [['L',-1],['R',1]].forEach(([s,zs])=>{
+        const S = J['shoulder'+s], Wt = [S[0]-.07, S[1]+.03, zs*.29];
+        const d = [Wt[0]-S[0], Wt[1]-S[1], Wt[2]-S[2]]; let D = Math.hypot(d[0],d[1],d[2]);
+        const dmax = L.uarm+L.farm-1e-3; if(D>dmax) D = dmax;
+        const dn = d.map(v=>v/(Math.hypot(d[0],d[1],d[2])||1));
+        const a = (L.uarm*L.uarm - L.farm*L.farm + D*D)/(2*D), h = Math.sqrt(Math.max(0, L.uarm*L.uarm - a*a));
+        let pole = [-.35,-1,zs*.25]; const dp = pole[0]*dn[0]+pole[1]*dn[1]+pole[2]*dn[2];
+        pole = pole.map((v,i)=>v-dp*dn[i]); const pl = Math.hypot(pole[0],pole[1],pole[2])||1; pole = pole.map(v=>v/pl);
+        J['elbow'+s] = [S[0]+dn[0]*a+pole[0]*h, S[1]+dn[1]*a+pole[1]*h, S[2]+dn[2]*a+pole[2]*h];
+        J['wrist'+s] = [S[0]+dn[0]*D, S[1]+dn[1]*D, S[2]+dn[2]*D];
+      });
+    }
     // roll about the global x axis through the pelvis
     if(roll){
       const c = Math.cos(roll), s = Math.sin(roll);
@@ -4237,8 +4294,41 @@ function ex3dBuild(THREE, BODY){
   }
   // Pose -> world joints. Applies ground contact and anchors horizontal drift.
   function place(pat, p, ref){
-    const J = joints(p);
-    let dy = pat.hang ? 2.15 - (J.wristL[1]+J.wristR[1])/2 : groundOffset(J);
+    let J = joints(p);
+    let dy = pat.hang ? (pat.hangY||2.15) - (J.wristL[1]+J.wristR[1])/2 : (pat.restY!=null ? pat.restY - J[pat.restOn||'pelvis'][1] : groundOffset(J));
+    if(pat.plant && pat.footX != null){
+      // feet stay put on the floor while the hips move: two-bone IK to a fixed ankle position
+      const fl = pat.floorY ?? .045;
+      const dx0 = (pat.anchor && pat.anchor !== 'none' && ref) ? ref[0] - J[pat.anchor][0] : 0;
+      const hx = J.pelvis[0] + dx0, hy = dy;
+      let ddx = pat.footX - hx, ddy = fl - hy, D = Math.hypot(ddx, ddy);
+      D = Math.min(D, L.thigh + L.shank - 1e-3); D = Math.max(D, Math.abs(L.thigh - L.shank) + 1e-3);
+      const gam = Math.atan2(ddx, -ddy), alp = Math.acos(Math.max(-1, Math.min(1, (L.thigh*L.thigh + D*D - L.shank*L.shank)/(2*L.thigh*D))));
+      const psiT = (gam + alp)/D2R;
+      const Kx = hx + Math.sin(psiT*D2R)*L.thigh, Ky = hy - Math.cos(psiT*D2R)*L.thigh;
+      const psiS = Math.atan2(hx + Math.sin(gam)*D - Kx, -(hy - Math.cos(gam)*D - Ky))/D2R;
+      const rs = (p.rot||0)+(p.spine||0);
+      const knee = Math.max(2, psiT - psiS);
+      J = joints(Object.assign({}, p, {hip: psiT + rs, knee, ankle: psiT - knee}));
+      dy = pat.restY - J[pat.restOn||'pelvis'][1];
+    } else
+    if(pat.plant){
+      // solve the thigh/knee/ankle so both feet rest flat on the floor under the knees
+      const rs = (p.rot||0)+(p.spine||0), fl = pat.floorY ?? .045;
+      let psiT = -rs + (p.hip||0), hipA = p.hip||0;
+      let Ky = dy - Math.cos(psiT*D2R)*L.thigh;
+      if((Ky-fl)/L.shank > 1){
+        // the pelvis is too high for this thigh angle: lower the thigh just enough for the shank to stand vertical
+        const ct = Math.max(-1, Math.min(1, (dy-fl-L.shank)/L.thigh));
+        psiT = Math.acos(ct)/D2R; hipA = psiT + rs; Ky = dy - Math.cos(psiT*D2R)*L.thigh;
+      }
+      const c = Math.max(-1, Math.min(1, (Ky-fl)/L.shank));
+      const psiS = -Math.acos(c)/D2R;
+      const knee = Math.max(2, psiT - psiS);
+      const q = Object.assign({}, p, {hip: hipA, knee, ankle: psiT - knee});
+      J = joints(q);
+      dy = pat.restY - J[pat.restOn||'pelvis'][1];
+    }
     let dx = 0;
     if(pat.anchor && pat.anchor !== 'none' && ref){ dx = ref[0] - J[pat.anchor][0]; }
     const out = {};
@@ -4255,7 +4345,8 @@ function ex3dBuild(THREE, BODY){
   function mount(container, patKey, propKey, opts){
     opts = opts || {};
     const pat = EX3D_PATTERNS[patKey] || EX3D_PATTERNS.squat;
-    const propSet = (EX3D_PROPS[propKey] || EX3D_PROPS.none).items;
+    const propSet = (EX3D_PROPS[propKey] || EX3D_PROPS.none).items, propPose = (EX3D_PROPS[propKey]||{}).pose || null;
+    const samp = t => { const q = sample(pat, t); return propPose ? Object.assign(q, propPose) : q; };
     const W = container.clientWidth || 320, H = opts.height || 300;
     const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, preserveDrawingBuffer: !!opts.preserve});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
@@ -4269,12 +4360,14 @@ function ex3dBuild(THREE, BODY){
     const cam = new THREE.PerspectiveCamera(35, W/H, .1, 50);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x556070, 1.15));
     const dl = new THREE.DirectionalLight(0xffffff, 1.1); dl.position.set(2,4,3); scene.add(dl);
+    const dl2 = new THREE.DirectionalLight(0xffffff, .55); dl2.position.set(-3,2,-2); scene.add(dl2);
     const grid = new THREE.GridHelper(4, 16, 0x8a93a3, 0x8a93a3); grid.material.transparent = true; grid.material.opacity = .14; scene.add(grid);
 
     const matBody = new THREE.MeshStandardMaterial({color: darkUI?0x5a5e68:0xb7c0cf, roughness:.62, metalness:.12});
     const matJoint = new THREE.MeshStandardMaterial({color:0xe5301f, roughness:.35, emissive:0xb01810, emissiveIntensity: darkUI?.55:.15});
     const matProp = new THREE.MeshStandardMaterial({color: darkUI?0x9aa3b2:0x2c3038, roughness:.4, metalness:.6});
     const matWood = new THREE.MeshStandardMaterial({color:0x7a8696, roughness:.8});
+    const matPad = new THREE.MeshStandardMaterial({color:0x3b3f48, roughness:.7});
     // Anatomical body: tapered, muscle-shaped limbs lofted from the same joint positions (no joint dots).
     const segs = []; const cyl = new THREE.CylinderGeometry(1,1,1,14); const sph = new THREE.SphereGeometry(1,24,16);
     const matSkin = new THREE.MeshStandardMaterial({color: darkUI?0x8d9099:0xc4cad6, roughness:.5, metalness:.05});
@@ -4328,13 +4421,27 @@ function ex3dBuild(THREE, BODY){
       const skeleton = new THREE.Skeleton(bones, bones.map(()=>new THREE.Matrix4()));
       const hi = new Set((opts.muscles&&opts.muscles.prim)||[]), hs = new Set((opts.muscles&&opts.muscles.sec)||[]);
       const anyHi = hi.size || hs.size;
+      let look = opts.look === 'anatomy' ? 'anatomy' : 'clean';
       const mkMat = (g, key)=>{
+        const prim = hi.has(key), sec = hs.has(key);
+        if(look==='clean'){
+          if(g==='skin') return new THREE.MeshStandardMaterial({color: darkUI?0x4b4f5a:0xb4bcc9, roughness:.48, metalness:.12});
+          // glowing muscles show through the skin
+          if(prim) return new THREE.MeshStandardMaterial({color:0xff4630, roughness:.35, emissive:0xd01808, emissiveIntensity:.85, depthTest:false, depthWrite:false});
+          if(sec) return new THREE.MeshStandardMaterial({color:0xf5a04a, roughness:.4, emissive:0x8a4a10, emissiveIntensity:.6, depthTest:false, depthWrite:false});
+          return new THREE.MeshStandardMaterial({color:0x6a3a38, roughness:.6});
+        }
         if(g==='skin') return new THREE.MeshStandardMaterial({color: darkUI?0xcfd3dc:0x9aa3b2, roughness:.6, transparent:true, opacity: opts.xray===false?.9:.16, depthWrite:false});
         if(g==='bone') return new THREE.MeshStandardMaterial({color:0xd9cfb8, roughness:.7});
-        const prim = hi.has(key), sec = hs.has(key);
-        if(prim) return new THREE.MeshStandardMaterial({color:0xe5301f, roughness:.45, emissive:0x8a1208, emissiveIntensity:.55});
-        if(sec) return new THREE.MeshStandardMaterial({color:0xb4503f, roughness:.5, emissive:0x3a0d08, emissiveIntensity:.3});
-        return new THREE.MeshStandardMaterial({color: anyHi ? 0x6b4a4a : 0x9a3e3c, roughness:.55});
+        if(prim) return new THREE.MeshStandardMaterial({color:0xff3b2a, roughness:.4, emissive:0xb01808, emissiveIntensity:.6});
+        if(sec) return new THREE.MeshStandardMaterial({color:0xf0963c, roughness:.45, emissive:0x6a3208, emissiveIntensity:.35});
+        return new THREE.MeshStandardMaterial({color: anyHi ? 0x8a4a47 : 0xc9584f, roughness:.6});
+      };
+      const layerOn = {bone:true, skin:!!opts.skin, muscle:true};
+      const visFor = (m)=>{
+        const hl = hi.has(m.key) || hs.has(m.key);
+        if(look==='clean') return m.group==='skin' ? true : (m.group==='muscle' && hl);
+        return m.group==='skin' ? layerOn.skin : (layerOn[m.group] !== false);
       };
       const meshes = [];
       meta.meshes.forEach(m=>{
@@ -4351,18 +4458,31 @@ function ex3dBuild(THREE, BODY){
         const mesh = new THREE.SkinnedMesh(g, mkMat(m.group, m.key));
         mesh.bind(skeleton, new THREE.Matrix4());
         mesh.frustumCulled = false;
-        mesh.renderOrder = m.group==='skin' ? 5 : 1;
+        mesh.renderOrder = look==='clean' ? (m.group==='skin' ? 1 : 6) : (m.group==='skin' ? 5 : 1);
+        mesh.visible = visFor(m);
         scene.add(mesh); meshes.push({mesh, m});
       });
-      const bdef = meta.bones.map(b=>({A:b.A, B:b.B}));
+      const bdef = meta.bones.map(b=>({A:b.A, B:b.B, mix:b.mix||null})), quats = bdef.map(()=>new THREE.Quaternion());
       const u0 = bdef.map(b=>rest[b.B].clone().sub(rest[b.A]));
       const L0 = u0.map(v=>v.length()); u0.forEach(v=>v.normalize());
       const _q = new THREE.Quaternion(), _m1 = new THREE.Matrix4(), _m2 = new THREE.Matrix4(), _m3 = new THREE.Matrix4(), _u1 = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
       bodyRig = {
+        setLayer(g,on){ layerOn[g] = on; meshes.forEach(x=>{ if(x.m.group===g) x.mesh.visible = look==='clean' ? visFor(x.m) : on; }); },
+        setLook(mode){
+          look = mode==='anatomy' ? 'anatomy' : 'clean';
+          meshes.forEach(x=>{ x.mesh.material.dispose(); x.mesh.material = mkMat(x.m.group, x.m.key); x.mesh.visible = visFor(x.m);
+            x.mesh.renderOrder = look==='clean' ? (x.m.group==='skin' ? 1 : 6) : (x.m.group==='skin' ? 5 : 1); });
+        },
+        getLook(){ return look; },
         update(J){
           bdef.forEach((d,i)=>{
             _a.set(...J[d.A]); _b.set(...J[d.B]); _u1.subVectors(_b,_a); const L1 = Math.max(1e-6,_u1.length()); _u1.divideScalar(L1);
-            _q.setFromUnitVectors(u0[i], _u1); const k = L1/L0[i]; const u = u0[i];
+            _q.setFromUnitVectors(u0[i], _u1); quats[i].copy(_q); const k = L1/L0[i]; const u = u0[i];
+            if(d.mix){
+              _q.copy(quats[d.mix[0]]).slerp(quats[d.mix[1]], .5);
+              _m2.makeRotationFromQuaternion(_q); _m3.makeTranslation(-rest[d.A].x, -rest[d.A].y, -rest[d.A].z);
+              const Mh = bones[i].matrixWorld; Mh.copy(_m2).multiply(_m3); Mh.premultiply(_m1.makeTranslation(_a.x,_a.y,_a.z)); return;
+            }
             // S = I + (k-1) u u^T
             const c = k-1;
             _m1.set(1+c*u.x*u.x, c*u.x*u.y, c*u.x*u.z, 0,  c*u.y*u.x, 1+c*u.y*u.y, c*u.y*u.z, 0,  c*u.z*u.x, c*u.z*u.y, 1+c*u.z*u.z, 0,  0,0,0,1);
@@ -4385,6 +4505,7 @@ function ex3dBuild(THREE, BODY){
       m.position.copy(a).addScaledVector(d,.5); m.scale.set(r,len,r);
       m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
     }
+    const nSceneBefore = scene.children.length;
     propSet.forEach(it=>{
       if(it.t==='db'){
         const grp = new THREE.Group();
@@ -4407,6 +4528,7 @@ function ex3dBuild(THREE, BODY){
         dyn.push(J=>{
           let q;
           if(it.at==='hands') q = [(J.wristL[0]+J.wristR[0])/2,(J.wristL[1]+J.wristR[1])/2,0];
+          else if(it.at==='hips'){ const s=J.pelvis; q=[s[0],s[1]+.12,0]; }
           else { const s=J.shoulderC; q=[s[0]-.08,s[1]+.02,0]; }
           grp.position.set(q[0],q[1],q[2]);
         });
@@ -4414,7 +4536,17 @@ function ex3dBuild(THREE, BODY){
         const m = new THREE.Mesh(cyl, new THREE.MeshStandardMaterial({color:new THREE.Color(it.c||'#e0a030')}));
         scene.add(m); dyn.push(J=>cylBetween(m, new THREE.Vector3(...J[it.a]), new THREE.Vector3(...J[it.b]), .012));
       } else if(it.t==='box'){
-        const m = new THREE.Mesh(new THREE.BoxGeometry(it.w,it.h,it.d), matWood); m.position.set(it.x,it.y,it.z); scene.add(m);
+        const m = new THREE.Mesh(new THREE.BoxGeometry(it.w,it.h,it.d), it.pad ? matPad : matWood); m.position.set(it.x,it.y,it.z); if(it.rz) m.rotation.z = it.rz; scene.add(m);
+      } else if(it.t==='plate'){
+        // foot plate that follows the feet (leg press): perpendicular to the shin
+        const pl = new THREE.Mesh(new THREE.BoxGeometry(.05,.55,.5), matPad); scene.add(pl);
+        dyn.push(J=>{ const a=J.ankleR, k=J.kneeR; const dx=a[0]-k[0], dy=a[1]-k[1], l=Math.hypot(dx,dy)||1; pl.position.set(a[0]+dx/l*.1, a[1]+dy/l*.1, 0); pl.rotation.z = Math.atan2(dy,dx); });
+      } else if(it.t==='cable'){
+        // cable machine: column + pulley + cable to the hands
+        const col = new THREE.Mesh(new THREE.BoxGeometry(.1,2.3,.5), matWood); col.position.set(it.x+.08, 1.15, 0); scene.add(col);
+        const pul = new THREE.Mesh(sph, matProp); pul.scale.setScalar(.05); pul.position.set(it.x, it.y, 0); scene.add(pul);
+        const cm = new THREE.Mesh(cyl, new THREE.MeshStandardMaterial({color:0xe0a030, roughness:.5})); scene.add(cm);
+        dyn.push(J=>{ const t = it.to==='hands' ? [(J.wristL[0]+J.wristR[0])/2,(J.wristL[1]+J.wristR[1])/2,0] : J[it.to]; cylBetween(cm, new THREE.Vector3(it.x,it.y,0), new THREE.Vector3(t[0],t[1],t[2]), .006); });
       } else if(it.t==='mat'){
         const m = new THREE.Mesh(new THREE.BoxGeometry(2.2,.02,.9), new THREE.MeshStandardMaterial({color:0x4a5a6a})); m.position.set(-.3,-.01,0); scene.add(m);
       } else if(it.t==='pullbar'){
@@ -4423,14 +4555,19 @@ function ex3dBuild(THREE, BODY){
       }
     });
 
+    // props are drawn after the glowing muscles so that a bar or machine in front of the body still hides them
+    scene.children.slice(nSceneBefore).forEach(o=>o.traverse(m=>{ if(m.isMesh) m.renderOrder = 7; }));
     const ref = refFor(pat); const ref0 = ref;
     // auto-fit the camera to the whole movement
     let bx0=1e9,bx1=-1e9,by0=1e9,by1=-1e9;
-    for(let i=0;i<24;i++){ const Jf = place(pat, sample(pat, pat.T*i/24), ref0); for(const k in Jf){ const q=Jf[k]; bx0=Math.min(bx0,q[0]);bx1=Math.max(bx1,q[0]);by0=Math.min(by0,q[1]);by1=Math.max(by1,q[1]); } }
-    const size = Math.max(bx1-bx0, by1-by0, 1.2) + (BODY?.3:.5);
+    for(let i=0;i<24;i++){ const Jf = place(pat, samp(pat.T*i/24), ref0); for(const k in Jf){ const q=Jf[k]; bx0=Math.min(bx0,q[0]);bx1=Math.max(bx1,q[0]);by0=Math.min(by0,q[1]);by1=Math.max(by1,q[1]); } }
+    if(BODY){ by1 += .22; by0 -= .03; }
+    const asp = Math.max(.5, W/H), propPad = propSet.length ? .22 : 0;
+    const size = Math.max(by1-by0+(BODY?.3:.5), (bx1-bx0+.3+propPad)/Math.min(asp,1.6), 1.2);
     const fitDist = (size/2)/Math.tan(17.5*D2R) * .92 + .15;
     const cx0 = (bx0+bx1)/2, cy0 = Math.max(.3,(by0+by1)/2) + (BODY?.08:0);
-    let az = (opts.az ?? 55)*D2R, el = (opts.el ?? 12)*D2R, dist = opts.dist || fitDist, target = new THREE.Vector3(cx0,cy0,0);
+    const tallProp = propSet.some(it=>it.t==='cable' || (it.t==='box' && it.h>=1.0) || it.t==='pullbar');
+    let az = (opts.az ?? (tallProp ? -35 : 55))*D2R, el = (opts.el ?? 12)*D2R, dist = opts.dist || fitDist, target = new THREE.Vector3(cx0,cy0,0);
     function placeCam(){
       cam.position.set(target.x + dist*Math.cos(el)*Math.sin(az), target.y + dist*Math.sin(el), target.z + dist*Math.cos(el)*Math.cos(az));
       cam.lookAt(target);
@@ -4446,7 +4583,7 @@ function ex3dBuild(THREE, BODY){
 
     const V = (a)=> new THREE.Vector3(a[0],a[1],a[2]);
     function draw(){
-      const p = sample(pat, tt);
+      const p = samp(tt);
       const J = place(pat, p, ref);
       if(bodyRig){ bodyRig.update(J); } else
       BONES.forEach(([a,b,L])=>{
@@ -4475,6 +4612,7 @@ function ex3dBuild(THREE, BODY){
       setSpeed(s){ speed = s; }, setView(a,e){ az = a*D2R; el = (e??12)*D2R; auto=false; },
       seek(t){ tt = t; draw(); }, draw,
       destroy(){ alive=false; cancelAnimationFrame(raf); renderer.dispose(); cv.remove(); },
+      layer(g,on){ if(bodyRig){ bodyRig.setLayer(g,on); draw(); } }, look(m){ if(bodyRig){ bodyRig.setLook(m); draw(); } }, hasBody: !!bodyRig,
       period: pat.T
     };
     return api;
@@ -4579,7 +4717,7 @@ function ex3dSlotHtml(ex, isCoach){
     </div>
     <div class="ex3dStage" style="min-height:260px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση 3D…':'Loading 3D…'}</div>
     <div class="ex3dCtl" style="display:none; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
-    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σύρε για να γυρίσεις το μοντέλο. Με κόκκινο οι κύριοι μύες της άσκησης. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου. Ανατομία: BodyParts3D © DBCLS (CC BY 4.0).':'Schematic illustration. Drag to rotate. Follow the execution guide and your coach.'}</p>
+    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σύρε για να γυρίσεις το μοντέλο. Με κόκκινο οι κύριοι μύες της άσκησης. Πάτα Ανατομία για να δεις όλους τους μυς. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου. Ανατομία: BodyParts3D © DBCLS (CC BY 4.0).':'Schematic illustration. Drag to rotate. Follow the execution guide and your coach.'}</p>
   </div>`;
 }
 async function ex3dMount(slot){
@@ -4595,6 +4733,23 @@ async function ex3dMount(slot){
     const pb = btn(reduce?'▶':'⏸', b=>{ const on = !api.isPlaying(); api.play(on); b.textContent = on ? '⏸' : '▶'; });
     let slow = false; btn('×0.5', b=>{ slow=!slow; api.setSpeed(slow?.5:1); b.style.opacity = slow?1:.7; }).style.opacity=.7;
     [[el_label('Πλάγια','Side'),0,8],[el_label('Μπροστά','Front'),90,8],[el_label('Πάνω','Top'),0,80],['3/4',55,12]].forEach(([l,a,e])=>btn(l, ()=>api.setView(a,e)));
+    if(api.hasBody){
+      const tog = (label, grp, init)=>{ let on = init; const b = btn(label, ()=>{ on=!on; api.layer(grp,on); b.style.opacity = on?1:.55; b.style.borderColor = on?'var(--red)':''; }); b.style.opacity = on?1:.55; if(on) b.style.borderColor='var(--red)'; return b; };
+      const hasP = slot.dataset.prim || slot.dataset.sec;
+      let lg = null;
+      if(hasP){
+        lg = document.createElement('div'); lg.style.cssText='display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-top:8px; align-items:center;';
+        ctl.insertAdjacentElement('afterend', lg);
+      }
+      const dot = (c,t)=>`<span style="display:inline-flex; align-items:center; gap:6px;"><i style="width:11px;height:11px;border-radius:50%;background:${c};display:inline-block;"></i>${t}</span>`;
+      const paintLegend = anat => { if(lg) lg.innerHTML = dot('#ff3b2a', el_label('Κύριοι μύες','Main muscles')) + dot('#f0963c', el_label('Δευτερεύοντες','Secondary')) + (anat ? dot('#8a4a47', el_label('Υπόλοιποι','Others')) : ''); };
+      paintLegend(false);
+      const bBones = tog(el_label('Οστά','Bones'),'bone',true), bSkin = tog(el_label('Δέρμα','Skin'),'skin',false);
+      bBones.style.display = bSkin.style.display = 'none';
+      let anat = false;
+      const bAn = btn(el_label('Ανατομία','Anatomy'), ()=>{ anat=!anat; api.look(anat?'anatomy':'clean'); bBones.style.display = bSkin.style.display = anat?'':'none'; bAn.style.opacity = anat?1:.55; bAn.style.borderColor = anat?'var(--red)':''; paintLegend(anat); });
+      bAn.style.opacity = .55;
+    }
     ctl.style.display = 'flex';
     slot._ex3d = api;
   }catch(err){
@@ -4652,37 +4807,71 @@ function ex3dPayload(wrap, pre, ex){
 }
 // Keyword guess from name / equipment / movement pattern. Always saved as draft, never shown to clients before approval.
 function ex3dSuggest(ex){
-  const norm = t => (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const nameOnly = norm([ex.name_el, ex.name_en].filter(Boolean).join(' '));
-  const x = norm([ex.name_el, ex.name_en, ex.equipment].filter(Boolean).join(' '));
-  const hasN = r => r.test(nameOnly), has = r => r.test(x);
-  // Only high-confidence matches. Anything unusual (single-leg, side-lying, jumps, seated, holds with bands...) is left for manual choice.
-  if(hasN(/single.?leg|μονοποδ|ενα ποδι|lateral lunge|πλαγια προβολ|side plank|πλαγια σανιδα|copenhagen|step.?up|jump|pogo|seated|καθιστου|slider|spanish|curl.?up|hip thrust|side.?lying|πλαγια κατακλιση|wall sit|bulgarian|split squat|push.?up plus|farmer|swing|nordic|leg curl|hamstring curl|extension|μηρι/)) return null;
-  let pat = null;
-  if(hasN(/clamshell|κλαμσελ/)) pat='clamshell';
-  else if(hasN(/bird.?dog|τετραποδ/)) pat='bird_dog';
+  const norm = t => (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const name = norm([ex.name_en, ex.name_el].filter(Boolean).join(' '));
+  const eq = norm(ex.equipment||'');
+  const hasN = r => r.test(name);
+  const isBB = /barbell|e-z|ez.?bar|ez curl|μπαρα|smith/.test(name+' '+eq) && !/dumbbell|kettlebell/.test(name);
+  const isDB = /dumbbell|αλτηρ/.test(name+' '+eq);
+  const isKB = /kettlebell/.test(name+' '+eq);
+  const isCable = /cable|pulley|rope|τροχαλ/.test(name+' '+eq);
+  const isMach = /machine|lever|μηχανημα|sled|hammer strength|leverage/.test(name+' '+eq);
+  const isBand = /band|λαστιχ/.test(name+' '+eq);
+  const isStretch = /stretch|mobility|foam|smr|roll/.test(name);
+  // never animate: stretches, olympic lifts, jumps, plyometrics, holds that need special poses, single-leg balance work
+  if(isStretch || hasN(/clean|snatch|jerk|jump|hop|bound|plyo|throw|slam|swing|turkish|muscle.?up|burpee|climber|sprint|\brun\b|\bwalk\b|carry|farmer|yoke|tire|sled|atlas|log lift|stone|handstand|iron cross|wheel|rollout|windmill|flag|l-sit|crab|bear|snake|inchworm|stairmaster|elliptical|\bbike\b|rowing machine|treadmill/)) return null;
+  let pat=null, prop='none';
+  const standing = !/seated|sitting|lying|incline|decline|bench|prone|supine|kneeling|bent|reclin/.test(name);
+  if(hasN(/clamshell/)) pat='clamshell';
+  else if(hasN(/bird.?dog/)) pat='bird_dog';
   else if(hasN(/dead.?bug/)) pat='dead_bug';
-  else if(hasN(/pull.?up|chin.?up|pulldown|ελκυσεις|ελξεις/)) pat='pullup';
-  else if(hasN(/push.?up|καμψεις στηριξης/)) pat='pushup';
-  else if(hasN(/plank|σανιδα/)) pat='plank';
-  else if(hasN(/glute bridge|γεφυρα γλουτων/)) pat='glute_bridge';
-  else if(hasN(/goblet/)) pat='goblet_squat';
-  else if(hasN(/lunge|προβολ/)) pat='lunge';
-  else if(hasN(/deadlift|rdl|romanian|ρουμανικ|good morning|hinge|νεκρη/)) pat='hinge';
-  else if(hasN(/squat|σκουατ/)) pat='squat';
-  else if(hasN(/row|κωπηλασ/)) pat='row';
-  else if(hasN(/overhead|shoulder press|military|arnold|πιεση ωμων|πιεσεις ωμων/)) pat='overhead_press';
-  else if(hasN(/lateral raise|πλαγια ανυψωσ|πλαγιες ανυψωσ/)) pat='lateral_raise';
-  else if(hasN(/calf|γαμπ/)) pat='calf_raise';
-  else if(hasN(/biceps curl|bicep curl|hammer curl|κλαση βραχιον|δικεφαλ βραχιον/)) pat='biceps_curl';
-  else if(hasN(/crunch|sit.?up/)) pat='crunch';
+  else if(hasN(/pull.?up|chin.?up|pullup|chinup/)) { pat='pullup'; prop='pullbar'; }
+  else if(hasN(/pulldown|pull.?down/)) { pat='lat_pulldown'; prop='lat_machine'; }
+  else if(hasN(/push.?up|pushup/) && !/handstand|wall/.test(name)) pat='pushup';
+  else if(hasN(/plank/) && !/side|row/.test(name)) pat='plank';
+  else if(hasN(/hip thrust/)) { pat='hip_thrust'; prop='bench_hipthrust'; }
+  else if(hasN(/glute bridge|butt lift|bridge/) && !/single|one|wall/.test(name)) pat='glute_bridge';
+  else if(hasN(/skull|lying (triceps|tricep)|triceps extension.*lying|lying.*triceps/)) { pat='skull_crusher'; prop = isDB ? 'bench_dumbbells' : 'bench_barbell'; }
+  else if(hasN(/pushdown|press.?down/)) { pat='triceps_pushdown'; prop='cable_high'; }
+  else if(hasN(/(triceps|tricep).*(extension|press)|french press|overhead.*extension/) && !/lying|kickback|bench|dip/.test(name)) { pat='overhead_tri_ext'; prop = isDB||isKB ? 'dumbbell1' : isBB ? 'barbell' : isCable ? 'cable_high' : 'none'; }
+  else if(hasN(/(rear|reverse).*(fly|flye|raise|delt)|bent.?over.*(lateral|raise|fly)/) && isDB && !/lying|incline|seated|one|single|cable|machine/.test(name)) { pat='rear_delt_fly'; prop='dumbbells'; }
+  else if(hasN(/fly|flye|crossover|pec deck|butterfly/)) {
+    if(isMach||hasN(/pec deck|butterfly/)) { pat='chest_press_machine'; prop='machine_seat_back'; }
+    else if(isDB && !/reverse|rear|bent|incline|decline|standing|cable|iron/.test(name)) { pat='db_fly'; prop='bench_dumbbells'; }
+    else return null;
+  }
+  else if(hasN(/leg extension/)) { pat='leg_extension'; prop='machine_legext'; }
+  else if(hasN(/leg curl/) && !/nordic|ball|slider/.test(name)) { pat='leg_curl'; prop='machine_legext'; }
+  else if(hasN(/(bench|chest) press|press.*(bench|chest)|bench press/)) {
+    if(isMach && !/smith/.test(name)) { pat='chest_press_machine'; prop='machine_seat_back'; }
+    else if(hasN(/incline/)) { pat='incline_press'; prop = isDB ? 'incline_dumbbells' : 'incline_barbell'; }
+    else if(hasN(/decline/)) return null;
+    else { pat='bench_press'; prop = isDB ? 'bench_dumbbells' : 'bench_barbell'; }
+  }
+  else if(hasN(/incline.*(press|dumbbell)/)) { pat='incline_press'; prop = isDB ? 'incline_dumbbells' : 'incline_barbell'; }
+  else if(hasN(/shoulder press|military|overhead press|arnold|push press|press behind|seated.*press|dumbbell press/) && !/leg|calf|bench|chest|incline|decline|floor|bent/.test(name)) {
+    if(hasN(/seated|arnold|machine|sitting/) || isMach) { pat='shoulder_press_seated'; prop = isDB ? 'seat_back_dumbbells' : isMach ? 'machine_seat_back' : 'seat_back_barbell'; }
+    else { pat='overhead_press'; prop = isDB ? 'dumbbells' : isKB ? 'kettlebell' : isBB ? 'barbell' : 'none'; }
+  }
+  else if(hasN(/upright.*row/)) { pat='upright_row'; prop = isDB ? 'dumbbells' : isCable ? 'cable_low' : 'barbell'; }
+  else if(hasN(/front (raise|dumbbell raise)|front plate raise|raise.*front|front.*raise/) && !/bench|incline|lying|seated|bent/.test(name)) { pat='front_raise'; prop = isDB ? 'dumbbells' : isCable ? 'cable_low' : isBB ? 'barbell' : 'dumbbells'; }
+  else if(hasN(/(lateral|side) raise|side lateral/) && !/lying|bent|reverse|rear|incline|bench/.test(name)) { pat='lateral_raise'; prop = isCable ? 'cable_low' : isBand ? 'none' : 'dumbbells'; }
+  else if(hasN(/seated.*row|row.*seated|low pulley|cable row|seated cable|machine row|lever.*row|t.?bar/) && !/bent|dumbbell/.test(name) && (isCable||isMach)) { pat='seated_row'; prop='seated_cable'; }
+  else if(hasN(/row/) && !/upright|rowing|reverse|renegade|inverted|plank|lying|prone|seal/.test(name)) { pat='row'; prop = isDB ? 'dumbbells' : isKB ? 'kettlebell' : isBB ? 'barbell' : 'none'; }
+  else if(hasN(/curl/) && !/leg|hamstring|wrist|reverse wrist|nordic|crunch|ball|concentration|incline|lying|spider|zottman|seated|preacher/.test(name)) { pat='biceps_curl'; prop = isCable ? 'cable_low' : isDB ? 'dumbbells' : isBB ? 'barbell' : isKB ? 'kettlebell' : 'none'; }
+  else if(hasN(/lunge|split squat|step.?up/) && !/jump|lateral|side|reverse.*curtsy/.test(name)) { pat='lunge'; prop = isDB ? 'dumbbells' : isBB ? 'barbell_back' : isKB ? 'kettlebell' : 'none'; }
+  else if(hasN(/goblet/)) { pat='goblet_squat'; prop = isDB ? 'dumbbell1' : 'kettlebell'; }
+  else if(hasN(/squat/) && !/jump|single|one.?leg|pistol|split|lateral|side|sissy|wall|zercher|overhead|belt/.test(name)) { pat='squat'; prop = isBB ? (hasN(/front|box/)?'barbell_back':'rack_barbell') : isDB ? 'dumbbells' : isKB ? 'kettlebell' : 'none'; }
+  else if(hasN(/deadlift|good morning|romanian|stiff.?leg|rdl|hyperextension|back extension/) && !/single|one.?leg|trap bar|hex|snatch|clean/.test(name)) { pat='hinge'; prop = isBB ? 'barbell' : isDB ? 'dumbbells' : isKB ? 'kettlebell' : 'none'; }
+  else if(hasN(/leg press/) && !/calf|single|one/.test(name)) { pat='leg_press'; prop='leg_press_machine'; }
+  else if(hasN(/dip/) && !/hip|tip|dips? machine|bench dip|weighted bench|assist|ring/.test(name) && /parallel|dips|dip -|dip$/.test(name)) { pat='dip'; prop='dip_bars'; }
+  else if(hasN(/pullover/) && !/bent|straight|decline|machine|cable|stability/.test(name) && (isDB||isBB)) { pat='pullover'; prop = isDB ? 'bench_dumbbells' : 'bench_barbell'; }
+  else if(hasN(/kickback/) && /tricep|triceps/.test(name) && isDB) { pat='tricep_kickback'; prop='dumbbell1'; }
+  else if(hasN(/(hanging|knee|hip).*(leg|knee).*raise|hanging.*raise|hanging pike/) && !/lying|bench|captain|incline/.test(name)) { pat='hanging_leg_raise'; prop='pullbar'; }
+  else if(hasN(/(seated|incline|standing).*(dumbbell )?(biceps |inner biceps |hammer )?curl|hammer curl/) && isDB && !/wrist|lying|prone|one|single|alternat|concentration|zottman|preacher|incline|cable|barbell|spider|reverse/.test(name)) { pat='seated_curl'; prop='seat_dumbbells'; }
+  else if(hasN(/calf raise|calf press|standing calf|donkey calf/)) { pat='calf_raise'; prop = isDB ? 'dumbbells' : 'none'; }
+  else if(hasN(/crunch|sit.?up/) && !/reverse|cable|machine|bicycle|twist|oblique/.test(name)) pat='crunch';
   if(!pat) return null;
-  let prop = 'none';
-  if(pat==='pullup') prop='pullbar';
-  else if(has(/kettlebell/)) prop='kettlebell';
-  else if(has(/dumbbell|αλτηρ/)) prop='dumbbells';
-  else if(has(/barbell|μπαρα/)) prop = pat==='squat' ? 'barbell_back' : 'barbell';
-  if(pat==='goblet_squat' && prop==='none') prop='kettlebell';
   return {pat, prop};
 }
 
@@ -6595,6 +6784,12 @@ async function renderClientDetail(main, forceRefresh){
   const back = el(`<button class="btn secondary">← ${locale==='el'?'Πίσω':'Back'}</button>`);
   back.addEventListener('click', ()=>{ selectedClient=null; renderClientDetail._cache=null; renderShell(); });
   main.appendChild(back);
+  if(window.innerWidth >= SPLIT_MIN_W){
+    const tg = el(`<button class="btn secondary splitToggle" type="button" style="float:right;">${splitToggleLabel()}</button>`);
+    tg.addEventListener('click', ()=>{ try{ localStorage.setItem('hfp_split', splitEnabled()?'0':'1'); }catch(e){} syncSplitPane(); tg.textContent = splitToggleLabel(); });
+    main.appendChild(tg);
+  }
+  syncSplitPane();
   const detailTitle = el(`<h2 style="margin-top:14px; margin-bottom:6px; display:flex; align-items:center;">${avatarPlaceholder(client.full_name, client.id, true)}<span>${escapeHtml(client.full_name)}</span></h2>`);
   main.appendChild(detailTitle); hydrateAvatars(detailTitle);
 
@@ -9962,12 +10157,15 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       : sugg.kind==='pain'
       ? (locale==='el' ? 'Την προηγούμενη φορά σημείωσες πόνο 3 ή παραπάνω σε αυτή την άσκηση. Κράτα ή μείωσε το φορτίο και πες το στον coach σου.' : 'Last time you logged pain of 3 or more on this exercise. Keep or lower the load and tell your coach.')
       : (locale==='el' ? `Κράτα τα <strong>${sugg.topLoad}kg</strong>${sugg.upper?` και στόχευσε ${sugg.upper} επαναλήψεις σε όλα τα sets`:''} πριν ανεβάσεις.` : `Stay at <strong>${sugg.topLoad}kg</strong>${sugg.upper?` and aim for ${sugg.upper} reps on every set`:''} before going up.`)) : '';
+    const demoHtml = (ex3dSlotHtml(ex, false) + fxAnimHtml(ex) + muscleMapHtml(ex)).trim();
     const card = el(`<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
         <span><strong>${escapeHtml(exName)}</strong>${pe.superset_group ? ` <span class="badge" title="${locale==='el'?'Εναλλάξ με τις άλλες ασκήσεις του ίδιου superset':'Alternate with the other exercises in this superset'}">🔗 Superset ${escapeHtml(pe.superset_group)}</span>` : ''}</span>
-        <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:12px; flex-shrink:0;">ℹ️ ${t('why',locale)}</button>
+        <span style="display:flex; gap:6px; flex-shrink:0;">${demoHtml ? `<button class="btn secondary demoToggleBtn" type="button" style="padding:4px 10px; font-size:12px;">▶ ${locale==='el'?'Δες πώς γίνεται':'See how'}</button>` : ''}
+        <button class="btn secondary whyToggleBtn" type="button" style="padding:4px 10px; font-size:12px;">ℹ️ ${t('why',locale)}</button></span>
       </div>
-      <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; line-height:1.6;">🎯 <strong>${pe.target_sets}</strong> ${locale==='el'?'σετ':'sets'} × <strong>${escapeHtml(pe.target_reps||'')}</strong> ${locale==='el'?'επαναλήψεις':'reps'} · ${pe.target_load ? (locale==='el'?'φορτίο':'load')+': <strong>'+escapeHtml(pe.target_load)+'</strong>' : (locale==='el'?'φορτίο: το επιλέγεις εσύ':'load: your choice')}${ex.equipment ? ` · <span class="badge">${EX_EQ_ICON[ex.equipment]||'🏋️'} ${escapeHtml(exLabel(EX_EQUIPMENT, ex.equipment))}</span>` : ''}</div>
+      ${demoHtml ? `<div class="demoPanel" style="display:none; margin:8px 0 10px;">${demoHtml}</div>` : ''}
+      <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; line-height:1.6;">🎯 <strong>${pe.target_sets ?? '–'}</strong> ${locale==='el'?'σετ':'sets'} × <strong>${escapeHtml(pe.target_reps||'')}</strong> ${locale==='el'?'επαναλήψεις':'reps'} · ${pe.target_load ? (locale==='el'?'φορτίο':'load')+': <strong>'+escapeHtml(pe.target_load)+'</strong>' : (locale==='el'?'φορτίο: το επιλέγεις εσύ':'load: your choice')}${ex.equipment ? ` · <span class="badge">${EX_EQ_ICON[ex.equipment]||'🏋️'} ${escapeHtml(exLabel(EX_EQUIPMENT, ex.equipment))}</span>` : ''}</div>
       ${tracker ? `<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; margin-bottom:10px;">
         ${tracker.lastSession ? `<span>📊 ${locale==='el'?'Προηγούμενη':'Previous'}: <strong class="mono">${tracker.lastSession.load_kg}kg × ${tracker.lastSession.reps}</strong> <span style="color:var(--ink-soft);">(${tracker.lastSession.session_date})</span></span>` : ''}
         ${tracker.pr ? `<span>🏆 PR: <strong class="mono">${tracker.pr.load_kg}kg × ${tracker.pr.reps}</strong></span>` : ''}
@@ -9978,9 +10176,6 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       ${warm.length ? `<div style="margin-bottom:8px;"><button class="btn secondary warmToggleBtn" type="button" style="padding:3px 10px; font-size:12px; min-height:32px;">🔥 ${locale==='el'?'Προθέρμανση':'Warm-up'}</button>
         <div class="warmPanel" style="display:none; font-size:11.5px; margin-top:6px;">${warm.map(w=>`<span class="badge mono">${w.pct}% × ${w.reps} → ${w.load}kg</span>`).join(' ')}<div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px;">${locale==='el'?'Ενδεικτική γενική προθέρμανση. Προσαρμόσέ την αν κάτι σε ενοχλεί.':'General guide only. Adjust it if anything bothers you.'}</div></div></div>` : ''}
       <div class="whyPanel" style="display:none; background:var(--tint-soft); border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:12px;">
-        ${ex3dSlotHtml(ex, false)}
-        ${fxAnimHtml(ex)}
-        ${muscleMapHtml(ex)}
         ${ex.video_url ? `${youtubeEmbedUrl(ex.video_url) ? `<div style="position:relative; padding-top:56.25%; margin-bottom:8px; border-radius:8px; overflow:hidden; background:#000;"><iframe src="${youtubeEmbedUrl(ex.video_url)}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="${escapeHtml(exName)}"></iframe></div>` : ''}<a href="${escapeHtml(ex.video_url)}" target="_blank" rel="noopener noreferrer">🎥 ${locale==='el'?'Σου εξηγώ ο ίδιος':'I explain it myself'} ↗</a>` : ((ex.gif_url && !fxIs(ex.gif_url)) ? `<img src="${escapeHtml(ex.gif_url)}" style="max-width:160px; border-radius:8px; display:block; margin-bottom:6px;">` : '')}
         ${why ? `<p style="margin-bottom:6px;"><strong>${t('why',locale)}:</strong> ${escapeHtml(why)}</p>` : ''}
         ${ex.execution_steps ? `<h4 style="font-size:12px; color:var(--ink-soft); margin:12px 0 6px;">${t('executionSteps',locale)}</h4>${stepsHtml(ex.execution_steps)}` : ''}
@@ -10005,6 +10200,8 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
       try{ const all = await loadAltCatalog(); list.innerHTML = exAltListHtml(ex, all) + `<p style="font-size:12px; color:var(--ink-soft); margin:6px 0 0;">${locale==='el'?'Μπορείς να κάνεις μία από αυτές σήμερα και να το γράψεις στις σημειώσεις ή να το πεις στον coach σου.':'You can do one of these today and note it, or tell your coach.'}</p>`; }
       catch(e){ list.innerHTML = '—'; }
     });
+    const demoBtn = card.querySelector('.demoToggleBtn');
+    if(demoBtn) demoBtn.addEventListener('click', ()=>{ const dp = card.querySelector('.demoPanel'); const on = dp.style.display==='none'; dp.style.display = on ? 'block' : 'none'; demoBtn.textContent = (on?'▾ ':'▶ ') + (locale==='el'?'Δες πώς γίνεται':'See how'); if(on) ex3dMountAll(dp); });
     card.querySelector('.whyToggleBtn').addEventListener('click', ()=>{
       const p = card.querySelector('.whyPanel');
       p.style.display = p.style.display==='none' ? 'block' : 'none';
@@ -11118,6 +11315,72 @@ function renderCheckinForm(body, existing, clientId){
   draw();
 }
 
+
+// ============================================================
+// SPLIT VIEW: coach on the left, the client's own screens on the right (desktop only)
+// ============================================================
+function installPreviewGuards(){
+  const msg = ()=>{ if(!installPreviewGuards._t || Date.now()-installPreviewGuards._t>4000){ installPreviewGuards._t = Date.now(); try{ toast(locale==='el'?'Προεπισκόπηση: μόνο ανάγνωση':'Preview: read only'); }catch(e){} } };
+  const blocked = ()=>{
+    msg();
+    const r = { data:null, error:{ message: locale==='el'?'Προεπισκόπηση, μόνο ανάγνωση':'Preview, read only' } };
+    const p = new Proxy(function(){}, {
+      get:(t,k)=> k==='then' ? (a,b)=>Promise.resolve(r).then(a,b) : k==='catch' ? (f)=>Promise.resolve(r).catch(f) : k==='finally' ? (f)=>Promise.resolve(r).finally(f) : ()=>p,
+      apply:()=>p,
+    });
+    return p;
+  };
+  const realFrom = supabase.from.bind(supabase);
+  supabase.from = (tbl)=>{
+    const q = realFrom(tbl);
+    ['insert','update','upsert','delete'].forEach(m=>{ q[m] = ()=>blocked(); });
+    return q;
+  };
+  const realRpc = supabase.rpc.bind(supabase);
+  supabase.rpc = (name, ...a)=> /^get_/.test(String(name)) ? realRpc(name, ...a) : blocked();
+  try{ supabase.functions.invoke = ()=>blocked(); }catch(e){}
+  try{
+    const realStorage = supabase.storage.from.bind(supabase.storage);
+    supabase.storage.from = (b)=>{ const o = realStorage(b); ['upload','remove','move','copy','update'].forEach(m=>{ o[m] = ()=>blocked(); }); return o; };
+  }catch(e){}
+  try{ supabase.auth.signOut = async ()=>({ error:null }); supabase.auth.updateUser = async ()=>({ data:null, error:{ message:'preview' } }); }catch(e){}
+}
+const SPLIT_MIN_W = 1280;
+function splitEnabled(){ try{ return localStorage.getItem('hfp_split') !== '0'; }catch(e){ return true; } }
+function splitToggleLabel(){ const el_ = locale==='el', on = splitEnabled(); return '👁 ' + (el_ ? (on?'Απόκρυψη όψης ασκούμενου':'Όψη ασκούμενου') : (on?'Hide client view':'Client view')); }
+function syncSplitPane(){
+  if(window.__PREVIEW) return;
+  const isCoach = profile && (profile.role==='coach' || profile.role==='owner');
+  const show = !!(isCoach && selectedClient && view==='dashboard' && window.innerWidth>=SPLIT_MIN_W && splitEnabled());
+  let pane = document.getElementById('splitPane');
+  if(!show){
+    if(pane) pane.hidden = true;
+    document.body.classList.remove('splitOn'); clearInterval(syncSplitPane._timer); syncSplitPane._timer = null; syncSplitPane._id = null;
+    return;
+  }
+  const el_ = locale==='el';
+  if(!pane){
+    pane = el(`<aside id="splitPane" aria-label="${el_?'Όψη ασκούμενου':'Client view'}">
+      <div class="spHead"><b>👁 ${el_?'Όψη ασκούμενου':'Client view'}</b><span class="spName"></span>
+        <button class="spBtn" id="spRefresh" type="button" title="${el_?'Ανανέωση':'Refresh'}">↻</button>
+        <button class="spBtn" id="spClose" type="button" title="${el_?'Απόκρυψη':'Hide'}">✕</button></div>
+      <div class="spFrameWrap"><iframe id="spFrame" title="${el_?'Όψη ασκούμενου':'Client view'}"></iframe></div>
+      <div class="spNote">${el_?'Όπως τα βλέπει ο ασκούμενος · μόνο ανάγνωση · ανανεώνεται κάθε 30 δευτ.':'Exactly what the client sees · read only · refreshes every 30 s'}</div>
+    </aside>`);
+    document.body.appendChild(pane);
+    pane.querySelector('#spRefresh').addEventListener('click', ()=>{ const f = pane.querySelector('#spFrame'); try{ f.contentWindow.__previewRefresh(); }catch(e){ f.contentWindow.location.reload(); } });
+    pane.querySelector('#spClose').addEventListener('click', ()=>{ try{ localStorage.setItem('hfp_split','0'); }catch(e){} syncSplitPane(); document.querySelectorAll('.splitToggle').forEach(b=>{ b.textContent = splitToggleLabel(); }); });
+  }
+  pane.hidden = false; document.body.classList.add('splitOn');
+  pane.querySelector('.spName').textContent = selectedClient.full_name || '';
+  if(syncSplitPane._id !== selectedClient.id){
+    syncSplitPane._id = selectedClient.id;
+    pane.querySelector('#spFrame').src = location.pathname + '?previewClient=' + encodeURIComponent(selectedClient.id);
+  }
+  if(!syncSplitPane._timer) syncSplitPane._timer = setInterval(()=>{ try{ const f = document.getElementById('spFrame'); if(f && !document.hidden && f.contentWindow.__previewRefresh) f.contentWindow.__previewRefresh(); }catch(e){} }, 30000);
+}
+window.addEventListener('resize', ()=>{ clearTimeout(syncSplitPane._rz); syncSplitPane._rz = setTimeout(syncSplitPane, 150); });
+
 // ============================================================
 // BOOT
 // ============================================================
@@ -11133,6 +11396,22 @@ async function boot(){
   profile = p; locale = p.locale || 'el';
   if(profile.role==='coach' && profile.suspended){ renderSuspendedScreen(); return; }
   view = 'dashboard'; selectedClient = null;
+  // Split view: this page was opened inside the coach's side pane to show a client's own screens, read-only.
+  const previewId = urlParams.get('previewClient');
+  if(previewId && (profile.role==='coach' || profile.role==='owner')){
+    const [{ data: cp }, { data: cr }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', previewId).maybeSingle(),
+      supabase.from('clients').select('*').eq('id', previewId).maybeSingle(),
+    ]);
+    if(cp && cp.role==='client'){
+      window.__PREVIEW = true; document.documentElement.classList.add('previewMode');
+      installPreviewGuards();
+      profile = cp; locale = cp.locale || 'el';
+      session = { ...session, user: { ...session.user, id: cp.id, email: (cr && cr.email) || cp.email || session.user.email } };
+      window.__previewRefresh = ()=>{ renderClientDashboard._cache = null; const m = document.getElementById('main'); if(m) renderClientDashboard(m); };
+      renderShell(); return;
+    }
+  }
   if(deepLinkTab && profile.role==='client'){ renderClientDashboard._tab = deepLinkTab; }
   const deepLinkClient = urlParams.get('client');
   if(deepLinkClient && (profile.role==='coach' || profile.role==='owner')){
@@ -11182,6 +11461,7 @@ function renderNewPassword(){
 }
 
 supabase.auth.onAuthStateChange((evt, s)=>{
+  if(window.__PREVIEW) return;
   session = s;
   if(evt === 'PASSWORD_RECOVERY'){ recoveryPending = true; renderNewPassword(); return; }
   // If Supabase signs us out from under the app (a revoked session, a failed token refresh —
