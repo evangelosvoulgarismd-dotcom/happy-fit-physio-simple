@@ -5281,7 +5281,7 @@ async function ex3dMount(slot){
     const lib = await ex3dLoad();
     stage.innerHTML = ''; stage.style.display = 'block'; stage.style.minHeight = '0';
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const api = lib.mount(stage, slot.dataset.pat, slot.dataset.prop, {height:Number(slot.dataset.h)||300, paused: reduce, autorotate:false, muscles:{prim:ex3dMuscleKeys(slot.dataset.prim), sec:ex3dMuscleKeys(slot.dataset.sec)}});
+    const api = lib.mount(stage, slot.dataset.pat, slot.dataset.prop, {height:Number(slot.dataset.h)||300, paused: reduce, autorotate: !reduce, muscles:{prim:ex3dMuscleKeys(slot.dataset.prim), sec:ex3dMuscleKeys(slot.dataset.sec)}});
     const btn = (label, fn, cls) => { const b = document.createElement('button'); b.type='button'; b.className='btn secondary'; b.style.cssText='padding:3px 10px; font-size:12px; min-height:32px;'; b.textContent=label; b.addEventListener('click', ()=>fn(b)); ctl.appendChild(b); return b; };
     const pb = btn(reduce?'▶':'⏸', b=>{ const on = !api.isPlaying(); api.play(on); b.textContent = on ? '⏸' : '▶'; });
     let slow = false; btn('×0.5', b=>{ slow=!slow; api.setSpeed(slow?.5:1); b.style.opacity = slow?1:.7; }).style.opacity=.7;
