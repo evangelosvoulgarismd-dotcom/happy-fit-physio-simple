@@ -77,11 +77,38 @@
   .exMLbl{font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px;}
   .exMChips{display:flex; gap:6px; flex-wrap:wrap;}
   .exMChip{border:1px solid transparent; border-radius:999px; padding:7px 12px; font:inherit; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer;}
-  .exMChip.exPrim{background:rgba(255,59,42,.18);} .exMChip.exSec{background:rgba(240,150,60,.16); font-weight:600;}
+  .exMChip.exPrim{background:rgba(255,59,42,.18);} .exMChip.exSec{background:rgba(255,210,63,.16); font-weight:600;}
   .exMChip.on{border-color:var(--red); box-shadow:0 0 0 2px rgba(255,59,42,.35);}
   .exMHint{font-size:11.5px; color:var(--ink-soft); margin-top:12px; line-height:1.45;}
   .exMuscleCard .muscleMap{border:0; padding:0; margin:0; background:none; flex-wrap:nowrap; gap:6px; flex-shrink:0; align-items:flex-start;}
   .exMuscleCard .muscleMap svg{width:62px;} .exMuscleCard .mmLegend{display:none;}
+
+  /* Χάρτης μυών (écorché): δύο όψεις, κύριοι σε κόκκινο, δευτερεύοντες σε πορτοκαλί, μεγέθυνση με πάτημα */
+  .muscleMap.mmx{display:grid; grid-template-columns:1fr 1fr; column-gap:10px; row-gap:8px; width:100%; max-width:300px; margin:0 auto; padding:0; border:0; background:none; transition:grid-template-columns .38s cubic-bezier(.2,.9,.2,1);}
+  .muscleMap.mmx[data-solo="front"]{grid-template-columns:1fr 0fr; column-gap:0;} .muscleMap.mmx[data-solo="back"]{grid-template-columns:0fr 1fr; column-gap:0;}
+  .mmx .mmPanel{appearance:none; -webkit-appearance:none; border:0; background:none; padding:0; margin:0; color:inherit; font:inherit; cursor:pointer; min-width:0; overflow:hidden; -webkit-tap-highlight-color:transparent; transition:opacity .25s ease, transform .12s ease-out;}
+  .mmx .mmPanel:active{transform:scale(.97);} .mmx .mmPanel:focus-visible{outline:2px solid var(--red); outline-offset:3px; border-radius:14px;}
+  .mmx[data-solo="front"] .mmPanel[data-v="back"], .mmx[data-solo="back"] .mmPanel[data-v="front"]{opacity:0; pointer-events:none;}
+  .mmStage{display:block; position:relative; aspect-ratio:168/364; width:100%; border-radius:14px; background:radial-gradient(120% 90% at 50% 30%, #2b2d33 0%, #17181c 100%); overflow:hidden; border:1px solid var(--line);}
+  .mmPanel.mmOff .mmStage{opacity:.45;}
+  .mmBase,.mmL{position:absolute; inset:0; display:block;}
+  .mmBase{background:url(./muscle-map.png?v=1) no-repeat; background-size:800% 600%; background-position:var(--px) var(--py);}
+  .mmL{-webkit-mask:url(./muscle-map.png?v=1) no-repeat; mask:url(./muscle-map.png?v=1) no-repeat; -webkit-mask-size:800% 600%; mask-size:800% 600%; -webkit-mask-position:var(--px) var(--py); mask-position:var(--px) var(--py); transition:opacity .2s ease;}
+  .mmL.p{background:#ff3b2a;} .mmL.s{background:#ffd23f;} .mmL.dim{opacity:.15;}
+  .mmPrimW{position:absolute; inset:0; display:block; filter:drop-shadow(0 0 1.2px #ff3b2a) drop-shadow(0 0 1.2px #ff3b2a) drop-shadow(0 0 5px rgba(255,59,42,.75));} .mmSecW{position:absolute; inset:0; display:block; filter:drop-shadow(0 0 1.2px #ffd23f) drop-shadow(0 0 1.2px #ffd23f);}
+  .mmCap{display:block; text-align:center; font-size:12.5px; font-weight:700; letter-spacing:.02em; color:var(--ink); margin-top:6px; white-space:nowrap;}
+  .mmx .mmLegend{grid-column:1/-1; display:flex; gap:12px; white-space:nowrap; justify-content:center; flex-wrap:wrap; font-size:12.5px; font-weight:600; color:var(--ink);}
+  .mmx .mmDot{width:12px; height:12px; margin-right:6px; vertical-align:-1px; opacity:1;} .mmx .mmDot.prim{background:#ff3b2a; box-shadow:0 0 6px rgba(255,59,42,.7);} .mmx .mmDot.sec{background:#f5a83c; border-radius:3px; opacity:1;}
+  .mmTap{grid-column:1/-1; text-align:center; font-size:11px; color:var(--ink-soft);}
+  .exMuscleCard{flex-direction:row; align-items:center; gap:10px;}
+  .exMuscleCard .muscleMap.mmx{order:0; width:208px; max-width:none; margin:0; column-gap:6px; flex-shrink:0;}
+  .exMuscleCard .exMLbl{font-size:13px; letter-spacing:0; text-transform:none; font-weight:500;}
+  .exMuscleCard .exMChip{font-size:14px; padding:6px 11px;}
+  .mmx .mmPanel{cursor:default;} .mmx .mmPanel:active{transform:none;}
+  .mmStage{border:0; background:none; border-radius:0;}
+  .mmBase{filter:brightness(.55) contrast(1.1);}
+  @media (min-width:700px){ .exMuscleCard .muscleMap.mmx{width:236px; column-gap:10px;} }
+@media (prefers-reduced-motion:reduce){ .mmx, .mmx .mmPanel, .mmL{transition:opacity .15s ease;} }
   .exEmpty{text-align:center; color:var(--ink-soft); font-size:13.5px; line-height:1.55; padding:34px 18px; border:1px dashed var(--line); border-radius:16px;}
   .exRecTable>div{display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-top:1px solid var(--line); font-size:13px;}
   .exSheet .stepList li{font-size:14.5px;}
@@ -5160,8 +5187,50 @@ const MM_SHAPES = {
   'Οπίσθιοι μηροί':{b:'<rect x="33" y="130" width="14" height="40" rx="6"/><rect x="53" y="130" width="14" height="40" rx="6"/>'},
   'Γάμπες':{b:'<rect x="33" y="172" width="13" height="30" rx="6"/><rect x="54" y="172" width="13" height="30" rx="6"/>'},
 };
+
+// ===== Χάρτης μυών (πραγματικό écorché, ατλας muscle-map.png) =====
+// Ατλας: 1 PNG με το βασικό σώμα (μπροστά/πίσω) και μάσκες ανά μυϊκή ομάδα. Αν λείπει το muscle-map.png, χρησιμοποιείται ο παλιός σχηματικός χάρτης.
+const MM_ATLAS_META = {"cols":8,"rows":6,"idx":{"base_front":[0,0],"base_back":[1,0],"deltoids_front":[2,0],"deltoids_back":[3,0],"pectorals_front":[4,0],"pectorals_back":[5,0],"teres_major_front":[6,0],"teres_major_back":[7,0],"trapezius_front":[0,1],"trapezius_back":[1,1],"latissimus_front":[2,1],"latissimus_back":[3,1],"rhomboids_front":[4,1],"rhomboids_back":[5,1],"rotator_cuff_front":[6,1],"rotator_cuff_back":[7,1],"serratus_front":[0,2],"serratus_back":[1,2],"rectus_abdominis_front":[2,2],"rectus_abdominis_back":[3,2],"obliques_front":[4,2],"obliques_back":[5,2],"erector_spinae_front":[6,2],"erector_spinae_back":[7,2],"deep_spinal_front":[0,3],"deep_spinal_back":[1,3],"biceps_front":[2,3],"biceps_back":[3,3],"triceps_front":[4,3],"triceps_back":[5,3],"forearms_front":[6,3],"forearms_back":[7,3],"glutes_front":[0,4],"glutes_back":[1,4],"quadriceps_front":[2,4],"quadriceps_back":[3,4],"hamstrings_front":[4,4],"hamstrings_back":[5,4],"adductors_front":[6,4],"adductors_back":[7,4],"calves_front":[0,5],"calves_back":[1,5],"tibialis_front":[2,5],"tibialis_back":[3,5],"hip_flexors_front":[4,5],"hip_flexors_back":[5,5]},"vis":{"deltoids":[true,true],"pectorals":[true,true],"teres_major":[true,true],"trapezius":[true,true],"latissimus":[true,true],"rhomboids":[true,true],"rotator_cuff":[true,true],"serratus":[true,true],"rectus_abdominis":[true,false],"obliques":[true,true],"erector_spinae":[true,true],"deep_spinal":[true,true],"biceps":[true,true],"triceps":[true,true],"forearms":[true,true],"glutes":[true,true],"quadriceps":[true,true],"hamstrings":[true,true],"adductors":[true,true],"calves":[true,true],"tibialis":[true,true],"hip_flexors":[true,true]}};
+const MM_TERM_GROUPS = {'Στήθος':['pectorals'],'Ώμοι':['deltoids'],'Τρικέφαλοι':['triceps'],'Δικέφαλοι':['biceps'],'Πήχεις':['forearms'],'Κοιλιακοί':['rectus_abdominis','obliques'],'Οσφυϊκή χώρα':['erector_spinae'],'Μέση πλάτη':['rhomboids'],'Τραπεζοειδείς':['trapezius'],'Πλατύς ραχιαίος':['latissimus','teres_major'],'Τετρακέφαλοι':['quadriceps'],'Οπίσθιοι μηροί':['hamstrings'],'Γλουτοί':['glutes'],'Γάμπες':['calves'],'Προσαγωγείς':['adductors'],'Απαγωγείς':['glutes']};
+let MM_ATLAS_OK = null;
+(function mmProbe(){ try{ const i = new Image(); i.onload = ()=>{ MM_ATLAS_OK = true; }; i.onerror = ()=>{ MM_ATLAS_OK = false; }; i.src = './muscle-map.png?v=1'; }catch(e){ MM_ATLAS_OK = false; } })();
+function muscleMapAtlasHtml(prim, sec){
+  const M = MM_ATLAS_META, el = locale==='el';
+  const pos = (c,r)=>`--px:${(c/(M.cols-1)*100).toFixed(3)}%;--py:${(r/(M.rows-1)*100).toFixed(3)}%`;
+  const primG = new Set(), secG = new Set();
+  prim.forEach(t=>(MM_TERM_GROUPS[t]||[]).forEach(g=>primG.add(g)));
+  sec.forEach(t=>(MM_TERM_GROUPS[t]||[]).forEach(g=>{ if(!primG.has(g)) secG.add(g); }));
+  const layer = (view, set, cls)=>[...set].map(g=>{
+    const k = M.idx[g+'_'+view]; if(!k) return '';
+    const term = [...prim, ...sec].find(t=>(MM_TERM_GROUPS[t]||[]).includes(g)) || '';
+    return `<i class="mmL ${cls}" data-term="${escapeHtml(term)}" style="${pos(k[0],k[1])}"></i>`;
+  }).join('');
+  const hasIn = (view, set)=>[...set].some(g=>M.vis[g] && M.vis[g][view==='front'?0:1]);
+  const panel = (view, label)=>{
+    const k = M.idx['base_'+view], on = hasIn(view, primG) || hasIn(view, secG);
+    return `<button type="button" class="mmPanel${on?'':' mmOff'}" data-v="${view}" aria-hidden="true" tabindex="-1">
+      <span class="mmStage"><i class="mmBase" style="${pos(k[0],k[1])}"></i><span class="mmSecW">${layer(view, secG, 's')}</span><span class="mmPrimW">${layer(view, primG, 'p')}</span></span>
+      </button>`;
+  };
+  const cnt = v => [...primG, ...secG].filter(g=>M.vis[g] && M.vis[g][v==='front'?0:1]).length;
+  const start = cnt('back') > cnt('front') ? 'back' : 'front';
+  const seg = (v, t)=>`<button type="button" class="mmSeg${v===start?' on':''}" data-v="${v}" aria-pressed="${v===start}">${t}</button>`;
+  return `<div class="muscleMap mmx" data-solo="">
+    ${panel('front', '')}${panel('back', '')}
+  </div>`;
+}
+function mmWire(root){
+  root.querySelectorAll('.mmx').forEach(m=>{
+    if(m._mmw) return; m._mmw = true;
+    m.querySelectorAll('.mmSeg').forEach(b=>b.addEventListener('click', ()=>{
+      m.dataset.solo = b.dataset.v;
+      m.querySelectorAll('.mmSeg').forEach(x=>{ const on = x.dataset.v===b.dataset.v; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
+    }));
+  });
+}
 function muscleMapHtml(ex){
   const split = v => String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if(MM_ATLAS_OK!==false){ const pa = split(ex && ex.primary_muscles), sa = split(ex && ex.secondary_muscles); if([...pa,...sa].some(t=>MM_TERM_GROUPS[t])) return muscleMapAtlasHtml(pa, sa); }
   const prim = new Set(split(ex && ex.primary_muscles)), sec = new Set(split(ex && ex.secondary_muscles));
   const known = k => MM_SHAPES[k];
   if(![...prim, ...sec].some(known)) return '';
@@ -10624,11 +10693,13 @@ async function renderLiveSessionTab(body, client, program, loggedByCoach, goalTe
           ${ex.common_mistakes ? sec(L('Συχνά λάθη','Common mistakes'), `<p class="exP" style="color:var(--danger);">${escapeHtml(ex.common_mistakes)}</p>`) : ''}
           ${(ex.regression_text||ex.progression_text) ? sec(L('Πιο εύκολα / πιο δύσκολα','Easier / harder'), `${ex.regression_text?`<p class="exP">⬇ <strong>${L('Πιο εύκολα','Easier')}:</strong> ${escapeHtml(ex.regression_text)}</p>`:''}${ex.progression_text?`<p class="exP">⬆ <strong>${L('Πιο δύσκολα','Harder')}:</strong> ${escapeHtml(ex.progression_text)}</p>`:''}`) : ''}
           <div class="altBox" style="margin-top:14px;"><button class="btn secondary altBtn" type="button">🔁 ${L('Δεν έχω τον εξοπλισμό; Εναλλακτικές','No equipment? Alternatives')}</button><div class="altList" style="display:none; margin-top:8px;"></div></div>`;
+        mmWire(pane);
         let focusName = null;
         pane.querySelectorAll('.exMChip').forEach(b=>b.addEventListener('click', ()=>{
           const slot = ov.querySelector('.ex3dSlot'); const api = slot && slot._ex3d;
           focusName = (focusName===b.dataset.m) ? null : b.dataset.m;
           pane.querySelectorAll('.exMChip').forEach(x=>x.classList.toggle('on', x.dataset.m===focusName));
+          pane.querySelectorAll('.mmL').forEach(l=>l.classList.toggle('dim', !!focusName && l.dataset.term!==focusName));
           if(api && api.focus) api.focus(focusName ? ex3dMuscleKeys(focusName) : null);
           if(api && api.setView){ const ks = focusName ? ex3dMuscleKeys(focusName) : []; const back = ks.some(k=>['gluteal','hamstrings','calf','triceps','trapezius','back_muscles','midback','lowback'].includes(k)); if(focusName) api.setView(back ? -90 : 90, 8); else api.setView(55, 12); }
           ov.querySelector('.exSheetBody').scrollTo({top:0, behavior:'smooth'});
