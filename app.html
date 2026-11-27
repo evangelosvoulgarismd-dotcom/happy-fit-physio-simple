@@ -4863,7 +4863,7 @@ function ex3dBuild(THREE, BODY){
       const patchGlow = (mat)=>{
         mat.onBeforeCompile = sh=>{
           sh.vertexShader = sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec2 aGlow;\nvarying vec2 vGlow;').replace('#include <begin_vertex>','#include <begin_vertex>\nvGlow = aGlow;');
-          sh.fragmentShader = sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vGlow;').replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n vec3 gP = vec3(.95,.1,.06); vec3 gS = vec3(.95,.5,.14); float gx = clamp(vGlow.x,0.,1.); float gy = clamp(vGlow.y,0.,1.)*(1.-gx); diffuseColor.rgb = mix(diffuseColor.rgb, gP, gx*.92); diffuseColor.rgb = mix(diffuseColor.rgb, gS, gy*.8); totalEmissiveRadiance += gP*gx*.38 + gS*gy*.2;');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vGlow;').replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n vec3 gP = vec3(.95,.1,.06); vec3 gS = vec3(1.,.82,.25); float gx = clamp(vGlow.x,0.,1.); float gy = clamp(vGlow.y,0.,1.)*(1.-gx); diffuseColor.rgb = mix(diffuseColor.rgb, gP, gx*.92); diffuseColor.rgb = mix(diffuseColor.rgb, gS, gy*.8); totalEmissiveRadiance += gP*gx*.38 + gS*gy*.2;');
         };
         return mat;
       };
@@ -4871,16 +4871,16 @@ function ex3dBuild(THREE, BODY){
       const mkMat = (g, key)=>{
         const prim = focusSet ? focusSet.has(key) : hi.has(key), sec = focusSet ? false : hs.has(key);
         if(look==='clean'){
-          if(g==='skin') return patchGlow(new THREE.MeshStandardMaterial({color: darkUI?0xa4a9b3:0xb4bcc9, roughness:.62, metalness:.02}));
+          if(g==='skin') return patchGlow(new THREE.MeshStandardMaterial({color: darkUI?0x3a3d45:0xb4bcc9, roughness:.55, metalness:.02}));
           // glowing muscles show through the skin
           if(prim) return new THREE.MeshStandardMaterial({color:0xff4630, roughness:.35, emissive:0xd01808, emissiveIntensity:.85, depthTest:false, depthWrite:false});
-          if(sec) return new THREE.MeshStandardMaterial({color:0xf5a04a, roughness:.4, emissive:0x8a4a10, emissiveIntensity:.6, depthTest:false, depthWrite:false});
+          if(sec) return new THREE.MeshStandardMaterial({color:0xffd23f, roughness:.4, emissive:0x8a6a10, emissiveIntensity:.6, depthTest:false, depthWrite:false});
           return new THREE.MeshStandardMaterial({color:0x6a3a38, roughness:.6});
         }
         if(g==='skin') return new THREE.MeshStandardMaterial({color: darkUI?0xcfd3dc:0x9aa3b2, roughness:.6, transparent:true, opacity: opts.xray===false?.9:.16, depthWrite:false});
         if(g==='bone') return new THREE.MeshStandardMaterial({color:0xd9cfb8, roughness:.7});
         if(prim) return new THREE.MeshStandardMaterial({color:0xff3b2a, roughness:.4, emissive:0xb01808, emissiveIntensity:.6});
-        if(sec) return new THREE.MeshStandardMaterial({color:0xf0963c, roughness:.45, emissive:0x6a3208, emissiveIntensity:.35});
+        if(sec) return new THREE.MeshStandardMaterial({color:0xffd23f, roughness:.45, emissive:0x6a5208, emissiveIntensity:.35});
         return new THREE.MeshStandardMaterial({color: anyHi ? 0x8a4a47 : 0xc9584f, roughness:.6});
       };
       const layerOn = {bone:true, skin:!!opts.skin, muscle:true};
@@ -5295,7 +5295,7 @@ async function ex3dMount(slot){
         ctl.insertAdjacentElement('afterend', lg);
       }
       const dot = (c,t)=>`<span style="display:inline-flex; align-items:center; gap:6px;"><i style="width:11px;height:11px;border-radius:50%;background:${c};display:inline-block;"></i>${t}</span>`;
-      const paintLegend = anat => { if(lg) lg.innerHTML = dot('#ff3b2a', el_label('Κύριοι μύες','Main muscles')) + dot('#f0963c', el_label('Δευτερεύοντες','Secondary')) + (anat ? dot('#8a4a47', el_label('Υπόλοιποι','Others')) : ''); };
+      const paintLegend = anat => { if(lg) lg.innerHTML = dot('#ff3b2a', el_label('Κύριοι μύες','Main muscles')) + dot('#ffd23f', el_label('Δευτερεύοντες','Secondary')) + (anat ? dot('#8a4a47', el_label('Υπόλοιποι','Others')) : ''); };
       paintLegend(false);
       if(api.hasAnatomy){
       const bBones = tog(el_label('Οστά','Bones'),'bone',true), bSkin = tog(el_label('Δέρμα','Skin'),'skin',false);
