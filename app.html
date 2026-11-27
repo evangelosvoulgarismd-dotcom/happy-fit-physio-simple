@@ -83,7 +83,7 @@
   .exMuscleCard .muscleMap{border:0; padding:0; margin:0; background:none; flex-wrap:nowrap; gap:6px; flex-shrink:0; align-items:flex-start;}
   .exMuscleCard .muscleMap svg{width:62px;} .exMuscleCard .mmLegend{display:none;}
 
-  /* Χάρτης μυών (écorché): δύο όψεις, κύριοι σε κόκκινο, δευτερεύοντες σε πορτοκαλί, μεγέθυνση με πάτημα */
+  /* Χάρτης μυών (écorché): δύο όψεις, κύριοι σε κόκκινο, δευτερεύοντες σε κίτρινο, μεγέθυνση με πάτημα */
   .muscleMap.mmx{display:grid; grid-template-columns:1fr 1fr; column-gap:10px; row-gap:8px; width:100%; max-width:300px; margin:0 auto; padding:0; border:0; background:none; transition:grid-template-columns .38s cubic-bezier(.2,.9,.2,1);}
   .muscleMap.mmx[data-solo="front"]{grid-template-columns:1fr 0fr; column-gap:0;} .muscleMap.mmx[data-solo="back"]{grid-template-columns:0fr 1fr; column-gap:0;}
   .mmx .mmPanel{appearance:none; -webkit-appearance:none; border:0; background:none; padding:0; margin:0; color:inherit; font:inherit; cursor:pointer; min-width:0; overflow:hidden; -webkit-tap-highlight-color:transparent; transition:opacity .25s ease, transform .12s ease-out;}
@@ -5270,7 +5270,7 @@ function ex3dSlotHtml(ex, isCoach, o){
     </div>
     <div class="ex3dStage" style="min-height:260px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink-soft);">${locale==='el'?'Φόρτωση 3D…':'Loading 3D…'}</div>
     <div class="ex3dCtl" style="display:none; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
-    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σύρε για να γυρίσεις το μοντέλο. Με κόκκινο οι κύριοι μύες της άσκησης, με πορτοκαλί οι δευτερεύοντες. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου.':'Schematic illustration. Red = main muscles, orange = secondary. Drag to rotate. Follow the execution guide and your coach.'}</p>
+    <p style="font-size:12px; color:var(--ink-soft); margin:8px 0 0;">${locale==='el'?'Σύρε για να γυρίσεις το μοντέλο. Με κόκκινο οι κύριοι μύες της άσκησης, με κίτρινο οι δευτερεύοντες. Ακολούθησε τις οδηγίες εκτέλεσης και του coach σου.':'Schematic illustration. Red = main muscles, yellow = secondary. Drag to rotate. Follow the execution guide and your coach.'}</p>
   </div>`;
 }
 async function ex3dMount(slot){
